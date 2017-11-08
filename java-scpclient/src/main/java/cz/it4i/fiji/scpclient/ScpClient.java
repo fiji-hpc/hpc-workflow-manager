@@ -1,5 +1,6 @@
 package cz.it4i.fiji.scpclient;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -16,21 +17,22 @@ import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 import com.jcraft.jsch.UserInfo;
 
-public class ScpClient {
+public class ScpClient implements Closeable {
 
 	public static void main(String[] args) throws JSchException, IOException {
-		boolean u = new ScpClient("salomon.it4i.cz", "koz01", "/home/koz01/.ssh/it4i_rsa", "nejlepsivyzkum")
-				.upload(Paths.get("/home/koz01/aaa/vecmath.jar"), "/home/koz01/");
-
-		boolean d = new ScpClient("salomon.it4i.cz", "koz01", "/home/koz01/.ssh/it4i_rsa", "nejlepsivyzkum")
-				.download("/home/koz01/proof", Paths.get("/home/koz01/aaa/proof"));
-		System.out.println(u);
-		System.out.println(d);
+		try (ScpClient scpClient = new ScpClient("salomon.it4i.cz", "koz01", "/home/koz01/.ssh/it4i_rsa",
+				"nejlepsivyzkum")) {
+			boolean u = scpClient.upload(Paths.get("/home/koz01/aaa/vecmath.jar"), "/home/koz01/");
+			boolean d = scpClient.download("/home/koz01/proof", Paths.get("/home/koz01/aaa/proof"));
+			System.out.println(u);
+			System.out.println(d);
+		}
 	}
 
 	private String hostName;
 	private String username;
 	private JSch jsch = new JSch();
+	private Session session;
 
 	public ScpClient(String hostName, String username, Identity privateKeyFile) throws JSchException {
 		super();
@@ -55,10 +57,12 @@ public class ScpClient {
 
 	public boolean download(String lfile, Path rfile) throws JSchException, IOException {
 		Session session = connectionSession();
+
+		// exec 'scp -f rfile' remotely
+		String command = "scp -f " + lfile;
+		Channel channel = session.openChannel("exec");
+
 		try {
-			// exec 'scp -f rfile' remotely
-			String command = "scp -f " + lfile;
-			Channel channel = session.openChannel("exec");
 			((ChannelExec) channel).setCommand(command);
 
 			// get I/O streams for remote scp
@@ -142,7 +146,7 @@ public class ScpClient {
 			}
 
 		} finally {
-			session.disconnect();
+			channel.disconnect();
 		}
 		return true;
 	}
@@ -157,69 +161,71 @@ public class ScpClient {
 		String command = "scp " + (ptimestamp ? "-p" : "") + " -t " + rfile;
 		Channel channel = session.openChannel("exec");
 		((ChannelExec) channel).setCommand(command);
-		try {
-			// get I/O streams for remote scp
-			try (OutputStream out = channel.getOutputStream(); InputStream in = channel.getInputStream()) {
-				channel.connect();
-				if (checkAck(in) != 0) {
-					return false;
-				}
+		// get I/O streams for remote scp
+		try (OutputStream out = channel.getOutputStream(); InputStream in = channel.getInputStream()) {
+			channel.connect();
+			if (checkAck(in) != 0) {
+				return false;
+			}
 
-				if (ptimestamp) {
-					command = "T " + (file.toFile().lastModified() / 1000) + " 0";
-					// The access time should be sent here,
-					// but it is not accessible with JavaAPI ;-<
-					command += (" " + (file.toFile().lastModified() / 1000) + " 0\n");
-					out.write(command.getBytes());
-					out.flush();
-					if (checkAck(in) != 0) {
-						return false;
-					}
-				}
-
-				// send "C0644 filesize filename", where filename should not include '/'
-				long filesize = file.toFile().length();
-				command = "C0644 " + filesize + " ";
-				command += file.getFileName().toString();
-				command += "\n";
+			if (ptimestamp) {
+				command = "T " + (file.toFile().lastModified() / 1000) + " 0";
+				// The access time should be sent here,
+				// but it is not accessible with JavaAPI ;-<
+				command += (" " + (file.toFile().lastModified() / 1000) + " 0\n");
 				out.write(command.getBytes());
 				out.flush();
 				if (checkAck(in) != 0) {
 					return false;
 				}
-				byte[] buf = new byte[1024];
-				// send a content of lfile
-				try (InputStream fis = Files.newInputStream(file)) {
-					while (true) {
-						int len = fis.read(buf, 0, buf.length);
-						if (len <= 0)
-							break;
-						out.write(buf, 0, len); // out.flush();
-					}
-				}
-				// send '\0'
-				buf[0] = 0;
-				out.write(buf, 0, 1);
-				out.flush();
-				if (checkAck(in) != 0) {
-					return false;
-				}
-				out.close();
 			}
+
+			// send "C0644 filesize filename", where filename should not include '/'
+			long filesize = file.toFile().length();
+			command = "C0644 " + filesize + " ";
+			command += file.getFileName().toString();
+			command += "\n";
+			out.write(command.getBytes());
+			out.flush();
+			if (checkAck(in) != 0) {
+				return false;
+			}
+			byte[] buf = new byte[1024];
+			// send a content of lfile
+			try (InputStream fis = Files.newInputStream(file)) {
+				while (true) {
+					int len = fis.read(buf, 0, buf.length);
+					if (len <= 0)
+						break;
+					out.write(buf, 0, len); // out.flush();
+				}
+			}
+			// send '\0'
+			buf[0] = 0;
+			out.write(buf, 0, 1);
+			out.flush();
+			if (checkAck(in) != 0) {
+				return false;
+			}
+			out.close();
+
 		} finally {
 			channel.disconnect();
-			session.disconnect();
 		}
 		return true;
 	}
 
 	private Session connectionSession() throws JSchException {
-		Session session = jsch.getSession(username, hostName);
+		if (session == null) {
+			session = jsch.getSession(username, hostName);
 
-		UserInfo ui = new P_UserInfo();
+			UserInfo ui = new P_UserInfo();
 
-		session.setUserInfo(ui);
-		session.connect();
+			session.setUserInfo(ui);
+		}
+		if (!session.isConnected()) {
+			session.connect();
+		}
 		return session;
 	}
 
@@ -282,5 +288,12 @@ public class ScpClient {
 			}
 		}
 		return b;
+	}
+
+	@Override
+	public void close() {
+		if (session.isConnected()) {
+			session.disconnect();
+		}
 	}
 }
