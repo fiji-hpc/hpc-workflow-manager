@@ -34,6 +34,10 @@ public class ScpClient implements Closeable {
 	private JSch jsch = new JSch();
 	private Session session;
 
+	public ScpClient(String hostName, String username, byte[] privateKeyFile) throws JSchException {
+		init(hostName, username, new ByteIdentity(jsch, privateKeyFile));
+	}
+	
 	public ScpClient(String hostName, String username, Identity privateKeyFile) throws JSchException {
 		super();
 		init(hostName, username, privateKeyFile);
@@ -292,8 +296,9 @@ public class ScpClient implements Closeable {
 
 	@Override
 	public void close() {
-		if (session.isConnected()) {
+		if ( session != null && session.isConnected()) {
 			session.disconnect();
+			session = null;
 		}
 	}
 }
