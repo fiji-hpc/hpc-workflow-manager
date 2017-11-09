@@ -1,7 +1,9 @@
 package cz.it4i.fiji.haas_java_client;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.rmi.RemoteException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -14,11 +16,16 @@ import cz.it4i.fiji.haas_java_client.proxy.JobFileContentExt;
 
 public class TestHaaSJavaClient {
 
-	public static void main(String[] args) throws RemoteException, ServiceException {
+	public static void main(String[] args) throws ServiceException, IOException {
 		Map<String, String> params = new HashMap<>();
 		params.put("inputParam", "someStringParam");
-		HaaSClient client = new HaaSClient(Paths.get("/home/koz01/aaa"), 1l,600, 7l,"DD-17-31");
+		Path baseDir = Paths.get("/home/koz01/aaa");
+		HaaSClient client = new HaaSClient( 1l,600, 7l,"DD-17-31");
 		long jobId = client.start(Arrays.asList(Paths.get("/home/koz01/aaa/vecmath.jar")), "TestOutRedirect", params.entrySet());
+		Path workDir = baseDir.resolve("" + jobId);
+		if (!Files.isDirectory(workDir)) {
+			Files.createDirectories(workDir);
+		}
 		JobInfo info;
 		do {
 			try {
@@ -33,7 +40,7 @@ public class TestHaaSJavaClient {
 			}
 			client.downloadPartsOfJobFiles(jobId, taskFileOffset).forEach(jfc -> showJFC(jfc));
 			if (info.getState() == JobState.Finished) {
-				client.download(jobId);
+				client.download(jobId,workDir);
 			}
 			System.out.println("JobId :" + jobId + ", state" + info.getState());
 		} while (info.getState() != JobState.Canceled && info.getState() != JobState.Failed

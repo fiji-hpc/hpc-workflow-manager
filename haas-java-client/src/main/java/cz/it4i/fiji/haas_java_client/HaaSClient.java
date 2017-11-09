@@ -81,8 +81,6 @@ public class HaaSClient {
 
 	private String sessionID;
 
-	private Path workDirectory;
-
 	private UserAndLimitationManagementWsSoap userAndLimitationManagement;
 
 	private JobManagementWsSoap jobManagement;
@@ -111,9 +109,8 @@ public class HaaSClient {
 		WS_STATE2STATE = Collections.unmodifiableMap(map);
 	}
 
-	public HaaSClient(Path workDirectory, Long templateId, Integer timeOut,Long  clusterNodeType, String projectId) {
+	public HaaSClient(Long templateId, Integer timeOut,Long  clusterNodeType, String projectId) {
 		super();
-		this.workDirectory = workDirectory;
 		this.templateId = templateId;
 		this.timeOut = timeOut;
 		this.clusterNodeType = clusterNodeType;
@@ -181,7 +178,7 @@ public class HaaSClient {
 		}
 	}
 
-	public void download(long jobId) {
+	public void download(long jobId, Path workDirectory) {
 		try {
 			FileTransferMethodExt ft = getFileTransfer().getFileTransferMethod(jobId, getSessionID());
 			try (ScpClient scpClient = getScpClient(ft)) {

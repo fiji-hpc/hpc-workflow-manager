@@ -1,8 +1,9 @@
 package cz.it4i.fiji.haas_java_client;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.rmi.RemoteException;
-import java.util.Collections;
 
 import javax.xml.rpc.ServiceException;
 
@@ -11,11 +12,16 @@ import cz.it4i.fiji.haas_java_client.proxy.JobFileContentExt;
 
 public class TestHaaSJavaClientWithSPIM {
 
-	public static void main(String[] args) throws RemoteException, ServiceException {
-		HaaSClient client = new HaaSClient(Paths.get("/home/koz01/Work/vyzkumnik/fiji/work/aaa"), 2l, 9600, 6l,
-				"DD-17-31");
+	public static void main(String[] args) throws ServiceException, IOException {
+		HaaSClient client = new HaaSClient(2l, 9600, 6l, "DD-17-31");
+		Path baseDir = Paths.get("/home/koz01/Work/vyzkumnik/fiji/work/aaa");
+
 		long jobId = 36;// client.start(Collections.emptyList(), "TestOutRedirect",
 						// Collections.emptyList());
+		Path workDir = baseDir.resolve("" + jobId);
+		if (!Files.isDirectory(workDir)) {
+			Files.createDirectories(workDir);
+		}
 		JobInfo info;
 		boolean firstIteration = true;
 		do {
@@ -33,7 +39,7 @@ public class TestHaaSJavaClientWithSPIM {
 			}
 			client.downloadPartsOfJobFiles(jobId, taskFileOffset).forEach(jfc -> showJFC(jfc));
 			if (info.getState() == JobState.Finished) {
-				client.download(jobId);
+				client.download(jobId, workDir);
 			}
 			System.out.println("JobId :" + jobId + ", state" + info.getState());
 			firstIteration = false;
