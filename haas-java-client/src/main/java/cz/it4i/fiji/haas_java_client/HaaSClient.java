@@ -176,8 +176,8 @@ public class HaaSClient {
 			try (ScpClient scpClient = getScpClient(ft)) {
 
 				for (String fileName : getFileTransfer().listChangedFilesForJob(jobId, getSessionID())) {
+					fileName=fileName.replaceAll("/", "");
 					Path rFile = workDirectory.resolve(fileName);
-					System.out.println("Downloading file: " + fileName);
 					scpClient.download(ft.getSharedBasepath() + "//" + fileName, rFile);
 				}
 			}

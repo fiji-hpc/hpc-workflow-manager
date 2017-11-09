@@ -35,7 +35,12 @@ class ByteIdentity  implements Identity{
 
 	@Override
 	public String getAlgName() {
-		return null;
+		if(keyPair.getKeyType() == KeyPair.RSA) {
+			return "ssh-rsa";
+		} else if(keyPair.getKeyType() == KeyPair.DSA) {
+			return "ssh-dsa";
+		}
+		throw new UnsupportedOperationException("Key type:" + keyPair.getKeyType() + " not supported.");
 	}
 
 	@Override

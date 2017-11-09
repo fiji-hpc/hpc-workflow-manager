@@ -2,7 +2,7 @@ package cz.it4i.fiji.haas_java_client;
 
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -18,7 +18,7 @@ public class TestHaaSJavaClient {
 		Map<String, String> params = new HashMap<>();
 		params.put("inputParam", "someStringParam");
 		HaaSClient client = new HaaSClient(Paths.get("/home/koz01/aaa"));
-		long jobId = client.start(Collections.emptyList(), "TestOutRedirect", 1, params.entrySet());
+		long jobId = client.start(Arrays.asList(Paths.get("/home/koz01/aaa/vecmath.jar")), "TestOutRedirect", 1, params.entrySet());
 		JobInfo info;
 		do {
 			try {
