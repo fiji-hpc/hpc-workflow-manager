@@ -74,7 +74,7 @@ public class ScpClient implements Closeable {
 
 				channel.connect();
 
-				byte[] buf = new byte[1024];
+				byte[] buf = new byte[getBufferSize()];
 
 				// send '\0'
 				buf[0] = 0;
@@ -194,7 +194,7 @@ public class ScpClient implements Closeable {
 			if (checkAck(in) != 0) {
 				return false;
 			}
-			byte[] buf = new byte[1024];
+			byte[] buf = new byte[getBufferSize()];
 			// send a content of lfile
 			try (InputStream fis = Files.newInputStream(file)) {
 				while (true) {
@@ -217,6 +217,10 @@ public class ScpClient implements Closeable {
 			channel.disconnect();
 		}
 		return true;
+	}
+
+	private int getBufferSize() {
+		return 1024*1024;
 	}
 
 	private Session connectionSession() throws JSchException {

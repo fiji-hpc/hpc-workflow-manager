@@ -2,29 +2,29 @@ package cz.it4i.fiji.haas_java_client;
 
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Collections;
 
 import javax.xml.rpc.ServiceException;
 
 import cz.it4i.fiji.haas_java_client.HaaSClient.SynchronizableFiles;
 import cz.it4i.fiji.haas_java_client.proxy.JobFileContentExt;
 
-
-public class TestHaaSJavaClient {
+public class TestHaaSJavaClientWithSPIM {
 
 	public static void main(String[] args) throws RemoteException, ServiceException {
-		Map<String, String> params = new HashMap<>();
-		params.put("inputParam", "someStringParam");
-		HaaSClient client = new HaaSClient(Paths.get("/home/koz01/aaa"), 1l,600, 7l,"DD-17-31");
-		long jobId = client.start(Arrays.asList(Paths.get("/home/koz01/aaa/vecmath.jar")), "TestOutRedirect", params.entrySet());
+		HaaSClient client = new HaaSClient(Paths.get("/home/koz01/Work/vyzkumnik/fiji/work/aaa"), 2l, 9600, 6l,
+				"DD-17-31");
+		long jobId = 36;// client.start(Collections.emptyList(), "TestOutRedirect",
+						// Collections.emptyList());
 		JobInfo info;
+		boolean firstIteration = true;
 		do {
-			try {
-				Thread.sleep(30000);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
+			if (!firstIteration) {
+				try {
+					Thread.sleep(30000);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
 			}
 			info = client.obtainJobInfo(jobId);
 			HaaSClient.SynchronizableFiles taskFileOffset = new HaaSClient.SynchronizableFiles();
@@ -36,6 +36,7 @@ public class TestHaaSJavaClient {
 				client.download(jobId);
 			}
 			System.out.println("JobId :" + jobId + ", state" + info.getState());
+			firstIteration = false;
 		} while (info.getState() != JobState.Canceled && info.getState() != JobState.Failed
 				&& info.getState() != JobState.Finished);
 	}

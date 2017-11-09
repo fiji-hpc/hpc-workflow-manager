@@ -38,11 +38,11 @@ import cz.it4i.fiji.haas_java_client.proxy.UserAndLimitationManagementWsSoap;
 import cz.it4i.fiji.scpclient.ScpClient;
 
 public class HaaSClient {
-
+	
 	static public class SynchronizableFiles {
 
 		private Collection<TaskFileOffsetExt> files = new LinkedList<>();
-		
+
 		public void addFile(long taskId, SynchronizableFileType type, long offset) {
 			TaskFileOffsetExt off = new TaskFileOffsetExt();
 			off.setFileType(getType(type));
@@ -50,26 +50,26 @@ public class HaaSClient {
 			off.setOffset(offset);
 			files.add(off);
 		}
-		
+
 		private Collection<TaskFileOffsetExt> getFiles() {
 			return files;
 		}
-		
+
 		private SynchronizableFilesExt getType(SynchronizableFileType type) {
-			switch(type) {
-				case LogFile:
-					return SynchronizableFilesExt.LogFile;
-				case ProgressFile:
-					return SynchronizableFilesExt.ProgressFile;
-				case StandardErrorFile:
-					return SynchronizableFilesExt.StandardErrorFile;
-				case StandardOutputFile:
-					return SynchronizableFilesExt.StandardOutputFile;
-				default:
-					throw new UnsupportedOperationException("Unsupported type: " + type);
+			switch (type) {
+			case LogFile:
+				return SynchronizableFilesExt.LogFile;
+			case ProgressFile:
+				return SynchronizableFilesExt.ProgressFile;
+			case StandardErrorFile:
+				return SynchronizableFilesExt.StandardErrorFile;
+			case StandardOutputFile:
+				return SynchronizableFilesExt.StandardOutputFile;
+			default:
+				throw new UnsupportedOperationException("Unsupported type: " + type);
 			}
-			
-		}	
+
+		}
 	}
 
 	private interface Constants {
@@ -89,10 +89,18 @@ public class HaaSClient {
 
 	private FileTransferWsSoap fileTransfer;
 
+	private Integer timeOut;
+
+	private Long templateId;
+
+	private Long clusterNodeType;
+
+	private String projectId;
+
 	final static private Map<JobStateExt, JobState> WS_STATE2STATE;
 
 	static {
-		Map<JobStateExt, JobState> map= new HashMap<JobStateExt, JobState>();
+		Map<JobStateExt, JobState> map = new HashMap<JobStateExt, JobState>();
 		map.put(JobStateExt.Canceled, JobState.Canceled);
 		map.put(JobStateExt.Configuring, JobState.Configuring);
 		map.put(JobStateExt.Failed, JobState.Failed);
@@ -103,13 +111,16 @@ public class HaaSClient {
 		WS_STATE2STATE = Collections.unmodifiableMap(map);
 	}
 
-	public HaaSClient(Path workDirectory) {
+	public HaaSClient(Path workDirectory, Long templateId, Integer timeOut,Long  clusterNodeType, String projectId) {
 		super();
 		this.workDirectory = workDirectory;
+		this.templateId = templateId;
+		this.timeOut = timeOut;
+		this.clusterNodeType = clusterNodeType;
+		this.projectId = projectId;
 	}
 
-	public long start(Iterable<Path> files, String name, long templateId,
-			Collection<Entry<String, String>> templateParameters) {
+	public long start(Iterable<Path> files, String name, Collection<Entry<String, String>> templateParameters) {
 
 		TaskSpecificationExt taskSpec = createTaskSpecification(name, templateId, templateParameters);
 		JobSpecificationExt jobSpecification = createJobSpecification(name, Arrays.asList(taskSpec));
@@ -176,7 +187,7 @@ public class HaaSClient {
 			try (ScpClient scpClient = getScpClient(ft)) {
 
 				for (String fileName : getFileTransfer().listChangedFilesForJob(jobId, getSessionID())) {
-					fileName=fileName.replaceAll("/", "");
+					fileName = fileName.replaceAll("/", "");
 					Path rFile = workDirectory.resolve(fileName);
 					scpClient.download(ft.getSharedBasepath() + "//" + fileName, rFile);
 				}
@@ -199,15 +210,15 @@ public class HaaSClient {
 		testJob.setMinCores(1);
 		testJob.setMaxCores(1);
 		testJob.setPriority(JobPriorityExt.Average);
-		testJob.setProject("ExpTests");
-		testJob.setWaitingLimit(600);
-		testJob.setWalltimeLimit(600);
+		testJob.setProject(projectId);
+		testJob.setWaitingLimit(null);
+		testJob.setWalltimeLimit(timeOut);
 		testJob.setNotificationEmail(Constants.EMAIL);
 		testJob.setPhoneNumber(Constants.PHONE);
 		testJob.setNotifyOnAbort(false);
 		testJob.setNotifyOnFinish(false);
 		testJob.setNotifyOnStart(false);
-		testJob.setClusterNodeTypeId(7l);
+		testJob.setClusterNodeTypeId(clusterNodeType);
 		testJob.setEnvironmentVariables(new EnvironmentVariableExt[0]);
 		testJob.setTasks(tasks.stream().toArray(TaskSpecificationExt[]::new));
 		return testJob;
@@ -220,7 +231,7 @@ public class HaaSClient {
 		testTask.setName(name);
 		testTask.setMinCores(1);
 		testTask.setMaxCores(1);
-		testTask.setWalltimeLimit(600);
+		testTask.setWalltimeLimit(timeOut);
 		testTask.setRequiredNodes(null);
 		testTask.setIsExclusive(false);
 		testTask.setIsRerunnable(false);
