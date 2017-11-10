@@ -7,7 +7,6 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.ChannelExec;
@@ -18,17 +17,6 @@ import com.jcraft.jsch.Session;
 import com.jcraft.jsch.UserInfo;
 
 public class ScpClient implements Closeable {
-
-	public static void main(String[] args) throws JSchException, IOException {
-		try (ScpClient scpClient = new ScpClient("salomon.it4i.cz", "koz01", "/home/koz01/.ssh/it4i_rsa",
-				"nejlepsivyzkum")) {
-			boolean u = scpClient.upload(Paths.get("/home/koz01/aaa/vecmath.jar"), "/home/koz01/");
-			boolean d = scpClient.download("/home/koz01/proof", Paths.get("/home/koz01/aaa/proof"));
-			System.out.println(u);
-			System.out.println(d);
-		}
-	}
-
 	private String hostName;
 	private String username;
 	private JSch jsch = new JSch();
