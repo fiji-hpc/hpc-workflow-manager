@@ -34,7 +34,9 @@ public class ScpClient implements Closeable {
 	public ScpClient(String hostName, String userName, String keyFile, String pass) throws JSchException {
 		Identity id = IdentityFile.newInstance(keyFile, null, jsch);
 		try {
-			id.setPassphrase(pass.getBytes("UTF-8"));
+			if(pass != null) {
+				id.setPassphrase(pass.getBytes("UTF-8"));
+			}
 		} catch (UnsupportedEncodingException e) {
 			throw new RuntimeException(e);
 		}

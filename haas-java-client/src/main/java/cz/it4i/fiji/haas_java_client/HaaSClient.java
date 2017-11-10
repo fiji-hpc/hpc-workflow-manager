@@ -131,8 +131,12 @@ public class HaaSClient {
 
 				for (Path file : files) {
 					System.out.println("Uploading file: " + file.getFileName());
-					scpClient.upload(file, fileTransfer.getSharedBasepath() + "/" + file.getFileName());
-					System.out.println("File uploaded.");
+					String destFile = fileTransfer.getSharedBasepath() + "/" ;
+					boolean result = scpClient.upload(file, destFile);
+					System.out.println(result?"File uploaded.":"File not uploaded");
+					if(!result) {
+						throw new HaaSClientException("Uploading of " + file + " to " + destFile + " failed");
+					}
 				}
 			}
 			getFileTransfer().endFileTransfer(job.getId(), fileTransfer, getSessionID());

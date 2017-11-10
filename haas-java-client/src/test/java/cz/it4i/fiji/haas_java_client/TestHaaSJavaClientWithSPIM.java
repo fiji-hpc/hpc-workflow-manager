@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
 
 import javax.xml.rpc.ServiceException;
 
@@ -16,8 +17,8 @@ public class TestHaaSJavaClientWithSPIM {
 		HaaSClient client = new HaaSClient(2l, 9600, 6l, "DD-17-31");
 		Path baseDir = Paths.get("/home/koz01/Work/vyzkumnik/fiji/work/aaa");
 
-		long jobId = 36;// client.start(Collections.emptyList(), "TestOutRedirect",
-						// Collections.emptyList());
+		long jobId =  client.start(getAllFiles(baseDir.resolve("spim-data")), "TestOutRedirect",
+						 Collections.emptyList());
 		Path workDir = baseDir.resolve("" + jobId);
 		if (!Files.isDirectory(workDir)) {
 			Files.createDirectories(workDir);
@@ -45,6 +46,17 @@ public class TestHaaSJavaClientWithSPIM {
 			firstIteration = false;
 		} while (info.getState() != JobState.Canceled && info.getState() != JobState.Failed
 				&& info.getState() != JobState.Finished);
+	}
+
+	private static Iterable<Path> getAllFiles(Path resolve) {
+		
+		return () -> {
+			try {
+				return Files.newDirectoryStream(resolve).iterator();
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		};
 	}
 
 	private static void addOffsetFilesForTask(Long taskId, SynchronizableFiles files) {
