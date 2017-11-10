@@ -17,8 +17,8 @@ public class TestHaaSJavaClientWithSPIM {
 		HaaSClient client = new HaaSClient(2l, 9600, 6l, "DD-17-31");
 		Path baseDir = Paths.get("/home/koz01/Work/vyzkumnik/fiji/work/aaa");
 
-		long jobId =  client.start(getAllFiles(baseDir.resolve("spim-data")), "TestOutRedirect",
-						 Collections.emptyList());
+		long jobId = client.start(getAllFiles(baseDir.resolve("spim-data")), "TestOutRedirect",
+				Collections.emptyList());
 		Path workDir = baseDir.resolve("" + jobId);
 		if (!Files.isDirectory(workDir)) {
 			Files.createDirectories(workDir);
@@ -49,7 +49,7 @@ public class TestHaaSJavaClientWithSPIM {
 	}
 
 	private static Iterable<Path> getAllFiles(Path resolve) {
-		
+
 		return () -> {
 			try {
 				return Files.newDirectoryStream(resolve).iterator();

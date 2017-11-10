@@ -39,7 +39,7 @@ import cz.it4i.fiji.haas_java_client.proxy.UserAndLimitationManagementWsSoap;
 import cz.it4i.fiji.scpclient.ScpClient;
 
 public class HaaSClient {
-	
+
 	static public class SynchronizableFiles {
 
 		private Collection<TaskFileOffsetExt> files = new LinkedList<>();
@@ -110,7 +110,7 @@ public class HaaSClient {
 		WS_STATE2STATE = Collections.unmodifiableMap(map);
 	}
 
-	public HaaSClient(Long templateId, Integer timeOut,Long  clusterNodeType, String projectId) {
+	public HaaSClient(Long templateId, Integer timeOut, Long clusterNodeType, String projectId) {
 		super();
 		this.templateId = templateId;
 		this.timeOut = timeOut;
@@ -131,10 +131,10 @@ public class HaaSClient {
 
 				for (Path file : files) {
 					System.out.println("Uploading file: " + file.getFileName());
-					String destFile = fileTransfer.getSharedBasepath() + "/" ;
+					String destFile = "'" + fileTransfer.getSharedBasepath() + "/" + file.getFileName() + "'";
 					boolean result = scpClient.upload(file, destFile);
-					System.out.println(result?"File uploaded.":"File not uploaded");
-					if(!result) {
+					System.out.println(result ? "File uploaded." : "File not uploaded");
+					if (!result) {
 						throw new HaaSClientException("Uploading of " + file + " to " + destFile + " failed");
 					}
 				}
@@ -191,16 +191,16 @@ public class HaaSClient {
 				for (String fileName : getFileTransfer().listChangedFilesForJob(jobId, getSessionID())) {
 					fileName = fileName.replaceFirst("/", "");
 					Path rFile = workDirectory.resolve(fileName);
-					if(!Files.exists(rFile.getParent())) {
+					if (!Files.exists(rFile.getParent())) {
 						Files.createDirectories(rFile.getParent());
 					}
-					String fileToDownload = ft.getSharedBasepath() + "/" + fileName;
+					String fileToDownload = "'" + ft.getSharedBasepath() + "/" + fileName + "'";
 					scpClient.download(fileToDownload, rFile);
-					
+
 				}
 			}
 			getFileTransfer().endFileTransfer(jobId, ft, getSessionID());
-			
+
 		} catch (IOException | JSchException | ServiceException e) {
 			throw new HaaSClientException(e);
 		}
