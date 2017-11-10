@@ -2,6 +2,7 @@ package cz.it4i.fiji.haas_java_client;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.rmi.RemoteException;
 import java.util.Arrays;
@@ -130,7 +131,7 @@ public class HaaSClient {
 
 				for (Path file : files) {
 					System.out.println("Uploading file: " + file.getFileName());
-					scpClient.upload(file, fileTransfer.getSharedBasepath() + "//" + file.getFileName());
+					scpClient.upload(file, fileTransfer.getSharedBasepath() + "/" + file.getFileName());
 					System.out.println("File uploaded.");
 				}
 			}
@@ -184,12 +185,18 @@ public class HaaSClient {
 			try (ScpClient scpClient = getScpClient(ft)) {
 
 				for (String fileName : getFileTransfer().listChangedFilesForJob(jobId, getSessionID())) {
-					fileName = fileName.replaceAll("/", "");
+					fileName = fileName.replaceFirst("/", "");
 					Path rFile = workDirectory.resolve(fileName);
-					scpClient.download(ft.getSharedBasepath() + "//" + fileName, rFile);
+					if(!Files.exists(rFile.getParent())) {
+						Files.createDirectories(rFile.getParent());
+					}
+					String fileToDownload = ft.getSharedBasepath() + "/" + fileName;
+					scpClient.download(fileToDownload, rFile);
+					
 				}
 			}
 			getFileTransfer().endFileTransfer(jobId, ft, getSessionID());
+			
 		} catch (IOException | JSchException | ServiceException e) {
 			throw new HaaSClientException(e);
 		}
