@@ -2,11 +2,8 @@ package cz.it4i.fiji.haas;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collection;
-import java.util.stream.Collectors;
 
 import org.scijava.command.Command;
 import org.scijava.log.LogService;
