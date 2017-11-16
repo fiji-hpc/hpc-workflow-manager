@@ -17,21 +17,27 @@ import net.imagej.ImageJ;
  *
  */
 @Plugin(type = Command.class, headless = true, menuPath = "Plugins>Check status of HaaS")
-public class CheckStatusOfHaaS implements Command {
+public class CheckStatusOfHaaS extends CommandBase implements Command {
 
 	@Parameter
 	private LogService log;
+	
 
 	@Parameter(label="Work directory",persist=true)
 	private File workDirectory;
 	
+	@Parameter(label="Work directory",persist=true,required = false)
+	private File workDirectory2;
+	
 	@SuppressWarnings("unused")
 	private JobManager jobManager;
+	
+	
 	
 	@Override
 	public void run() {
 		try {
-			jobManager = new JobManager(getWorkingDirectoryPath());
+			jobManager = new JobManager(getWorkingDirectoryPath(), getGate());
 		} catch (IOException e) {
 			log.error(e);
 		}
@@ -47,7 +53,8 @@ public class CheckStatusOfHaaS implements Command {
 		final ImageJ ij = new ImageJ();
 		ij.launch(args);
 	
-		ij.command().run(CheckStatusOfHaaS.class, true);
+		//ij.command().run(CheckStatusOfHaaS.class, true);
 	}
 
+	
 }

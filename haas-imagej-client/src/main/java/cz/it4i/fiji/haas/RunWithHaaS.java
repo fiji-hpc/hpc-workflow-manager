@@ -20,7 +20,7 @@ import net.imagej.ImageJ;
  *
  */
 @Plugin(type = Command.class, headless = true, menuPath = "Plugins>Run with HaaS")
-public class RunWithHaaS implements Command {
+public class RunWithHaaS extends CommandBase implements Command {
 
 	@Parameter
 	private LogService log;
@@ -36,7 +36,7 @@ public class RunWithHaaS implements Command {
 	@Override
 	public void run() {
 		try {
-			jobManager = new JobManager(getWorkingDirectoryPath());
+			jobManager = new JobManager(getWorkingDirectoryPath(), getGate());
 			jobManager.startJob(getWorkingDirectoryPath(),getContent(dataDirectory));
 		} catch (IOException e) {
 			log.error(e);

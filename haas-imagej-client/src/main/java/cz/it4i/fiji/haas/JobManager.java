@@ -16,13 +16,16 @@ public class JobManager {
 	
 	private HaaSClient haasClient;
 
-	public JobManager(Path workDirectory) throws IOException {
+	private ImageJGate gate;
+
+	public JobManager(Path workDirectory, ImageJGate gate) throws IOException {
 		super();
+		this.gate = gate;
 		this.workDirectory = workDirectory;
 		Files.list(this.workDirectory).filter(p -> Files.isDirectory(p) && Job.isJobPath(p))
 				.forEach(p -> {
 					try {
-						jobs.add(new Job(p,this::getHaasClient));
+						jobs.add(new Job(p,this::getHaasClient, gate));
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
@@ -31,7 +34,7 @@ public class JobManager {
 	}
 
 	public void startJob(Path path, Collection<Path> files) throws IOException {
-		jobs.add(new Job(path, files,this::getHaasClient));
+		jobs.add(new Job(path, files,this::getHaasClient,gate));
 	}
 
 	private HaaSClient getHaasClient() {

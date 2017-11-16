@@ -17,6 +17,8 @@ import cz.it4i.fiji.haas_java_client.JobState;
 
 public class Job {
 
+	
+	
 	private static final String JOB_ID_PROPERTY = "job.id";
 
 	private static final String JOB_STATE_PROPERTY = "job.state";
@@ -32,9 +34,11 @@ public class Job {
 	private Supplier<HaaSClient> haasClientSupplier;
 	
 	private JobState state;
+
+	private ImageJGate gate;
 	
-	public Job(Path path, Collection<Path> files, Supplier<HaaSClient> haasClientSupplier) throws IOException {
-		this(haasClientSupplier);
+	public Job(Path path, Collection<Path> files, Supplier<HaaSClient> haasClientSupplier, ImageJGate gate) throws IOException {
+		this(haasClientSupplier,gate);
 		HaaSClient client = this.haasClientSupplier.get();
 		long id = client.start(files, "TestOutRedirect",
 				Collections.emptyList());
@@ -46,8 +50,8 @@ public class Job {
 
 	
 
-	public Job(Path p, Supplier<HaaSClient> haasClientSupplier) throws IOException {
-		this(haasClientSupplier);
+	public Job(Path p, Supplier<HaaSClient> haasClientSupplier, ImageJGate gate) throws IOException {
+		this(haasClientSupplier,gate);
 		jobDir = p;
 		loadJobInfo();
 		checkStateForDownload();
@@ -56,7 +60,9 @@ public class Job {
 	private synchronized void checkStateForDownload() throws IOException {
 		long jobId = getJobId();
 		JobState actualState = haasClientSupplier.get().obtainJobInfo(jobId).getState();
+		gate.getLog().info("Job: " + jobId + " is " + actualState);
 		if(EnumSet.of(JobState.Failed, JobState.Finished, JobState.Canceled).contains(actualState) && state != actualState) {
+			gate.getLog().info("Downloading data.");
 			haasClientSupplier.get().download(jobId, jobDir);
 			state = actualState;
 			saveJobinfo();
@@ -65,8 +71,9 @@ public class Job {
 
 
 
-	private Job(Supplier<HaaSClient> haasClientSupplier) {
+	private Job(Supplier<HaaSClient> haasClientSupplier, ImageJGate gate) {
 		this.haasClientSupplier = haasClientSupplier;
+		this.gate = gate;
 	}
 	
 	private synchronized void saveJobinfo() throws IOException {
