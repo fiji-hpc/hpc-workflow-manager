@@ -2,12 +2,12 @@ package cz.it4i.fiji.haas.ui;
 
 
 
+import java.util.function.Function;
+
 import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
 
 import cz.it4i.fiji.haas.JobManager.JobInfo;
-import javafx.beans.InvalidationListener;
-import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
@@ -16,9 +16,7 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableColumn.CellDataFeatures;
 import javafx.scene.control.TableView;
-import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.ContextMenuEvent;
-import javafx.util.Callback;
 
 public class CheckStatusOfHaaSController {
 	
@@ -37,15 +35,14 @@ public class CheckStatusOfHaaSController {
 		jobs.getItems().add(job);
 	}
 	
-	@SuppressWarnings("unchecked")
 	public void init() {
 		ContextMenu cm = new ContextMenu();
 		MenuItem download = new MenuItem("Download");
 		cm.getItems().add(download);
-		((TableColumn<JobInfo, String>)jobs.getColumns().get(0)).setCellValueFactory(new PropertyValueFactory<JobInfo,String>("id"));
-		((TableColumn<JobInfo, String>)jobs.getColumns().get(1)).setCellValueFactory(new P_Factory());
-		((TableColumn<JobInfo, String>)jobs.getColumns().get(2)).setCellValueFactory(new PropertyValueFactory<JobInfo,String>("startTime"));
-		((TableColumn<JobInfo, String>)jobs.getColumns().get(3)).setCellValueFactory(new PropertyValueFactory<JobInfo,String>("endTime"));
+		setCellValueFactory(0,j->j.getId().toString());
+		setCellValueFactory(1,j->j.getState().toString() + (j.needsDownload()?" - needs download":""));
+		setCellValueFactory(2,j->j.getStartTime().toString());
+		setCellValueFactory(3,j->j.getEndTime().toString());
 		jobs.setContextMenu(cm);
 		jobs.setOnContextMenuRequested(new EventHandler<ContextMenuEvent>() {
 
@@ -68,45 +65,13 @@ public class CheckStatusOfHaaSController {
 		logService.info("init");
 	}
 	
-	
-	
-	private class P_Factory implements Callback<CellDataFeatures<JobInfo, String>, ObservableValue<String>> {
-
-		@Override
-		public ObservableValue<String> call(final CellDataFeatures<JobInfo, String> param) {
-			return new ObservableValue<String>() {
-
-				@Override
-				public void addListener(InvalidationListener listener) {
-					
-					
-				}
-
-				@Override
-				public void removeListener(InvalidationListener listener) {
-					
-					
-				}
-
-				@Override
-				public void addListener(ChangeListener<? super String> listener) {
-					
-					
-				}
-
-				@Override
-				public void removeListener(ChangeListener<? super String> listener) {
-					
-					
-				}
-
-				@Override
-				public String getValue() {
-					 JobInfo ji = param.getValue();
-					 return ji.getState().toString() + (ji.needsDownload()?" - needs download":"");
-				}
-			};
-		}
+	@SuppressWarnings("unchecked")
+	private void setCellValueFactory(int index, Function<JobInfo,String> mapper) {
+		((TableColumn<JobInfo, String>)jobs.getColumns().get(index)).setCellValueFactory(f->getObservableValue(f, mapper));
 		
+	}
+
+	private ObservableValue<String> getObservableValue(CellDataFeatures<JobInfo, String> feature, Function<JobInfo,String> mapper) {
+		return new ObservableValueAdapter<JobInfo,String>(feature.getValue(), mapper);
 	}
 }

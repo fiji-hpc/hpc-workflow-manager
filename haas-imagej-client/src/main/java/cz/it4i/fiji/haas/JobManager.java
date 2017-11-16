@@ -3,7 +3,6 @@ package cz.it4i.fiji.haas;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Calendar;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -12,6 +11,7 @@ import org.scijava.Context;
 
 import cz.it4i.fiji.haas_java_client.HaaSClient;
 import cz.it4i.fiji.haas_java_client.JobState;
+import javafx.beans.value.ObservableValueBase;
 
 public class JobManager {
 
@@ -74,7 +74,7 @@ public class JobManager {
 		return haasClient;
 	}
 
-	public static class JobInfo {
+	public static class JobInfo extends ObservableValueBase<JobInfo> {
 
 		private Job job;
 		
@@ -101,6 +101,11 @@ public class JobManager {
 		
 		public String getEndTime() {
 			return job.getEndTime().getTime().toString();
+		}
+
+		@Override
+		public JobInfo getValue() {
+			return this;
 		}
 	}
 }
