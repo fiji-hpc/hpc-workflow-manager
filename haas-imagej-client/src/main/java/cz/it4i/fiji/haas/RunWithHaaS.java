@@ -21,7 +21,7 @@ import net.imagej.ImageJ;
  *
  */
 @Plugin(type = Command.class, headless = true, menuPath = "Plugins>Run with HaaS")
-public class RunWithHaaS extends CommandBase implements Command {
+public class RunWithHaaS implements Command {
 
 	@Parameter
 	private LogService log;

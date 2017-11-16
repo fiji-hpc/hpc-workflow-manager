@@ -25,7 +25,7 @@ import net.imagej.ImageJ;
  *
  */
 @Plugin(type = Command.class, headless = true, menuPath = "Plugins>Check status of HaaS")
-public class CheckStatusOfHaaS extends CommandBase implements Command {
+public class CheckStatusOfHaaS implements Command {
 
 	@Parameter
 	private LogService log;

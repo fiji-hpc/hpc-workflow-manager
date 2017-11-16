@@ -13,6 +13,9 @@ import java.util.EnumSet;
 import java.util.Properties;
 import java.util.function.Supplier;
 
+import org.scijava.log.LogService;
+import org.scijava.plugin.Parameter;
+
 import cz.it4i.fiji.haas_java_client.HaaSClient;
 import cz.it4i.fiji.haas_java_client.JobInfo;
 import cz.it4i.fiji.haas_java_client.JobState;
@@ -31,6 +34,9 @@ public class Job {
 
 	private static String JOB_INFO_FILE = ".jobinfo";
 
+	@Parameter
+	private LogService log;
+	
 	private Path jobDir;
 
 	private Supplier<HaaSClient> haasClientSupplier;
@@ -79,7 +85,6 @@ public class Job {
 	}
 
 	synchronized public void updateState() throws IOException {
-		long jobId = getJobId();
 		JobState actualState = updateJobInfo().getState();
 		if (EnumSet.of(JobState.Failed, JobState.Finished, JobState.Canceled).contains(actualState)
 				&& state != actualState) {
@@ -98,6 +103,11 @@ public class Job {
 		}
 		haasClientSupplier.get().download(getJobId(), jobDir);
 		needsDownload = false;
+		try {
+			saveJobinfo();
+		} catch (IOException e) {
+			log.error(e);
+		}
 	}
 	
 	public JobState getState() {

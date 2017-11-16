@@ -103,6 +103,11 @@ public class JobManager {
 			return job.getEndTime().getTime().toString();
 		}
 
+		public void downloadData() {
+			job.download();
+			fireValueChangedEvent();
+		}
+		
 		@Override
 		public JobInfo getValue() {
 			return this;
