@@ -8,6 +8,7 @@ import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
+import org.scijava.Context;
 import org.scijava.command.Command;
 import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
@@ -31,12 +32,15 @@ public class RunWithHaaS extends CommandBase implements Command {
 	@Parameter(label="Data directory")
 	private File dataDirectory;
 	
+	@Parameter
+	private Context context; 
+	
 	private JobManager jobManager;
 	
 	@Override
 	public void run() {
 		try {
-			jobManager = new JobManager(getWorkingDirectoryPath(), getGate());
+			jobManager = new JobManager(getWorkingDirectoryPath(), context);
 			jobManager.startJob(getWorkingDirectoryPath(),getContent(dataDirectory));
 		} catch (IOException e) {
 			log.error(e);

@@ -4,28 +4,37 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.LinkedList;
 
+import org.scijava.Context;
+
 import cz.it4i.fiji.haas_java_client.HaaSClient;
+import cz.it4i.fiji.haas_java_client.JobState;
 
 public class JobManager {
 
+	
+	
 	private Path workDirectory;
 	
 	private Collection<Job> jobs = new LinkedList<>();
 	
 	private HaaSClient haasClient;
 
-	private ImageJGate gate;
+	private Context context;
 
-	public JobManager(Path workDirectory, ImageJGate gate) throws IOException {
+	
+
+	public JobManager(Path workDirectory, Context ctx) throws IOException {
 		super();
-		this.gate = gate;
+		this.context = ctx;
 		this.workDirectory = workDirectory;
+		context.inject(this);
 		Files.list(this.workDirectory).filter(p -> Files.isDirectory(p) && Job.isJobPath(p))
 				.forEach(p -> {
 					try {
-						jobs.add(new Job(p,this::getHaasClient, gate));
+						jobs.add(inject(new Job(p,this::getHaasClient)));
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
@@ -33,8 +42,28 @@ public class JobManager {
 
 	}
 
+	private Job inject(Job job) {
+		context.inject(job);
+		return job;
+	}
+
 	public void startJob(Path path, Collection<Path> files) throws IOException {
-		jobs.add(new Job(path, files,this::getHaasClient,gate));
+		jobs.add(new Job(path, files,this::getHaasClient));
+	}
+	
+	public Iterable<JobInfo> getJobsNeedingDownload() {
+		return ()->jobs.stream().filter(j->j.needsDownload()).map(j->new JobInfo(j)).iterator();
+	}
+
+	public Iterable<JobInfo> getJobs() {
+		return ()->jobs.stream().map(j->new JobInfo(j)).iterator();
+	}
+	
+	public void downloadJob(Long id) {
+		Iterator<Job>  job =jobs.stream().filter(j->j.getJobId() == id).iterator();
+		assert job.hasNext();
+		job.next().download();
+		
 	}
 
 	private HaaSClient getHaasClient() {
@@ -44,4 +73,25 @@ public class JobManager {
 		return haasClient;
 	}
 
+	public static class JobInfo {
+
+		private Job job;
+		
+		
+		public JobInfo(Job job) {
+			this.job = job;
+		}
+
+		public Long getId() {
+			return job.getJobId();
+		}
+
+		public JobState getState() {
+			return job.getState();
+		}
+
+		public boolean needsDownload() {
+			return job.needsDownload();
+		}
+	}
 }
