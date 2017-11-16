@@ -22,10 +22,7 @@ import cz.it4i.fiji.haas_java_client.JobState;
 
 public class Job {
 
-	private static final String JOB_ID_PROPERTY = "job.id";
-
-	private static final String JOB_STATE_PROPERTY = "job.state";
-
+	
 	private static final String JOB_HAS_DATA_TO_DOWNLOAD_PROPERTY = "job.needDownload";
 
 	public static boolean isJobPath(Path p) {
@@ -36,14 +33,12 @@ public class Job {
 
 	@Parameter
 	private LogService log;
-	
+
 	private Path jobDir;
 
 	private Supplier<HaaSClient> haasClientSupplier;
 
 	private JobState state;
-
-	
 
 	private Boolean needsDownload;
 
@@ -51,8 +46,7 @@ public class Job {
 
 	private JobInfo jobInfo;
 
-	public Job(Path path, Collection<Path> files, Supplier<HaaSClient> haasClientSupplier)
-			throws IOException {
+	public Job(Path path, Collection<Path> files, Supplier<HaaSClient> haasClientSupplier) throws IOException {
 		this(haasClientSupplier);
 		HaaSClient client = this.haasClientSupplier.get();
 		long id = client.start(files, "TestOutRedirect", Collections.emptyList());
@@ -85,20 +79,20 @@ public class Job {
 	}
 
 	synchronized public void updateState() throws IOException {
-		JobState actualState = updateJobInfo().getState();
-		if (EnumSet.of(JobState.Failed, JobState.Finished, JobState.Canceled).contains(actualState)
-				&& state != actualState) {
+		state = updateJobInfo().getState();
+		if (needsDownload == null
+				&& EnumSet.of(JobState.Failed, JobState.Finished, JobState.Canceled).contains(state)) {
 			needsDownload = true;
-			state = actualState;
-			saveJobinfo();
 		}
+		saveJobinfo();
 	}
 
 	private JobInfo updateJobInfo() {
 		return jobInfo = haasClientSupplier.get().obtainJobInfo(getJobId());
 	}
+
 	synchronized public void download() {
-		if(!needsDownload()) {
+		if (!needsDownload()) {
 			throw new IllegalStateException("Job: " + getJobId() + " dosn't need download");
 		}
 		haasClientSupplier.get().download(getJobId(), jobDir);
@@ -109,19 +103,15 @@ public class Job {
 			log.error(e);
 		}
 	}
-	
+
 	public JobState getState() {
 		return state;
 	}
-	
-	
 
 	private synchronized void saveJobinfo() throws IOException {
 		try (OutputStream ow = Files.newOutputStream(jobDir.resolve(JOB_INFO_FILE),
 				StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)) {
 			Properties prop = new Properties();
-			prop.setProperty(JOB_ID_PROPERTY, "" + getJobId());
-			prop.setProperty(JOB_STATE_PROPERTY, "" + state);
 			if (needsDownload != null) {
 				prop.setProperty(JOB_HAS_DATA_TO_DOWNLOAD_PROPERTY, needsDownload.toString());
 			}
@@ -133,8 +123,6 @@ public class Job {
 		try (InputStream is = Files.newInputStream(jobDir.resolve(JOB_INFO_FILE))) {
 			Properties prop = new Properties();
 			prop.load(is);
-			state = JobState.valueOf(prop.getProperty(JOB_STATE_PROPERTY));
-			assert getJobId() == Long.parseLong(prop.getProperty(JOB_ID_PROPERTY));
 			if (prop.containsKey(JOB_HAS_DATA_TO_DOWNLOAD_PROPERTY)) {
 				needsDownload = Boolean.parseBoolean(prop.getProperty(JOB_HAS_DATA_TO_DOWNLOAD_PROPERTY));
 			}

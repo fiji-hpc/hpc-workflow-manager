@@ -6,13 +6,12 @@ import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
 
 import cz.it4i.fiji.haas.JobManager.JobInfo;
-import javafx.beans.value.ObservableValue;
+import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableColumn.CellDataFeatures;
 import javafx.scene.control.TableView;
 import javafx.scene.input.ContextMenuEvent;
 
@@ -37,10 +36,14 @@ public class CheckStatusOfHaaSController {
 		initMenu();
 	}
 
+	private void downloadData(ActionEvent event) {
+		jobs.getSelectionModel().getSelectedItem().downloadData();
+	}
+	
 	private void initMenu() {
 		ContextMenu cm = new ContextMenu();
 		MenuItem download = new MenuItem("Download");
-		download.setOnAction(ev->jobs.getSelectionModel().getSelectedItem().downloadData());
+		download.setOnAction(this::downloadData);
 		cm.getItems().add(download);
 		jobs.setContextMenu(cm);
 		jobs.setOnContextMenuRequested(new EventHandler<ContextMenuEvent>() {
