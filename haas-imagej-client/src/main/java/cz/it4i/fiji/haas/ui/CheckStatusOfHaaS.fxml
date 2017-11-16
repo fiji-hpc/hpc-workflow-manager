@@ -4,13 +4,14 @@
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.layout.BorderPane?>
 
-
-<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="cz.it4i.fiji.haas.ui.CheckStatusOfHaaSController">
+<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="730.0" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="cz.it4i.fiji.haas.ui.CheckStatusOfHaaSController">
    <center>
-      <TableView fx:id="jobs" prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+      <TableView fx:id="jobs" prefHeight="445.0" prefWidth="623.0" BorderPane.alignment="CENTER">
         <columns>
           <TableColumn prefWidth="75.0" text="Job Id" />
-          <TableColumn prefWidth="145.0" text="Status" />
+          <TableColumn prefWidth="192.0" text="Status" />
+            <TableColumn prefWidth="227.0" text="Start time" />
+            <TableColumn prefWidth="235.0" text="End Time" />
         </columns>
       </TableView>
    </center>

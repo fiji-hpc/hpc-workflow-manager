@@ -6,6 +6,7 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -13,6 +14,7 @@ import java.util.Properties;
 import java.util.function.Supplier;
 
 import cz.it4i.fiji.haas_java_client.HaaSClient;
+import cz.it4i.fiji.haas_java_client.JobInfo;
 import cz.it4i.fiji.haas_java_client.JobState;
 
 public class Job {
@@ -41,6 +43,8 @@ public class Job {
 
 	private Long jobId;
 
+	private JobInfo jobInfo;
+
 	public Job(Path path, Collection<Path> files, Supplier<HaaSClient> haasClientSupplier)
 			throws IOException {
 		this(haasClientSupplier);
@@ -48,7 +52,7 @@ public class Job {
 		long id = client.start(files, "TestOutRedirect", Collections.emptyList());
 		jobDir = path.resolve("" + id);
 		Files.createDirectory(jobDir);
-		state = client.obtainJobInfo(id).getState();
+		state = updateJobInfo().getState();
 		saveJobinfo();
 	}
 
@@ -76,13 +80,17 @@ public class Job {
 
 	synchronized public void updateState() throws IOException {
 		long jobId = getJobId();
-		JobState actualState = haasClientSupplier.get().obtainJobInfo(jobId).getState();
+		JobState actualState = updateJobInfo().getState();
 		if (EnumSet.of(JobState.Failed, JobState.Finished, JobState.Canceled).contains(actualState)
 				&& state != actualState) {
 			needsDownload = true;
 			state = actualState;
 			saveJobinfo();
 		}
+	}
+
+	private JobInfo updateJobInfo() {
+		return jobInfo = haasClientSupplier.get().obtainJobInfo(getJobId());
 	}
 	synchronized public void download() {
 		if(!needsDownload()) {
@@ -95,6 +103,8 @@ public class Job {
 	public JobState getState() {
 		return state;
 	}
+	
+	
 
 	private synchronized void saveJobinfo() throws IOException {
 		try (OutputStream ow = Files.newOutputStream(jobDir.resolve(JOB_INFO_FILE),
@@ -135,4 +145,11 @@ public class Job {
 		return Long.parseLong(path.getFileName().toString());
 	}
 
+	public Calendar getStartTime() {
+		return jobInfo.getStartTime();
+	}
+
+	public Calendar getEndTime() {
+		return jobInfo.getEndTime();
+	}
 }

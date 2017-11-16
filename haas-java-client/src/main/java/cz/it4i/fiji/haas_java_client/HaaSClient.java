@@ -73,13 +73,6 @@ public class HaaSClient {
 		}
 	}
 
-	private interface Constants {
-		String USER_NAME = "testuser";
-		String PASSWORD = "testpass";
-		String EMAIL = "jan.kozusznik@vsb.cz";
-		String PHONE = "999111000";
-	}
-
 	private String sessionID;
 
 	private UserAndLimitationManagementWsSoap userAndLimitationManagement;
@@ -167,6 +160,14 @@ public class HaaSClient {
 				public JobState getState() {
 					return WS_STATE2STATE.get(info.getState());
 				}
+				
+				public java.util.Calendar getStartTime() {
+					return info.getStartTime();
+				};
+				
+				public java.util.Calendar getEndTime() {
+					return info.getEndTime();
+				};
 			};
 		} catch (RemoteException | ServiceException e) {
 			throw new HaaSClientException(e);

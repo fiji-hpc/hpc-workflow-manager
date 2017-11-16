@@ -3,6 +3,7 @@ package cz.it4i.fiji.haas;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -92,6 +93,14 @@ public class JobManager {
 
 		public boolean needsDownload() {
 			return job.needsDownload();
+		}
+		
+		public String getStartTime() {
+			return job.getStartTime().getTime().toString();
+		}
+		
+		public String getEndTime() {
+			return job.getEndTime().getTime().toString();
 		}
 	}
 }

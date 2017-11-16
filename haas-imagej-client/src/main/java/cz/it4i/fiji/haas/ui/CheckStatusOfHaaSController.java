@@ -44,6 +44,8 @@ public class CheckStatusOfHaaSController {
 		cm.getItems().add(download);
 		((TableColumn<JobInfo, String>)jobs.getColumns().get(0)).setCellValueFactory(new PropertyValueFactory<JobInfo,String>("id"));
 		((TableColumn<JobInfo, String>)jobs.getColumns().get(1)).setCellValueFactory(new P_Factory());
+		((TableColumn<JobInfo, String>)jobs.getColumns().get(2)).setCellValueFactory(new PropertyValueFactory<JobInfo,String>("startTime"));
+		((TableColumn<JobInfo, String>)jobs.getColumns().get(3)).setCellValueFactory(new PropertyValueFactory<JobInfo,String>("endTime"));
 		jobs.setContextMenu(cm);
 		jobs.setOnContextMenuRequested(new EventHandler<ContextMenuEvent>() {
 
