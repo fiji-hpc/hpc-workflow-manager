@@ -248,8 +248,10 @@ public class HaaSClient {
 			FileTransferMethodExt ft = getFileTransfer().getFileTransferMethod(jobId, getSessionID());
 			try (ScpClient scpClient = getScpClient(ft)) {
 				String[] files = getFileTransfer().listChangedFilesForJob(jobId, getSessionID());
-				List<Long> fileSizes = getSizes(Arrays.asList(files).stream()
-						.map(filename -> "'" + ft.getSharedBasepath() + "/" + filename + "'").collect(Collectors.toList()),
+				List<Long> fileSizes = getSizes(
+						Arrays.asList(files).stream()
+								.map(filename -> "'" + ft.getSharedBasepath() + "/" + filename + "'")
+								.collect(Collectors.toList()),
 						scpClient, new P_ProgressNotifierDecorator4Size(notifier));
 				final long totalFileSize = fileSizes.stream().mapToLong(i -> i.longValue()).sum();
 				int[] idx = { 0 };
@@ -268,10 +270,15 @@ public class HaaSClient {
 
 						@Override
 						public void dataTransfered(long bytesTransfered) {
-							totalDownloaded[0] += bytesTransfered;
-							fileDownloaded[0] += bytesTransfered;
-							notifier.setCount((int) (totalDownloaded[0] >> 10), (int) (totalFileSize>> 10));
-							notifier.setItemCount((int) (fileDownloaded[0] >> 10), (int) ( fileSizes.get(idx[0]) >> 10));
+							if (fileDownloaded[0] == 0 && bytesTransfered == 0) {
+								notifier.setItemCount(1, 1);
+							} else {
+								totalDownloaded[0] += bytesTransfered;
+								fileDownloaded[0] += bytesTransfered;
+								notifier.setCount((int) (totalDownloaded[0] >> 10), (int) (totalFileSize >> 10));
+								notifier.setItemCount((int) (fileDownloaded[0] >> 10),
+										(int) (fileSizes.get(idx[0]) >> 10));
+							}
 
 						}
 					});
@@ -287,9 +294,10 @@ public class HaaSClient {
 		}
 	}
 
-	private List<Long> getSizes(List<String> asList, ScpClient scpClient, ProgressNotifier notifier) throws JSchException, IOException {
+	private List<Long> getSizes(List<String> asList, ScpClient scpClient, ProgressNotifier notifier)
+			throws JSchException, IOException {
 		List<Long> result = new LinkedList<>();
-		
+
 		String item;
 		notifier.addItem(item = "Checking sizes");
 		for (String lfile : asList) {
@@ -395,61 +403,49 @@ public class HaaSClient {
 		return sessionID;
 	}
 
-	private class P_ProgressNotifierDecorator4Size extends P_ProgressNotifierDecorator{
+	private class P_ProgressNotifierDecorator4Size extends P_ProgressNotifierDecorator {
 
 		private static final int SIZE_RATIO = 20;
+
 		public P_ProgressNotifierDecorator4Size(ProgressNotifier notifier) {
 			super(notifier);
-			
+
 		}
+
 		@Override
 		public void setItemCount(int count, int total) {
 			super.setItemCount(count, total);
 			setCount(count, total * SIZE_RATIO);
 		}
 	}
-	
-	private class P_ProgressNotifierDecorator implements ProgressNotifier{
+
+	private class P_ProgressNotifierDecorator implements ProgressNotifier {
 		private ProgressNotifier notifier;
 
-		
-		
 		public P_ProgressNotifierDecorator(ProgressNotifier notifier) {
 			super();
 			this.notifier = notifier;
 		}
 
-
-
 		public void setTitle(String title) {
 			notifier.setTitle(title);
 		}
-
-
 
 		public void setCount(int count, int total) {
 			notifier.setCount(count, total);
 		}
 
-
-
 		public void addItem(Object item) {
 			notifier.addItem(item);
 		}
-
-
 
 		public void setItemCount(int count, int total) {
 			notifier.setItemCount(count, total);
 		}
 
-
-
 		public void itemDone(Object item) {
 			notifier.itemDone(item);
 		}
-
-
 
 		public void done() {
 			notifier.done();
