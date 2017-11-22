@@ -6,6 +6,7 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.stream.Collectors;
 
 import org.scijava.Context;
 
@@ -25,7 +26,6 @@ public class JobManager {
 	private Context context;
 
 	public JobManager(Path workDirectory, Context ctx) throws IOException {
-		super();
 		this.context = ctx;
 		this.workDirectory = workDirectory;
 		context.inject(this);
@@ -39,6 +39,7 @@ public class JobManager {
 
 	}
 
+	
 	private Job inject(Job job) {
 		context.inject(job);
 		return job;
@@ -52,8 +53,8 @@ public class JobManager {
 		return () -> jobs.stream().filter(j -> j.needsDownload()).map(j -> new JobInfo(j)).iterator();
 	}
 
-	public Iterable<JobInfo> getJobs() {
-		return () -> jobs.stream().map(j -> new JobInfo(j)).iterator();
+	public Collection<JobInfo> getJobs() {
+		return jobs.stream().map(j -> new JobInfo(j)).collect(Collectors.toList());
 	}
 
 	public void downloadJob(Long id) {
@@ -97,10 +98,14 @@ public class JobManager {
 		public String getEndTime() {
 			return job.getEndTime() != null ? job.getEndTime().getTime().toString() : "N/A";
 		}
-
+		
 		public void downloadData(Progress progress) {
 			job.download(progress);
 			fireValueChangedEvent();
+		}
+		
+		public void updateInfo() throws IOException {
+			job.updateState();
 		}
 
 		@Override

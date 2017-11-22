@@ -41,12 +41,9 @@ public class Job {
 	private Supplier<HaaSClient> haasClientSupplier;
 
 	private JobState state;
-
 	private Boolean needsDownload;
-
-	private Long jobId;
-
 	private JobInfo jobInfo;
+	private Long jobId;
 
 	final private Progress dummy = new Progress() {
 		
@@ -81,15 +78,13 @@ public class Job {
 		long id = client.start(files, "TestOutRedirect", Collections.emptyList(), new P_ProgressNotifierAdapter(progress));
 		jobDir = path.resolve("" + id);
 		Files.createDirectory(jobDir);
-		state = updateJobInfo().getState();
-		saveJobinfo();
+		updateState();
 	}
 
 	public Job(Path p, Supplier<HaaSClient> haasClientSupplier) throws IOException {
 		this(haasClientSupplier);
 		jobDir = p;
 		loadJobInfo();
-		updateState();
 	}
 
 	private Job(Supplier<HaaSClient> haasClientSupplier) {
@@ -141,6 +136,14 @@ public class Job {
 		return state;
 	}
 
+	public Calendar getStartTime() {
+		return jobInfo.getStartTime();
+	}
+
+	public Calendar getEndTime() {
+		return jobInfo.getEndTime();
+	}
+
 	private synchronized void saveJobinfo() throws IOException {
 		try (OutputStream ow = Files.newOutputStream(jobDir.resolve(JOB_INFO_FILE),
 				StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)) {
@@ -175,15 +178,9 @@ public class Job {
 	private static long getJobId(Path path) {
 		return Long.parseLong(path.getFileName().toString());
 	}
-
-	public Calendar getStartTime() {
-		return jobInfo.getStartTime();
-	}
-
-	public Calendar getEndTime() {
-		return jobInfo.getEndTime();
-	}
 	
+	
+
 	private class P_ProgressNotifierAdapter implements ProgressNotifier {
 		private Progress progress;
 

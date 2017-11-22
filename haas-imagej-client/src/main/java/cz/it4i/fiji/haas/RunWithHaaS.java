@@ -16,7 +16,6 @@ import org.scijava.plugin.Plugin;
 
 import net.imagej.ImageJ;
 import net.imagej.ui.swing.updater.ProgressDialog;
-import net.imagej.updater.util.Progress;
 /**
  * 
  * @author koz01
