@@ -15,6 +15,8 @@ import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
 import net.imagej.ImageJ;
+import net.imagej.ui.swing.updater.ProgressDialog;
+import net.imagej.updater.util.Progress;
 /**
  * 
  * @author koz01
@@ -26,10 +28,10 @@ public class RunWithHaaS implements Command {
 	@Parameter
 	private LogService log;
 
-	@Parameter(label="Work directory",persist=true)
+	@Parameter(label="Work directory",persist=true, style = "directory")
 	private File workDirectory;
 	
-	@Parameter(label="Data directory")
+	@Parameter(label="Data directory",persist=true, style = "directory")
 	private File dataDirectory;
 	
 	@Parameter
@@ -41,7 +43,7 @@ public class RunWithHaaS implements Command {
 	public void run() {
 		try {
 			jobManager = new JobManager(getWorkingDirectoryPath(), context);
-			jobManager.startJob(getWorkingDirectoryPath(),getContent(dataDirectory));
+			jobManager.startJob(getWorkingDirectoryPath(),getContent(dataDirectory), new ProgressDialog(null));
 		} catch (IOException e) {
 			log.error(e);
 		}

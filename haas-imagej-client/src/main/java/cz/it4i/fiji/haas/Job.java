@@ -19,6 +19,8 @@ import org.scijava.plugin.Parameter;
 import cz.it4i.fiji.haas_java_client.HaaSClient;
 import cz.it4i.fiji.haas_java_client.JobInfo;
 import cz.it4i.fiji.haas_java_client.JobState;
+import cz.it4i.fiji.haas_java_client.ProgressNotifier;
+import net.imagej.updater.util.Progress;
 
 public class Job {
 
@@ -46,10 +48,37 @@ public class Job {
 
 	private JobInfo jobInfo;
 
-	public Job(Path path, Collection<Path> files, Supplier<HaaSClient> haasClientSupplier) throws IOException {
+	final private Progress dummy = new Progress() {
+		
+		@Override
+		public void setTitle(String title) {
+		}
+		
+		@Override
+		public void setItemCount(int count, int total) {
+		}
+		
+		@Override
+		public void setCount(int count, int total) {
+		}
+		
+		@Override
+		public void itemDone(Object item) {
+		}
+		
+		@Override
+		public void done() {
+		}
+		
+		@Override
+		public void addItem(Object item) {
+		}
+	};
+	
+	public Job(Path path, Collection<Path> files, Supplier<HaaSClient> haasClientSupplier, Progress progress) throws IOException {
 		this(haasClientSupplier);
 		HaaSClient client = this.haasClientSupplier.get();
-		long id = client.start(files, "TestOutRedirect", Collections.emptyList());
+		long id = client.start(files, "TestOutRedirect", Collections.emptyList(), new P_ProgressNotifierAdapter(progress));
 		jobDir = path.resolve("" + id);
 		Files.createDirectory(jobDir);
 		state = updateJobInfo().getState();
@@ -91,11 +120,15 @@ public class Job {
 		return jobInfo = haasClientSupplier.get().obtainJobInfo(getJobId());
 	}
 
-	synchronized public void download() {
+	public void download() {
+		download(dummy);
+	}
+
+	synchronized public void download(Progress progress) {
 		if (!needsDownload()) {
 			throw new IllegalStateException("Job: " + getJobId() + " dosn't need download");
 		}
-		haasClientSupplier.get().download(getJobId(), jobDir);
+		haasClientSupplier.get().download(getJobId(), jobDir, new P_ProgressNotifierAdapter(progress));
 		needsDownload = false;
 		try {
 			saveJobinfo();
@@ -149,5 +182,40 @@ public class Job {
 
 	public Calendar getEndTime() {
 		return jobInfo.getEndTime();
+	}
+	
+	private class P_ProgressNotifierAdapter implements ProgressNotifier {
+		private Progress progress;
+
+		public P_ProgressNotifierAdapter(Progress progress) {
+			super();
+			this.progress = progress;
+		}
+
+		public void setTitle(String title) {
+			progress.setTitle(title);
+		}
+
+		public void setCount(int count, int total) {
+			progress.setCount(count, total);
+		}
+
+		public void addItem(Object item) {
+			progress.addItem(item);
+		}
+
+		public void setItemCount(int count, int total) {
+			progress.setItemCount(count, total);
+		}
+
+		public void itemDone(Object item) {
+			progress.itemDone(item);
+		}
+
+		public void done() {
+			progress.done();
+		}
+		
+		
 	}
 }

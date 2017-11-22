@@ -14,6 +14,7 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.input.ContextMenuEvent;
+import net.imagej.ui.swing.updater.ProgressDialog;
 
 public class CheckStatusOfHaaSController {
 
@@ -37,7 +38,7 @@ public class CheckStatusOfHaaSController {
 	}
 
 	private void downloadData(ActionEvent event) {
-		jobs.getSelectionModel().getSelectedItem().downloadData();
+		jobs.getSelectionModel().getSelectedItem().downloadData(new ProgressDialog(null));
 	}
 	
 	private void initMenu() {
