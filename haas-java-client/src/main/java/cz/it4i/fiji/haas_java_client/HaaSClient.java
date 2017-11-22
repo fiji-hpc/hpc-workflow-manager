@@ -167,11 +167,6 @@ public class HaaSClient {
 					TransferFileProgress progress = new TransferFileProgress() {
 
 						@Override
-						public long getMinimalDeltaForNotification() {
-							return step;
-						}
-
-						@Override
 						public void dataTransfered(long bytesTransfered) {
 							fileTransfered[0] += bytesTransfered;
 							totalTransfered[0] += bytesTransfered;
@@ -255,7 +250,7 @@ public class HaaSClient {
 				String[] files = getFileTransfer().listChangedFilesForJob(jobId, getSessionID());
 				List<Long> fileSizes = getSizes(Arrays.asList(files).stream()
 						.map(filename -> "'" + ft.getSharedBasepath() + "/" + filename + "'").collect(Collectors.toList()),
-						scpClient, notifier);
+						scpClient, new P_ProgressNotifierDecorator4Size(notifier));
 				final long totalFileSize = fileSizes.stream().mapToLong(i -> i.longValue()).sum();
 				int[] idx = { 0 };
 				final int[] totalDownloaded = { 0 };
@@ -270,11 +265,6 @@ public class HaaSClient {
 					String item;
 					notifier.addItem(item = fileName);
 					scpClient.download(fileToDownload, rFile, new TransferFileProgress() {
-
-						@Override
-						public long getMinimalDeltaForNotification() {
-							return totalFileSize / 100;
-						}
 
 						@Override
 						public void dataTransfered(long bytesTransfered) {
@@ -405,4 +395,65 @@ public class HaaSClient {
 		return sessionID;
 	}
 
+	private class P_ProgressNotifierDecorator4Size extends P_ProgressNotifierDecorator{
+
+		private static final int SIZE_RATIO = 20;
+		public P_ProgressNotifierDecorator4Size(ProgressNotifier notifier) {
+			super(notifier);
+			
+		}
+		@Override
+		public void setItemCount(int count, int total) {
+			super.setItemCount(count, total);
+			setCount(count, total * SIZE_RATIO);
+		}
+	}
+	
+	private class P_ProgressNotifierDecorator implements ProgressNotifier{
+		private ProgressNotifier notifier;
+
+		
+		
+		public P_ProgressNotifierDecorator(ProgressNotifier notifier) {
+			super();
+			this.notifier = notifier;
+		}
+
+
+
+		public void setTitle(String title) {
+			notifier.setTitle(title);
+		}
+
+
+
+		public void setCount(int count, int total) {
+			notifier.setCount(count, total);
+		}
+
+
+
+		public void addItem(Object item) {
+			notifier.addItem(item);
+		}
+
+
+
+		public void setItemCount(int count, int total) {
+			notifier.setItemCount(count, total);
+		}
+
+
+
+		public void itemDone(Object item) {
+			notifier.itemDone(item);
+		}
+
+
+
+		public void done() {
+			notifier.done();
+		}
+
+	}
 }

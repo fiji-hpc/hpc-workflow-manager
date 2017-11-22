@@ -27,15 +27,10 @@ public class ScpClient implements Closeable {
 	private JSch jsch = new JSch();
 	private Session session;
 	private TransferFileProgress dummyProgress = new TransferFileProgress() {
-		
-		@Override
-		public long getMinimalDeltaForNotification() {
-			return 0;
-		}
-		
+
 		@Override
 		public void dataTransfered(long bytesTransfered) {
-			
+
 		}
 	};
 
@@ -67,7 +62,7 @@ public class ScpClient implements Closeable {
 	}
 
 	public void download(String lfile, Path rFile) throws JSchException, IOException {
-		download(lfile, rFile, dummyProgress );
+		download(lfile, rFile, dummyProgress);
 	}
 
 	public boolean download(String lfile, Path rfile, TransferFileProgress progress) throws JSchException, IOException {
@@ -132,7 +127,6 @@ public class ScpClient implements Closeable {
 					// read a content of lfile
 					try (OutputStream fos = Files.newOutputStream(rfile)) {
 						int foo;
-						long totalTransfered = 0;
 						while (true) {
 							if (buf.length < filesize)
 								foo = buf.length;
@@ -144,11 +138,7 @@ public class ScpClient implements Closeable {
 								break;
 							}
 							fos.write(buf, 0, foo);
-							totalTransfered += foo;
-							if(totalTransfered >= progress.getMinimalDeltaForNotification()) {
-								progress.dataTransfered(totalTransfered);
-								totalTransfered = 0;
-							}
+							progress.dataTransfered(foo);
 							filesize -= foo;
 							if (filesize == 0L)
 								break;
@@ -173,9 +163,9 @@ public class ScpClient implements Closeable {
 	}
 
 	public boolean upload(Path file, String rfile) throws JSchException, IOException {
-		return upload(file, rfile,dummyProgress);
+		return upload(file, rfile, dummyProgress);
 	}
-	
+
 	public boolean upload(Path file, String rfile, TransferFileProgress progress) throws JSchException, IOException {
 
 		Session session = connectionSession();
@@ -217,18 +207,13 @@ public class ScpClient implements Closeable {
 			}
 			byte[] buf = new byte[getBufferSize()];
 			// send a content of lfile
-			long transfered = 0;
 			try (InputStream fis = Files.newInputStream(file)) {
 				while (true) {
 					int len = fis.read(buf, 0, buf.length);
 					if (len <= 0)
 						break;
 					out.write(buf, 0, len); // out.flush();
-					transfered += len;
-					if(transfered >= progress.getMinimalDeltaForNotification()) {
-						progress.dataTransfered(transfered);
-						transfered = 0;
-					}
+					progress.dataTransfered(len);
 				}
 			}
 			// send '\0'
@@ -255,7 +240,7 @@ public class ScpClient implements Closeable {
 
 		try {
 			channel.connect();
-			return  ((List<LsEntry>)((ChannelSftp) channel).ls(lfile)).stream().map(atr -> atr.getAttrs().getSize())
+			return ((List<LsEntry>) ((ChannelSftp) channel).ls(lfile)).stream().map(atr -> atr.getAttrs().getSize())
 					.collect(Collectors.toList());
 
 		} catch (SftpException e) {
@@ -355,35 +340,35 @@ public class ScpClient implements Closeable {
 
 	public long size(String lfile) throws JSchException, IOException {
 		Session session = connectionSession();
-	
+
 		// exec 'scp -f rfile' remotely
 		String command = "scp -f " + lfile;
 		Channel channel = session.openChannel("exec");
-	
+
 		try {
 			((ChannelExec) channel).setCommand(command);
-	
+
 			// get I/O streams for remote scp
 			try (OutputStream out = channel.getOutputStream(); InputStream in = channel.getInputStream()) {
-	
+
 				channel.connect();
-	
+
 				byte[] buf = new byte[getBufferSize()];
-	
+
 				// send '\0'
 				buf[0] = 0;
 				out.write(buf, 0, 1);
 				out.flush();
-	
+
 				while (true) {
 					int c = checkAck(in);
 					if (c != 'C') {
 						break;
 					}
-	
+
 					// read '0644 '
 					in.read(buf, 0, 5);
-	
+
 					long filesize = 0L;
 					while (true) {
 						if (in.read(buf, 0, 1) < 0) {
@@ -395,10 +380,10 @@ public class ScpClient implements Closeable {
 						filesize = filesize * 10L + (long) (buf[0] - '0');
 					}
 					return filesize;
-	
+
 				}
 			}
-	
+
 		} finally {
 			channel.disconnect();
 		}
