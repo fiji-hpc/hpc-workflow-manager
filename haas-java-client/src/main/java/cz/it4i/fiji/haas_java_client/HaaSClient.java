@@ -254,8 +254,8 @@ public class HaaSClient {
 			try (ScpClient scpClient = getScpClient(ft)) {
 				String[] files = getFileTransfer().listChangedFilesForJob(jobId, getSessionID());
 				List<Long> fileSizes = getSizes(Arrays.asList(files).stream()
-						.map(filename -> ft.getSharedBasepath() + "/" + filename).collect(Collectors.toList()),
-						scpClient);
+						.map(filename -> "'" + ft.getSharedBasepath() + "/" + filename + "'").collect(Collectors.toList()),
+						scpClient, notifier);
 				final long totalFileSize = fileSizes.stream().mapToLong(i -> i.longValue()).sum();
 				int[] idx = { 0 };
 				final int[] totalDownloaded = { 0 };
@@ -280,8 +280,8 @@ public class HaaSClient {
 						public void dataTransfered(long bytesTransfered) {
 							totalDownloaded[0] += bytesTransfered;
 							fileDownloaded[0] += bytesTransfered;
-							notifier.setCount((int) (totalDownloaded[0] >> 10), (int) (Math.max(totalFileSize,totalDownloaded[0]) >> 10));
-							notifier.setItemCount((int) (fileDownloaded[0] >> 10), (int) ( Math.max(fileSizes.get(idx[0]),fileDownloaded[0]) >> 10));
+							notifier.setCount((int) (totalDownloaded[0] >> 10), (int) (totalFileSize>> 10));
+							notifier.setItemCount((int) (fileDownloaded[0] >> 10), (int) ( fileSizes.get(idx[0]) >> 10));
 
 						}
 					});
@@ -297,11 +297,16 @@ public class HaaSClient {
 		}
 	}
 
-	private List<Long> getSizes(List<String> asList, ScpClient scpClient) throws JSchException, IOException {
+	private List<Long> getSizes(List<String> asList, ScpClient scpClient, ProgressNotifier notifier) throws JSchException, IOException {
 		List<Long> result = new LinkedList<>();
+		
+		String item;
+		notifier.addItem(item = "Checking sizes");
 		for (String lfile : asList) {
-			result.add(0l);//scpClient.size(lfile).get(0));
+			result.add(scpClient.size(lfile));
+			notifier.setItemCount(result.size(), asList.size());
 		}
+		notifier.itemDone(item);
 		return result;
 	}
 

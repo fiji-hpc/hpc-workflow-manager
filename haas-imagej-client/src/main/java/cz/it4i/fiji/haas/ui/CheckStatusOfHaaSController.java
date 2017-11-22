@@ -1,11 +1,13 @@
 package cz.it4i.fiji.haas.ui;
 
+import java.awt.Frame;
 import java.util.function.Function;
 
 import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
 
 import cz.it4i.fiji.haas.JobManager.JobInfo;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
@@ -24,6 +26,8 @@ public class CheckStatusOfHaaSController {
 	@FXML
 	private TableView<JobInfo> jobs;
 
+	private Frame root;
+
 	public CheckStatusOfHaaSController() {
 
 	}
@@ -32,13 +36,14 @@ public class CheckStatusOfHaaSController {
 		jobs.getItems().add(job);
 	}
 
-	public void init() {
+	public void init(Frame root) {
 		initTable();
 		initMenu();
+		this.root = root;
 	}
 
 	private void downloadData(ActionEvent event) {
-		jobs.getSelectionModel().getSelectedItem().downloadData(new ProgressDialog(null));
+		Platform.runLater(() -> jobs.getSelectionModel().getSelectedItem().downloadData(new ProgressDialog(root)));
 	}
 	
 	private void initMenu() {

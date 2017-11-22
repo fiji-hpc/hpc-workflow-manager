@@ -247,7 +247,7 @@ public class ScpClient implements Closeable {
 	}
 
 	@SuppressWarnings("unchecked")
-	public List<Long> size(String lfile) throws JSchException, IOException {
+	public List<Long> sizeByLs(String lfile) throws JSchException, IOException {
 		Session session = connectionSession();
 
 		// exec 'scp -f rfile' remotely
@@ -351,5 +351,57 @@ public class ScpClient implements Closeable {
 			session.disconnect();
 			session = null;
 		}
+	}
+
+	public long size(String lfile) throws JSchException, IOException {
+		Session session = connectionSession();
+	
+		// exec 'scp -f rfile' remotely
+		String command = "scp -f " + lfile;
+		Channel channel = session.openChannel("exec");
+	
+		try {
+			((ChannelExec) channel).setCommand(command);
+	
+			// get I/O streams for remote scp
+			try (OutputStream out = channel.getOutputStream(); InputStream in = channel.getInputStream()) {
+	
+				channel.connect();
+	
+				byte[] buf = new byte[getBufferSize()];
+	
+				// send '\0'
+				buf[0] = 0;
+				out.write(buf, 0, 1);
+				out.flush();
+	
+				while (true) {
+					int c = checkAck(in);
+					if (c != 'C') {
+						break;
+					}
+	
+					// read '0644 '
+					in.read(buf, 0, 5);
+	
+					long filesize = 0L;
+					while (true) {
+						if (in.read(buf, 0, 1) < 0) {
+							// error
+							break;
+						}
+						if (buf[0] == ' ')
+							break;
+						filesize = filesize * 10L + (long) (buf[0] - '0');
+					}
+					return filesize;
+	
+				}
+			}
+	
+		} finally {
+			channel.disconnect();
+		}
+		return -1;
 	}
 }

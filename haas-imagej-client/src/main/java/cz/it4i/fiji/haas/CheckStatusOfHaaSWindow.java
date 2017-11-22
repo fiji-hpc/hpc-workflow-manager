@@ -16,12 +16,15 @@ public class CheckStatusOfHaaSWindow extends FXFrame<CheckStatusOfHaaSController
 	private Context context;
 	
 	private CheckStatusOfHaaSController controller;
+
+	private Frame applicationFrame;
 	public CheckStatusOfHaaSWindow(Frame applicationFrame, Context context) {
 		super(applicationFrame,"/cz/it4i/fiji/haas/ui/CheckStatusOfHaaS.fxml");
 		this.context = context;
 		init(this::initController);
 		this.setResizable(false);
 		this.setTitle("Manage status of HaaS jobs");
+		this.applicationFrame = applicationFrame;
 	}
 	
 	public void addJob(JobInfo job) {
@@ -31,7 +34,7 @@ public class CheckStatusOfHaaSWindow extends FXFrame<CheckStatusOfHaaSController
 	private void initController(CheckStatusOfHaaSController controller) {
 		this.controller = controller;
 		context.inject(controller);
-		controller.init();
+		controller.init(applicationFrame);
 	}
 
 }
