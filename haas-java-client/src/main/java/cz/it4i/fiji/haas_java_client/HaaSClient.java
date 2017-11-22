@@ -38,7 +38,6 @@ import cz.it4i.fiji.haas_java_client.proxy.TaskSpecificationExt;
 import cz.it4i.fiji.haas_java_client.proxy.UserAndLimitationManagementWsLocator;
 import cz.it4i.fiji.haas_java_client.proxy.UserAndLimitationManagementWsSoap;
 import cz.it4i.fiji.scpclient.ScpClient;
-import cz.it4i.fiji.scpclient.TransferFileProgress;
 
 public class HaaSClient {
 
@@ -157,23 +156,11 @@ public class HaaSClient {
 			FileTransferMethodExt fileTransfer = getFileTransfer().getFileTransferMethod(job.getId(), getSessionID());
 			List<Long> totalSizes = getSizes(files);
 			long totalSize = totalSizes.stream().mapToLong(l -> l.longValue()).sum();
+			TransferFileProgressForHaaSClient progress = new TransferFileProgressForHaaSClient(totalSize, notifier);
 			try (ScpClient scpClient = getScpClient(fileTransfer)) {
-				final int[] index = { 0 };
-				final long[] totalTransfered = { 0 };
+				int index = 0;
 				for (Path file : files) {
-					final long[] fileTransfered = { 0 };
-					TransferFileProgress progress = new TransferFileProgress() {
-
-						@Override
-						public void dataTransfered(long bytesTransfered) {
-							fileTransfered[0] += bytesTransfered;
-							totalTransfered[0] += bytesTransfered;
-							int[] sizes = normalizaSizes(fileTransfered[0], totalSizes.get(index[0]));
-							notifier.setItemCount(sizes[0], sizes[1]);
-							sizes = normalizaSizes(totalTransfered[0], totalSize);
-							notifier.setCount(sizes[0], sizes[1]);
-						}
-					};
+					progress.startNewFile(totalSizes.get(index));
 					notifier.addItem(item = "Uploading file: " + file.getFileName());
 					String destFile = "'" + fileTransfer.getSharedBasepath() + "/" + file.getFileName() + "'";
 					boolean result = scpClient.upload(file, destFile, progress);
@@ -181,7 +168,7 @@ public class HaaSClient {
 					if (!result) {
 						throw new HaaSClientException("Uploading of " + file + " to " + destFile + " failed");
 					}
-					index[0]++;
+					index++;
 				}
 			}
 			getFileTransfer().endFileTransfer(job.getId(), fileTransfer, getSessionID());
@@ -194,21 +181,6 @@ public class HaaSClient {
 			throw new RuntimeException(e);
 		}
 
-	}
-
-	private int[] normalizaSizes(long part, long total) {
-		int[] result = new int[2];
-		if(total > Integer.MAX_VALUE) {
-			part = part>>10;
-			total = total>>10;
-		}
-		result[0] = (int) part;
-		result[1] = (int) total;
-	
-		if(result[0]==0 && result[1] == 0) {
-			result[0] = result[1] = 1;
-		}
-		return result;
 	}
 
 	public JobInfo obtainJobInfo(long jobId) {
@@ -268,10 +240,9 @@ public class HaaSClient {
 								.collect(Collectors.toList()),
 						scpClient, new P_ProgressNotifierDecorator4Size(notifier));
 				final long totalFileSize = fileSizes.stream().mapToLong(i -> i.longValue()).sum();
-				int[] idx = { 0 };
-				final int[] totalDownloaded = { 0 };
+				TransferFileProgressForHaaSClient progress =new TransferFileProgressForHaaSClient(totalFileSize, notifier);
+				int idx = 0;
 				for (String fileName : files) {
-					final int[] fileDownloaded = { 0 };
 					fileName = fileName.replaceFirst("/", "");
 					Path rFile = workDirectory.resolve(fileName);
 					if (!Files.exists(rFile.getParent())) {
@@ -280,18 +251,10 @@ public class HaaSClient {
 					String fileToDownload = "'" + ft.getSharedBasepath() + "/" + fileName + "'";
 					String item;
 					notifier.addItem(item = fileName);
-					scpClient.download(fileToDownload, rFile, new TransferFileProgress() {
-						@Override
-						public void dataTransfered(long bytesTransfered) {
-							int[] sizes = normalizaSizes(fileDownloaded[0], fileSizes.get(idx[0]));
-							notifier.setItemCount(sizes[0], sizes[1]);
-							sizes = normalizaSizes(totalDownloaded[0], totalFileSize);
-							notifier.setCount(sizes[0], sizes[1]);
-
-						}
-					});
+					progress.startNewFile(fileSizes.get(idx));
+					scpClient.download(fileToDownload, rFile, progress);
 					notifier.itemDone(item);
-					idx[0]++;
+					idx++;
 				}
 			}
 			getFileTransfer().endFileTransfer(jobId, ft, getSessionID());
