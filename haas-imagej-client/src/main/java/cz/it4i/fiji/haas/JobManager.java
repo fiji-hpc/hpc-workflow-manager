@@ -3,6 +3,7 @@ package cz.it4i.fiji.haas;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -91,14 +92,19 @@ public class JobManager {
 			return job.needsDownload();
 		}
 
+		public String getCreationTime() {
+			return getStringFromTimeSafely(job.getCreationTime());
+		}
+
 		public String getStartTime() {
-			return job.getStartTime().getTime().toString();
+			return getStringFromTimeSafely(job.getStartTime());
 		}
 
 		public String getEndTime() {
-			return job.getEndTime() != null ? job.getEndTime().getTime().toString() : "N/A";
+			return getStringFromTimeSafely(job.getEndTime());
 		}
 		
+
 		public void downloadData(Progress progress) {
 			job.download(progress);
 			fireValueChangedEvent();
@@ -112,5 +118,10 @@ public class JobManager {
 		public JobInfo getValue() {
 			return this;
 		}
+
+		private String getStringFromTimeSafely(Calendar time) {
+			return time!= null ? time.getTime().toString() : "N/A";
+		}
+
 	}
 }

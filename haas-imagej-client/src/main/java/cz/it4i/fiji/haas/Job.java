@@ -140,6 +140,10 @@ public class Job {
 		return jobInfo.getStartTime();
 	}
 
+	public Calendar getCreationTime() {
+		return jobInfo.getCreationTime();
+	}
+
 	public Calendar getEndTime() {
 		return jobInfo.getEndTime();
 	}

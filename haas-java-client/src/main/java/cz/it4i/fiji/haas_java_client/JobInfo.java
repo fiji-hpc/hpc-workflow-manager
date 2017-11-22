@@ -13,4 +13,6 @@ public interface JobInfo {
 	Calendar getStartTime();
 
 	Calendar getEndTime();
+
+	Calendar getCreationTime();
 }

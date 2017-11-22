@@ -74,8 +74,9 @@ public class CheckStatusOfHaaSController {
 	private void initTable() {
 		setCellValueFactory(0, j -> j.getId().toString());
 		setCellValueFactory(1, j -> j.getState().toString() + (j.needsDownload() ? " - needs download" : ""));
-		setCellValueFactory(2, j -> j.getStartTime().toString());
-		setCellValueFactory(3, j -> j.getEndTime().toString());
+		setCellValueFactory(2, j -> j.getCreationTime().toString());
+		setCellValueFactory(3, j -> j.getStartTime().toString());
+		setCellValueFactory(4, j -> j.getEndTime().toString());
 	}
 
 	@SuppressWarnings("unchecked")

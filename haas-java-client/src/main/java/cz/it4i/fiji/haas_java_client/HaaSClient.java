@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.rmi.RemoteException;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -205,6 +206,10 @@ public class HaaSClient {
 
 				public java.util.Calendar getEndTime() {
 					return info.getEndTime();
+				};
+				
+				public Calendar getCreationTime() {
+					return info.getCreationTime();
 				};
 			};
 		} catch (RemoteException | ServiceException e) {
