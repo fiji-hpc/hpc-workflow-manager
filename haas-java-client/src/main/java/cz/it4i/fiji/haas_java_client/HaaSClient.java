@@ -157,8 +157,6 @@ public class HaaSClient {
 			FileTransferMethodExt fileTransfer = getFileTransfer().getFileTransferMethod(job.getId(), getSessionID());
 			List<Long> totalSizes = getSizes(files);
 			long totalSize = totalSizes.stream().mapToLong(l -> l.longValue()).sum();
-			final long step = totalSize / 100;
-
 			try (ScpClient scpClient = getScpClient(fileTransfer)) {
 				final int[] index = { 0 };
 				final long[] totalTransfered = { 0 };
@@ -170,9 +168,10 @@ public class HaaSClient {
 						public void dataTransfered(long bytesTransfered) {
 							fileTransfered[0] += bytesTransfered;
 							totalTransfered[0] += bytesTransfered;
-							notifier.setItemCount((int) (fileTransfered[0] >> 10),
-									(int) (totalSizes.get(index[0]) >> 10));
-							notifier.setCount((int) (totalTransfered[0] >> 10), (int) (totalSize >> 10));
+							int[] sizes = normalizaSizes(fileTransfered[0], totalSizes.get(index[0]));
+							notifier.setItemCount(sizes[0], sizes[1]);
+							sizes = normalizaSizes(totalTransfered[0], totalSize);
+							notifier.setCount(sizes[0], sizes[1]);
 						}
 					};
 					notifier.addItem(item = "Uploading file: " + file.getFileName());
@@ -195,6 +194,21 @@ public class HaaSClient {
 			throw new RuntimeException(e);
 		}
 
+	}
+
+	private int[] normalizaSizes(long part, long total) {
+		int[] result = new int[2];
+		if(total > Integer.MAX_VALUE) {
+			part = part>>10;
+			total = total>>10;
+		}
+		result[0] = (int) part;
+		result[1] = (int) total;
+	
+		if(result[0]==0 && result[1] == 0) {
+			result[0] = result[1] = 1;
+		}
+		return result;
 	}
 
 	public JobInfo obtainJobInfo(long jobId) {
@@ -267,18 +281,12 @@ public class HaaSClient {
 					String item;
 					notifier.addItem(item = fileName);
 					scpClient.download(fileToDownload, rFile, new TransferFileProgress() {
-
 						@Override
 						public void dataTransfered(long bytesTransfered) {
-							if (fileDownloaded[0] == 0 && bytesTransfered == 0) {
-								notifier.setItemCount(1, 1);
-							} else {
-								totalDownloaded[0] += bytesTransfered;
-								fileDownloaded[0] += bytesTransfered;
-								notifier.setCount((int) (totalDownloaded[0] >> 10), (int) (totalFileSize >> 10));
-								notifier.setItemCount((int) (fileDownloaded[0] >> 10),
-										(int) (fileSizes.get(idx[0]) >> 10));
-							}
+							int[] sizes = normalizaSizes(fileDownloaded[0], fileSizes.get(idx[0]));
+							notifier.setItemCount(sizes[0], sizes[1]);
+							sizes = normalizaSizes(totalDownloaded[0], totalFileSize);
+							notifier.setCount(sizes[0], sizes[1]);
 
 						}
 					});
