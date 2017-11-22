@@ -17,10 +17,8 @@ import org.scijava.ui.UIService;
 import org.scijava.widget.UIComponent;
 
 import cz.it4i.fiji.haas.JobManager.JobInfo;
-import javafx.application.Platform;
+import cz.it4i.fiji.haas.ui.ProgressDialog;
 import net.imagej.ImageJ;
-import net.imagej.ui.swing.updater.ProgressDialog;
-import net.imagej.updater.util.Progress;
 
 /**
  * 
@@ -52,28 +50,25 @@ public class CheckStatusOfHaaS implements Command {
 				downloadAll();
 			} else {
 				CheckStatusOfHaaSWindow window;
-				(window = new CheckStatusOfHaaSWindow(getFrame(),context)).setVisible(true);
-				
-				Platform.runLater(() -> {
-					Progress dialog = new ProgressDialog(getFrame());
-					dialog.setTitle("Downloading info about jobs");
-					Collection<JobInfo> jobs = jobManager.getJobs();
-					int count = 0;
-					for(JobInfo ji: jobs) {
-						String item;
-						dialog.addItem(item = "job id:" + ji.getId());
-						try {
-							ji.updateInfo();
-						} catch (IOException e) {
-							log.error(e);
-						}
-						window.addJob(ji);
-						dialog.itemDone(item);
-						dialog.setCount(count, jobs.size());
-						count++;
+				window = ModalDialogs.doModal(new CheckStatusOfHaaSWindow(getFrame(), context));
+				ProgressDialog dialog = ModalDialogs.doModal(new ProgressDialog(window));
+				dialog.setTitle("Downloading info about jobs");
+				Collection<JobInfo> jobs = jobManager.getJobs();
+				int count = 0;
+				for (JobInfo ji : jobs) {
+					String item;
+					dialog.addItem(item = "job id:" + ji.getId());
+					try {
+						ji.updateInfo();
+					} catch (IOException e) {
+						log.error(e);
 					}
-					dialog.done();
-				});
+					window.addJob(ji);
+					dialog.itemDone(item);
+					dialog.setCount(count, jobs.size());
+					count++;
+				}
+				dialog.done();
 			}
 		} catch (IOException e) {
 			log.error(e);
@@ -110,7 +105,7 @@ public class CheckStatusOfHaaS implements Command {
 		final ImageJ ij = new ImageJ();
 		ij.launch(args);
 
-		// ij.command().run(CheckStatusOfHaaS.class, true);
+		ij.command().run(CheckStatusOfHaaS.class, true);
 	}
 
 }

@@ -36,7 +36,7 @@ class TransferFileProgressForHaaSClient implements TransferFileProgress {
 	}
 
 	
-	private int[] normalizaSizes(long part, long total) {
+	private static int[] normalizaSizes(long part, long total) {
 		int[] result = new int[2];
 		if(total > Integer.MAX_VALUE) {
 			part = part>>10;

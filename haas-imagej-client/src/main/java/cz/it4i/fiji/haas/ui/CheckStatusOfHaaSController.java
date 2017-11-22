@@ -1,12 +1,13 @@
 package cz.it4i.fiji.haas.ui;
 
-import java.awt.Frame;
+import java.awt.Window;
 import java.util.function.Function;
 
 import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
 
 import cz.it4i.fiji.haas.JobManager.JobInfo;
+import cz.it4i.fiji.haas.ModalDialogs;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -16,7 +17,7 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.input.ContextMenuEvent;
-import net.imagej.ui.swing.updater.ProgressDialog;
+
 
 public class CheckStatusOfHaaSController {
 
@@ -26,7 +27,7 @@ public class CheckStatusOfHaaSController {
 	@FXML
 	private TableView<JobInfo> jobs;
 
-	private Frame root;
+	private Window root;
 
 	public CheckStatusOfHaaSController() {
 
@@ -36,14 +37,14 @@ public class CheckStatusOfHaaSController {
 		jobs.getItems().add(job);
 	}
 
-	public void init(Frame root) {
+	public void init(Window root) {
 		initTable();
 		initMenu();
 		this.root = root;
 	}
 
 	private void downloadData(ActionEvent event) {
-		Platform.runLater(() -> jobs.getSelectionModel().getSelectedItem().downloadData(new ProgressDialog(root)));
+		Platform.runLater(() -> jobs.getSelectionModel().getSelectedItem().downloadData(ModalDialogs.doModal(new ProgressDialog(root))));
 	}
 	
 	private void initMenu() {

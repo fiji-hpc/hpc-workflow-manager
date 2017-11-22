@@ -188,9 +188,7 @@ public class HaaSClient {
 			final SubmittedJobInfoExt info = getJobManagement().getCurrentInfoForJob(jobId, getSessionID());
 			final Collection<Long> tasksId = Arrays.asList(info.getTasks()).stream().map(ti -> ti.getId())
 					.collect(Collectors.toList());
-
 			return new JobInfo() {
-
 				@Override
 				public Collection<Long> getTasks() {
 					return tasksId;
@@ -421,6 +419,5 @@ public class HaaSClient {
 		public void done() {
 			notifier.done();
 		}
-
 	}
 }

@@ -36,9 +36,9 @@ public class FXFrame<C> extends JDialog {
 	protected void init( Consumer<C> controlerInit) {
 		this.controlerInit = controlerInit;
 		this.fxPanel = new JFXPanel();
+		Platform.setImplicitExit(false);
 		this.add(this.fxPanel);
-		this.setVisible(true);
-
+		
 		// The call to runLater() avoid a mix between JavaFX thread and Swing thread.
 		Platform.runLater(new Runnable() {
 			@Override
