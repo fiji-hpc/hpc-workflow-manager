@@ -50,4 +50,12 @@ class TransferFileProgressForHaaSClient implements TransferFileProgress {
 		}
 		return result;
 	}
+
+	public void addItem(String item) {
+		notifier.addItem(item);
+	}
+
+	public void itemDone(String item) {
+		notifier.itemDone(item);
+	}
 }

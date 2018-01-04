@@ -253,10 +253,10 @@ public class HaaSClient {
 					}
 					String fileToDownload = "'" + ft.getSharedBasepath() + "/" + fileName + "'";
 					String item;
-					notifier.addItem(item = fileName);
+					progress.addItem(item = fileName);
 					progress.startNewFile(fileSizes.get(idx));
 					scpClient.download(fileToDownload, rFile, progress);
-					notifier.itemDone(item);
+					progress.itemDone(item);
 					idx++;
 				}
 			}
