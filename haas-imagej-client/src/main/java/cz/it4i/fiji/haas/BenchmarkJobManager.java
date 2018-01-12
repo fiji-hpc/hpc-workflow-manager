@@ -43,6 +43,7 @@ public class BenchmarkJobManager {
 	public JobState getState(long jobId) {
 		return jobManager.getState(jobId);
 	}
+	
 
 	private byte[] updateConfigFile(byte[] data) throws IOException {
 		return data;
