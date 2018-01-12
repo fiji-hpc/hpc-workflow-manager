@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 
 import cz.it4i.fiji.haas_java_client.HaaSClient;
 import cz.it4i.fiji.haas_java_client.JobState;
+import cz.it4i.fiji.haas_java_client.Settings;
 import javafx.beans.value.ObservableValueBase;
 import net.imagej.updater.util.Progress;
 
@@ -22,9 +23,12 @@ public class JobManager {
 
 	private HaaSClient haasClient;
 
+	private Settings settings;
+
 	
-	public JobManager(Path workDirectory) throws IOException {
+	public JobManager(Path workDirectory, Settings settings) throws IOException {
 		this.workDirectory = workDirectory;
+		this.settings = settings;
 		Files.list(this.workDirectory).filter(p -> Files.isDirectory(p) && Job.isJobPath(p)).forEach(p -> {
 			try {
 				jobs.add(new Job(p, this::getHaasClient));
@@ -56,7 +60,7 @@ public class JobManager {
 
 	private HaaSClient getHaasClient() {
 		if (haasClient == null) {
-			haasClient = new HaaSClient(2l, 9600, 6l, "DD-17-31");
+			haasClient = new HaaSClient(settings);
 		}
 		return haasClient;
 	}

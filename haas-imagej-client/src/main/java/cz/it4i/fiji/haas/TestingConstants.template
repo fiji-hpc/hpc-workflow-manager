@@ -1,0 +1,61 @@
+package cz.it4i.fiji.haas;
+
+import cz.it4i.fiji.haas_java_client.Settings;
+
+interface TestingConstants {
+	String USER_NAME = <user name to haas>;
+	String PASSWORD = <password to haas>;
+	String EMAIL = ;
+	String PHONE = ;
+	
+	
+	static Settings getSettings() {
+		long templateId = 2l;
+		int timeOut = 9600; 
+		long clusterNodeType = 6l;
+		String projectId = "DD-17-31";
+		return new Settings() {
+			
+			@Override
+			public String getUserName() {
+				return USER_NAME;
+			}
+			
+			@Override
+			public String getPhone() {
+				return PHONE;
+			}
+			
+			@Override
+			public String getPassword() {
+				return PASSWORD;
+			}
+			
+			@Override
+			public String getEmail() {
+				return EMAIL;
+			}
+
+			@Override
+			public long getTemplateId() {
+				return templateId;
+			}
+			
+			@Override
+			public int getTimeout() {
+				return timeOut;
+			}
+			
+			@Override
+			public long getClusterNodeType() {
+				return clusterNodeType;
+			}
+
+			@Override
+			public String getProjectId() {
+				return projectId;
+			}
+		};
+	}
+	
+}

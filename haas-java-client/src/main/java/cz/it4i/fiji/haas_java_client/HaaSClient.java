@@ -118,6 +118,8 @@ public class HaaSClient {
 		}
 	};
 
+	private Settings settings;
+
 	final static private Map<JobStateExt, JobState> WS_STATE2STATE;
 
 	static {
@@ -132,12 +134,13 @@ public class HaaSClient {
 		WS_STATE2STATE = Collections.unmodifiableMap(map);
 	}
 
-	public HaaSClient(Long templateId, Integer timeOut, Long clusterNodeType, String projectId) {
+	public HaaSClient(Settings settings) {
 		super();
-		this.templateId = templateId;
-		this.timeOut = timeOut;
-		this.clusterNodeType = clusterNodeType;
-		this.projectId = projectId;
+		this.settings = settings;
+		this.templateId = settings.getTemplateId();
+		this.timeOut = settings.getTimeout();
+		this.clusterNodeType = settings.getClusterNodeType();
+		this.projectId = settings.getProjectId();
 	}
 
 	public long start(Iterable<Path> files, String name, Collection<Entry<String, String>> templateParameters) {
@@ -297,8 +300,8 @@ public class HaaSClient {
 		testJob.setProject(projectId);
 		testJob.setWaitingLimit(null);
 		testJob.setWalltimeLimit(timeOut);
-		testJob.setNotificationEmail(Constants.EMAIL);
-		testJob.setPhoneNumber(Constants.PHONE);
+		testJob.setNotificationEmail(settings.getEmail());
+		testJob.setPhoneNumber(settings.getPhone());
 		testJob.setNotifyOnAbort(false);
 		testJob.setNotifyOnFinish(false);
 		testJob.setNotifyOnStart(false);
@@ -337,7 +340,7 @@ public class HaaSClient {
 
 	private String authenticate() throws RemoteException, ServiceException {
 		return getUserAndLimitationManagement()
-				.authenticateUserPassword(new PasswordCredentialsExt(Constants.USER_NAME, Constants.PASSWORD));
+				.authenticateUserPassword(new PasswordCredentialsExt(settings.getUserName(), settings.getPassword()));
 	}
 
 	private UserAndLimitationManagementWsSoap getUserAndLimitationManagement() throws ServiceException {

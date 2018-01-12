@@ -20,8 +20,8 @@ public class TestHaaSJavaClient {
 		Map<String, String> params = new HashMap<>();
 		params.put("inputParam", "someStringParam");
 		Path baseDir = Paths.get("/home/koz01/aaa");
-		HaaSClient client = new HaaSClient( 1l,600, 7l,"DD-17-31");
-		long jobId = client.start(Arrays.asList(Paths.get("/home/koz01/aaa/vecmath.jar")), "TestOutRedirect", params.entrySet());
+		HaaSClient client = new HaaSClient(TestingConstants.getSettings(1l, 600,7l, "DD-17-31"));
+		long jobId = client.start(Arrays.asList(Paths.get("/home/koz01/.inputrc")), "TestOutRedirect", params.entrySet());
 		Path workDir = baseDir.resolve("" + jobId);
 		if (!Files.isDirectory(workDir)) {
 			Files.createDirectories(workDir);

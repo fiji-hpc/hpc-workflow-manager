@@ -14,7 +14,7 @@ import cz.it4i.fiji.haas_java_client.proxy.JobFileContentExt;
 public class TestHaaSJavaClientWithSPIM {
 
 	public static void main(String[] args) throws ServiceException, IOException {
-		HaaSClient client = new HaaSClient(2l, 9600, 6l, "DD-17-31");
+		HaaSClient client = new HaaSClient(TestingConstants.getSettings(2, 9600, 6l, "DD-17-31"));
 		Path baseDir = Paths.get("/home/koz01/Work/vyzkumnik/fiji/work/aaa");
 
 		long jobId = client.start(getAllFiles(baseDir.resolve("spim-data")), "TestOutRedirect",

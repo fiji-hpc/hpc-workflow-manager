@@ -121,7 +121,7 @@ public class Job {
 
 	synchronized public void download(Progress progress) {
 		if (!needsDownload()) {
-			throw new IllegalStateException("Job: " + getJobId() + " dosn't need download");
+			throw new IllegalStateException("Job: " + getJobId() + " doesn't need download");
 		}
 		haasClientSupplier.get().download(getJobId(), jobDir, new P_ProgressNotifierAdapter(progress));
 		needsDownload = false;
