@@ -24,7 +24,6 @@ import net.imagej.updater.util.Progress;
 
 public class Job {
 
-	
 	private static final String JOB_HAS_DATA_TO_DOWNLOAD_PROPERTY = "job.needDownload";
 
 	public static boolean isJobPath(Path p) {
@@ -46,37 +45,39 @@ public class Job {
 	private Long jobId;
 
 	final private Progress dummy = new Progress() {
-		
+
 		@Override
 		public void setTitle(String title) {
 		}
-		
+
 		@Override
 		public void setItemCount(int count, int total) {
 		}
-		
+
 		@Override
 		public void setCount(int count, int total) {
 		}
-		
+
 		@Override
 		public void itemDone(Object item) {
 		}
-		
+
 		@Override
 		public void done() {
 		}
-		
+
 		@Override
 		public void addItem(Object item) {
 		}
 	};
-	
-	public Job(Path path, Collection<Path> files, Supplier<HaaSClient> haasClientSupplier, Progress progress) throws IOException {
+
+	public Job(Path basePath, Collection<Path> files, Supplier<HaaSClient> haasClientSupplier, Progress progress)
+			throws IOException {
 		this(haasClientSupplier);
 		HaaSClient client = this.haasClientSupplier.get();
-		long id = client.start(files, "TestOutRedirect", Collections.emptyList(), new P_ProgressNotifierAdapter(progress));
-		jobDir = path.resolve("" + id);
+		long id = client.start(files, "TestOutRedirect", Collections.emptyList(),
+				new P_ProgressNotifierAdapter(progress));
+		jobDir = basePath.resolve("" + id);
 		Files.createDirectory(jobDir);
 		updateState();
 	}
@@ -132,6 +133,11 @@ public class Job {
 		}
 	}
 
+	public void downloadFileData(String fileName, OutputStream bos) {
+		haasClientSupplier.get().downloadFileData(jobId,fileName, bos);
+	}
+	
+
 	public JobState getState() {
 		return state;
 	}
@@ -182,8 +188,6 @@ public class Job {
 	private static long getJobId(Path path) {
 		return Long.parseLong(path.getFileName().toString());
 	}
-	
-	
 
 	private class P_ProgressNotifierAdapter implements ProgressNotifier {
 		private Progress progress;
@@ -216,7 +220,9 @@ public class Job {
 		public void done() {
 			progress.done();
 		}
-		
-		
+
 	}
+
+	
+
 }

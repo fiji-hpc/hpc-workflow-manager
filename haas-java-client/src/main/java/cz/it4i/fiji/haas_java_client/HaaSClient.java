@@ -1,6 +1,7 @@
 package cz.it4i.fiji.haas_java_client;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -14,7 +15,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.xml.rpc.ServiceException;
 
@@ -210,7 +213,7 @@ public class HaaSClient {
 				public java.util.Calendar getEndTime() {
 					return info.getEndTime();
 				};
-				
+
 				public Calendar getCreationTime() {
 					return info.getCreationTime();
 				};
@@ -235,20 +238,25 @@ public class HaaSClient {
 	}
 
 	public void download(long jobId, Path workDirectory, final ProgressNotifier notifier) {
+		download(jobId, workDirectory, notifier, val -> true);
+	}
+
+	public void download(long jobId, Path workDirectory, final ProgressNotifier notifier, Predicate<String> function) {
 		try {
 			notifier.setTitle("Downloading");
 			FileTransferMethodExt ft = getFileTransfer().getFileTransferMethod(jobId, getSessionID());
 			try (ScpClient scpClient = getScpClient(ft)) {
-				String[] files = getFileTransfer().listChangedFilesForJob(jobId, getSessionID());
+				String[] filesArray = getFileTransfer().listChangedFilesForJob(jobId, getSessionID());
+				Stream<String> files = Arrays.asList(filesArray).stream().filter(function);
 				List<Long> fileSizes = getSizes(
-						Arrays.asList(files).stream()
-								.map(filename -> "'" + ft.getSharedBasepath() + "/" + filename + "'")
-								.collect(Collectors.toList()),
+						files.map(filename -> "'" + ft.getSharedBasepath() + "/" + filename + "'").collect(
+								Collectors.toList()),
 						scpClient, new P_ProgressNotifierDecorator4Size(notifier));
 				final long totalFileSize = fileSizes.stream().mapToLong(i -> i.longValue()).sum();
-				TransferFileProgressForHaaSClient progress =new TransferFileProgressForHaaSClient(totalFileSize, notifier);
+				TransferFileProgressForHaaSClient progress = new TransferFileProgressForHaaSClient(totalFileSize,
+						notifier);
 				int idx = 0;
-				for (String fileName : files) {
+				for (String fileName : (Iterable<String>) files::iterator) {
 					fileName = fileName.replaceFirst("/", "");
 					Path rFile = workDirectory.resolve(fileName);
 					if (!Files.exists(rFile.getParent())) {
@@ -266,6 +274,17 @@ public class HaaSClient {
 			getFileTransfer().endFileTransfer(jobId, ft, getSessionID());
 			notifier.done();
 
+		} catch (IOException | JSchException | ServiceException e) {
+			throw new HaaSClientException(e);
+		}
+	}
+
+	public void downloadFileData(long jobId, String fileName, OutputStream os) {
+		try {
+			FileTransferMethodExt ft = getFileTransfer().getFileTransferMethod(jobId, getSessionID());
+			try (ScpClient scpClient = getScpClient(ft)) {
+				scpClient.download(fileName, os, new TransferFileProgressForHaaSClient(0, dummyNotifier));
+			}
 		} catch (IOException | JSchException | ServiceException e) {
 			throw new HaaSClientException(e);
 		}
@@ -428,4 +447,5 @@ public class HaaSClient {
 			notifier.done();
 		}
 	}
+
 }

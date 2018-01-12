@@ -66,6 +66,13 @@ public class ScpClient implements Closeable {
 	}
 
 	public boolean download(String lfile, Path rfile, TransferFileProgress progress) throws JSchException, IOException {
+		try(OutputStream os = Files.newOutputStream(rfile)) {
+			return download(lfile, os, progress);
+		}
+	}
+
+	public boolean download(String lfile, OutputStream os, TransferFileProgress progress)
+			throws JSchException, IOException {
 		Session session = connectionSession();
 
 		// exec 'scp -f rfile' remotely
@@ -125,25 +132,24 @@ public class ScpClient implements Closeable {
 					out.flush();
 
 					// read a content of lfile
-					try (OutputStream fos = Files.newOutputStream(rfile)) {
-						int foo;
-						while (true) {
-							if (buf.length < filesize)
-								foo = buf.length;
-							else
-								foo = (int) filesize;
-							foo = in.read(buf, 0, foo);
-							if (foo < 0) {
-								// error
-								break;
-							}
-							fos.write(buf, 0, foo);
-							progress.dataTransfered(foo);
-							filesize -= foo;
-							if (filesize == 0L)
-								break;
+					int foo;
+					while (true) {
+						if (buf.length < filesize)
+							foo = buf.length;
+						else
+							foo = (int) filesize;
+						foo = in.read(buf, 0, foo);
+						if (foo < 0) {
+							// error
+							break;
 						}
+						os.write(buf, 0, foo);
+						progress.dataTransfered(foo);
+						filesize -= foo;
+						if (filesize == 0L)
+							break;
 					}
+
 					if (checkAck(in) != 0) {
 						return false;
 					}
@@ -167,11 +173,16 @@ public class ScpClient implements Closeable {
 	}
 
 	public boolean upload(Path file, String rfile, TransferFileProgress progress) throws JSchException, IOException {
+		try (InputStream is = Files.newInputStream(file)) {
+			return upload(is, file.getFileName().toString(), file.toFile().length(), file.toFile().lastModified(),
+					rfile, progress);
+		}
+	}
 
+	public boolean upload(InputStream is, String fileName, long length, long lastModified, String rfile,
+			TransferFileProgress progress) throws JSchException, IOException {
 		Session session = connectionSession();
-
 		boolean ptimestamp = true;
-
 		// exec 'scp -t rfile' remotely
 		String command = "scp " + (ptimestamp ? "-p" : "") + " -t " + rfile;
 		Channel channel = session.openChannel("exec");
@@ -184,10 +195,10 @@ public class ScpClient implements Closeable {
 			}
 
 			if (ptimestamp) {
-				command = "T " + (file.toFile().lastModified() / 1000) + " 0";
+				command = "T " + (lastModified / 1000) + " 0";
 				// The access time should be sent here,
 				// but it is not accessible with JavaAPI ;-<
-				command += (" " + (file.toFile().lastModified() / 1000) + " 0\n");
+				command += (" " + (lastModified / 1000) + " 0\n");
 				out.write(command.getBytes());
 				out.flush();
 				if (checkAck(in) != 0) {
@@ -196,9 +207,9 @@ public class ScpClient implements Closeable {
 			}
 
 			// send "C0644 filesize filename", where filename should not include '/'
-			long filesize = file.toFile().length();
+			long filesize = length;
 			command = "C0644 " + filesize + " ";
-			command += file.getFileName().toString();
+			command += fileName;
 			command += "\n";
 			out.write(command.getBytes());
 			out.flush();
@@ -207,14 +218,12 @@ public class ScpClient implements Closeable {
 			}
 			byte[] buf = new byte[getBufferSize()];
 			// send a content of lfile
-			try (InputStream fis = Files.newInputStream(file)) {
-				while (true) {
-					int len = fis.read(buf, 0, buf.length);
-					if (len <= 0)
-						break;
-					out.write(buf, 0, len); // out.flush();
-					progress.dataTransfered(len);
-				}
+			while (true) {
+				int len = is.read(buf, 0, buf.length);
+				if (len <= 0)
+					break;
+				out.write(buf, 0, len); // out.flush();
+				progress.dataTransfered(len);
 			}
 			// send '\0'
 			buf[0] = 0;
@@ -233,35 +242,35 @@ public class ScpClient implements Closeable {
 
 	public long size(String lfile) throws JSchException, IOException {
 		Session session = connectionSession();
-	
+
 		// exec 'scp -f rfile' remotely
 		String command = "scp -f " + lfile;
 		Channel channel = session.openChannel("exec");
-	
+
 		try {
 			((ChannelExec) channel).setCommand(command);
-	
+
 			// get I/O streams for remote scp
 			try (OutputStream out = channel.getOutputStream(); InputStream in = channel.getInputStream()) {
-	
+
 				channel.connect();
-	
+
 				byte[] buf = new byte[getBufferSize()];
-	
+
 				// send '\0'
 				buf[0] = 0;
 				out.write(buf, 0, 1);
 				out.flush();
-	
+
 				while (true) {
 					int c = checkAck(in);
 					if (c != 'C') {
 						break;
 					}
-	
+
 					// read '0644 '
 					in.read(buf, 0, 5);
-	
+
 					long filesize = 0L;
 					while (true) {
 						if (in.read(buf, 0, 1) < 0) {
@@ -273,10 +282,10 @@ public class ScpClient implements Closeable {
 						filesize = filesize * 10L + (long) (buf[0] - '0');
 					}
 					return filesize;
-	
+
 				}
 			}
-	
+
 		} finally {
 			channel.disconnect();
 		}

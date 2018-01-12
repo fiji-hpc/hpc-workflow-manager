@@ -1,6 +1,8 @@
 package cz.it4i.fiji.haas;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Calendar;
@@ -8,6 +10,9 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import cz.it4i.fiji.haas_java_client.HaaSClient;
 import cz.it4i.fiji.haas_java_client.JobState;
@@ -17,6 +22,8 @@ import net.imagej.updater.util.Progress;
 
 public class JobManager {
 
+	private static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas.JobManager.class);
+
 	private Path workDirectory;
 
 	private Collection<Job> jobs = new LinkedList<>();
@@ -25,7 +32,6 @@ public class JobManager {
 
 	private Settings settings;
 
-	
 	public JobManager(Path workDirectory, Settings settings) throws IOException {
 		this.workDirectory = workDirectory;
 		this.settings = settings;
@@ -39,8 +45,20 @@ public class JobManager {
 
 	}
 
-	public void startJob(Path path, Collection<Path> files, Progress progress) throws IOException {
-		jobs.add(new Job(path, files, this::getHaasClient, progress));
+	public JobInfo startJob(Collection<Path> files, Progress progress) throws IOException {
+		Job job;
+		jobs.add(job = new Job(workDirectory, files, this::getHaasClient, progress));
+		return new JobInfo(job) {
+			@Override
+			public JobState getState() {
+				try {
+					job.updateState();
+				} catch (IOException e) {
+					log.error(e.getMessage(), e);
+				}
+				return super.getState();
+			}
+		};
 	}
 
 	public Iterable<JobInfo> getJobsNeedingDownload() {
@@ -58,13 +76,18 @@ public class JobManager {
 
 	}
 
+	public JobState getState(long id) {
+		return getHaasClient().obtainJobInfo(id).getState();
+	}
+	
+	
+
 	private HaaSClient getHaasClient() {
 		if (haasClient == null) {
 			haasClient = new HaaSClient(settings);
 		}
 		return haasClient;
 	}
-
 
 	public static class JobInfo extends ObservableValueBase<JobInfo> {
 
@@ -102,7 +125,13 @@ public class JobManager {
 			job.download(progress);
 			fireValueChangedEvent();
 		}
+		
+		public void waitForStart() {
+			// TODO Auto-generated method stub
+			
+		}
 
+		
 		public void updateInfo() throws IOException {
 			job.updateState();
 		}
@@ -111,10 +140,25 @@ public class JobManager {
 		public JobInfo getValue() {
 			return this;
 		}
+		
+		public void downloadFileData(String fileName, OutputStream bos) {
+			job.downloadFileData(fileName, bos);
+		}
+
+		public void uploadFile(ByteArrayInputStream byteArrayInputStream, String configModified, int length,
+				long epochSecond) {
+			
+			//TODO
+		}
 
 		private String getStringFromTimeSafely(Calendar time) {
 			return time != null ? time.getTime().toString() : "N/A";
 		}
 
+
+
+
+
 	}
+
 }

@@ -49,9 +49,8 @@ public class RunWithHaaS implements Command {
 	@Override
 	public void run() {
 		try {
-			jobManager = new JobManager(getWorkingDirectoryPath(),TestingConstants.getSettings());
-			jobManager.startJob(getWorkingDirectoryPath(), getContent(dataDirectory),
-					ModalDialogs.doModal(new ProgressDialog(getFrame())));
+			jobManager = new JobManager(getWorkingDirectoryPath(), TestingConstants.getSettings());
+			jobManager.startJob(getContent(dataDirectory), ModalDialogs.doModal(new ProgressDialog(getFrame())));
 		} catch (IOException e) {
 			log.error(e);
 		}
