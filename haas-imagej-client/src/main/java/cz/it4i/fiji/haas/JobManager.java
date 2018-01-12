@@ -1,7 +1,7 @@
 package cz.it4i.fiji.haas;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -145,10 +145,10 @@ public class JobManager {
 			job.downloadFileData(fileName, bos);
 		}
 
-		public void uploadFile(ByteArrayInputStream byteArrayInputStream, String configModified, int length,
-				long epochSecond) {
+		public void uploadFile(InputStream inputStream, String name, int length,
+				long lastModification) {
 			
-			//TODO
+			job.uploadFileData(inputStream, name, length, lastModification);
 		}
 
 		private String getStringFromTimeSafely(Calendar time) {

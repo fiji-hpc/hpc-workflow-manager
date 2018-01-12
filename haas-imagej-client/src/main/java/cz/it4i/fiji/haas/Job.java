@@ -134,9 +134,12 @@ public class Job {
 	}
 
 	public void downloadFileData(String fileName, OutputStream bos) {
-		haasClientSupplier.get().downloadFileData(jobId,fileName, bos);
+		haasClientSupplier.get().downloadFileData(jobId, fileName, bos);
 	}
-	
+
+	public void uploadFileData(InputStream inputStream, String fileName, int length, long lastModification) {
+		haasClientSupplier.get().uploadFileData(jobId, inputStream, fileName, length, lastModification);
+	}
 
 	public JobState getState() {
 		return state;
@@ -222,7 +225,5 @@ public class Job {
 		}
 
 	}
-
-	
 
 }

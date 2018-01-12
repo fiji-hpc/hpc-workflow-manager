@@ -66,7 +66,7 @@ public class ScpClient implements Closeable {
 	}
 
 	public boolean download(String lfile, Path rfile, TransferFileProgress progress) throws JSchException, IOException {
-		try(OutputStream os = Files.newOutputStream(rfile)) {
+		try (OutputStream os = Files.newOutputStream(rfile)) {
 			return download(lfile, os, progress);
 		}
 	}
@@ -174,17 +174,16 @@ public class ScpClient implements Closeable {
 
 	public boolean upload(Path file, String rfile, TransferFileProgress progress) throws JSchException, IOException {
 		try (InputStream is = Files.newInputStream(file)) {
-			return upload(is, file.getFileName().toString(), file.toFile().length(), file.toFile().lastModified(),
-					rfile, progress);
+			return upload(is, rfile, file.toFile().length(), file.toFile().lastModified(), progress);
 		}
 	}
 
-	public boolean upload(InputStream is, String fileName, long length, long lastModified, String rfile,
+	public boolean upload(InputStream is, String fileName, long length, long lastModified,
 			TransferFileProgress progress) throws JSchException, IOException {
 		Session session = connectionSession();
 		boolean ptimestamp = true;
 		// exec 'scp -t rfile' remotely
-		String command = "scp " + (ptimestamp ? "-p" : "") + " -t " + rfile;
+		String command = "scp " + (ptimestamp ? "-p" : "") + " -t " + fileName;
 		Channel channel = session.openChannel("exec");
 		((ChannelExec) channel).setCommand(command);
 		// get I/O streams for remote scp

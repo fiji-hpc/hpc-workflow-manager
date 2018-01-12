@@ -1,6 +1,7 @@
 package cz.it4i.fiji.haas_java_client;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
@@ -284,6 +285,20 @@ public class HaaSClient {
 			FileTransferMethodExt ft = getFileTransfer().getFileTransferMethod(jobId, getSessionID());
 			try (ScpClient scpClient = getScpClient(ft)) {
 				scpClient.download(fileName, os, new TransferFileProgressForHaaSClient(0, dummyNotifier));
+				getFileTransfer().endFileTransfer(jobId, ft, getSessionID());
+			}
+		} catch (IOException | JSchException | ServiceException e) {
+			throw new HaaSClientException(e);
+		}
+	}
+	
+	public void uploadFileData(Long jobId, InputStream inputStream, String fileName, long length,
+			long lastModification) {
+		try {
+			FileTransferMethodExt ft = getFileTransfer().getFileTransferMethod(jobId, getSessionID());
+			try (ScpClient scpClient = getScpClient(ft)) {
+				scpClient.upload(inputStream,fileName,length,lastModification, new TransferFileProgressForHaaSClient(0, dummyNotifier));
+				getFileTransfer().endFileTransfer(jobId, ft, getSessionID());
 			}
 		} catch (IOException | JSchException | ServiceException e) {
 			throw new HaaSClientException(e);
@@ -447,5 +462,7 @@ public class HaaSClient {
 			notifier.done();
 		}
 	}
+
+	
 
 }
