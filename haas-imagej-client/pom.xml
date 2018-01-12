@@ -1,17 +1,14 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-
-
 	<parent>
 		<groupId>org.scijava</groupId>
 		<artifactId>pom-scijava</artifactId>
 		<version>17.1.1</version>
 		<relativePath />
 	</parent>
-
 	<groupId>cz.it4i.fiji</groupId>
-	<artifactId>inspect-menus</artifactId>
+	<artifactId>haas-imagej-client</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>jar</packaging>
 	<name>Simple ImageJ Commands</name>
@@ -84,22 +81,11 @@
 			<artifactId>imagej</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>net.preibisch</groupId>
-			<artifactId>multiview-reconstruction</artifactId>
-			<version>0.1.1-SNAPSHOT</version>
-		</dependency>
-		<!-- https://mvnrepository.com/artifact/net.imagej/imagej-legacy -->
-		<dependency>
-			<groupId>net.imagej</groupId>
-			<artifactId>imagej-legacy</artifactId>
-		</dependency>
-		<dependency>
 			<groupId>cz.it4i.fiji</groupId>
 			<artifactId>haas-java-client</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/net.imagej/imagej-launcher -->
-
 
 	</dependencies>
 </project>
