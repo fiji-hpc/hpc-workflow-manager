@@ -9,8 +9,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.stream.Collectors;
 
-import org.scijava.Context;
-
 import cz.it4i.fiji.haas_java_client.HaaSClient;
 import cz.it4i.fiji.haas_java_client.JobState;
 import javafx.beans.value.ObservableValueBase;
@@ -24,26 +22,17 @@ public class JobManager {
 
 	private HaaSClient haasClient;
 
-	private Context context;
-
-	public JobManager(Path workDirectory, Context ctx) throws IOException {
-		this.context = ctx;
+	
+	public JobManager(Path workDirectory) throws IOException {
 		this.workDirectory = workDirectory;
-		context.inject(this);
 		Files.list(this.workDirectory).filter(p -> Files.isDirectory(p) && Job.isJobPath(p)).forEach(p -> {
 			try {
-				jobs.add(inject(new Job(p, this::getHaasClient)));
+				jobs.add(new Job(p, this::getHaasClient));
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		});
 
-	}
-
-	
-	private Job inject(Job job) {
-		context.inject(job);
-		return job;
 	}
 
 	public void startJob(Path path, Collection<Path> files, Progress progress) throws IOException {
@@ -71,6 +60,7 @@ public class JobManager {
 		}
 		return haasClient;
 	}
+
 
 	public static class JobInfo extends ObservableValueBase<JobInfo> {
 
@@ -103,13 +93,12 @@ public class JobManager {
 		public String getEndTime() {
 			return getStringFromTimeSafely(job.getEndTime());
 		}
-		
 
 		public void downloadData(Progress progress) {
 			job.download(progress);
 			fireValueChangedEvent();
 		}
-		
+
 		public void updateInfo() throws IOException {
 			job.updateState();
 		}
@@ -120,7 +109,7 @@ public class JobManager {
 		}
 
 		private String getStringFromTimeSafely(Calendar time) {
-			return time!= null ? time.getTime().toString() : "N/A";
+			return time != null ? time.getTime().toString() : "N/A";
 		}
 
 	}

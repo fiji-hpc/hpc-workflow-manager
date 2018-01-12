@@ -45,7 +45,7 @@ public class CheckStatusOfHaaS implements Command {
 	@Override
 	public void run() {
 		try {
-			jobManager = new JobManager(getWorkingDirectoryPath(), context);
+			jobManager = new JobManager(getWorkingDirectoryPath());
 			if (uiService.isHeadless()) {
 				downloadAll();
 			} else {

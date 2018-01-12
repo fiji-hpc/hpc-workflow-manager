@@ -49,7 +49,7 @@ public class RunWithHaaS implements Command {
 	@Override
 	public void run() {
 		try {
-			jobManager = new JobManager(getWorkingDirectoryPath(), context);
+			jobManager = new JobManager(getWorkingDirectoryPath());
 			jobManager.startJob(getWorkingDirectoryPath(), getContent(dataDirectory),
 					ModalDialogs.doModal(new ProgressDialog(getFrame())));
 		} catch (IOException e) {
