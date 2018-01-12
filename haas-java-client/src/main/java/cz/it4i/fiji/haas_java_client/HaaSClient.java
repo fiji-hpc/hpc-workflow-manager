@@ -45,7 +45,13 @@ import cz.it4i.fiji.haas_java_client.proxy.UserAndLimitationManagementWsSoap;
 import cz.it4i.fiji.scpclient.ScpClient;
 
 public class HaaSClient {
-
+	interface UploadingFile {
+		InputStream getInputStream();
+		String getName();
+		long getLength();
+		long getLastTime();
+	}
+	
 	static public class SynchronizableFiles {
 
 		private Collection<TaskFileOffsetExt> files = new LinkedList<>();
