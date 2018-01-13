@@ -113,10 +113,6 @@ public class Job {
 		saveJobinfo();
 	}
 
-	private JobInfo updateJobInfo() {
-		return jobInfo = haasClientSupplier.get().obtainJobInfo(getJobId());
-	}
-
 	public void download() {
 		download(dummy);
 	}
@@ -133,15 +129,7 @@ public class Job {
 			log.error(e);
 		}
 	}
-
-	public void downloadFileData(String fileName, OutputStream bos) {
-		haasClientSupplier.get().downloadFileData(jobId, fileName, bos);
-	}
-
-	public void uploadFileData(InputStream inputStream, String fileName, int length, long lastModification) {
-		haasClientSupplier.get().uploadFileData(jobId, inputStream, fileName, length, lastModification);
-	}
-
+	
 	public JobState getState() {
 		return state;
 	}
@@ -177,6 +165,10 @@ public class Job {
 				needsDownload = Boolean.parseBoolean(prop.getProperty(JOB_HAS_DATA_TO_DOWNLOAD_PROPERTY));
 			}
 		}
+	}
+
+	private JobInfo updateJobInfo() {
+		return jobInfo = haasClientSupplier.get().obtainJobInfo(getJobId());
 	}
 
 	private static boolean isValidPath(Path path) {

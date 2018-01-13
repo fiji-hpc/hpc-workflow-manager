@@ -1,8 +1,6 @@
 package cz.it4i.fiji.haas;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Calendar;
@@ -81,8 +79,6 @@ public class JobManager {
 	public JobState getState(long id) {
 		return getHaasClient().obtainJobInfo(id).getState();
 	}
-	
-	
 
 	private HaaSClient getHaasClient() {
 		if (haasClient == null) {
@@ -127,13 +123,12 @@ public class JobManager {
 			job.download(progress);
 			fireValueChangedEvent();
 		}
-		
+
 		public void waitForStart() {
 			// TODO Auto-generated method stub
-			
+
 		}
 
-		
 		public void updateInfo() throws IOException {
 			job.updateState();
 		}
@@ -142,24 +137,10 @@ public class JobManager {
 		public JobInfo getValue() {
 			return this;
 		}
-		
-		public void downloadFileData(String fileName, OutputStream bos) {
-			job.downloadFileData(fileName, bos);
-		}
-
-		public void uploadFile(InputStream inputStream, String name, int length,
-				long lastModification) {
-			
-			job.uploadFileData(inputStream, name, length, lastModification);
-		}
 
 		private String getStringFromTimeSafely(Calendar time) {
 			return time != null ? time.getTime().toString() : "N/A";
 		}
-
-
-
-
 
 	}
 
