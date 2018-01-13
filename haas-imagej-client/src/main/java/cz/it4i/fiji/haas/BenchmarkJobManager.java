@@ -5,9 +5,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Instant;
-import java.util.Collections;
+import java.util.Arrays;
 
 import cz.it4i.fiji.haas.JobManager.JobInfo;
+import cz.it4i.fiji.haas_java_client.HaaSClient;
 import cz.it4i.fiji.haas_java_client.JobState;
 import net.imagej.updater.util.Progress;
 
@@ -26,7 +27,8 @@ public class BenchmarkJobManager {
 	}
 
 	public JobInfo startJob() throws IOException {
-		JobInfo jobInfo = jobManager.startJob(Collections.emptyList(), null);
+		
+		JobInfo jobInfo = jobManager.startJob(Arrays.asList(getUploadingFile()).stream(), progress);
 		jobInfo.waitForStart();
 		if (jobInfo.getState() != JobState.Running) {
 			throw new IllegalStateException("start of job: " + jobInfo + " failed");
@@ -38,6 +40,10 @@ public class BenchmarkJobManager {
 		jobInfo.uploadFile(new ByteArrayInputStream(data), CONFIG_MODIFIED, data.length,
 				Instant.now().getEpochSecond());
 		return jobInfo;
+	}
+
+	private HaaSClient.UploadingFile getUploadingFile() {
+		return new UploadingFileFromResource("", "config.yaml");
 	}
 
 	public JobState getState(long jobId) {

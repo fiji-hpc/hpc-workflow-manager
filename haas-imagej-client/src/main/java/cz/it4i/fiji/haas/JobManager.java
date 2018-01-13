@@ -10,11 +10,13 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import cz.it4i.fiji.haas_java_client.HaaSClient;
+import cz.it4i.fiji.haas_java_client.HaaSClient.UploadingFile;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.Settings;
 import javafx.beans.value.ObservableValueBase;
@@ -45,7 +47,7 @@ public class JobManager {
 
 	}
 
-	public JobInfo startJob(Collection<Path> files, Progress progress) throws IOException {
+	public JobInfo startJob(Stream<UploadingFile> files, Progress progress) throws IOException {
 		Job job;
 		jobs.add(job = new Job(workDirectory, files, this::getHaasClient, progress));
 		return new JobInfo(job) {
