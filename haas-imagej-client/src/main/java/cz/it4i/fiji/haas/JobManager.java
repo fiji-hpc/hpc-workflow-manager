@@ -7,6 +7,7 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -47,7 +48,7 @@ public class JobManager {
 
 	public JobInfo createJob(Progress progress) throws IOException {
 		Job job;
-		jobs.add(job = new Job(settings.getJobName(),workDirectory, this::getHaasClient, progress));
+		jobs.add(job = new Job(settings.getJobName(), workDirectory, this::getHaasClient, progress));
 		return new JobInfo(job) {
 			@Override
 			public JobState getState() {
@@ -60,14 +61,13 @@ public class JobManager {
 			}
 		};
 	}
-	
-	public JobInfo startJob(Stream<UploadingFile> files, Progress progress) throws IOException {
+
+	public JobInfo startJob(Supplier<Stream<UploadingFile>> files, Progress progress) throws IOException {
 		JobInfo result = createJob(progress);
 		result.uploadFiles(files);
 		result.submit();
 		return result;
 	}
-	
 
 	public Iterable<JobInfo> getJobsNeedingDownload() {
 		return () -> jobs.stream().filter(j -> j.needsDownload()).map(j -> new JobInfo(j)).iterator();
@@ -103,15 +103,13 @@ public class JobManager {
 			this.job = job;
 		}
 
-		
-		public void uploadFiles(Stream<UploadingFile> files) {
+		public void uploadFiles(Supplier<Stream<UploadingFile>> files) {
 			job.uploadFiles(files);
 		}
-		
+
 		public void submit() {
 			job.submit();
 		}
-
 
 		public Long getId() {
 			return job.getJobId();
@@ -160,13 +158,10 @@ public class JobManager {
 			return time != null ? time.getTime().toString() : "N/A";
 		}
 
-
 		public Path storeDataInWorkdirectory(UploadingFile uploadingFile) throws IOException {
 			return job.storeDataInWorkdirectory(uploadingFile);
 		}
 
 	}
-
-	
 
 }

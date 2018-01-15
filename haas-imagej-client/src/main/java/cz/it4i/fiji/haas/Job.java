@@ -94,7 +94,7 @@ public class Job {
 		loadJobInfo();
 	}
 
-	public void uploadFiles(Stream<UploadingFile> files) {
+	public void uploadFiles(Supplier<Stream<UploadingFile>> files) {
 		HaaSClient client = this.haasClientSupplier.get();
 		client.uploadFiles(jobId, files, notifier);
 	}

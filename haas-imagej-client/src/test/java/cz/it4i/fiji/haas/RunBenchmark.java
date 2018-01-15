@@ -19,7 +19,7 @@ public class RunBenchmark {
 			if(!Files.exists(p)) {
 				Files.createDirectory(p);
 			}
-			BenchmarkJobManager benchmarkJobManager = new BenchmarkJobManager(Paths.get("/tmp"), new P_Progress());
+			BenchmarkJobManager benchmarkJobManager = new BenchmarkJobManager(p, new P_Progress());
 			JobInfo ji = benchmarkJobManager.createJob();
 			log.info("job: " + ji + " created.");
 		}

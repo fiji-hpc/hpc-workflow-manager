@@ -17,7 +17,7 @@ public class BenchmarkJobManager {
 	private Map<JobInfo, Path> uploadedFiles = new HashMap<>();
 
 	public BenchmarkJobManager(Path workDirectory, Progress progress) throws IOException {
-		jobManager = new JobManager(workDirectory, TestingConstants.getSettings(3, 6));
+		jobManager = new JobManager(workDirectory, TestingConstants.getSettings(2, 6));
 		this.progress = progress;
 	}
 
@@ -29,7 +29,7 @@ public class BenchmarkJobManager {
 	}
 
 	public void startJob(JobInfo jobInfo) {
-		jobInfo.uploadFiles(Arrays.asList(HaaSClient.getUploadingFile(uploadedFiles.get(jobInfo))).stream());
+		jobInfo.uploadFiles(() -> Arrays.asList(HaaSClient.getUploadingFile(uploadedFiles.get(jobInfo))).stream());
 		jobInfo.submit();
 	}
 
