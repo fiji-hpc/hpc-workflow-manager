@@ -7,6 +7,7 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -208,7 +209,7 @@ public class ScpClient implements Closeable {
 			// send "C0644 filesize filename", where filename should not include '/'
 			long filesize = length;
 			command = "C0644 " + filesize + " ";
-			command += fileName;
+			command += Paths.get(fileName).getFileName().toString();
 			command += "\n";
 			out.write(command.getBytes());
 			out.flush();
