@@ -106,6 +106,10 @@ public class JobManager {
 		public void uploadFiles(Supplier<Stream<UploadingFile>> files) {
 			job.uploadFiles(files);
 		}
+		
+		public void uploadFilesByName(Supplier<Stream<String>> files) {
+			job.uploadFilesByName(files);
+		}
 
 		public void submit() {
 			job.submit();

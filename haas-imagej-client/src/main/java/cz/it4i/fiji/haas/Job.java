@@ -42,7 +42,7 @@ public class Job {
 
 	private Supplier<HaaSClient> haasClientSupplier;
 
-	private JobState state;
+	//private JobState state;
 	private Boolean needsDownload;
 	private JobInfo jobInfo;
 	private Long jobId;
@@ -98,6 +98,10 @@ public class Job {
 		HaaSClient client = this.haasClientSupplier.get();
 		client.uploadFiles(jobId, files, notifier);
 	}
+	
+	public void uploadFilesByName(Supplier<Stream<String>> files) {
+		uploadFiles(() -> files.get().map(name -> HaaSClient.getUploadingFile(jobDir.resolve(name))));
+	}
 
 	public void submit() {
 		HaaSClient client = this.haasClientSupplier.get();
@@ -120,9 +124,8 @@ public class Job {
 	}
 
 	synchronized public void updateState() throws IOException {
-		state = updateJobInfo().getState();
 		if (needsDownload == null
-				&& EnumSet.of(JobState.Failed, JobState.Finished, JobState.Canceled).contains(state)) {
+				&& EnumSet.of(JobState.Failed, JobState.Finished, JobState.Canceled).contains(getState())) {
 			needsDownload = true;
 		}
 		saveJobinfo();
@@ -154,7 +157,7 @@ public class Job {
 	}
 
 	public JobState getState() {
-		return state;
+		return getJobInfo().getState();
 	}
 
 	public Calendar getStartTime() {
@@ -192,8 +195,14 @@ public class Job {
 		}
 	}
 
-	private JobInfo updateJobInfo() {
-		return jobInfo = haasClientSupplier.get().obtainJobInfo(getJobId());
+	private JobInfo getJobInfo() {
+		if(jobInfo == null) {
+			updateJobInfo();
+		}
+		return jobInfo;
+	}
+	private void updateJobInfo() {
+		jobInfo = haasClientSupplier.get().obtainJobInfo(getJobId());
 	}
 
 	private static boolean isValidPath(Path path) {
@@ -243,4 +252,6 @@ public class Job {
 		}
 
 	}
+
+	
 }

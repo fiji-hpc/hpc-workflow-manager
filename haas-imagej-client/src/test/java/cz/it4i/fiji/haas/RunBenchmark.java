@@ -9,14 +9,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import cz.it4i.fiji.haas.JobManager.JobInfo;
+import cz.it4i.fiji.haas_java_client.JobState;
 import net.imagej.updater.util.Progress;
 
 public class RunBenchmark {
 	private static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas.RunBenchmark.class);
-	public static class CreateJob{
+
+	public static class CreateJob {
 		public static void main(String[] args) throws IOException {
 			Path p = Paths.get("/tmp/benchmark");
-			if(!Files.exists(p)) {
+			if (!Files.exists(p)) {
 				Files.createDirectory(p);
 			}
 			BenchmarkJobManager benchmarkJobManager = new BenchmarkJobManager(p, new P_Progress());
@@ -24,7 +26,25 @@ public class RunBenchmark {
 			log.info("job: " + ji + " created.");
 		}
 	}
-	
+
+	public static class ProcessJobs {
+		public static void main(String[] args) throws IOException {
+			Path p = Paths.get("/tmp/benchmark");
+			if (!Files.exists(p)) {
+				Files.createDirectory(p);
+			}
+			BenchmarkJobManager benchmarkJobManager = new BenchmarkJobManager(p, new P_Progress());
+			for (JobInfo ji : benchmarkJobManager.getJobs()) {
+				log.info("job: " + ji.getId() + " hasStatus " + ji.getState());
+				if (ji.getState() == JobState.Configuring) {
+					benchmarkJobManager.startJob(ji);
+				} else if (ji.getState() != JobState.Running) {
+					ji.downloadData(new P_Progress());
+				}
+			}
+		}
+	}
+
 	private static class P_Progress implements Progress {
 
 		@Override
@@ -50,6 +70,6 @@ public class RunBenchmark {
 		@Override
 		public void done() {
 		}
-		
+
 	}
 }
