@@ -27,6 +27,8 @@ public class Job {
 
 	private static final String JOB_HAS_DATA_TO_DOWNLOAD_PROPERTY = "job.needDownload";
 
+	private static final String JOB_NAME = "job.name";
+
 	public static boolean isJobPath(Path p) {
 		return isValidPath(p);
 	}
@@ -73,12 +75,15 @@ public class Job {
 		}
 	};
 
-	public Job(Path basePath, Supplier<HaaSClient> haasClientSupplier, Progress progress) throws IOException {
+	private String name;
+
+	public Job(String name, Path basePath, Supplier<HaaSClient> haasClientSupplier, Progress progress) throws IOException {
 		this(haasClientSupplier);
 		HaaSClient client = this.haasClientSupplier.get();
-		long id = client.createJob("TestOutRedirect", Collections.emptyList(),
+		long id = client.createJob(name, Collections.emptyList(),
 				notifier = new P_ProgressNotifierAdapter(progress));
 		jobDir = basePath.resolve("" + id);
+		this.name = name;
 		Files.createDirectory(jobDir);
 		updateState();
 	}
@@ -171,6 +176,7 @@ public class Job {
 			if (needsDownload != null) {
 				prop.setProperty(JOB_HAS_DATA_TO_DOWNLOAD_PROPERTY, needsDownload.toString());
 			}
+			prop.setProperty(JOB_NAME, name);
 			prop.store(ow, null);
 		}
 	}
@@ -181,6 +187,7 @@ public class Job {
 			prop.load(is);
 			if (prop.containsKey(JOB_HAS_DATA_TO_DOWNLOAD_PROPERTY)) {
 				needsDownload = Boolean.parseBoolean(prop.getProperty(JOB_HAS_DATA_TO_DOWNLOAD_PROPERTY));
+				name = prop.getProperty(JOB_NAME);
 			}
 		}
 	}

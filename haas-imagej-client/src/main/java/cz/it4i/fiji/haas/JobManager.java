@@ -47,7 +47,7 @@ public class JobManager {
 
 	public JobInfo createJob(Progress progress) throws IOException {
 		Job job;
-		jobs.add(job = new Job(workDirectory, this::getHaasClient, progress));
+		jobs.add(job = new Job(settings.getJobName(),workDirectory, this::getHaasClient, progress));
 		return new JobInfo(job) {
 			@Override
 			public JobState getState() {

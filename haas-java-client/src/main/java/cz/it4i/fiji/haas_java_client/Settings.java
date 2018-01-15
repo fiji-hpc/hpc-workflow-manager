@@ -9,4 +9,5 @@ public interface Settings {
 	int getTimeout();
 	long getClusterNodeType();
 	String getProjectId();
+	String getJobName();
 }

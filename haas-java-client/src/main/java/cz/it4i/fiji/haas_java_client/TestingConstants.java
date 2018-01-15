@@ -48,6 +48,11 @@ interface TestingConstants {
 			public String getProjectId() {
 				return projectId;
 			}
+
+			@Override
+			public String getJobName() {
+				return "TestOutRedirect";
+			}
 		};
 	}
 	
