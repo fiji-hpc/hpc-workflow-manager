@@ -10,12 +10,17 @@ import java.util.Map;
 
 import javax.xml.rpc.ServiceException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import cz.it4i.fiji.haas_java_client.HaaSClient.SynchronizableFiles;
 import cz.it4i.fiji.haas_java_client.proxy.JobFileContentExt;
 
 
 public class TestHaaSJavaClient {
 
+	private static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas_java_client.TestHaaSJavaClient.class);
+	
 	public static void main(String[] args) throws ServiceException, IOException {
 		Map<String, String> params = new HashMap<>();
 		params.put("inputParam", "someStringParam");
@@ -42,7 +47,7 @@ public class TestHaaSJavaClient {
 			if (info.getState() == JobState.Finished) {
 				client.download(jobId,workDir);
 			}
-			System.out.println("JobId :" + jobId + ", state" + info.getState());
+			log.info("JobId :" + jobId + ", state" + info.getState());
 		} while (info.getState() != JobState.Canceled && info.getState() != JobState.Failed
 				&& info.getState() != JobState.Finished);
 	}
@@ -55,10 +60,10 @@ public class TestHaaSJavaClient {
 	}
 
 	private static void showJFC(JobFileContentExt file) {
-		System.out.println("File: " + file.getFileType() + ", " + file.getRelativePath());
-		System.out.println("TaskInfoId: " + file.getSubmittedTaskInfoId());
-		System.out.println("Offset: " + file.getOffset());
-		System.out.println("Content: " + file.getContent());
+		log.info("File: " + file.getFileType() + ", " + file.getRelativePath());
+		log.info("TaskInfoId: " + file.getSubmittedTaskInfoId());
+		log.info("Offset: " + file.getOffset());
+		log.info("Content: " + file.getContent());
 	}
 
 }
