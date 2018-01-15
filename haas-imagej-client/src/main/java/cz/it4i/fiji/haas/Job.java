@@ -44,6 +44,7 @@ public class Job {
 	private Boolean needsDownload;
 	private JobInfo jobInfo;
 	private Long jobId;
+	private ProgressNotifier notifier;
 
 	final private Progress dummy = new Progress() {
 
@@ -72,12 +73,11 @@ public class Job {
 		}
 	};
 
-	public Job(Path basePath, Stream<UploadingFile> files, Supplier<HaaSClient> haasClientSupplier, Progress progress)
-			throws IOException {
+	public Job(Path basePath, Supplier<HaaSClient> haasClientSupplier, Progress progress) throws IOException {
 		this(haasClientSupplier);
 		HaaSClient client = this.haasClientSupplier.get();
-		long id = client.start(files, "TestOutRedirect", Collections.emptyList(),
-				new P_ProgressNotifierAdapter(progress));
+		long id = client.createJob("TestOutRedirect", Collections.emptyList(),
+				notifier = new P_ProgressNotifierAdapter(progress));
 		jobDir = basePath.resolve("" + id);
 		Files.createDirectory(jobDir);
 		updateState();
@@ -87,6 +87,16 @@ public class Job {
 		this(haasClientSupplier);
 		jobDir = p;
 		loadJobInfo();
+	}
+
+	public void uploadFiles(Stream<UploadingFile> files) {
+		HaaSClient client = this.haasClientSupplier.get();
+		client.uploadFiles(jobId, files, notifier);
+	}
+
+	public void submit() {
+		HaaSClient client = this.haasClientSupplier.get();
+		client.submitJob(jobId, notifier);
 	}
 
 	private Job(Supplier<HaaSClient> haasClientSupplier) {
@@ -116,6 +126,14 @@ public class Job {
 	public void download() {
 		download(dummy);
 	}
+	
+	public Path storeDataInWorkdirectory(UploadingFile uploadingFile) throws IOException {
+		Path result;
+		try(InputStream is = uploadingFile.getInputStream()) {
+			Files.copy(is, result = jobDir.resolve(uploadingFile.getName()));
+		}
+		return result;
+	}
 
 	synchronized public void download(Progress progress) {
 		if (!needsDownload()) {
@@ -129,7 +147,7 @@ public class Job {
 			log.error(e);
 		}
 	}
-	
+
 	public JobState getState() {
 		return state;
 	}
@@ -218,5 +236,4 @@ public class Job {
 		}
 
 	}
-
 }
