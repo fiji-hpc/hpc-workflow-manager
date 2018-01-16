@@ -9,7 +9,6 @@ import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import cz.it4i.fiji.haas.JobManager.JobInfo;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
 import net.imagej.updater.util.Progress;
@@ -24,7 +23,7 @@ public class RunBenchmark {
 				Files.createDirectory(p);
 			}
 			BenchmarkJobManager benchmarkJobManager = new BenchmarkJobManager(p, new P_Progress());
-			JobInfo ji = benchmarkJobManager.createJob();
+			long ji = benchmarkJobManager.createJob();
 			log.info("job: " + ji + " created.");
 		}
 	}
@@ -36,14 +35,15 @@ public class RunBenchmark {
 				Files.createDirectory(p);
 			}
 			BenchmarkJobManager benchmarkJobManager = new BenchmarkJobManager(p, new P_Progress());
-			for (JobInfo ji : benchmarkJobManager.getJobs()) {
-				log.info("job: " + ji.getId() + " hasStatus " + ji.getState());
-				if (ji.getState() == JobState.Configuring) {
-					benchmarkJobManager.startJob(ji);
-				} else if (ji.getState() != JobState.Running && ji.getState() != JobState.Queued) {
-					ji.downloadData(new P_Progress());
-				} else if (ji.getState() == JobState.Running) {
-					log.info(ji.getOutput(Arrays.asList(
+			for (long jobId : benchmarkJobManager.getJobs()) {
+				JobState state;
+				log.info("job: " + jobId + " hasStatus " + (state = benchmarkJobManager.getState(jobId)));
+				if (state == JobState.Configuring) {
+					benchmarkJobManager.startJob(jobId);
+				} else if (state != JobState.Running && state != JobState.Queued) {
+					benchmarkJobManager.downloadData(jobId);
+				} else if (state == JobState.Running) {
+					log.info(benchmarkJobManager.getOutput(jobId,Arrays.asList(
 							new JobManager.JobSynchronizableFile(SynchronizableFileType.StandardErrorFile, 0))).iterator().next());
 				}
 			}
