@@ -4,12 +4,14 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import cz.it4i.fiji.haas.JobManager.JobInfo;
 import cz.it4i.fiji.haas_java_client.JobState;
+import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
 import net.imagej.updater.util.Progress;
 
 public class RunBenchmark {
@@ -40,6 +42,9 @@ public class RunBenchmark {
 					benchmarkJobManager.startJob(ji);
 				} else if (ji.getState() != JobState.Running && ji.getState() != JobState.Queued) {
 					ji.downloadData(new P_Progress());
+				} else if (ji.getState() == JobState.Running) {
+					log.info(ji.getOutput(Arrays.asList(
+							new JobManager.JobSynchronizableFile(SynchronizableFileType.StandardErrorFile, 0))).iterator().next());
 				}
 			}
 		}

@@ -11,16 +11,19 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Properties;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
 
+import cz.it4i.fiji.haas.JobManager.JobSynchronizableFile;
 import cz.it4i.fiji.haas_java_client.HaaSClient;
 import cz.it4i.fiji.haas_java_client.HaaSClient.UploadingFile;
 import cz.it4i.fiji.haas_java_client.JobInfo;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.ProgressNotifier;
+import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
 import net.imagej.updater.util.Progress;
 
 public class Job {
@@ -42,7 +45,7 @@ public class Job {
 
 	private Supplier<HaaSClient> haasClientSupplier;
 
-	//private JobState state;
+	// private JobState state;
 	private Boolean needsDownload;
 	private JobInfo jobInfo;
 	private Long jobId;
@@ -77,10 +80,11 @@ public class Job {
 
 	private String name;
 
-	public Job(String name, Path basePath, Supplier<HaaSClient> haasClientSupplier, Progress progress) throws IOException {
+	public Job(String name, Path basePath, Supplier<HaaSClient> haasClientSupplier, Progress progress)
+			throws IOException {
 		this(haasClientSupplier, progress);
 		HaaSClient client = this.haasClientSupplier.get();
-		long id = client.createJob(name, Collections.emptyList(),notifier);
+		long id = client.createJob(name, Collections.emptyList(), notifier);
 		jobDir = basePath.resolve("" + id);
 		this.name = name;
 		Files.createDirectory(jobDir);
@@ -97,7 +101,7 @@ public class Job {
 		HaaSClient client = this.haasClientSupplier.get();
 		client.uploadFiles(jobId, files, notifier);
 	}
-	
+
 	public void uploadFilesByName(Supplier<Stream<String>> files) {
 		uploadFiles(() -> files.get().map(name -> HaaSClient.getUploadingFile(jobDir.resolve(name))));
 	}
@@ -134,10 +138,10 @@ public class Job {
 	public void download() {
 		download(dummy);
 	}
-	
+
 	public Path storeDataInWorkdirectory(UploadingFile uploadingFile) throws IOException {
 		Path result;
-		try(InputStream is = uploadingFile.getInputStream()) {
+		try (InputStream is = uploadingFile.getInputStream()) {
 			Files.copy(is, result = jobDir.resolve(uploadingFile.getName()));
 		}
 		return result;
@@ -196,11 +200,12 @@ public class Job {
 	}
 
 	private JobInfo getJobInfo() {
-		if(jobInfo == null) {
+		if (jobInfo == null) {
 			updateJobInfo();
 		}
 		return jobInfo;
 	}
+
 	private void updateJobInfo() {
 		jobInfo = haasClientSupplier.get().obtainJobInfo(getJobId());
 	}
@@ -253,5 +258,12 @@ public class Job {
 
 	}
 
-	
+	public Iterable<String> getOutput(Iterable<JobSynchronizableFile> output) {
+		HaaSClient.SynchronizableFiles taskFileOffset = new HaaSClient.SynchronizableFiles();
+		long taskId = (Long) getJobInfo().getTasks().toArray()[0];
+		output.forEach(file->taskFileOffset.addFile(taskId, file.getType(), file.getOffset()));
+		return haasClientSupplier.get().downloadPartsOfJobFiles(jobId, taskFileOffset).stream().map(f -> f.getContent())
+				.collect(Collectors.toList());
+	}
+
 }

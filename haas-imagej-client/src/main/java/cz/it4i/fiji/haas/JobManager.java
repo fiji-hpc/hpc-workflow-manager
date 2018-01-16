@@ -18,6 +18,7 @@ import cz.it4i.fiji.haas_java_client.HaaSClient;
 import cz.it4i.fiji.haas_java_client.HaaSClient.UploadingFile;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.Settings;
+import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
 import javafx.beans.value.ObservableValueBase;
 import net.imagej.updater.util.Progress;
 
@@ -96,6 +97,22 @@ public class JobManager {
 		}
 		return haasClient;
 	}
+	
+	public static class JobSynchronizableFile {
+		private SynchronizableFileType type;
+		private long offset;
+		public JobSynchronizableFile(SynchronizableFileType type, long offset) {
+			super();
+			this.type = type;
+			this.offset = offset;
+		}
+		public SynchronizableFileType getType() {
+			return type;
+		}
+		public long getOffset() {
+			return offset;
+		}
+	}
 
 	public static class JobInfo extends ObservableValueBase<JobInfo> {
 
@@ -160,12 +177,16 @@ public class JobManager {
 			return this;
 		}
 
-		private String getStringFromTimeSafely(Calendar time) {
-			return time != null ? time.getTime().toString() : "N/A";
-		}
-
 		public Path storeDataInWorkdirectory(UploadingFile uploadingFile) throws IOException {
 			return job.storeDataInWorkdirectory(uploadingFile);
+		}
+		
+		public Iterable<String> getOutput(Iterable<JobSynchronizableFile> files) {
+			return job.getOutput(files);
+		}
+		
+		private String getStringFromTimeSafely(Calendar time) {
+			return time != null ? time.getTime().toString() : "N/A";
 		}
 
 	}
