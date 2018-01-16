@@ -1,6 +1,7 @@
 package cz.it4i.fiji.haas;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Calendar;
@@ -187,6 +188,15 @@ public class JobManager {
 		
 		private String getStringFromTimeSafely(Calendar time) {
 			return time != null ? time.getTime().toString() : "N/A";
+		}
+
+		public InputStream openLocalFile(String name) throws IOException {
+			return job.openLocalFile(name);
+		}
+
+		public void setProperty(String name, String value) throws IOException {
+			job.setProperty(name, value);
+			
 		}
 
 	}

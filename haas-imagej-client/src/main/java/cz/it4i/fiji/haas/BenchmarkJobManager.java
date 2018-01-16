@@ -1,6 +1,7 @@
 package cz.it4i.fiji.haas;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
@@ -8,6 +9,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import org.yaml.snakeyaml.Yaml;
 
 import cz.it4i.fiji.haas.JobManager.JobInfo;
 import cz.it4i.fiji.haas.JobManager.JobSynchronizableFile;
@@ -32,10 +35,12 @@ public class BenchmarkJobManager {
 		return indexJob(jobInfo);
 	}
 
-	public void startJob(long jobId) {
+	public void startJob(long jobId) throws IOException {
 		JobInfo jobInfo = jobs.get(jobId);
 		jobInfo.uploadFilesByName(() -> Arrays.asList(CONFIG_YAML).stream());
+		String outputName = getOutputName(jobInfo.openLocalFile(CONFIG_YAML));
 		jobInfo.submit();
+		jobInfo.setProperty("spim.outputFilenamePattern", outputName);
 	}
 
 	
@@ -64,6 +69,21 @@ public class BenchmarkJobManager {
 	private long indexJob(JobInfo jobInfo) {
 		jobs.put(jobInfo.getId(), jobInfo);
 		return jobInfo.getId();
+	}
+
+	@SuppressWarnings("rawtypes")
+	private String getOutputName(InputStream openLocalFile) throws IOException {
+		try(InputStream is = openLocalFile){
+			Yaml yaml = new Yaml();
+			
+			Map map = yaml.load(is);
+			String result = (String) ((Map)map.get("common")).get("hdf5_xml_filename");
+			if(result == null) {
+				throw new IllegalArgumentException("hdf5_xml_filename not found");
+			}
+			return result;
+		}
+		
 	}
 
 	

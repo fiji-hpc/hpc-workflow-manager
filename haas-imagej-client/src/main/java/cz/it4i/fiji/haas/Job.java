@@ -23,7 +23,6 @@ import cz.it4i.fiji.haas_java_client.HaaSClient.UploadingFile;
 import cz.it4i.fiji.haas_java_client.JobInfo;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.ProgressNotifier;
-import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
 import net.imagej.updater.util.Progress;
 
 public class Job {
@@ -176,27 +175,56 @@ public class Job {
 		return jobInfo.getEndTime();
 	}
 
+	public Iterable<String> getOutput(Iterable<JobSynchronizableFile> output) {
+		HaaSClient.SynchronizableFiles taskFileOffset = new HaaSClient.SynchronizableFiles();
+		long taskId = (Long) getJobInfo().getTasks().toArray()[0];
+		output.forEach(file->taskFileOffset.addFile(taskId, file.getType(), file.getOffset()));
+		return haasClientSupplier.get().downloadPartsOfJobFiles(jobId, taskFileOffset).stream().map(f -> f.getContent())
+				.collect(Collectors.toList());
+	}
+
+	public InputStream openLocalFile(String name) throws IOException {
+		return Files.newInputStream(jobDir.resolve(name));
+	}
+
+	public void setProperty(String name, String value) throws IOException {
+		Properties prop = loadPropertiesIfExists();
+		prop.setProperty(name, value);
+		
+	}
+
 	private synchronized void saveJobinfo() throws IOException {
+		Properties prop = loadPropertiesIfExists();
+		if (needsDownload != null) {
+			prop.setProperty(JOB_HAS_DATA_TO_DOWNLOAD_PROPERTY, needsDownload.toString());
+		}
+		prop.setProperty(JOB_NAME, name);
+		storeProperties(prop);
+	}
+
+	private void storeProperties(Properties prop) throws IOException {
 		try (OutputStream ow = Files.newOutputStream(jobDir.resolve(JOB_INFO_FILE),
 				StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)) {
-			Properties prop = new Properties();
-			if (needsDownload != null) {
-				prop.setProperty(JOB_HAS_DATA_TO_DOWNLOAD_PROPERTY, needsDownload.toString());
-			}
-			prop.setProperty(JOB_NAME, name);
 			prop.store(ow, null);
 		}
 	}
 
 	private synchronized void loadJobInfo() throws IOException {
-		try (InputStream is = Files.newInputStream(jobDir.resolve(JOB_INFO_FILE))) {
-			Properties prop = new Properties();
-			prop.load(is);
-			if (prop.containsKey(JOB_HAS_DATA_TO_DOWNLOAD_PROPERTY)) {
-				needsDownload = Boolean.parseBoolean(prop.getProperty(JOB_HAS_DATA_TO_DOWNLOAD_PROPERTY));
-				name = prop.getProperty(JOB_NAME);
+		Properties prop = loadPropertiesIfExists();
+		if (prop.containsKey(JOB_HAS_DATA_TO_DOWNLOAD_PROPERTY)) {
+			needsDownload = Boolean.parseBoolean(prop.getProperty(JOB_HAS_DATA_TO_DOWNLOAD_PROPERTY));
+			name = prop.getProperty(JOB_NAME);
+		}
+	}
+
+	private Properties loadPropertiesIfExists() throws IOException {
+		Properties prop = new Properties();
+		if(Files.exists(jobDir.resolve(JOB_INFO_FILE))) {
+			try (InputStream is = Files.newInputStream(jobDir.resolve(JOB_INFO_FILE))) {
+				prop.load(is);
 			}
 		}
+		return prop;
 	}
 
 	private JobInfo getJobInfo() {
@@ -256,14 +284,6 @@ public class Job {
 			progress.done();
 		}
 
-	}
-
-	public Iterable<String> getOutput(Iterable<JobSynchronizableFile> output) {
-		HaaSClient.SynchronizableFiles taskFileOffset = new HaaSClient.SynchronizableFiles();
-		long taskId = (Long) getJobInfo().getTasks().toArray()[0];
-		output.forEach(file->taskFileOffset.addFile(taskId, file.getType(), file.getOffset()));
-		return haasClientSupplier.get().downloadPartsOfJobFiles(jobId, taskFileOffset).stream().map(f -> f.getContent())
-				.collect(Collectors.toList());
 	}
 
 }
