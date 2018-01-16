@@ -38,7 +38,7 @@ public class RunBenchmark {
 				log.info("job: " + ji.getId() + " hasStatus " + ji.getState());
 				if (ji.getState() == JobState.Configuring) {
 					benchmarkJobManager.startJob(ji);
-				} else if (ji.getState() != JobState.Running) {
+				} else if (ji.getState() != JobState.Running && ji.getState() != JobState.Queued) {
 					ji.downloadData(new P_Progress());
 				}
 			}

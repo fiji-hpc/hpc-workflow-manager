@@ -40,8 +40,8 @@ public class BenchmarkJobManager {
 		return new UploadingFileFromResource("", CONFIG_YAML);
 	}
 
-	public Collection<JobInfo> getJobs() {
-		return jobManager.getJobs();
+	public Collection<JobInfo> getJobs() throws IOException {
+		return jobManager.getJobs(progress);
 	}
 
 }

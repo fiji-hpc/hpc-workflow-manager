@@ -78,18 +78,17 @@ public class Job {
 	private String name;
 
 	public Job(String name, Path basePath, Supplier<HaaSClient> haasClientSupplier, Progress progress) throws IOException {
-		this(haasClientSupplier);
+		this(haasClientSupplier, progress);
 		HaaSClient client = this.haasClientSupplier.get();
-		long id = client.createJob(name, Collections.emptyList(),
-				notifier = new P_ProgressNotifierAdapter(progress));
+		long id = client.createJob(name, Collections.emptyList(),notifier);
 		jobDir = basePath.resolve("" + id);
 		this.name = name;
 		Files.createDirectory(jobDir);
 		updateState();
 	}
 
-	public Job(Path p, Supplier<HaaSClient> haasClientSupplier) throws IOException {
-		this(haasClientSupplier);
+	public Job(Path p, Supplier<HaaSClient> haasClientSupplier, Progress progress) throws IOException {
+		this(haasClientSupplier, progress);
 		jobDir = p;
 		loadJobInfo();
 	}
@@ -108,7 +107,8 @@ public class Job {
 		client.submitJob(jobId, notifier);
 	}
 
-	private Job(Supplier<HaaSClient> haasClientSupplier) {
+	private Job(Supplier<HaaSClient> haasClientSupplier, Progress progress) {
+		notifier = new P_ProgressNotifierAdapter(progress);
 		this.haasClientSupplier = haasClientSupplier;
 	}
 

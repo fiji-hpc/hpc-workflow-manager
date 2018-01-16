@@ -53,7 +53,7 @@ public class CheckStatusOfHaaS implements Command {
 				window = ModalDialogs.doModal(new CheckStatusOfHaaSWindow(getFrame(), context));
 				ProgressDialog dialog = ModalDialogs.doModal(new ProgressDialog(window));
 				dialog.setTitle("Downloading info about jobs");
-				Collection<JobInfo> jobs = jobManager.getJobs();
+				Collection<JobInfo> jobs = jobManager.getJobs(dialog);
 				int count = 0;
 				for (JobInfo ji : jobs) {
 					String item;

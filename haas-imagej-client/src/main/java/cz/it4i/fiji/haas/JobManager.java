@@ -27,23 +27,15 @@ public class JobManager {
 
 	private Path workDirectory;
 
-	private Collection<Job> jobs = new LinkedList<>();
+	private Collection<Job> jobs;
 
 	private HaaSClient haasClient;
 
 	private Settings settings;
 
-	public JobManager(Path workDirectory, Settings settings) throws IOException {
+	public JobManager(Path workDirectory, Settings settings){
 		this.workDirectory = workDirectory;
 		this.settings = settings;
-		Files.list(this.workDirectory).filter(p -> Files.isDirectory(p) && Job.isJobPath(p)).forEach(p -> {
-			try {
-				jobs.add(new Job(p, this::getHaasClient));
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		});
-
 	}
 
 	public JobInfo createJob(Progress progress) throws IOException {
@@ -73,7 +65,17 @@ public class JobManager {
 		return () -> jobs.stream().filter(j -> j.needsDownload()).map(j -> new JobInfo(j)).iterator();
 	}
 
-	public Collection<JobInfo> getJobs() {
+	public Collection<JobInfo> getJobs(Progress progress) throws IOException {
+		if(jobs == null) {
+			jobs = new LinkedList<>();
+			Files.list(this.workDirectory).filter(p -> Files.isDirectory(p) && Job.isJobPath(p)).forEach(p -> {
+				try {
+					jobs.add(new Job(p, this::getHaasClient, progress));
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			});
+		}
 		return jobs.stream().map(j -> new JobInfo(j)).collect(Collectors.toList());
 	}
 
