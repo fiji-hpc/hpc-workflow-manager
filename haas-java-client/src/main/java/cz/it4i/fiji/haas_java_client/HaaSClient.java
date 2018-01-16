@@ -254,25 +254,25 @@ public class HaaSClient {
 	}
 
 	public void download(long jobId, Path workDirectory, final ProgressNotifier notifier) {
-		download(jobId, workDirectory, notifier, val -> true);
+		download(jobId, workDirectory, val -> true, notifier);
 	}
 
-	public void download(long jobId, Path workDirectory, final ProgressNotifier notifier, Predicate<String> function) {
+	public void download(long jobId, Path workDirectory, Predicate<String> function, final ProgressNotifier notifier) {
 		try {
 			notifier.setTitle("Downloading");
 			FileTransferMethodExt ft = getFileTransfer().getFileTransferMethod(jobId, getSessionID());
 			try (ScpClient scpClient = getScpClient(ft)) {
 				String[] filesArray = getFileTransfer().listChangedFilesForJob(jobId, getSessionID());
-				Stream<String> files = Arrays.asList(filesArray).stream().filter(function);
+				Collection<String> files = Arrays.asList(filesArray).stream().filter(function).collect(Collectors.toList());
 				List<Long> fileSizes = getSizes(
-						files.map(filename -> "'" + ft.getSharedBasepath() + "/" + filename + "'").collect(
+						files.stream().map(filename -> "'" + ft.getSharedBasepath() + "/" + filename + "'").collect(
 								Collectors.toList()),
 						scpClient, new P_ProgressNotifierDecorator4Size(notifier));
 				final long totalFileSize = fileSizes.stream().mapToLong(i -> i.longValue()).sum();
 				TransferFileProgressForHaaSClient progress = new TransferFileProgressForHaaSClient(totalFileSize,
 						notifier);
 				int idx = 0;
-				for (String fileName : (Iterable<String>) files::iterator) {
+				for (String fileName : files) {
 					fileName = fileName.replaceFirst("/", "");
 					Path rFile = workDirectory.resolve(fileName);
 					if (!Files.exists(rFile.getParent())) {

@@ -10,6 +10,7 @@ import java.util.Calendar;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Properties;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -94,6 +95,7 @@ public class Job {
 		this(haasClientSupplier, progress);
 		jobDir = p;
 		loadJobInfo();
+		updateState();
 	}
 
 	public void uploadFiles(Supplier<Stream<UploadingFile>> files) {
@@ -110,7 +112,7 @@ public class Job {
 		client.submitJob(jobId, notifier);
 	}
 
-	private Job(Supplier<HaaSClient> haasClientSupplier, Progress progress) {
+	private Job(Supplier<HaaSClient> haasClientSupplier, Progress progress) throws IOException {
 		notifier = new P_ProgressNotifierAdapter(progress);
 		this.haasClientSupplier = haasClientSupplier;
 	}
@@ -135,7 +137,7 @@ public class Job {
 	}
 
 	public void download() {
-		download(dummy);
+		download(x->true, dummy);
 	}
 
 	public Path storeDataInWorkdirectory(UploadingFile uploadingFile) throws IOException {
@@ -146,11 +148,11 @@ public class Job {
 		return result;
 	}
 
-	synchronized public void download(Progress progress) {
+	synchronized public void download(Predicate<String> predicate, Progress progress) {
 		if (!needsDownload()) {
 			throw new IllegalStateException("Job: " + getJobId() + " doesn't need download");
 		}
-		haasClientSupplier.get().download(getJobId(), jobDir, new P_ProgressNotifierAdapter(progress));
+		haasClientSupplier.get().download(getJobId(), jobDir, predicate, new P_ProgressNotifierAdapter(progress));
 		needsDownload = false;
 		try {
 			saveJobinfo();
@@ -190,9 +192,13 @@ public class Job {
 	public void setProperty(String name, String value) throws IOException {
 		Properties prop = loadPropertiesIfExists();
 		prop.setProperty(name, value);
-		
+		storeProperties(prop);
 	}
 
+	public String getProperty(String name) throws IOException {
+		return loadPropertiesIfExists().getProperty(name);
+	}
+	
 	private synchronized void saveJobinfo() throws IOException {
 		Properties prop = loadPropertiesIfExists();
 		if (needsDownload != null) {
@@ -213,8 +219,8 @@ public class Job {
 		Properties prop = loadPropertiesIfExists();
 		if (prop.containsKey(JOB_HAS_DATA_TO_DOWNLOAD_PROPERTY)) {
 			needsDownload = Boolean.parseBoolean(prop.getProperty(JOB_HAS_DATA_TO_DOWNLOAD_PROPERTY));
-			name = prop.getProperty(JOB_NAME);
 		}
+		name = prop.getProperty(JOB_NAME);
 	}
 
 	private Properties loadPropertiesIfExists() throws IOException {
@@ -285,5 +291,7 @@ public class Job {
 		}
 
 	}
+
+	
 
 }

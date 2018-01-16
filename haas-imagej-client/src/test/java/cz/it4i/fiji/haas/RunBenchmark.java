@@ -45,7 +45,7 @@ public class RunBenchmark {
 				} else if (state == JobState.Running) {
 					log.info(benchmarkJobManager.getOutput(jobId,Arrays.asList(
 							new JobManager.JobSynchronizableFile(SynchronizableFileType.StandardErrorFile, 0))).iterator().next());
-				}
+				} 
 			}
 		}
 	}

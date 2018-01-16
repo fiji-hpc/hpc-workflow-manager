@@ -8,6 +8,7 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -42,6 +43,9 @@ public class JobManager {
 
 	public JobInfo createJob(Progress progress) throws IOException {
 		Job job;
+		if(jobs == null) {
+			jobs = new LinkedList<>();
+		}
 		jobs.add(job = new Job(settings.getJobName(), workDirectory, this::getHaasClient, progress));
 		return new JobInfo(job) {
 			@Override
@@ -160,8 +164,13 @@ public class JobManager {
 		}
 
 		public void downloadData(Progress progress) {
-			job.download(progress);
+			downloadData(x->true, progress);
+		}
+		
+		public void downloadData(Predicate<String> predicate, Progress progress) {
+			job.download(predicate,progress);
 			fireValueChangedEvent();
+			
 		}
 
 		public void waitForStart() {
@@ -198,6 +207,13 @@ public class JobManager {
 			job.setProperty(name, value);
 			
 		}
+
+		public String getProperty(String name) throws IOException {
+			return job.getProperty(name);
+		}
+
+		
+		
 
 	}
 
