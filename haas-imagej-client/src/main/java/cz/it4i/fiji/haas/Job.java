@@ -13,7 +13,7 @@ import java.util.Properties;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
@@ -98,13 +98,15 @@ public class Job {
 		updateState();
 	}
 
-	public void uploadFiles(Supplier<Stream<UploadingFile>> files) {
+	public void uploadFiles(Iterable<UploadingFile> files) {
 		HaaSClient client = this.haasClientSupplier.get();
 		client.uploadFiles(jobId, files, notifier);
 	}
 
-	public void uploadFilesByName(Supplier<Stream<String>> files) {
-		uploadFiles(() -> files.get().map(name -> HaaSClient.getUploadingFile(jobDir.resolve(name))));
+	public void uploadFilesByName(Iterable<String> files) {
+		Iterable<UploadingFile> uploadingFiles = StreamSupport.stream(files.spliterator(), false)
+				.map((String name) -> HaaSClient.getUploadingFile(jobDir.resolve(name))).collect(Collectors.toList());
+		uploadFiles(uploadingFiles);
 	}
 
 	public void submit() {
@@ -137,7 +139,7 @@ public class Job {
 	}
 
 	public void download() {
-		download(x->true, dummy);
+		download(x -> true, dummy);
 	}
 
 	public Path storeDataInWorkdirectory(UploadingFile uploadingFile) throws IOException {
@@ -180,7 +182,7 @@ public class Job {
 	public Iterable<String> getOutput(Iterable<JobSynchronizableFile> output) {
 		HaaSClient.SynchronizableFiles taskFileOffset = new HaaSClient.SynchronizableFiles();
 		long taskId = (Long) getJobInfo().getTasks().toArray()[0];
-		output.forEach(file->taskFileOffset.addFile(taskId, file.getType(), file.getOffset()));
+		output.forEach(file -> taskFileOffset.addFile(taskId, file.getType(), file.getOffset()));
 		return haasClientSupplier.get().downloadPartsOfJobFiles(jobId, taskFileOffset).stream().map(f -> f.getContent())
 				.collect(Collectors.toList());
 	}
@@ -198,7 +200,7 @@ public class Job {
 	public String getProperty(String name) throws IOException {
 		return loadPropertiesIfExists().getProperty(name);
 	}
-	
+
 	private synchronized void saveJobinfo() throws IOException {
 		Properties prop = loadPropertiesIfExists();
 		if (needsDownload != null) {
@@ -225,7 +227,7 @@ public class Job {
 
 	private Properties loadPropertiesIfExists() throws IOException {
 		Properties prop = new Properties();
-		if(Files.exists(jobDir.resolve(JOB_INFO_FILE))) {
+		if (Files.exists(jobDir.resolve(JOB_INFO_FILE))) {
 			try (InputStream is = Files.newInputStream(jobDir.resolve(JOB_INFO_FILE))) {
 				prop.load(is);
 			}
@@ -291,7 +293,5 @@ public class Job {
 		}
 
 	}
-
-	
 
 }

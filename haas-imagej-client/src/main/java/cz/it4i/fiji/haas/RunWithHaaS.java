@@ -51,13 +51,9 @@ public class RunWithHaaS implements Command {
 	public void run() {
 		try {
 			jobManager = new JobManager(getWorkingDirectoryPath(), TestingConstants.getSettings());
-			jobManager.startJob(() -> {
-				try {
-					return getContent(dataDirectory).stream().map(HaaSClient::getUploadingFile);
-				} catch (IOException e) {
-					throw new RuntimeException(e);
-				}
-			}, ModalDialogs.doModal(new ProgressDialog(getFrame())));
+			jobManager.startJob(
+					getContent(dataDirectory).stream().map(HaaSClient::getUploadingFile).collect(Collectors.toList()),
+					ModalDialogs.doModal(new ProgressDialog(getFrame())));
 		} catch (IOException e) {
 			log.error(e);
 		}

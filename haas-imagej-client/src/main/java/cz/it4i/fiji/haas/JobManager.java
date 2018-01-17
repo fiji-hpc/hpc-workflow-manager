@@ -9,9 +9,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,7 +58,7 @@ public class JobManager {
 		};
 	}
 
-	public JobInfo startJob(Supplier<Stream<UploadingFile>> files, Progress progress) throws IOException {
+	public JobInfo startJob(Iterable<UploadingFile> files, Progress progress) throws IOException {
 		JobInfo result = createJob(progress);
 		result.uploadFiles(files);
 		result.submit();
@@ -127,11 +125,11 @@ public class JobManager {
 			this.job = job;
 		}
 
-		public void uploadFiles(Supplier<Stream<UploadingFile>> files) {
+		public void uploadFiles(Iterable<UploadingFile> files) {
 			job.uploadFiles(files);
 		}
 		
-		public void uploadFilesByName(Supplier<Stream<String>> files) {
+		public void uploadFilesByName(Iterable<String> files) {
 			job.uploadFilesByName(files);
 		}
 

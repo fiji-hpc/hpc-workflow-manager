@@ -41,7 +41,7 @@ public class BenchmarkJobManager {
 
 	public void startJob(long jobId) throws IOException {
 		JobInfo jobInfo = jobs.get(jobId);
-		jobInfo.uploadFilesByName(() -> Arrays.asList(CONFIG_YAML).stream());
+		jobInfo.uploadFilesByName(Arrays.asList(CONFIG_YAML));
 		String outputName = getOutputName(jobInfo.openLocalFile(CONFIG_YAML));
 		jobInfo.submit();
 		jobInfo.setProperty(SPIM_OUTPUT_FILENAME_PATTERN, outputName);

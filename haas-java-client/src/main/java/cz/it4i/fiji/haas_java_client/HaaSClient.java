@@ -16,9 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import javax.xml.rpc.ServiceException;
@@ -164,10 +162,11 @@ public class HaaSClient {
 	}
 
 	public long start(Iterable<Path> files, String name, Collection<Entry<String, String>> templateParameters) {
-		return start(files, name, templateParameters, dummyNotifier);
+		Iterable<UploadingFile> uploadingFiles = StreamSupport.stream(files.spliterator(), false).map(HaaSClient::getUploadingFile).collect(Collectors.toList());
+		return start(uploadingFiles, name, templateParameters, dummyNotifier);
 	}
 
-	public long start(Supplier<Stream<UploadingFile>> files, String name,
+	public long start(Iterable<UploadingFile> files, String name,
 			Collection<Entry<String, String>> templateParameters, ProgressNotifier notifier) {
 		notifier.setTitle("Starting job");
 		try {
@@ -190,7 +189,7 @@ public class HaaSClient {
 		}
 	}
 
-	public void uploadFiles(long jobId, Supplier<Stream<UploadingFile>> files, ProgressNotifier notifier) {
+	public void uploadFiles(long jobId, Iterable<UploadingFile> files, ProgressNotifier notifier) {
 		try {
 			doUploadFiles(jobId, files, notifier);
 		} catch (ServiceException | JSchException | IOException e) {
@@ -342,16 +341,16 @@ public class HaaSClient {
 		notifier.done();
 	}
 
-	private void doUploadFiles(long jobId, Supplier<Stream<UploadingFile>> files, ProgressNotifier notifier)
+	private void doUploadFiles(long jobId, Iterable<UploadingFile> files, ProgressNotifier notifier)
 			throws RemoteException, ServiceException, JSchException, IOException, UnsupportedEncodingException {
 		FileTransferMethodExt fileTransfer = getFileTransfer().getFileTransferMethod(jobId, getSessionID());
-		List<Long> totalSizes = StreamSupport.stream(files.get().spliterator(), false).map(f -> f.getLength())
+		List<Long> totalSizes = StreamSupport.stream(files.spliterator(), false).map(f -> f.getLength())
 				.collect(Collectors.toList());
 		long totalSize = totalSizes.stream().mapToLong(l -> l.longValue()).sum();
 		TransferFileProgressForHaaSClient progress = new TransferFileProgressForHaaSClient(totalSize, notifier);
 		try (ScpClient scpClient = getScpClient(fileTransfer)) {
 			int index = 0;
-			for (UploadingFile file : (Iterable<UploadingFile>) files.get()::iterator) {
+			for (UploadingFile file : files) {
 				String item;
 				progress.startNewFile(totalSizes.get(index));
 				notifier.addItem(item = "Uploading file: " + file.getName());
@@ -382,14 +381,7 @@ public class HaaSClient {
 		return String.format("Created job: %d\n", jobId);
 	}
 
-	private long start(Iterable<Path> files, String name, Collection<Entry<String, String>> templateParameters,
-			ProgressNotifier notifier) {
-		Supplier<Stream<UploadingFile>> fileStream = () -> StreamSupport.stream(files.spliterator(), false)
-				.map(file -> getUploadingFile(file));
-		return start(fileStream, name, templateParameters, notifier);
-	}
-
-	private List<Long> getSizes(List<String> asList, ScpClient scpClient, ProgressNotifier notifier)
+		private List<Long> getSizes(List<String> asList, ScpClient scpClient, ProgressNotifier notifier)
 			throws JSchException, IOException {
 		List<Long> result = new LinkedList<>();
 
