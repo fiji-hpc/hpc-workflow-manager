@@ -7,6 +7,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
 
+import javax.swing.WindowConstants;
+
 import org.scijava.Context;
 import org.scijava.command.Command;
 import org.scijava.log.LogService;
@@ -54,8 +56,8 @@ public class CheckStatusOfHaaS implements Command {
 				downloadAll();
 			} else {
 				CheckStatusOfHaaSWindow window;
-				window = ModalDialogs.doModal(new CheckStatusOfHaaSWindow(getFrame(), context));
-				ProgressDialog dialog = ModalDialogs.doModal(new ProgressDialog(window));
+				window = ModalDialogs.doModal(new CheckStatusOfHaaSWindow(getFrame(), context),WindowConstants.DISPOSE_ON_CLOSE);
+				ProgressDialog dialog = ModalDialogs.doModal(new ProgressDialog(window),WindowConstants.DO_NOTHING_ON_CLOSE);
 				dialog.setTitle("Downloading info about jobs");
 				Collection<JobInfo> jobs = jobManager.getJobs(dialog);
 				int count = 0;

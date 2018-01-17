@@ -3,6 +3,8 @@ package cz.it4i.fiji.haas_snakemake_spim.ui;
 import java.awt.Window;
 import java.util.function.Function;
 
+import javax.swing.WindowConstants;
+
 import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
 
@@ -19,7 +21,6 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.input.ContextMenuEvent;
-
 
 public class CheckStatusOfHaaSController {
 
@@ -46,9 +47,10 @@ public class CheckStatusOfHaaSController {
 	}
 
 	private void downloadData(ActionEvent event) {
-		Platform.runLater(() -> jobs.getSelectionModel().getSelectedItem().downloadData(ModalDialogs.doModal(new ProgressDialog(root))));
+		Platform.runLater(() -> jobs.getSelectionModel().getSelectedItem()
+				.downloadData(ModalDialogs.doModal(new ProgressDialog(root), WindowConstants.DO_NOTHING_ON_CLOSE)));
 	}
-	
+
 	private void initMenu() {
 		ContextMenu cm = new ContextMenu();
 		MenuItem download = new MenuItem("Download");
@@ -63,7 +65,7 @@ public class CheckStatusOfHaaSController {
 					return;
 				}
 				JobInfo job = jobs.getSelectionModel().getSelectedItem();
-				
+
 				if (job != null && job.needsDownload()) {
 					download.setDisable(false);
 				} else {

@@ -9,6 +9,8 @@ import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
+import javax.swing.WindowConstants;
+
 import org.scijava.Context;
 import org.scijava.command.Command;
 import org.scijava.log.LogService;
@@ -56,7 +58,7 @@ public class RunWithHaaS implements Command {
 			jobManager = new JobManager(getWorkingDirectoryPath(), TestingConstants.getSettings());
 			jobManager.startJob(
 					getContent(dataDirectory).stream().map(HaaSClient::getUploadingFile).collect(Collectors.toList()),
-					ModalDialogs.doModal(new ProgressDialog(getFrame())));
+					ModalDialogs.doModal(new ProgressDialog(getFrame()), WindowConstants.DO_NOTHING_ON_CLOSE));
 		} catch (IOException e) {
 			log.error(e);
 		}
