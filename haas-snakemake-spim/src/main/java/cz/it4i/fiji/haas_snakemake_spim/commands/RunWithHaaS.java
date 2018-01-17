@@ -1,4 +1,4 @@
-package cz.it4i.fiji.haas;
+package cz.it4i.fiji.haas_snakemake_spim.commands;
 
 import java.awt.Frame;
 import java.io.File;
@@ -18,6 +18,9 @@ import org.scijava.ui.ApplicationFrame;
 import org.scijava.ui.UIService;
 import org.scijava.widget.UIComponent;
 
+import cz.it4i.fiji.haas.JobManager;
+import cz.it4i.fiji.haas.TestingConstants;
+import cz.it4i.fiji.haas.ui.ModalDialogs;
 import cz.it4i.fiji.haas.ui.ProgressDialog;
 import cz.it4i.fiji.haas_java_client.HaaSClient;
 import net.imagej.ImageJ;

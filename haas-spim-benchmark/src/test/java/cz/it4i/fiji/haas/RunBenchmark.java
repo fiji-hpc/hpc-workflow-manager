@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
+import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager;
 import net.imagej.updater.util.Progress;
 
 public class RunBenchmark {

@@ -1,4 +1,4 @@
-package cz.it4i.fiji.haas;
+package cz.it4i.fiji.haas.ui;
 
 import java.awt.Dimension;
 import java.awt.Frame;

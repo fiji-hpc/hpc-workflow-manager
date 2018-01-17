@@ -1,4 +1,4 @@
-package cz.it4i.fiji.haas;
+package cz.it4i.fiji.haas.ui;
 
 import javax.swing.JDialog;
 import javax.swing.WindowConstants;

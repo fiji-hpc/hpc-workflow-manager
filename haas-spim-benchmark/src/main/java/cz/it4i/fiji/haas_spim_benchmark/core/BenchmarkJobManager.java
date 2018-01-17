@@ -1,4 +1,4 @@
-package cz.it4i.fiji.haas;
+package cz.it4i.fiji.haas_spim_benchmark.core;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -14,6 +14,9 @@ import java.util.stream.Collectors;
 
 import org.yaml.snakeyaml.Yaml;
 
+import cz.it4i.fiji.haas.JobManager;
+import cz.it4i.fiji.haas.TestingConstants;
+import cz.it4i.fiji.haas.UploadingFileFromResource;
 import cz.it4i.fiji.haas.JobManager.JobInfo;
 import cz.it4i.fiji.haas.JobManager.JobSynchronizableFile;
 import cz.it4i.fiji.haas_java_client.HaaSClient;
