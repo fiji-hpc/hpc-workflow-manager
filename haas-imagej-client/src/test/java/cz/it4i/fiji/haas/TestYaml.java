@@ -11,7 +11,7 @@ import org.yaml.snakeyaml.Yaml;
 public class TestYaml {
 
 	private static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas.TestYaml.class);
-	
+	@SuppressWarnings("rawtypes")
 	public static void main(String[] args) throws IOException {
 		try(InputStream is = args.getClass().getResourceAsStream("config.yaml")){
 			Yaml yaml = new Yaml();
