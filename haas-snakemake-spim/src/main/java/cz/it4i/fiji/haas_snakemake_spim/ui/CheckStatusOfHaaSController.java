@@ -9,6 +9,7 @@ import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
 
 import cz.it4i.fiji.haas.JobManager.JobInfo;
+import cz.it4i.fiji.haas.ui.FXFrame;
 import cz.it4i.fiji.haas.ui.ModalDialogs;
 import cz.it4i.fiji.haas.ui.ObservableValueAdapter;
 import cz.it4i.fiji.haas.ui.ProgressDialog;
@@ -22,7 +23,7 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.input.ContextMenuEvent;
 
-public class CheckStatusOfHaaSController {
+public class CheckStatusOfHaaSController implements FXFrame.Controller{
 
 	@Parameter
 	private LogService logService;
