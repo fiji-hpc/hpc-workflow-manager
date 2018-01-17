@@ -1,4 +1,4 @@
-package cz.it4i.fiji.haas;
+package cz.it4i.fiji.haas_snakemake_spim.commands;
 
 import java.awt.Frame;
 import java.io.File;
@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
+
+import javax.swing.WindowConstants;
 
 import org.scijava.Context;
 import org.scijava.command.Command;
@@ -16,8 +18,12 @@ import org.scijava.ui.ApplicationFrame;
 import org.scijava.ui.UIService;
 import org.scijava.widget.UIComponent;
 
+import cz.it4i.fiji.haas.JobManager;
+import cz.it4i.fiji.haas.TestingConstants;
 import cz.it4i.fiji.haas.JobManager.JobInfo;
+import cz.it4i.fiji.haas.ui.ModalDialogs;
 import cz.it4i.fiji.haas.ui.ProgressDialog;
+import cz.it4i.fiji.haas_snakemake_spim.ui.CheckStatusOfHaaSWindow;
 import net.imagej.ImageJ;
 
 /**
@@ -45,15 +51,15 @@ public class CheckStatusOfHaaS implements Command {
 	@Override
 	public void run() {
 		try {
-			jobManager = new JobManager(getWorkingDirectoryPath(), context);
+			jobManager = new JobManager(getWorkingDirectoryPath(),TestingConstants.getSettings());
 			if (uiService.isHeadless()) {
 				downloadAll();
 			} else {
 				CheckStatusOfHaaSWindow window;
-				window = ModalDialogs.doModal(new CheckStatusOfHaaSWindow(getFrame(), context));
-				ProgressDialog dialog = ModalDialogs.doModal(new ProgressDialog(window));
+				window = ModalDialogs.doModal(new CheckStatusOfHaaSWindow(getFrame(), context),WindowConstants.DISPOSE_ON_CLOSE);
+				ProgressDialog dialog = ModalDialogs.doModal(new ProgressDialog(window),WindowConstants.DO_NOTHING_ON_CLOSE);
 				dialog.setTitle("Downloading info about jobs");
-				Collection<JobInfo> jobs = jobManager.getJobs();
+				Collection<JobInfo> jobs = jobManager.getJobs(dialog);
 				int count = 0;
 				for (JobInfo ji : jobs) {
 					String item;

@@ -1,5 +1,5 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
 		<groupId>org.scijava</groupId>
@@ -8,10 +8,10 @@
 		<relativePath />
 	</parent>
 	<groupId>cz.it4i.fiji</groupId>
-	<artifactId>haas-imagej-client</artifactId>
+	<artifactId>haas-spim-benchmark</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>jar</packaging>
-	<name>Simple ImageJ Commands</name>
+	<name>Plugins for running SPIM automated workflow by IT4I HaaS.</name>
 	<description>This example provides an introduction to writing ImageJ commands.</description>
 	<url>https://github.com/[MY-ORG]/[MY-REPO]</url>
 	<inceptionYear>2013</inceptionYear>
@@ -60,13 +60,7 @@
 	<ciManagement>
 		<system>None</system>
 	</ciManagement>
-	<properties>
-		<license.licenseName>cc0</license.licenseName>
-		<license.copyrightOwners>N/A</license.copyrightOwners>
-		<license.projectName>ImageJ software for multidimensional image
-			processing and analysis.</license.projectName>
 
-	</properties>
 
 	<repositories>
 		<repository>
@@ -80,14 +74,10 @@
 			<groupId>net.imagej</groupId>
 			<artifactId>imagej</artifactId>
 		</dependency>
-		<!-- https://mvnrepository.com/artifact/net.imagej/imagej-legacy -->
-		<dependency>
-			<groupId>net.imagej</groupId>
-			<artifactId>imagej-legacy</artifactId>
-		</dependency>
+		
 		<dependency>
 			<groupId>cz.it4i.fiji</groupId>
-			<artifactId>haas-java-client</artifactId>
+			<artifactId>haas-imagej-client</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-api -->
@@ -100,13 +90,5 @@
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-simple</artifactId>
 		</dependency>
-
-		<!-- https://mvnrepository.com/artifact/org.yaml/snakeyaml -->
-		<dependency>
-		    <groupId>org.yaml</groupId>
-		    <artifactId>snakeyaml</artifactId>
-		    <version>1.19</version>
-		</dependency>
-
 	</dependencies>
 </project>

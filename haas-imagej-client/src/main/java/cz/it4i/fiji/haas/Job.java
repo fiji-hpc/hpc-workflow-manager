@@ -7,16 +7,20 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Calendar;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Properties;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
 
+import cz.it4i.fiji.haas.JobManager.JobSynchronizableFile;
 import cz.it4i.fiji.haas_java_client.HaaSClient;
+import cz.it4i.fiji.haas_java_client.HaaSClient.UploadingFile;
 import cz.it4i.fiji.haas_java_client.JobInfo;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.ProgressNotifier;
@@ -24,8 +28,9 @@ import net.imagej.updater.util.Progress;
 
 public class Job {
 
-	
 	private static final String JOB_HAS_DATA_TO_DOWNLOAD_PROPERTY = "job.needDownload";
+
+	private static final String JOB_NAME = "job.name";
 
 	public static boolean isJobPath(Path p) {
 		return isValidPath(p);
@@ -40,54 +45,77 @@ public class Job {
 
 	private Supplier<HaaSClient> haasClientSupplier;
 
-	private JobState state;
+	// private JobState state;
 	private Boolean needsDownload;
 	private JobInfo jobInfo;
 	private Long jobId;
+	private ProgressNotifier notifier;
 
 	final private Progress dummy = new Progress() {
-		
+
 		@Override
 		public void setTitle(String title) {
 		}
-		
+
 		@Override
 		public void setItemCount(int count, int total) {
 		}
-		
+
 		@Override
 		public void setCount(int count, int total) {
 		}
-		
+
 		@Override
 		public void itemDone(Object item) {
 		}
-		
+
 		@Override
 		public void done() {
 		}
-		
+
 		@Override
 		public void addItem(Object item) {
 		}
 	};
-	
-	public Job(Path path, Collection<Path> files, Supplier<HaaSClient> haasClientSupplier, Progress progress) throws IOException {
-		this(haasClientSupplier);
+
+	private String name;
+
+	public Job(String name, Path basePath, Supplier<HaaSClient> haasClientSupplier, Progress progress)
+			throws IOException {
+		this(haasClientSupplier, progress);
 		HaaSClient client = this.haasClientSupplier.get();
-		long id = client.start(files, "TestOutRedirect", Collections.emptyList(), new P_ProgressNotifierAdapter(progress));
-		jobDir = path.resolve("" + id);
+		long id = client.createJob(name, Collections.emptyList(), notifier);
+		jobDir = basePath.resolve("" + id);
+		this.name = name;
 		Files.createDirectory(jobDir);
 		updateState();
 	}
 
-	public Job(Path p, Supplier<HaaSClient> haasClientSupplier) throws IOException {
-		this(haasClientSupplier);
+	public Job(Path p, Supplier<HaaSClient> haasClientSupplier, Progress progress) throws IOException {
+		this(haasClientSupplier, progress);
 		jobDir = p;
 		loadJobInfo();
+		updateState();
 	}
 
-	private Job(Supplier<HaaSClient> haasClientSupplier) {
+	public void uploadFiles(Iterable<UploadingFile> files) {
+		HaaSClient client = this.haasClientSupplier.get();
+		client.uploadFiles(jobId, files, notifier);
+	}
+
+	public void uploadFilesByName(Iterable<String> files) {
+		Iterable<UploadingFile> uploadingFiles = StreamSupport.stream(files.spliterator(), false)
+				.map((String name) -> HaaSClient.getUploadingFile(jobDir.resolve(name))).collect(Collectors.toList());
+		uploadFiles(uploadingFiles);
+	}
+
+	public void submit() {
+		HaaSClient client = this.haasClientSupplier.get();
+		client.submitJob(jobId, notifier);
+	}
+
+	private Job(Supplier<HaaSClient> haasClientSupplier, Progress progress) throws IOException {
+		notifier = new P_ProgressNotifierAdapter(progress);
 		this.haasClientSupplier = haasClientSupplier;
 	}
 
@@ -103,27 +131,30 @@ public class Job {
 	}
 
 	synchronized public void updateState() throws IOException {
-		state = updateJobInfo().getState();
 		if (needsDownload == null
-				&& EnumSet.of(JobState.Failed, JobState.Finished, JobState.Canceled).contains(state)) {
+				&& EnumSet.of(JobState.Failed, JobState.Finished, JobState.Canceled).contains(getState())) {
 			needsDownload = true;
 		}
 		saveJobinfo();
 	}
 
-	private JobInfo updateJobInfo() {
-		return jobInfo = haasClientSupplier.get().obtainJobInfo(getJobId());
-	}
-
 	public void download() {
-		download(dummy);
+		download(x -> true, dummy);
 	}
 
-	synchronized public void download(Progress progress) {
-		if (!needsDownload()) {
-			throw new IllegalStateException("Job: " + getJobId() + " dosn't need download");
+	public Path storeDataInWorkdirectory(UploadingFile uploadingFile) throws IOException {
+		Path result;
+		try (InputStream is = uploadingFile.getInputStream()) {
+			Files.copy(is, result = jobDir.resolve(uploadingFile.getName()));
 		}
-		haasClientSupplier.get().download(getJobId(), jobDir, new P_ProgressNotifierAdapter(progress));
+		return result;
+	}
+
+	synchronized public void download(Predicate<String> predicate, Progress progress) {
+		if (!needsDownload()) {
+			throw new IllegalStateException("Job: " + getJobId() + " doesn't need download");
+		}
+		haasClientSupplier.get().download(getJobId(), jobDir, predicate, new P_ProgressNotifierAdapter(progress));
 		needsDownload = false;
 		try {
 			saveJobinfo();
@@ -133,7 +164,7 @@ public class Job {
 	}
 
 	public JobState getState() {
-		return state;
+		return getJobInfo().getState();
 	}
 
 	public Calendar getStartTime() {
@@ -148,25 +179,71 @@ public class Job {
 		return jobInfo.getEndTime();
 	}
 
+	public Iterable<String> getOutput(Iterable<JobSynchronizableFile> output) {
+		HaaSClient.SynchronizableFiles taskFileOffset = new HaaSClient.SynchronizableFiles();
+		long taskId = (Long) getJobInfo().getTasks().toArray()[0];
+		output.forEach(file -> taskFileOffset.addFile(taskId, file.getType(), file.getOffset()));
+		return haasClientSupplier.get().downloadPartsOfJobFiles(jobId, taskFileOffset).stream().map(f -> f.getContent())
+				.collect(Collectors.toList());
+	}
+
+	public InputStream openLocalFile(String name) throws IOException {
+		return Files.newInputStream(jobDir.resolve(name));
+	}
+
+	public void setProperty(String name, String value) throws IOException {
+		Properties prop = loadPropertiesIfExists();
+		prop.setProperty(name, value);
+		storeProperties(prop);
+	}
+
+	public String getProperty(String name) throws IOException {
+		return loadPropertiesIfExists().getProperty(name);
+	}
+
 	private synchronized void saveJobinfo() throws IOException {
+		Properties prop = loadPropertiesIfExists();
+		if (needsDownload != null) {
+			prop.setProperty(JOB_HAS_DATA_TO_DOWNLOAD_PROPERTY, needsDownload.toString());
+		}
+		prop.setProperty(JOB_NAME, name);
+		storeProperties(prop);
+	}
+
+	private void storeProperties(Properties prop) throws IOException {
 		try (OutputStream ow = Files.newOutputStream(jobDir.resolve(JOB_INFO_FILE),
 				StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)) {
-			Properties prop = new Properties();
-			if (needsDownload != null) {
-				prop.setProperty(JOB_HAS_DATA_TO_DOWNLOAD_PROPERTY, needsDownload.toString());
-			}
 			prop.store(ow, null);
 		}
 	}
 
 	private synchronized void loadJobInfo() throws IOException {
-		try (InputStream is = Files.newInputStream(jobDir.resolve(JOB_INFO_FILE))) {
-			Properties prop = new Properties();
-			prop.load(is);
-			if (prop.containsKey(JOB_HAS_DATA_TO_DOWNLOAD_PROPERTY)) {
-				needsDownload = Boolean.parseBoolean(prop.getProperty(JOB_HAS_DATA_TO_DOWNLOAD_PROPERTY));
+		Properties prop = loadPropertiesIfExists();
+		if (prop.containsKey(JOB_HAS_DATA_TO_DOWNLOAD_PROPERTY)) {
+			needsDownload = Boolean.parseBoolean(prop.getProperty(JOB_HAS_DATA_TO_DOWNLOAD_PROPERTY));
+		}
+		name = prop.getProperty(JOB_NAME);
+	}
+
+	private Properties loadPropertiesIfExists() throws IOException {
+		Properties prop = new Properties();
+		if (Files.exists(jobDir.resolve(JOB_INFO_FILE))) {
+			try (InputStream is = Files.newInputStream(jobDir.resolve(JOB_INFO_FILE))) {
+				prop.load(is);
 			}
 		}
+		return prop;
+	}
+
+	private JobInfo getJobInfo() {
+		if (jobInfo == null) {
+			updateJobInfo();
+		}
+		return jobInfo;
+	}
+
+	private void updateJobInfo() {
+		jobInfo = haasClientSupplier.get().obtainJobInfo(getJobId());
 	}
 
 	private static boolean isValidPath(Path path) {
@@ -182,8 +259,6 @@ public class Job {
 	private static long getJobId(Path path) {
 		return Long.parseLong(path.getFileName().toString());
 	}
-	
-	
 
 	private class P_ProgressNotifierAdapter implements ProgressNotifier {
 		private Progress progress;
@@ -216,7 +291,7 @@ public class Job {
 		public void done() {
 			progress.done();
 		}
-		
-		
+
 	}
+
 }

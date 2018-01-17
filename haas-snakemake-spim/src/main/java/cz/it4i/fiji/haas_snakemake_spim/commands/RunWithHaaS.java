@@ -1,4 +1,4 @@
-package cz.it4i.fiji.haas;
+package cz.it4i.fiji.haas_snakemake_spim.commands;
 
 import java.awt.Frame;
 import java.io.File;
@@ -9,6 +9,8 @@ import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
+import javax.swing.WindowConstants;
+
 import org.scijava.Context;
 import org.scijava.command.Command;
 import org.scijava.log.LogService;
@@ -18,7 +20,11 @@ import org.scijava.ui.ApplicationFrame;
 import org.scijava.ui.UIService;
 import org.scijava.widget.UIComponent;
 
+import cz.it4i.fiji.haas.JobManager;
+import cz.it4i.fiji.haas.TestingConstants;
+import cz.it4i.fiji.haas.ui.ModalDialogs;
 import cz.it4i.fiji.haas.ui.ProgressDialog;
+import cz.it4i.fiji.haas_java_client.HaaSClient;
 import net.imagej.ImageJ;
 
 /**
@@ -49,9 +55,10 @@ public class RunWithHaaS implements Command {
 	@Override
 	public void run() {
 		try {
-			jobManager = new JobManager(getWorkingDirectoryPath(), context);
-			jobManager.startJob(getWorkingDirectoryPath(), getContent(dataDirectory),
-					ModalDialogs.doModal(new ProgressDialog(getFrame())));
+			jobManager = new JobManager(getWorkingDirectoryPath(), TestingConstants.getSettings());
+			jobManager.startJob(
+					getContent(dataDirectory).stream().map(HaaSClient::getUploadingFile).collect(Collectors.toList()),
+					ModalDialogs.doModal(new ProgressDialog(getFrame()), WindowConstants.DO_NOTHING_ON_CLOSE));
 		} catch (IOException e) {
 			log.error(e);
 		}

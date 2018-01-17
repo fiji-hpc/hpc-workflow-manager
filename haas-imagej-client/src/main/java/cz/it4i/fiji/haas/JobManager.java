@@ -1,60 +1,85 @@
 package cz.it4i.fiji.haas;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import org.scijava.Context;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import cz.it4i.fiji.haas_java_client.HaaSClient;
+import cz.it4i.fiji.haas_java_client.HaaSClient.UploadingFile;
 import cz.it4i.fiji.haas_java_client.JobState;
+import cz.it4i.fiji.haas_java_client.Settings;
+import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
 import javafx.beans.value.ObservableValueBase;
 import net.imagej.updater.util.Progress;
 
 public class JobManager {
 
+	private static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas.JobManager.class);
+
 	private Path workDirectory;
 
-	private Collection<Job> jobs = new LinkedList<>();
+	private Collection<Job> jobs;
 
 	private HaaSClient haasClient;
 
-	private Context context;
+	private Settings settings;
 
-	public JobManager(Path workDirectory, Context ctx) throws IOException {
-		this.context = ctx;
+	public JobManager(Path workDirectory, Settings settings){
 		this.workDirectory = workDirectory;
-		context.inject(this);
-		Files.list(this.workDirectory).filter(p -> Files.isDirectory(p) && Job.isJobPath(p)).forEach(p -> {
-			try {
-				jobs.add(inject(new Job(p, this::getHaasClient)));
-			} catch (IOException e) {
-				e.printStackTrace();
+		this.settings = settings;
+	}
+
+	public JobInfo createJob(Progress progress) throws IOException {
+		Job job;
+		if(jobs == null) {
+			jobs = new LinkedList<>();
+		}
+		jobs.add(job = new Job(settings.getJobName(), workDirectory, this::getHaasClient, progress));
+		return new JobInfo(job) {
+			@Override
+			public JobState getState() {
+				try {
+					job.updateState();
+				} catch (IOException e) {
+					log.error(e.getMessage(), e);
+				}
+				return super.getState();
 			}
-		});
-
+		};
 	}
 
-	
-	private Job inject(Job job) {
-		context.inject(job);
-		return job;
-	}
-
-	public void startJob(Path path, Collection<Path> files, Progress progress) throws IOException {
-		jobs.add(new Job(path, files, this::getHaasClient, progress));
+	public JobInfo startJob(Iterable<UploadingFile> files, Progress progress) throws IOException {
+		JobInfo result = createJob(progress);
+		result.uploadFiles(files);
+		result.submit();
+		return result;
 	}
 
 	public Iterable<JobInfo> getJobsNeedingDownload() {
 		return () -> jobs.stream().filter(j -> j.needsDownload()).map(j -> new JobInfo(j)).iterator();
 	}
 
-	public Collection<JobInfo> getJobs() {
+	public Collection<JobInfo> getJobs(Progress progress) throws IOException {
+		if(jobs == null) {
+			jobs = new LinkedList<>();
+			Files.list(this.workDirectory).filter(p -> Files.isDirectory(p) && Job.isJobPath(p)).forEach(p -> {
+				try {
+					jobs.add(new Job(p, this::getHaasClient, progress));
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			});
+		}
 		return jobs.stream().map(j -> new JobInfo(j)).collect(Collectors.toList());
 	}
 
@@ -65,11 +90,31 @@ public class JobManager {
 
 	}
 
+	public JobState getState(long id) {
+		return getHaasClient().obtainJobInfo(id).getState();
+	}
+
 	private HaaSClient getHaasClient() {
 		if (haasClient == null) {
-			haasClient = new HaaSClient(2l, 9600, 6l, "DD-17-31");
+			haasClient = new HaaSClient(settings);
 		}
 		return haasClient;
+	}
+	
+	public static class JobSynchronizableFile {
+		private SynchronizableFileType type;
+		private long offset;
+		public JobSynchronizableFile(SynchronizableFileType type, long offset) {
+			super();
+			this.type = type;
+			this.offset = offset;
+		}
+		public SynchronizableFileType getType() {
+			return type;
+		}
+		public long getOffset() {
+			return offset;
+		}
 	}
 
 	public static class JobInfo extends ObservableValueBase<JobInfo> {
@@ -78,6 +123,18 @@ public class JobManager {
 
 		public JobInfo(Job job) {
 			this.job = job;
+		}
+
+		public void uploadFiles(Iterable<UploadingFile> files) {
+			job.uploadFiles(files);
+		}
+		
+		public void uploadFilesByName(Iterable<String> files) {
+			job.uploadFilesByName(files);
+		}
+
+		public void submit() {
+			job.submit();
 		}
 
 		public Long getId() {
@@ -103,13 +160,22 @@ public class JobManager {
 		public String getEndTime() {
 			return getStringFromTimeSafely(job.getEndTime());
 		}
-		
 
 		public void downloadData(Progress progress) {
-			job.download(progress);
-			fireValueChangedEvent();
+			downloadData(x->true, progress);
 		}
 		
+		public void downloadData(Predicate<String> predicate, Progress progress) {
+			job.download(predicate,progress);
+			fireValueChangedEvent();
+			
+		}
+
+		public void waitForStart() {
+			// TODO Auto-generated method stub
+
+		}
+
 		public void updateInfo() throws IOException {
 			job.updateState();
 		}
@@ -119,9 +185,34 @@ public class JobManager {
 			return this;
 		}
 
+		public Path storeDataInWorkdirectory(UploadingFile uploadingFile) throws IOException {
+			return job.storeDataInWorkdirectory(uploadingFile);
+		}
+		
+		public Iterable<String> getOutput(Iterable<JobSynchronizableFile> files) {
+			return job.getOutput(files);
+		}
+		
 		private String getStringFromTimeSafely(Calendar time) {
-			return time!= null ? time.getTime().toString() : "N/A";
+			return time != null ? time.getTime().toString() : "N/A";
 		}
 
+		public InputStream openLocalFile(String name) throws IOException {
+			return job.openLocalFile(name);
+		}
+
+		public void setProperty(String name, String value) throws IOException {
+			job.setProperty(name, value);
+			
+		}
+
+		public String getProperty(String name) throws IOException {
+			return job.getProperty(name);
+		}
+
+		
+		
+
 	}
+
 }

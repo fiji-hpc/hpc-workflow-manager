@@ -1,6 +1,7 @@
 package cz.it4i.fiji.haas_java_client;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -14,9 +15,14 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import javax.xml.rpc.ServiceException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.jcraft.jsch.JSchException;
 
@@ -41,6 +47,18 @@ import cz.it4i.fiji.haas_java_client.proxy.UserAndLimitationManagementWsSoap;
 import cz.it4i.fiji.scpclient.ScpClient;
 
 public class HaaSClient {
+
+	private static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas_java_client.HaaSClient.class);
+
+	public interface UploadingFile {
+		InputStream getInputStream();
+
+		String getName();
+
+		long getLength();
+
+		long getLastTime();
+	}
 
 	static public class SynchronizableFiles {
 
@@ -118,6 +136,8 @@ public class HaaSClient {
 		}
 	};
 
+	private Settings settings;
+
 	final static private Map<JobStateExt, JobState> WS_STATE2STATE;
 
 	static {
@@ -132,56 +152,57 @@ public class HaaSClient {
 		WS_STATE2STATE = Collections.unmodifiableMap(map);
 	}
 
-	public HaaSClient(Long templateId, Integer timeOut, Long clusterNodeType, String projectId) {
+	public HaaSClient(Settings settings) {
 		super();
-		this.templateId = templateId;
-		this.timeOut = timeOut;
-		this.clusterNodeType = clusterNodeType;
-		this.projectId = projectId;
+		this.settings = settings;
+		this.templateId = settings.getTemplateId();
+		this.timeOut = settings.getTimeout();
+		this.clusterNodeType = settings.getClusterNodeType();
+		this.projectId = settings.getProjectId();
 	}
 
 	public long start(Iterable<Path> files, String name, Collection<Entry<String, String>> templateParameters) {
-		return start(files, name, templateParameters, dummyNotifier);
+		Iterable<UploadingFile> uploadingFiles = StreamSupport.stream(files.spliterator(), false).map(HaaSClient::getUploadingFile).collect(Collectors.toList());
+		return start(uploadingFiles, name, templateParameters, dummyNotifier);
 	}
 
-	public long start(Iterable<Path> files, String name, Collection<Entry<String, String>> templateParameters,
-			ProgressNotifier notifier) {
+	public long start(Iterable<UploadingFile> files, String name,
+			Collection<Entry<String, String>> templateParameters, ProgressNotifier notifier) {
 		notifier.setTitle("Starting job");
-		TaskSpecificationExt taskSpec = createTaskSpecification(name, templateId, templateParameters);
-		JobSpecificationExt jobSpecification = createJobSpecification(name, Arrays.asList(taskSpec));
 		try {
-			String item;
-			String jobItem;
-			SubmittedJobInfoExt job = getJobManagement().createJob(jobSpecification, getSessionID());
-			notifier.addItem(jobItem = String.format("Created job: %d\n", job.getId()));
-			FileTransferMethodExt fileTransfer = getFileTransfer().getFileTransferMethod(job.getId(), getSessionID());
-			List<Long> totalSizes = getSizes(files);
-			long totalSize = totalSizes.stream().mapToLong(l -> l.longValue()).sum();
-			TransferFileProgressForHaaSClient progress = new TransferFileProgressForHaaSClient(totalSize, notifier);
-			try (ScpClient scpClient = getScpClient(fileTransfer)) {
-				int index = 0;
-				for (Path file : files) {
-					progress.startNewFile(totalSizes.get(index));
-					notifier.addItem(item = "Uploading file: " + file.getFileName());
-					String destFile = "'" + fileTransfer.getSharedBasepath() + "/" + file.getFileName() + "'";
-					boolean result = scpClient.upload(file, destFile, progress);
-					notifier.itemDone(item);
-					if (!result) {
-						throw new HaaSClientException("Uploading of " + file + " to " + destFile + " failed");
-					}
-					index++;
-				}
-			}
-			getFileTransfer().endFileTransfer(job.getId(), fileTransfer, getSessionID());
-			// submit job
-			job = getJobManagement().submitJob((long) job.getId(), getSessionID());
-			notifier.itemDone(jobItem);
-			notifier.done();
-			return job.getId();
+			long jobId = doCreateJob(name, templateParameters, notifier);
+			doUploadFiles(jobId, files, notifier);
+			doSubmitJob(jobId, notifier);
+			return jobId;
 		} catch (ServiceException | JSchException | IOException e) {
 			throw new RuntimeException(e);
 		}
 
+	}
+
+	public long createJob(String name, Collection<Entry<String, String>> templateParameters,
+			ProgressNotifier notifier) {
+		try {
+			return doCreateJob(name, templateParameters, notifier);
+		} catch (RemoteException | ServiceException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	public void uploadFiles(long jobId, Iterable<UploadingFile> files, ProgressNotifier notifier) {
+		try {
+			doUploadFiles(jobId, files, notifier);
+		} catch (ServiceException | JSchException | IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	public void submitJob(long jobId, ProgressNotifier notifier) {
+		try {
+			doSubmitJob(jobId, notifier);
+		} catch (RemoteException | ServiceException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	public JobInfo obtainJobInfo(long jobId) {
@@ -207,7 +228,7 @@ public class HaaSClient {
 				public java.util.Calendar getEndTime() {
 					return info.getEndTime();
 				};
-				
+
 				public Calendar getCreationTime() {
 					return info.getCreationTime();
 				};
@@ -232,18 +253,23 @@ public class HaaSClient {
 	}
 
 	public void download(long jobId, Path workDirectory, final ProgressNotifier notifier) {
+		download(jobId, workDirectory, val -> true, notifier);
+	}
+
+	public void download(long jobId, Path workDirectory, Predicate<String> function, final ProgressNotifier notifier) {
 		try {
 			notifier.setTitle("Downloading");
 			FileTransferMethodExt ft = getFileTransfer().getFileTransferMethod(jobId, getSessionID());
 			try (ScpClient scpClient = getScpClient(ft)) {
-				String[] files = getFileTransfer().listChangedFilesForJob(jobId, getSessionID());
+				String[] filesArray = getFileTransfer().listChangedFilesForJob(jobId, getSessionID());
+				Collection<String> files = Arrays.asList(filesArray).stream().filter(function).collect(Collectors.toList());
 				List<Long> fileSizes = getSizes(
-						Arrays.asList(files).stream()
-								.map(filename -> "'" + ft.getSharedBasepath() + "/" + filename + "'")
-								.collect(Collectors.toList()),
+						files.stream().map(filename -> "'" + ft.getSharedBasepath() + "/" + filename + "'").collect(
+								Collectors.toList()),
 						scpClient, new P_ProgressNotifierDecorator4Size(notifier));
 				final long totalFileSize = fileSizes.stream().mapToLong(i -> i.longValue()).sum();
-				TransferFileProgressForHaaSClient progress =new TransferFileProgressForHaaSClient(totalFileSize, notifier);
+				TransferFileProgressForHaaSClient progress = new TransferFileProgressForHaaSClient(totalFileSize,
+						notifier);
 				int idx = 0;
 				for (String fileName : files) {
 					fileName = fileName.replaceFirst("/", "");
@@ -268,7 +294,94 @@ public class HaaSClient {
 		}
 	}
 
-	private List<Long> getSizes(List<String> asList, ScpClient scpClient, ProgressNotifier notifier)
+	public static UploadingFile getUploadingFile(Path file) {
+		return new UploadingFile() {
+
+			@Override
+			public InputStream getInputStream() {
+				try {
+					return Files.newInputStream(file);
+				} catch (IOException e) {
+					log.error(e.getMessage(), e);
+					throw new RuntimeException(e);
+				}
+			}
+
+			@Override
+			public String getName() {
+				return file.getFileName().toString();
+			}
+
+			@Override
+			public long getLength() {
+				try {
+					return Files.size(file);
+				} catch (IOException e) {
+					log.error(e.getMessage(), e);
+					throw new RuntimeException(e);
+				}
+			}
+
+			@Override
+			public long getLastTime() {
+				try {
+					return Files.getLastModifiedTime(file).toMillis();
+				} catch (IOException e) {
+					log.error(e.getMessage(), e);
+					throw new RuntimeException(e);
+				}
+			}
+
+		};
+	}
+
+	private void doSubmitJob(long jobId, ProgressNotifier notifier) throws RemoteException, ServiceException {
+		getJobManagement().submitJob(jobId, getSessionID());
+		notifier.itemDone(getNotificationItem4JobId(jobId));
+		notifier.done();
+	}
+
+	private void doUploadFiles(long jobId, Iterable<UploadingFile> files, ProgressNotifier notifier)
+			throws RemoteException, ServiceException, JSchException, IOException, UnsupportedEncodingException {
+		FileTransferMethodExt fileTransfer = getFileTransfer().getFileTransferMethod(jobId, getSessionID());
+		List<Long> totalSizes = StreamSupport.stream(files.spliterator(), false).map(f -> f.getLength())
+				.collect(Collectors.toList());
+		long totalSize = totalSizes.stream().mapToLong(l -> l.longValue()).sum();
+		TransferFileProgressForHaaSClient progress = new TransferFileProgressForHaaSClient(totalSize, notifier);
+		try (ScpClient scpClient = getScpClient(fileTransfer)) {
+			int index = 0;
+			for (UploadingFile file : files) {
+				String item;
+				progress.startNewFile(totalSizes.get(index));
+				notifier.addItem(item = "Uploading file: " + file.getName());
+				String destFile = "'" + fileTransfer.getSharedBasepath() + "/" + file.getName() + "'";
+				try (InputStream is = file.getInputStream()) {
+					boolean result = scpClient.upload(is, destFile, file.getLength(), file.getLastTime(), progress);
+					notifier.itemDone(item);
+					if (!result) {
+						throw new HaaSClientException("Uploading of " + file + " to " + destFile + " failed");
+					}
+				}
+				index++;
+			}
+		}
+		getFileTransfer().endFileTransfer(jobId, fileTransfer, getSessionID());
+	}
+
+	private long doCreateJob(String name, Collection<Entry<String, String>> templateParameters,
+			ProgressNotifier notifier) throws RemoteException, ServiceException {
+		TaskSpecificationExt taskSpec = createTaskSpecification(name, templateId, templateParameters);
+		JobSpecificationExt jobSpecification = createJobSpecification(name, Arrays.asList(taskSpec));
+		SubmittedJobInfoExt job = getJobManagement().createJob(jobSpecification, getSessionID());
+		notifier.addItem(getNotificationItem4JobId(job.getId()));
+		return job.getId();
+	}
+
+	private String getNotificationItem4JobId(long jobId) {
+		return String.format("Created job: %d\n", jobId);
+	}
+
+		private List<Long> getSizes(List<String> asList, ScpClient scpClient, ProgressNotifier notifier)
 			throws JSchException, IOException {
 		List<Long> result = new LinkedList<>();
 
@@ -297,8 +410,8 @@ public class HaaSClient {
 		testJob.setProject(projectId);
 		testJob.setWaitingLimit(null);
 		testJob.setWalltimeLimit(timeOut);
-		testJob.setNotificationEmail(Constants.EMAIL);
-		testJob.setPhoneNumber(Constants.PHONE);
+		testJob.setNotificationEmail(settings.getEmail());
+		testJob.setPhoneNumber(settings.getPhone());
 		testJob.setNotifyOnAbort(false);
 		testJob.setNotifyOnFinish(false);
 		testJob.setNotifyOnStart(false);
@@ -337,7 +450,7 @@ public class HaaSClient {
 
 	private String authenticate() throws RemoteException, ServiceException {
 		return getUserAndLimitationManagement()
-				.authenticateUserPassword(new PasswordCredentialsExt(Constants.USER_NAME, Constants.PASSWORD));
+				.authenticateUserPassword(new PasswordCredentialsExt(settings.getUserName(), settings.getPassword()));
 	}
 
 	private UserAndLimitationManagementWsSoap getUserAndLimitationManagement() throws ServiceException {
@@ -360,14 +473,6 @@ public class HaaSClient {
 			fileTransfer = new FileTransferWsLocator().getFileTransferWsSoap12();
 		}
 		return fileTransfer;
-	}
-
-	private List<Long> getSizes(Iterable<Path> files) throws IOException {
-		List<Long> result = new LinkedList<>();
-		for (Path path : files) {
-			result.add(Files.size(path));
-		}
-		return result;
 	}
 
 	private String getSessionID() throws RemoteException, ServiceException {
@@ -425,4 +530,5 @@ public class HaaSClient {
 			notifier.done();
 		}
 	}
+
 }
