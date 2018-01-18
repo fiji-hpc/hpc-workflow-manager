@@ -15,9 +15,7 @@ public class CheckStatusOfHaaSWindow extends FXFrame<CheckStatusOfHaaSController
 
 	@Parameter
 	private Context context;
-
-	private CheckStatusOfHaaSController controller;
-
+	
 	public CheckStatusOfHaaSWindow(Frame applicationFrame, Context context) {
 		super(applicationFrame, "/cz/it4i/fiji/haas_snakemake_spim/ui/CheckStatusOfHaaS.fxml");
 		this.context = context;
@@ -30,15 +28,13 @@ public class CheckStatusOfHaaSWindow extends FXFrame<CheckStatusOfHaaSController
 		Platform.runLater(new Runnable() {
 			@Override
 			public void run() {
-				controller.addJob(job);
+				getController().addJob(job);
 			}
 		});
 	}
 
 	private void initController(CheckStatusOfHaaSController controller) {
-		this.controller = controller;
 		context.inject(controller);
-		controller.init(this);
 	}
 
 }
