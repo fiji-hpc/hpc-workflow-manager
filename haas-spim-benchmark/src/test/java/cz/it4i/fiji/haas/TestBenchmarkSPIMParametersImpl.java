@@ -5,11 +5,11 @@ import java.nio.file.Path;
 import cz.it4i.fiji.haas_java_client.Configuration;
 import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkSPIMParameters;
 
-class BenchmarkSPIMParametersImpl extends Configuration implements BenchmarkSPIMParameters{
+class TestBenchmarkSPIMParametersImpl extends Configuration implements BenchmarkSPIMParameters{
 
 	private Path workingDirectory;
 	
-	public BenchmarkSPIMParametersImpl(Path workingDirectory) {
+	public TestBenchmarkSPIMParametersImpl(Path workingDirectory) {
 		super("configuration.properties");
 		this.workingDirectory = workingDirectory;
 	}

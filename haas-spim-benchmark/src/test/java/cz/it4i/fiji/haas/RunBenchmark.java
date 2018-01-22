@@ -53,6 +53,6 @@ public class RunBenchmark {
 		if (!Files.exists(p)) {
 			Files.createDirectory(p);
 		}
-		return new BenchmarkSPIMParametersImpl(p);
+		return new TestBenchmarkSPIMParametersImpl(p);
 	}
 }
