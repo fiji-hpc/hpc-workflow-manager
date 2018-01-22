@@ -1,39 +1,36 @@
-package cz.it4i.fiji.haas;
+package cz.it4i.fiji.haas_snakemake_spim;
 
 import cz.it4i.fiji.haas_java_client.Settings;
 
-interface TestingConstants {
-	String USER_NAME = <user name to haas>;
-	String PASSWORD = <password to haas>;
-	String EMAIL = ;
-	String PHONE = ;
-	
+public interface TestingConstants {
 	
 	static Settings getSettings() {
+		Constants constants = new Constants();
 		long templateId = 2l;
 		int timeOut = 9600; 
 		long clusterNodeType = 6l;
-		String projectId = "DD-17-31";
+		
+	
 		return new Settings() {
 			
 			@Override
 			public String getUserName() {
-				return USER_NAME;
+				return constants.getUserName();
 			}
 			
 			@Override
 			public String getPhone() {
-				return PHONE;
+				return constants.getPhone();
 			}
 			
 			@Override
 			public String getPassword() {
-				return PASSWORD;
+				return constants.getPassword();
 			}
 			
 			@Override
 			public String getEmail() {
-				return EMAIL;
+				return constants.getEmail();
 			}
 
 			@Override
@@ -53,7 +50,12 @@ interface TestingConstants {
 
 			@Override
 			public String getProjectId() {
-				return projectId;
+				return constants.getProjectId();
+			}
+
+			@Override
+			public String getJobName() {
+				return "HaaS-Snakemake-SPIM";
 			}
 		};
 	}

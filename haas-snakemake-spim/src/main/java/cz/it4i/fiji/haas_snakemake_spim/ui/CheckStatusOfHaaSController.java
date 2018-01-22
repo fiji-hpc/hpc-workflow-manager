@@ -22,8 +22,9 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.input.ContextMenuEvent;
+import net.imagej.updater.util.Progress;
 
-public class CheckStatusOfHaaSController implements FXFrame.Controller{
+public class CheckStatusOfHaaSController implements FXFrame.Controller {
 
 	@Parameter
 	private LogService logService;
@@ -42,14 +43,15 @@ public class CheckStatusOfHaaSController implements FXFrame.Controller{
 	}
 
 	public void init(Window root) {
+		this.root = root;
 		initTable();
 		initMenu();
-		this.root = root;
 	}
 
 	private void downloadData(ActionEvent event) {
-		Platform.runLater(() -> jobs.getSelectionModel().getSelectedItem()
-				.downloadData(ModalDialogs.doModal(new ProgressDialog(root), WindowConstants.DO_NOTHING_ON_CLOSE)));
+		Progress progress = ModalDialogs.doModal(new ProgressDialog(root, "Downloading data"), WindowConstants.DO_NOTHING_ON_CLOSE);
+		Platform.runLater(() -> jobs.getSelectionModel().getSelectedItem().downloadData(progress));
+		progress.done();
 	}
 
 	private void initMenu() {

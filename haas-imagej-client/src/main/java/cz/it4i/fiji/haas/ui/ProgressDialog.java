@@ -1,5 +1,4 @@
- package cz.it4i.fiji.haas.ui;
-
+package cz.it4i.fiji.haas.ui;
 
 import java.awt.Adjustable;
 import java.awt.Container;
@@ -20,17 +19,22 @@ import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.ScrollPaneConstants;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import net.imagej.ui.swing.updater.SwingTools;
 import net.imagej.updater.util.Progress;
 import net.imagej.updater.util.UpdateCanceledException;
 
 /**
-* TODO
-* 
-* @author Johannes Schindelin
-*/
+ * TODO
+ * 
+ * @author Johannes Schindelin
+ */
 @SuppressWarnings("serial")
 public class ProgressDialog extends JDialog implements Progress {
+	@SuppressWarnings("unused")
+	private static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas.ui.ProgressDialog.class);
 
 	JProgressBar progress;
 	JButton detailsToggle;
@@ -47,7 +51,7 @@ public class ProgressDialog extends JDialog implements Progress {
 	}
 
 	public ProgressDialog(final Window owner, final String title) {
-		super(owner);
+		super(owner, title);
 
 		final Container root = getContentPane();
 		root.setLayout(new BoxLayout(root, BoxLayout.Y_AXIS));
@@ -75,14 +79,12 @@ public class ProgressDialog extends JDialog implements Progress {
 				ProgressDialog.this.dispose();
 			}
 		});
-		buttons.add(cancel);
+		// buttons.add(cancel);
 		buttons.setMaximumSize(buttons.getMinimumSize());
 		root.add(buttons);
 
 		details = new Details();
-		detailsScrollPane =
-			new JScrollPane(details,
-				ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+		detailsScrollPane = new JScrollPane(details, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
 				ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 		detailsScrollPane.getVerticalScrollBar().addAdjustmentListener(new AdjustmentListener() {
 
@@ -98,7 +100,8 @@ public class ProgressDialog extends JDialog implements Progress {
 		detailsScrollPane.setVisible(false);
 		root.add(detailsScrollPane);
 
-		if (title != null) setTitle(title);
+		if (title != null)
+			setTitle(title);
 		pack();
 
 		if (owner != null) {
@@ -108,15 +111,15 @@ public class ProgressDialog extends JDialog implements Progress {
 				size.width = o.width / 2;
 				setSize(size);
 			}
-			setLocation(owner.getX() + (o.width - size.width) / 2, owner.getY() +
-				(o.height - size.height) / 2);
+			setLocation(owner.getX() + (o.width - size.width) / 2, owner.getY() + (o.height - size.height) / 2);
 		}
 
 		final KeyAdapter keyAdapter = new KeyAdapter() {
 
 			@Override
 			public void keyReleased(final KeyEvent e) {
-				if (e.getKeyCode() == KeyEvent.VK_ESCAPE) cancel();
+				if (e.getKeyCode() == KeyEvent.VK_ESCAPE)
+					cancel();
 			}
 		};
 		root.addKeyListener(keyAdapter);
@@ -124,7 +127,8 @@ public class ProgressDialog extends JDialog implements Progress {
 		cancel.addKeyListener(keyAdapter);
 
 		setLocationRelativeTo(null);
-		if (title != null) setVisible(true);
+		if (title != null)
+			setVisible(true);
 	}
 
 	public void cancel() {
@@ -132,7 +136,8 @@ public class ProgressDialog extends JDialog implements Progress {
 	}
 
 	protected void checkIfCanceled() {
-		if (canceled) throw new UpdateCanceledException();
+		if (canceled)
+			throw new UpdateCanceledException();
 	}
 
 	@Override
@@ -147,9 +152,10 @@ public class ProgressDialog extends JDialog implements Progress {
 		SwingTools.invokeOnEDT(new Runnable() {
 			@Override
 			public void run() {
-				if (detailsScrollPane.isVisible() || latestDetail == null) progress
-					.setString(title);
-				else progress.setString(title + ": " + latestDetail.getString());
+				if (detailsScrollPane.isVisible() || latestDetail == null)
+					progress.setString(title);
+				else
+					progress.setString(title + ": " + latestDetail.getString());
 			}
 		});
 		repaint();
@@ -158,7 +164,8 @@ public class ProgressDialog extends JDialog implements Progress {
 	@Override
 	public void setCount(final int count, final int total) {
 		checkIfCanceled();
-		if (updatesTooFast()) return;
+		if (updatesTooFast())
+			return;
 		SwingTools.invokeOnEDT(new Runnable() {
 			@Override
 			public void run() {
@@ -173,7 +180,8 @@ public class ProgressDialog extends JDialog implements Progress {
 	public void addItem(final Object item) {
 		checkIfCanceled();
 		details.addDetail(item.toString());
-		if (itemUpdatesTooFast() && !detailsScrollPane.isVisible()) return;
+		if (itemUpdatesTooFast() && !detailsScrollPane.isVisible())
+			return;
 		setTitle();
 		validate();
 		repaint();
@@ -182,7 +190,8 @@ public class ProgressDialog extends JDialog implements Progress {
 	@Override
 	public void setItemCount(final int count, final int total) {
 		checkIfCanceled();
-		if (itemUpdatesTooFast()) return;
+		if (itemUpdatesTooFast())
+			return;
 		SwingTools.invokeOnEDT(new Runnable() {
 			@Override
 			public void run() {
@@ -196,7 +205,9 @@ public class ProgressDialog extends JDialog implements Progress {
 	@Override
 	public void itemDone(final Object item) {
 		checkIfCanceled();
-		if (itemUpdatesTooFast() && !detailsScrollPane.isVisible()) return;
+		if (itemUpdatesTooFast() && !detailsScrollPane.isVisible())
+			return;
+		
 		SwingTools.invokeOnEDT(new Runnable() {
 			@Override
 			public void run() {
@@ -207,7 +218,8 @@ public class ProgressDialog extends JDialog implements Progress {
 
 	@Override
 	public void done() {
-		if (latestDetail != null) latestDetail.setValue(latestDetail.getMaximum());
+		if (latestDetail != null)
+			latestDetail.setValue(latestDetail.getMaximum());
 		SwingTools.invokeOnEDT(new Runnable() {
 			@Override
 			public void run() {
@@ -228,7 +240,8 @@ public class ProgressDialog extends JDialog implements Progress {
 				setTitle();
 
 				final Dimension dimension = getSize();
-				if (toggleHeight == -1) toggleHeight = dimension.height + 100;
+				if (toggleHeight == -1)
+					toggleHeight = dimension.height + 100;
 				setSize(new Dimension(dimension.width, toggleHeight));
 				toggleHeight = dimension.height;
 			}
@@ -260,13 +273,15 @@ public class ProgressDialog extends JDialog implements Progress {
 	}
 
 	protected boolean updatesTooFast() {
-		if (System.currentTimeMillis() - latestUpdate < 50) return true;
+		if (System.currentTimeMillis() - latestUpdate < 50)
+			return true;
 		latestUpdate = System.currentTimeMillis();
 		return false;
 	}
 
 	protected boolean itemUpdatesTooFast() {
-		if (System.currentTimeMillis() - itemLatestUpdate < 50) return true;
+		if (System.currentTimeMillis() - itemLatestUpdate < 50)
+			return true;
 		itemLatestUpdate = System.currentTimeMillis();
 		return false;
 	}
@@ -277,4 +292,3 @@ public class ProgressDialog extends JDialog implements Progress {
 		dialog.setVisible(true);
 	}
 }
-

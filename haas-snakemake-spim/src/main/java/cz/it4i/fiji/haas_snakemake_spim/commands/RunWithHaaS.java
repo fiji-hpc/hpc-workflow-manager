@@ -21,10 +21,10 @@ import org.scijava.ui.UIService;
 import org.scijava.widget.UIComponent;
 
 import cz.it4i.fiji.haas.JobManager;
-import cz.it4i.fiji.haas.TestingConstants;
 import cz.it4i.fiji.haas.ui.ModalDialogs;
 import cz.it4i.fiji.haas.ui.ProgressDialog;
 import cz.it4i.fiji.haas_java_client.HaaSClient;
+import cz.it4i.fiji.haas_snakemake_spim.TestingConstants;
 import net.imagej.ImageJ;
 
 /**
@@ -56,9 +56,13 @@ public class RunWithHaaS implements Command {
 	public void run() {
 		try {
 			jobManager = new JobManager(getWorkingDirectoryPath(), TestingConstants.getSettings());
+			ProgressDialog dialog = ModalDialogs.doModal(new ProgressDialog(getFrame(), "Starting job"),
+					WindowConstants.DO_NOTHING_ON_CLOSE);
+
 			jobManager.startJob(
 					getContent(dataDirectory).stream().map(HaaSClient::getUploadingFile).collect(Collectors.toList()),
-					ModalDialogs.doModal(new ProgressDialog(getFrame()), WindowConstants.DO_NOTHING_ON_CLOSE));
+					dialog);
+			dialog.done();
 		} catch (IOException e) {
 			log.error(e);
 		}

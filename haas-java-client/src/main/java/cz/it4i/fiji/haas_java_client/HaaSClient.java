@@ -162,17 +162,18 @@ public class HaaSClient {
 	}
 
 	public long start(Iterable<Path> files, String name, Collection<Entry<String, String>> templateParameters) {
-		Iterable<UploadingFile> uploadingFiles = StreamSupport.stream(files.spliterator(), false).map(HaaSClient::getUploadingFile).collect(Collectors.toList());
+		Iterable<UploadingFile> uploadingFiles = StreamSupport.stream(files.spliterator(), false)
+				.map(HaaSClient::getUploadingFile).collect(Collectors.toList());
 		return start(uploadingFiles, name, templateParameters, dummyNotifier);
 	}
 
-	public long start(Iterable<UploadingFile> files, String name,
-			Collection<Entry<String, String>> templateParameters, ProgressNotifier notifier) {
+	public long start(Iterable<UploadingFile> files, String name, Collection<Entry<String, String>> templateParameters,
+			ProgressNotifier notifier) {
 		notifier.setTitle("Starting job");
 		try {
-			long jobId = doCreateJob(name, templateParameters, notifier);
+			long jobId = doCreateJob(name, templateParameters);
 			doUploadFiles(jobId, files, notifier);
-			doSubmitJob(jobId, notifier);
+			doSubmitJob(jobId);
 			return jobId;
 		} catch (ServiceException | JSchException | IOException e) {
 			throw new RuntimeException(e);
@@ -180,10 +181,9 @@ public class HaaSClient {
 
 	}
 
-	public long createJob(String name, Collection<Entry<String, String>> templateParameters,
-			ProgressNotifier notifier) {
+	public long createJob(String name, Collection<Entry<String, String>> templateParameters) {
 		try {
-			return doCreateJob(name, templateParameters, notifier);
+			return doCreateJob(name, templateParameters);
 		} catch (RemoteException | ServiceException e) {
 			throw new RuntimeException(e);
 		}
@@ -197,9 +197,9 @@ public class HaaSClient {
 		}
 	}
 
-	public void submitJob(long jobId, ProgressNotifier notifier) {
+	public void submitJob(long jobId) {
 		try {
-			doSubmitJob(jobId, notifier);
+			doSubmitJob(jobId);
 		} catch (RemoteException | ServiceException e) {
 			throw new RuntimeException(e);
 		}
@@ -262,7 +262,8 @@ public class HaaSClient {
 			FileTransferMethodExt ft = getFileTransfer().getFileTransferMethod(jobId, getSessionID());
 			try (ScpClient scpClient = getScpClient(ft)) {
 				String[] filesArray = getFileTransfer().listChangedFilesForJob(jobId, getSessionID());
-				Collection<String> files = Arrays.asList(filesArray).stream().filter(function).collect(Collectors.toList());
+				Collection<String> files = Arrays.asList(filesArray).stream().filter(function)
+						.collect(Collectors.toList());
 				List<Long> fileSizes = getSizes(
 						files.stream().map(filename -> "'" + ft.getSharedBasepath() + "/" + filename + "'").collect(
 								Collectors.toList()),
@@ -335,10 +336,8 @@ public class HaaSClient {
 		};
 	}
 
-	private void doSubmitJob(long jobId, ProgressNotifier notifier) throws RemoteException, ServiceException {
+	private void doSubmitJob(long jobId) throws RemoteException, ServiceException {
 		getJobManagement().submitJob(jobId, getSessionID());
-		notifier.itemDone(getNotificationItem4JobId(jobId));
-		notifier.done();
 	}
 
 	private void doUploadFiles(long jobId, Iterable<UploadingFile> files, ProgressNotifier notifier)
@@ -368,20 +367,15 @@ public class HaaSClient {
 		getFileTransfer().endFileTransfer(jobId, fileTransfer, getSessionID());
 	}
 
-	private long doCreateJob(String name, Collection<Entry<String, String>> templateParameters,
-			ProgressNotifier notifier) throws RemoteException, ServiceException {
+	private long doCreateJob(String name, Collection<Entry<String, String>> templateParameters)
+			throws RemoteException, ServiceException {
 		TaskSpecificationExt taskSpec = createTaskSpecification(name, templateId, templateParameters);
 		JobSpecificationExt jobSpecification = createJobSpecification(name, Arrays.asList(taskSpec));
 		SubmittedJobInfoExt job = getJobManagement().createJob(jobSpecification, getSessionID());
-		notifier.addItem(getNotificationItem4JobId(job.getId()));
 		return job.getId();
 	}
 
-	private String getNotificationItem4JobId(long jobId) {
-		return String.format("Created job: %d\n", jobId);
-	}
-
-		private List<Long> getSizes(List<String> asList, ScpClient scpClient, ProgressNotifier notifier)
+	private List<Long> getSizes(List<String> asList, ScpClient scpClient, ProgressNotifier notifier)
 			throws JSchException, IOException {
 		List<Long> result = new LinkedList<>();
 

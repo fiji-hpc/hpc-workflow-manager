@@ -61,7 +61,13 @@
 		<system>None</system>
 	</ciManagement>
 
+	<properties>
+		<license.licenseName>cc0</license.licenseName>
+		<license.copyrightOwners>N/A</license.copyrightOwners>
+		<license.projectName>Plugins for running SPIM automated workflow by
+			IT4I HaaS.</license.projectName>
 
+	</properties>
 	<repositories>
 		<repository>
 			<id>imagej.public</id>
@@ -73,8 +79,9 @@
 		<dependency>
 			<groupId>net.imagej</groupId>
 			<artifactId>imagej</artifactId>
+			<scope>compile</scope>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>cz.it4i.fiji</groupId>
 			<artifactId>haas-imagej-client</artifactId>
@@ -91,4 +98,7 @@
 			<artifactId>slf4j-simple</artifactId>
 		</dependency>
 	</dependencies>
+	<build>
+		
+	</build>
 </project>

@@ -1,5 +1,4 @@
 import java.io.IOException;
-import java.nio.file.Paths;
 
 import com.jcraft.jsch.JSchException;
 

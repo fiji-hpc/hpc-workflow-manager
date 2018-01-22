@@ -19,10 +19,11 @@ import org.scijava.ui.UIService;
 import org.scijava.widget.UIComponent;
 
 import cz.it4i.fiji.haas.JobManager;
-import cz.it4i.fiji.haas.TestingConstants;
 import cz.it4i.fiji.haas.JobManager.JobInfo;
+import cz.it4i.fiji.haas.ui.DummyProgress;
 import cz.it4i.fiji.haas.ui.ModalDialogs;
 import cz.it4i.fiji.haas.ui.ProgressDialog;
+import cz.it4i.fiji.haas_snakemake_spim.TestingConstants;
 import cz.it4i.fiji.haas_snakemake_spim.ui.CheckStatusOfHaaSWindow;
 import net.imagej.ImageJ;
 
@@ -59,16 +60,11 @@ public class CheckStatusOfHaaS implements Command {
 				window = ModalDialogs.doModal(new CheckStatusOfHaaSWindow(getFrame(), context),WindowConstants.DISPOSE_ON_CLOSE);
 				ProgressDialog dialog = ModalDialogs.doModal(new ProgressDialog(window),WindowConstants.DO_NOTHING_ON_CLOSE);
 				dialog.setTitle("Downloading info about jobs");
-				Collection<JobInfo> jobs = jobManager.getJobs(dialog);
+				Collection<JobInfo> jobs = jobManager.getJobs();
 				int count = 0;
 				for (JobInfo ji : jobs) {
 					String item;
 					dialog.addItem(item = "job id:" + ji.getId());
-					try {
-						ji.updateInfo();
-					} catch (IOException e) {
-						log.error(e);
-					}
 					window.addJob(ji);
 					dialog.itemDone(item);
 					dialog.setCount(count, jobs.size());
@@ -98,7 +94,7 @@ public class CheckStatusOfHaaS implements Command {
 	private void downloadAll() {
 		for (JobInfo id : jobManager.getJobsNeedingDownload()) {
 			System.out.println("Job " + id.getId() + " needs download");
-			jobManager.downloadJob(id.getId());
+			jobManager.downloadJob(id.getId(), new DummyProgress());
 		}
 	}
 

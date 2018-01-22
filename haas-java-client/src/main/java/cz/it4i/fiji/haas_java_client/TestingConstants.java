@@ -1,32 +1,29 @@
 package cz.it4i.fiji.haas_java_client;
 
 interface TestingConstants {
-	String USER_NAME = "testuser";
-	String PASSWORD = "57f9caaf84";
-	String EMAIL = "jan.kozusznik@vsb.cz";
-	String PHONE = "999111000";
 	
 	static Settings getSettings(long templateId, int timeOut, long clusterNodeType, String projectId) {
+		Constants constants = new Constants();
 		return new Settings() {
 			
 			@Override
 			public String getUserName() {
-				return USER_NAME;
+				return  constants.getUserName();
 			}
 			
 			@Override
 			public String getPhone() {
-				return PHONE;
+				return constants.getPhone();
 			}
 			
 			@Override
 			public String getPassword() {
-				return PASSWORD;
+				return constants.getPassword();
 			}
 			
 			@Override
 			public String getEmail() {
-				return EMAIL;
+				return constants.getEmail();
 			}
 
 			@Override

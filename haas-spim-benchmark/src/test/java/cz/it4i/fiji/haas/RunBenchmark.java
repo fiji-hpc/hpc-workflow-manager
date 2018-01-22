@@ -9,73 +9,50 @@ import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import cz.it4i.fiji.haas.JobManager.JobSynchronizableFile;
+import cz.it4i.fiji.haas.ui.DummyProgress;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
 import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager;
-import net.imagej.updater.util.Progress;
+import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.Job;
+import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkSPIMParameters;
 
 public class RunBenchmark {
 	private static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas.RunBenchmark.class);
 
 	public static class CreateJob {
 		public static void main(String[] args) throws IOException {
-			Path p = Paths.get("/tmp/benchmark");
-			if (!Files.exists(p)) {
-				Files.createDirectory(p);
-			}
-			BenchmarkJobManager benchmarkJobManager = new BenchmarkJobManager(p, new P_Progress());
-			long ji = benchmarkJobManager.createJob();
-			log.info("job: " + ji + " created.");
+			BenchmarkJobManager benchmarkJobManager = new BenchmarkJobManager(getBenchmarkSPIMParameters());
+			Job ji = benchmarkJobManager.createJob();
+			log.info("job: " + ji.getId() + " created.");
 		}
 	}
 
 	public static class ProcessJobs {
 		public static void main(String[] args) throws IOException {
-			Path p = Paths.get("/tmp/benchmark");
-			if (!Files.exists(p)) {
-				Files.createDirectory(p);
-			}
-			BenchmarkJobManager benchmarkJobManager = new BenchmarkJobManager(p, new P_Progress());
-			for (long jobId : benchmarkJobManager.getJobs()) {
+			BenchmarkJobManager benchmarkJobManager = new BenchmarkJobManager(getBenchmarkSPIMParameters());
+			for (Job job : benchmarkJobManager.getJobs()) {
 				JobState state;
-				log.info("job: " + jobId + " hasStatus " + (state = benchmarkJobManager.getState(jobId)));
+				log.info("job: " + job.getId() + " hasStatus " + (state = job.getState()));
 				if (state == JobState.Configuring) {
-					benchmarkJobManager.startJob(jobId);
+					job.startJob(new DummyProgress());
 				} else if (state != JobState.Running && state != JobState.Queued) {
-					benchmarkJobManager.downloadData(jobId);
+					job.downloadData(new DummyProgress());
 				} else if (state == JobState.Running) {
-					log.info(benchmarkJobManager.getOutput(jobId,Arrays.asList(
-							new JobManager.JobSynchronizableFile(SynchronizableFileType.StandardErrorFile, 0))).iterator().next());
-				} 
+					JobSynchronizableFile file = new JobSynchronizableFile(SynchronizableFileType.StandardErrorFile, 0);
+					log.info(job.getOutput(Arrays.asList(file)).iterator().next());
+				}
 			}
 		}
 	}
 
-	private static class P_Progress implements Progress {
+	
 
-		@Override
-		public void setTitle(String title) {
+	private static BenchmarkSPIMParameters getBenchmarkSPIMParameters() throws IOException {
+		Path p = Paths.get("/tmp/benchmark");
+		if (!Files.exists(p)) {
+			Files.createDirectory(p);
 		}
-
-		@Override
-		public void setCount(int count, int total) {
-		}
-
-		@Override
-		public void addItem(Object item) {
-		}
-
-		@Override
-		public void setItemCount(int count, int total) {
-		}
-
-		@Override
-		public void itemDone(Object item) {
-		}
-
-		@Override
-		public void done() {
-		}
-
+		return new BenchmarkSPIMParametersImpl(p);
 	}
 }
