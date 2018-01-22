@@ -2,6 +2,7 @@ package cz.it4i.fiji.haas_spim_benchmark.core;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -185,29 +186,46 @@ public class BenchmarkJobManager {
 
 	}
 
-	private Predicate<String> downloadFinishedData(String filePattern) {
+	private static Predicate<String> downloadFinishedData(String filePattern) {
 		return name -> {
-			Path p = Paths.get(name);
-			String fileName = p.getFileName().toString();
+			Path path = getPathSafely(name);
+			if (path == null)
+				return false;
+			
+			String fileName = path.getFileName().toString();
 			return fileName.startsWith(filePattern) && fileName.endsWith("h5") || fileName.equals(filePattern + ".xml")
 					|| fileName.equals("benchmark_result.csv");
 		};
 	}
 
-	static private Predicate<String> downloadStatistics() {
+	private static Predicate<String> downloadStatistics() {
 		return name -> {
-			Path p = Paths.get(name);
-			String fileName = p.getFileName().toString();
+			Path path = getPathSafely(name);
+			if (path == null)
+				return false;
+			
+			String fileName = path.getFileName().toString();
 			return fileName.equals("benchmark_result.csv");
 		};
 	}
 
-	private Predicate<String> downloadFailedData() {
+	private static Predicate<String> downloadFailedData() {
 		return name -> {
-			Path p = Paths.get(name);
-			return p.getFileName().toString().startsWith("snakejob.")
-					|| p.getParent().getFileName().toString().equals("logs");
+			Path path = getPathSafely(name);
+			if (path == null)
+				return false;
+			
+			return path.getFileName().toString().startsWith("snakejob.")
+					|| path.getParent().getFileName().toString().equals("logs");
 		};
+	}
+	
+	private static Path getPathSafely(String name) {
+		try {
+			return Paths.get(name);
+		} catch(InvalidPathException ex) {
+			return null;
+		}
 	}
 
 	private static Settings constructSettingsFromParams(BenchmarkSPIMParameters params) {
