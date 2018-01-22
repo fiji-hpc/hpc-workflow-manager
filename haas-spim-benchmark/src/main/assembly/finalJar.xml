@@ -1,0 +1,36 @@
+<assembly xmlns="http://maven.apache.org/ASSEMBLY/2.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.0.0 http://maven.apache.org/xsd/assembly-2.0.0.xsd">
+	<id>distribution</id>
+	<formats>
+		<format>jar</format>
+	</formats>
+<!--   to include the main jar in non transitive manner and without base directory and in expanded way -->
+	<includeBaseDirectory>false</includeBaseDirectory>
+	<dependencySets>
+		<dependencySet>
+			<useProjectArtifact>true</useProjectArtifact>
+			<useTransitiveDependencies>true</useTransitiveDependencies>
+			<unpack>true</unpack>
+			<scope>runtime</scope>
+			<fileMode>0755</fileMode>
+			<directoryMode>0755</directoryMode>
+			<includes>
+				<include>project_groupid:project_artifactid</include>
+			</includes>
+		</dependencySet>
+
+<!--  to include the dependent jars in transitive manner -->
+		<dependencySet>
+			<useProjectArtifact>false</useProjectArtifact>
+			<useTransitiveDependencies>true</useTransitiveDependencies>
+			<unpack>false</unpack>
+			<scope>runtime</scope>
+			<fileMode>0644</fileMode>
+			<directoryMode>0755</directoryMode>
+			<outputDirectory>lib</outputDirectory>
+
+			<includes></includes>
+		</dependencySet>
+	</dependencySets>
+</assembly>
