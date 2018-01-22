@@ -50,13 +50,10 @@ public class Job {
 	private Boolean needsDownload;
 	private JobInfo jobInfo;
 	private Long jobId;
-	
-
 
 	private String name;
 
-	public Job(String name, Path basePath, Supplier<HaaSClient> haasClientSupplier)
-			throws IOException {
+	public Job(String name, Path basePath, Supplier<HaaSClient> haasClientSupplier) throws IOException {
 		this(haasClientSupplier);
 		HaaSClient client = this.haasClientSupplier.get();
 		long id = client.createJob(name, Collections.emptyList());
@@ -105,10 +102,8 @@ public class Job {
 		return jobId;
 	}
 
-	
-
 	public void download(Progress notifier) {
-		download(x -> true, notifier);
+		download(x -> true, notifier, false);
 	}
 
 	public Path storeDataInWorkdirectory(UploadingFile uploadingFile) throws IOException {
@@ -119,16 +114,18 @@ public class Job {
 		return result;
 	}
 
-	synchronized public void download(Predicate<String> predicate, Progress notifier) {
-		if (!needsDownload()) {
+	synchronized public void download(Predicate<String> predicate, Progress notifier, boolean allowAgain) {
+		if (!allowAgain && !needsDownload()) {
 			throw new IllegalStateException("Job: " + getJobId() + " doesn't need download");
 		}
 		haasClientSupplier.get().download(getJobId(), jobDir, predicate, new P_ProgressNotifierAdapter(notifier));
-		needsDownload = false;
-		try {
-			saveJobinfo();
-		} catch (IOException e) {
-			log.error(e);
+		if(!allowAgain) {
+			needsDownload = false;
+			try {
+				saveJobinfo();
+			} catch (IOException e) {
+				log.error(e);
+			}
 		}
 	}
 
@@ -169,11 +166,11 @@ public class Job {
 	public String getProperty(String name) throws IOException {
 		return loadPropertiesIfExists().getProperty(name);
 	}
-	
+
 	public void updateInfo() {
 		updateJobInfo();
 	}
-	
+
 	public Path getDirectory() {
 		return jobDir;
 	}
@@ -283,7 +280,5 @@ public class Job {
 		}
 
 	}
-
-	
 
 }

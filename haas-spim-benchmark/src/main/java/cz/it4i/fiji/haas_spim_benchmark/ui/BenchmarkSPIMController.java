@@ -94,9 +94,13 @@ public class BenchmarkSPIMController implements FXFrame.Controller {
 		menu.addItem("Create job", x -> executeJobActionAsync("Creating job", p -> manager.createJob()), j -> true);
 		menu.addItem("Start job", job -> executeJobActionAsync("Starting job", p -> job.startJob(p)),
 				job -> notNullValue(job, j -> j.getState() == JobState.Configuring));
-		menu.addItem("Download", job -> executeJobActionAsync("Downloading data", p -> job.downloadData(p)),
+		menu.addItem("Download result", job -> executeJobActionAsync("Downloading data", p -> job.downloadData(p)),
 				job -> notNullValue(job,
 						j -> EnumSet.of(JobState.Failed, JobState.Finished).contains(j.getState()) && !j.downloaded()));
+		menu.addItem("Download statistics",
+				job -> executeJobActionAsync("Downloading data", p -> job.downloadStatistics(p)),
+				job -> notNullValue(job, j -> j.getState() == JobState.Finished));		
+		
 		menu.addItem("Show output", j -> new JobOutputView(root, executorService, j, Constants.HAAS_UPDATE_TIMEOUT),
 				job -> notNullValue(job,
 						j -> EnumSet.of(JobState.Failed, JobState.Finished, JobState.Running).contains(j.getState())));

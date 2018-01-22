@@ -163,11 +163,11 @@ public class JobManager {
 		}
 
 		public void downloadData(Progress notifier) {
-			downloadData(x -> true, notifier);
+			downloadData(x -> true, notifier, false);
 		}
 
-		public void downloadData(Predicate<String> predicate, Progress notifier) {
-			job.download(predicate, notifier);
+		public void downloadData(Predicate<String> predicate, Progress notifier, boolean allowAgain) {
+			job.download(predicate, notifier, allowAgain);
 			fireValueChangedEvent();
 
 		}

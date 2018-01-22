@@ -26,15 +26,16 @@ import javafx.beans.value.ObservableValueBase;
 import net.imagej.updater.util.Progress;
 
 public class BenchmarkJobManager {
-	
+
 	@SuppressWarnings("unused")
 	private static Logger log = LoggerFactory
 			.getLogger(cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.class);
-	
+
 	public final class Job extends ObservableValueBase<Job> {
 		private JobInfo jobInfo;
 
 		private JobState oldState;
+
 		public Job(JobInfo ji) {
 			super();
 			this.jobInfo = ji;
@@ -56,12 +57,16 @@ public class BenchmarkJobManager {
 			if (ji.needsDownload()) {
 				if (ji.getState() == JobState.Finished) {
 					String filePattern = ji.getProperty(SPIM_OUTPUT_FILENAME_PATTERN);
-					ji.downloadData(downloadFinishedData(filePattern), progress);
+					ji.downloadData(downloadFinishedData(filePattern), progress, false);
 				} else if (ji.getState() == JobState.Failed) {
-					ji.downloadData(downloadFailedData(), progress);
+					ji.downloadData(downloadFailedData(), progress, false);
 				}
 			}
+		}
 
+		public void downloadStatistics(Progress progress) throws IOException {
+			JobInfo ji = jobInfo;
+			ji.downloadData(BenchmarkJobManager.downloadStatistics(), progress, true);
 		}
 
 		public List<String> getOutput(List<JobSynchronizableFile> files) {
@@ -111,8 +116,6 @@ public class BenchmarkJobManager {
 			}
 		}
 
-	
-		
 		public boolean downloaded() {
 			return !jobInfo.needsDownload();
 		}
@@ -137,7 +140,7 @@ public class BenchmarkJobManager {
 	private static final String CONFIG_YAML = "config.yaml";
 
 	private JobManager jobManager;
-	
+
 	public BenchmarkJobManager(BenchmarkSPIMParameters params) throws IOException {
 		jobManager = new JobManager(params.workingDirectory(), constructSettingsFromParams(params));
 	}
@@ -149,7 +152,7 @@ public class BenchmarkJobManager {
 	}
 
 	public Collection<Job> getJobs() throws IOException {
-		
+
 		return jobManager.getJobs().stream().map(this::convertJob).collect(Collectors.toList());
 	}
 
@@ -188,6 +191,14 @@ public class BenchmarkJobManager {
 			String fileName = p.getFileName().toString();
 			return fileName.startsWith(filePattern) && fileName.endsWith("h5") || fileName.equals(filePattern + ".xml")
 					|| fileName.equals("benchmark_result.csv");
+		};
+	}
+
+	static private Predicate<String> downloadStatistics() {
+		return name -> {
+			Path p = Paths.get(name);
+			String fileName = p.getFileName().toString();
+			return fileName.equals("benchmark_result.csv");
 		};
 	}
 
