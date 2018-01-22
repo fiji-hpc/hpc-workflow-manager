@@ -7,13 +7,6 @@ import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkSPIMParameters;
 
 class BenchmarkSPIMParametersImpl extends Configuration implements BenchmarkSPIMParameters{
 
-	String USER_NAME = "testuser";
-	String PASSWORD = "57f9caaf84";
-
-	String EMAIL = "aaa@vsb.cz";
-	String PHONE = "123456789";
-	
-	
 	private Path workingDirectory;
 	
 	public BenchmarkSPIMParametersImpl(Path workingDirectory) {
