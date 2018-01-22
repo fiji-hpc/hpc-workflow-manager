@@ -13,6 +13,8 @@ import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 import org.scijava.ui.ApplicationFrame;
 import org.scijava.ui.UIService;
+import org.scijava.widget.FileWidget;
+import org.scijava.widget.TextWidget;
 import org.scijava.widget.UIComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,21 +34,33 @@ public class ManageSPIMBenchmark implements Command {
 	private static Logger log = LoggerFactory
 			.getLogger(cz.it4i.fiji.haas_spim_benchmark.commands.ManageSPIMBenchmark.class);
 
-	@Parameter(label = "Work directory", persist = true, style = "directory")
-	private File workDirectory;
-
 	@Parameter
 	private UIService uiService;
 
 	@Parameter
 	private Context context;
+	
+	@Parameter(style = TextWidget.FIELD_STYLE)
+	private String userName;
+	
+	@Parameter(style = TextWidget.PASSWORD_STYLE)
+	private String password;
+	
+	@Parameter(style = TextWidget.FIELD_STYLE)
+	private String phone;
+	
+	@Parameter(style = TextWidget.FIELD_STYLE)
+	private String email;
 
+	@Parameter(label = "Work directory", persist = true, style = FileWidget.DIRECTORY_STYLE)
+	private File workDirectory;
+	
 	@Override
 	public void run() {
 		try {
 			ModalDialogs.doModal(
-					new BenchmarkSPIMWindow(getFrame(), new BenchmarkSPIMParametersImpl(Paths.get(workDirectory.getPath()))),
-					WindowConstants.DISPOSE_ON_CLOSE);
+					new BenchmarkSPIMWindow(getFrame(), new BenchmarkSPIMParametersImpl(
+							userName, password, phone, email, Paths.get(workDirectory.getPath()))), WindowConstants.DISPOSE_ON_CLOSE);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			log.error(e.getMessage(), e);
