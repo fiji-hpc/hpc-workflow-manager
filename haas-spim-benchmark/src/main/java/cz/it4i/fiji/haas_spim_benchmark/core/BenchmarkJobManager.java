@@ -1,13 +1,20 @@
 package cz.it4i.fiji.haas_spim_benchmark.core;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.NumberFormat;
+import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -68,6 +75,9 @@ public class BenchmarkJobManager {
 		public void downloadStatistics(Progress progress) throws IOException {
 			JobInfo ji = jobInfo;
 			ji.downloadData(BenchmarkJobManager.downloadStatistics(), progress, true);
+			Path resultFile = ji.getDirectory().resolve(Constants.BENCHMARK_RESULT_FILE);
+			if (resultFile != null)
+				BenchmarkJobManager.formatResultFile(resultFile);
 		}
 
 		public List<String> getOutput(List<JobSynchronizableFile> files) {
@@ -216,6 +226,80 @@ public class BenchmarkJobManager {
 			return Paths.get(name);
 		} catch(InvalidPathException ex) {
 			return null;
+		}
+	}
+	
+	private static void formatResultFile(Path filename) throws FileNotFoundException {
+		
+		LinkedList<ResultFileTask> identifiedTasks = new LinkedList<ResultFileTask>();
+		
+		try {
+			String line = null;
+			final String separator = ";";
+			
+			ResultFileTask processedTask = null;			
+			LinkedList<String> id = new LinkedList<String>();
+			LinkedList<Double> memoryUsed = new LinkedList<Double>();
+			LinkedList<Integer> wallTime = new LinkedList<Integer>();
+			LinkedList<Integer> cpuPercentage = new LinkedList<Integer>();
+			
+			BufferedReader reader = Files.newBufferedReader(filename);
+			while (null != (line = reader.readLine())) {
+				
+				line = line.trim();
+				if (line.isEmpty()) {
+					continue;
+				}
+				
+				String[] columns = line.split(separator);
+				
+				if (columns[0].equals("Task name")) {
+					
+					if (null != processedTask ) {
+						for (int i = 0; i < id.size(); i++) {
+							processedTask.jobs.add(new ResultFileJob(id.get(i), memoryUsed.get(i), wallTime.get(i), cpuPercentage.get(i)));							
+						}
+						identifiedTasks.add(processedTask);
+					}
+					
+					processedTask = new ResultFileTask(columns[1]);
+					
+					id = new LinkedList<String>();
+					memoryUsed = new LinkedList<Double>();
+					wallTime = new LinkedList<Integer>();
+					cpuPercentage = new LinkedList<Integer>();
+					
+				} else if (columns[0].equals("job ids")) {
+					for (int i = 1; i < columns.length; i++) {
+						id.add(columns[i]);
+					}
+				} else if (columns[0].equals("resources_used.mem")) {
+					for (int i = 1; i < columns.length; i++) {
+						Number number = NumberFormat.getInstance(Locale.GERMANY).parse(columns[i]);
+						memoryUsed.add(number.doubleValue());
+					}
+				} else if (columns[0].equals("resources_used.walltime")) {
+					for (int i = 1; i < columns.length; i++) {
+						wallTime.add(Integer.parseInt(columns[i]));
+					}
+				} else if (columns[0].equals("resources_used.cpupercent")) {
+					for (int i = 1; i < columns.length; i++) {
+						cpuPercentage.add(Integer.parseInt(columns[i]));
+					}
+				}
+			}
+			
+			if (null != processedTask ) {
+				for (int i = 1; i < id.size(); i++) {
+					processedTask.jobs.add(new ResultFileJob(id.get(i), memoryUsed.get(i), wallTime.get(i), cpuPercentage.get(i)));							
+				}
+				identifiedTasks.add(processedTask);
+			}
+			
+		} catch (IOException e) {
+			log.error(e.getMessage(), e);
+		} catch (ParseException e) {
+			log.error(e.getMessage(), e);
 		}
 	}
 
