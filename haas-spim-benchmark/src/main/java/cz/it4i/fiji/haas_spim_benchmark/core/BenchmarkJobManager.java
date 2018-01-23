@@ -43,10 +43,10 @@ public class BenchmarkJobManager {
 		}
 
 		public void startJob(Progress progress) throws IOException {
-			jobInfo.uploadFilesByName(Arrays.asList(CONFIG_YAML), progress);
-			String outputName = getOutputName(jobInfo.openLocalFile(CONFIG_YAML));
+			jobInfo.uploadFilesByName(Arrays.asList(Constants.CONFIG_YAML), progress);
+			String outputName = getOutputName(jobInfo.openLocalFile(Constants.CONFIG_YAML));
 			jobInfo.submit();
-			jobInfo.setProperty(SPIM_OUTPUT_FILENAME_PATTERN, outputName);
+			jobInfo.setProperty(Constants.SPIM_OUTPUT_FILENAME_PATTERN, outputName);
 		}
 
 		public JobState getState() {
@@ -57,7 +57,7 @@ public class BenchmarkJobManager {
 			JobInfo ji = jobInfo;
 			if (ji.needsDownload()) {
 				if (ji.getState() == JobState.Finished) {
-					String filePattern = ji.getProperty(SPIM_OUTPUT_FILENAME_PATTERN);
+					String filePattern = ji.getProperty(Constants.SPIM_OUTPUT_FILENAME_PATTERN);
 					ji.downloadData(downloadFinishedData(filePattern), progress, false);
 				} else if (ji.getState() == JobState.Failed) {
 					ji.downloadData(downloadFailedData(), progress, false);
@@ -131,15 +131,6 @@ public class BenchmarkJobManager {
 		}
 	}
 
-	private static final String HAAS_JOB_NAME = "HaaSSPIMBenchmark";
-	private static final int HAAS_CLUSTER_NODE_TYPE = 6;
-	private static final int HAAS_TEMPLATE_ID = 4;
-	private static final String HAAS_PROJECT_ID = "DD-17-31";
-	private static final int HAAS_TIMEOUT = 9600;
-
-	private static final String SPIM_OUTPUT_FILENAME_PATTERN = "spim.outputFilenamePattern";
-	private static final String CONFIG_YAML = "config.yaml";
-
 	private JobManager jobManager;
 
 	public BenchmarkJobManager(BenchmarkSPIMParameters params) throws IOException {
@@ -158,7 +149,7 @@ public class BenchmarkJobManager {
 	}
 
 	private HaaSClient.UploadingFile getUploadingFile() {
-		return new UploadingFileFromResource("", CONFIG_YAML);
+		return new UploadingFileFromResource("", Constants.CONFIG_YAML);
 	}
 
 	private Job convertJob(JobInfo jobInfo) {
@@ -194,7 +185,7 @@ public class BenchmarkJobManager {
 			
 			String fileName = path.getFileName().toString();
 			return fileName.startsWith(filePattern) && fileName.endsWith("h5") || fileName.equals(filePattern + ".xml")
-					|| fileName.equals("benchmark_result.csv");
+					|| fileName.equals(Constants.BENCHMARK_RESULT_FILE);
 		};
 	}
 
@@ -205,7 +196,7 @@ public class BenchmarkJobManager {
 				return false;
 			
 			String fileName = path.getFileName().toString();
-			return fileName.equals("benchmark_result.csv");
+			return fileName.equals(Constants.BENCHMARK_RESULT_FILE);
 		};
 	}
 
@@ -239,17 +230,17 @@ public class BenchmarkJobManager {
 
 			@Override
 			public int getTimeout() {
-				return HAAS_TIMEOUT;
+				return Constants.HAAS_TIMEOUT;
 			}
 
 			@Override
 			public long getTemplateId() {
-				return HAAS_TEMPLATE_ID;
+				return Constants.HAAS_TEMPLATE_ID;
 			}
 
 			@Override
 			public String getProjectId() {
-				return HAAS_PROJECT_ID;
+				return Constants.HAAS_PROJECT_ID;
 			}
 
 			@Override
@@ -264,7 +255,7 @@ public class BenchmarkJobManager {
 
 			@Override
 			public String getJobName() {
-				return HAAS_JOB_NAME;
+				return Constants.HAAS_JOB_NAME;
 			}
 
 			@Override
@@ -274,7 +265,7 @@ public class BenchmarkJobManager {
 
 			@Override
 			public long getClusterNodeType() {
-				return HAAS_CLUSTER_NODE_TYPE;
+				return Constants.HAAS_CLUSTER_NODE_TYPE;
 			}
 		};
 	}
