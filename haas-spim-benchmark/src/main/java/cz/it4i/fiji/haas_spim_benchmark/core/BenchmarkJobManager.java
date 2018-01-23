@@ -290,7 +290,7 @@ public class BenchmarkJobManager {
 			}
 			
 			if (null != processedTask ) {
-				for (int i = 1; i < id.size(); i++) {
+				for (int i = 0; i < id.size(); i++) {
 					processedTask.jobs.add(new ResultFileJob(id.get(i), memoryUsed.get(i), wallTime.get(i), cpuPercentage.get(i)));							
 				}
 				identifiedTasks.add(processedTask);
@@ -300,6 +300,10 @@ public class BenchmarkJobManager {
 			log.error(e.getMessage(), e);
 		} catch (ParseException e) {
 			log.error(e.getMessage(), e);
+		}
+		
+		for (ResultFileTask task : identifiedTasks) {
+			System.out.println("Task " + task.name + " needed " + task.getJobCount() + " jobs and " + task.getAverageMemoryUsage() +" MB of memory in average.");
 		}
 	}
 
