@@ -6,14 +6,12 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.text.NumberFormat;
 import java.time.Duration;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -110,11 +108,12 @@ public class Extractor {
 		}
 
 		private Function<String, String> getConversion(String format) {
-			Locale l =new Locale("cs");
-			NumberFormat nf = NumberFormat.getNumberInstance(l);
+//			Locale l =new Locale("cs");
+//			NumberFormat nf = NumberFormat.getNumberInstance(l);
 			switch(format) {
 			case "kb":
-				return str->nf.format(Double.parseDouble(str.replace("kb", ""))/1024.);
+				//return str->nf.format(Double.parseDouble(str.replace("kb", ""))/1024.);
+				return str -> "" + Double.parseDouble(str.replace("kb", ""))/1024.;
 			case "tm":
 				return str-> Duration.between(LocalTime.of(0, 0, 0), LocalTime.parse(str, DateTimeFormatter.ofPattern("H:m:s"))).getSeconds() + "";
 			}
