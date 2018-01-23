@@ -8,13 +8,10 @@ import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.text.NumberFormat;
-import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -35,7 +32,6 @@ import net.imagej.updater.util.Progress;
 
 public class BenchmarkJobManager {
 
-	@SuppressWarnings("unused")
 	private static Logger log = LoggerFactory
 			.getLogger(cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.class);
 
@@ -231,17 +227,14 @@ public class BenchmarkJobManager {
 	
 	private static void formatResultFile(Path filename) throws FileNotFoundException {
 		
-		LinkedList<ResultFileTask> identifiedTasks = new LinkedList<ResultFileTask>();
+		List<ResultFileTask> identifiedTasks = new LinkedList<ResultFileTask>();
 		
 		try {
 			String line = null;
 			final String separator = ";";
 			
 			ResultFileTask processedTask = null;			
-			LinkedList<String> id = new LinkedList<String>();
-			LinkedList<Double> memoryUsed = new LinkedList<Double>();
-			LinkedList<Integer> wallTime = new LinkedList<Integer>();
-			LinkedList<Integer> cpuPercentage = new LinkedList<Integer>();
+			List<ResultFileJob> values = new LinkedList<>();
 			
 			BufferedReader reader = Files.newBufferedReader(filename);
 			while (null != (line = reader.readLine())) {
@@ -256,51 +249,36 @@ public class BenchmarkJobManager {
 				if (columns[0].equals("Task name")) {
 					
 					if (null != processedTask ) {
-						for (int i = 0; i < id.size(); i++) {
-							processedTask.jobs.add(new ResultFileJob(id.get(i), memoryUsed.get(i), wallTime.get(i), cpuPercentage.get(i)));							
-						}
+						processedTask.jobs.addAll(values);							
+						
 						identifiedTasks.add(processedTask);
 					}
 					
 					processedTask = new ResultFileTask(columns[1]);
-					
-					id = new LinkedList<String>();
-					memoryUsed = new LinkedList<Double>();
-					wallTime = new LinkedList<Integer>();
-					cpuPercentage = new LinkedList<Integer>();
+					values.clear();
 					
 				} else if (columns[0].equals("job ids")) {
 					for (int i = 1; i < columns.length; i++) {
-						id.add(columns[i]);
+						values.add(new ResultFileJob(columns[i]));
 					}
-				} else if (columns[0].equals("resources_used.mem")) {
+				} else if (!columns[0].equals("jobs #")){
 					for (int i = 1; i < columns.length; i++) {
-						Number number = NumberFormat.getInstance(Locale.GERMANY).parse(columns[i]);
-						memoryUsed.add(number.doubleValue());
+						ResultFileJob resultFileJob;
+						resultFileJob = values.get(i - 1);
+						resultFileJob.setValue(columns[0], columns[i]);
 					}
-				} else if (columns[0].equals("resources_used.walltime")) {
-					for (int i = 1; i < columns.length; i++) {
-						wallTime.add(Integer.parseInt(columns[i]));
-					}
-				} else if (columns[0].equals("resources_used.cpupercent")) {
-					for (int i = 1; i < columns.length; i++) {
-						cpuPercentage.add(Integer.parseInt(columns[i]));
-					}
-				}
+				} 
 			}
 			
 			if (null != processedTask ) {
-				for (int i = 0; i < id.size(); i++) {
-					processedTask.jobs.add(new ResultFileJob(id.get(i), memoryUsed.get(i), wallTime.get(i), cpuPercentage.get(i)));							
-				}
+				processedTask.jobs.addAll(values);							
+				
 				identifiedTasks.add(processedTask);
 			}
 			
 		} catch (IOException e) {
 			log.error(e.getMessage(), e);
-		} catch (ParseException e) {
-			log.error(e.getMessage(), e);
-		}
+		} 
 		
 		for (ResultFileTask task : identifiedTasks) {
 			System.out.println("Task " + task.name + " needed " + task.getJobCount() + " jobs and " + task.getAverageMemoryUsage() +" MB of memory in average.");
