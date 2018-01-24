@@ -1,8 +1,6 @@
 package cz.it4i.fiji.haas_spim_benchmark.core;
 
 import java.util.LinkedList;
-import java.util.function.Function;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 public class ResultFileTask {
@@ -19,23 +17,20 @@ public class ResultFileTask {
 	}
 
 	public double getAverageMemoryUsage() {
-		return getAverage(str->Double.parseDouble(str), Collectors.averagingDouble(d->d),"resources_used.mem").doubleValue();
+		return getAverage(Constants.STATISTICS_RESOURCES_MEMORY_USAGE);
 	}
 
 	public double getAverageWallTime() {
-		return getAverage("resources_used.walltime");
+		return getAverage(Constants.STATISTICS_RESOURCES_WALL_TIME);
 	}
 
 	public double getAverageCpuPercentage() {
-		return getAverage("resources_used.cpupercent");
-	}
-
-	private double getAverage(String propertyName) {
-		return getAverage(str->Integer.parseInt(str), Collectors.averagingInt(i->i),propertyName).doubleValue();
+		return getAverage(Constants.STATISTICS_RESOURCES_CPU_PERCENTAGE);
 	}
 	
-	private<T> Double getAverage(Function<String, T> valueProvider,Collector<T,?,Double> collector,String propertyName) {
-		return jobs.stream().map(job -> job.getValue(propertyName)).map(memStr -> valueProvider.apply(memStr))
-				.collect(collector);
+	private Double getAverage(String propertyName) {
+		return jobs.stream().map(job -> job.getValue(propertyName))
+				.map(memStr -> Double.parseDouble(memStr))
+				.collect(Collectors.averagingDouble(d->d)).doubleValue();
 	}
 }

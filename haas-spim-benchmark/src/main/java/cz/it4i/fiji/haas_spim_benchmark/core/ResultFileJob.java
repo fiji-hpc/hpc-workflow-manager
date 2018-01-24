@@ -9,7 +9,6 @@ public class ResultFileJob {
 
 	public ResultFileJob(String id) {
 		this.id = id;
-
 	}
 
 	public String getValue(String key) {

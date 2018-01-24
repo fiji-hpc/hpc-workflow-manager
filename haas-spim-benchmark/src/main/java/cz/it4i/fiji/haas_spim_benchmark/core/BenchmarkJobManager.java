@@ -261,7 +261,7 @@ public class BenchmarkJobManager {
 					for (int i = 1; i < columns.length; i++) {
 						values.add(new ResultFileJob(columns[i]));
 					}
-				} else if (!columns[0].equals("jobs #")){
+				} else if (!columns[0].equals("jobs #")) {
 					for (int i = 1; i < columns.length; i++) {
 						ResultFileJob resultFileJob;
 						resultFileJob = values.get(i - 1);

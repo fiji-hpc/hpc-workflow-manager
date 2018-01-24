@@ -11,4 +11,8 @@ public interface Constants {
 	String SPIM_OUTPUT_FILENAME_PATTERN = "spim.outputFilenamePattern";
 	String CONFIG_YAML = "config.yaml";
 	String BENCHMARK_RESULT_FILE = "benchmark_result.csv";
+	
+	String STATISTICS_RESOURCES_MEMORY_USAGE = "resources_used.mem";
+	String STATISTICS_RESOURCES_WALL_TIME = "resources_used.walltime";
+	String STATISTICS_RESOURCES_CPU_PERCENTAGE = "resources_used.cpupercent";
 }
