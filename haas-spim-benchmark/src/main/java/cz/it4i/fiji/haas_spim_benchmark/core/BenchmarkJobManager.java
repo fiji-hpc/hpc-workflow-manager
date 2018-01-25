@@ -1,11 +1,17 @@
 package cz.it4i.fiji.haas_spim_benchmark.core;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
@@ -27,7 +33,6 @@ import net.imagej.updater.util.Progress;
 
 public class BenchmarkJobManager {
 
-	@SuppressWarnings("unused")
 	private static Logger log = LoggerFactory
 			.getLogger(cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.class);
 
@@ -42,10 +47,10 @@ public class BenchmarkJobManager {
 		}
 
 		public void startJob(Progress progress) throws IOException {
-			jobInfo.uploadFilesByName(Arrays.asList(CONFIG_YAML), progress);
-			String outputName = getOutputName(jobInfo.openLocalFile(CONFIG_YAML));
+			jobInfo.uploadFilesByName(Arrays.asList(Constants.CONFIG_YAML), progress);
+			String outputName = getOutputName(jobInfo.openLocalFile(Constants.CONFIG_YAML));
 			jobInfo.submit();
-			jobInfo.setProperty(SPIM_OUTPUT_FILENAME_PATTERN, outputName);
+			jobInfo.setProperty(Constants.SPIM_OUTPUT_FILENAME_PATTERN, outputName);
 		}
 
 		public JobState getState() {
@@ -56,7 +61,7 @@ public class BenchmarkJobManager {
 			JobInfo ji = jobInfo;
 			if (ji.needsDownload()) {
 				if (ji.getState() == JobState.Finished) {
-					String filePattern = ji.getProperty(SPIM_OUTPUT_FILENAME_PATTERN);
+					String filePattern = ji.getProperty(Constants.SPIM_OUTPUT_FILENAME_PATTERN);
 					ji.downloadData(downloadFinishedData(filePattern), progress, false);
 				} else if (ji.getState() == JobState.Failed) {
 					ji.downloadData(downloadFailedData(), progress, false);
@@ -67,6 +72,9 @@ public class BenchmarkJobManager {
 		public void downloadStatistics(Progress progress) throws IOException {
 			JobInfo ji = jobInfo;
 			ji.downloadData(BenchmarkJobManager.downloadStatistics(), progress, true);
+			Path resultFile = ji.getDirectory().resolve(Constants.BENCHMARK_RESULT_FILE);
+			if (resultFile != null)
+				BenchmarkJobManager.formatResultFile(resultFile);
 		}
 
 		public List<String> getOutput(List<JobSynchronizableFile> files) {
@@ -130,15 +138,6 @@ public class BenchmarkJobManager {
 		}
 	}
 
-	private static final String HAAS_JOB_NAME = "HaaSSPIMBenchmark";
-	private static final int HAAS_CLUSTER_NODE_TYPE = 6;
-	private static final int HAAS_TEMPLATE_ID = 4;
-	private static final String HAAS_PROJECT_ID = "DD-17-31";
-	private static final int HAAS_TIMEOUT = 9600;
-
-	private static final String SPIM_OUTPUT_FILENAME_PATTERN = "spim.outputFilenamePattern";
-	private static final String CONFIG_YAML = "config.yaml";
-
 	private JobManager jobManager;
 
 	public BenchmarkJobManager(BenchmarkSPIMParameters params) throws IOException {
@@ -157,7 +156,7 @@ public class BenchmarkJobManager {
 	}
 
 	private HaaSClient.UploadingFile getUploadingFile() {
-		return new UploadingFileFromResource("", CONFIG_YAML);
+		return new UploadingFileFromResource("", Constants.CONFIG_YAML);
 	}
 
 	private Job convertJob(JobInfo jobInfo) {
@@ -185,29 +184,113 @@ public class BenchmarkJobManager {
 
 	}
 
-	private Predicate<String> downloadFinishedData(String filePattern) {
+	private static Predicate<String> downloadFinishedData(String filePattern) {
 		return name -> {
-			Path p = Paths.get(name);
-			String fileName = p.getFileName().toString();
+			Path path = getPathSafely(name);
+			if (path == null)
+				return false;
+			
+			String fileName = path.getFileName().toString();
 			return fileName.startsWith(filePattern) && fileName.endsWith("h5") || fileName.equals(filePattern + ".xml")
-					|| fileName.equals("benchmark_result.csv");
+					|| fileName.equals(Constants.BENCHMARK_RESULT_FILE);
 		};
 	}
 
-	static private Predicate<String> downloadStatistics() {
+	private static Predicate<String> downloadStatistics() {
 		return name -> {
-			Path p = Paths.get(name);
-			String fileName = p.getFileName().toString();
-			return fileName.equals("benchmark_result.csv");
+			Path path = getPathSafely(name);
+			if (path == null)
+				return false;
+			
+			String fileName = path.getFileName().toString();
+			return fileName.equals(Constants.BENCHMARK_RESULT_FILE);
 		};
 	}
 
-	private Predicate<String> downloadFailedData() {
+	private static Predicate<String> downloadFailedData() {
 		return name -> {
-			Path p = Paths.get(name);
-			return p.getFileName().toString().startsWith("snakejob.")
-					|| p.getParent().getFileName().toString().equals("logs");
+			Path path = getPathSafely(name);
+			if (path == null)
+				return false;
+			
+			return path.getFileName().toString().startsWith("snakejob.")
+					|| path.getParent().getFileName().toString().equals("logs");
 		};
+	}
+	
+	private static Path getPathSafely(String name) {
+		try {
+			return Paths.get(name);
+		} catch(InvalidPathException ex) {
+			return null;
+		}
+	}
+	
+	private static void formatResultFile(Path filename) throws FileNotFoundException {
+		
+		List<ResultFileTask> identifiedTasks = new LinkedList<ResultFileTask>();
+		
+		try {
+			String line = null;
+			final String separator = ";";
+			
+			ResultFileTask processedTask = null;			
+			List<ResultFileJob> jobs = new LinkedList<>();
+			
+			BufferedReader reader = Files.newBufferedReader(filename);
+			while (null != (line = reader.readLine())) {
+				
+				line = line.trim();
+				if (line.isEmpty()) {
+					continue;
+				}
+				
+				String[] columns = line.split(separator);
+				
+				if (columns[0].equals(Constants.STATISTICS_TASK_NAME)) {
+					
+					// If there is a task being processed, add all cached jobs to it and wrap it up
+					if (null != processedTask ) {
+						processedTask.jobs.addAll(jobs);
+						identifiedTasks.add(processedTask);
+					}
+					
+					// Start processing a new task
+					processedTask = new ResultFileTask(columns[1]);
+					jobs.clear();
+					
+				} else if (columns[0].equals(Constants.STATISTICS_JOB_IDS)) {
+					
+					// Cache all found jobs
+					for (int i = 1; i < columns.length; i++) {
+						jobs.add(new ResultFileJob(columns[i]));
+					}
+					
+				} else if (!columns[0].equals(Constants.STATISTICS_JOB_COUNT)) {
+					
+					// Save values of a given property to cached jobs
+					for (int i = 1; i < columns.length; i++) {
+						jobs.get(i - 1).setValue(columns[0], columns[i]);
+					}
+					
+				} 
+			}
+			
+			// If there is a task being processed, add all cached jobs to it and wrap it up
+			if (null != processedTask ) {
+				processedTask.jobs.addAll(jobs);
+				identifiedTasks.add(processedTask);
+			}
+			
+		} catch (IOException e) {
+			log.error(e.getMessage(), e);
+		} 
+		
+		for (ResultFileTask task : identifiedTasks) {
+			Object[] args = {Constants.STATISTICS_TASK_NAME_MAP.get(task.name), task.getJobCount(), task.getAverageMemoryUsage()};
+			MessageFormat fmt = new MessageFormat(Constants.STATISTICS_OUTPUT_MESSAGE);
+			System.out.println(fmt.format(args));
+		}
 	}
 
 	private static Settings constructSettingsFromParams(BenchmarkSPIMParameters params) {
@@ -221,17 +304,17 @@ public class BenchmarkJobManager {
 
 			@Override
 			public int getTimeout() {
-				return HAAS_TIMEOUT;
+				return Constants.HAAS_TIMEOUT;
 			}
 
 			@Override
 			public long getTemplateId() {
-				return HAAS_TEMPLATE_ID;
+				return Constants.HAAS_TEMPLATE_ID;
 			}
 
 			@Override
 			public String getProjectId() {
-				return HAAS_PROJECT_ID;
+				return Constants.HAAS_PROJECT_ID;
 			}
 
 			@Override
@@ -246,7 +329,7 @@ public class BenchmarkJobManager {
 
 			@Override
 			public String getJobName() {
-				return HAAS_JOB_NAME;
+				return Constants.HAAS_JOB_NAME;
 			}
 
 			@Override
@@ -256,7 +339,7 @@ public class BenchmarkJobManager {
 
 			@Override
 			public long getClusterNodeType() {
-				return HAAS_CLUSTER_NODE_TYPE;
+				return Constants.HAAS_CLUSTER_NODE_TYPE;
 			}
 		};
 	}
