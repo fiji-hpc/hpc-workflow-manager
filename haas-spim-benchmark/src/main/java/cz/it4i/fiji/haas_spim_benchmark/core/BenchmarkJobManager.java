@@ -287,7 +287,7 @@ public class BenchmarkJobManager {
 		} 
 		
 		for (ResultFileTask task : identifiedTasks) {
-			Object[] args = {task.name, task.getJobCount(), task.getAverageMemoryUsage()};
+			Object[] args = {Constants.STATISTICS_TASK_NAME_MAP.get(task.name), task.getJobCount(), task.getAverageMemoryUsage()};
 			MessageFormat fmt = new MessageFormat(Constants.STATISTICS_OUTPUT_MESSAGE);
 			System.out.println(fmt.format(args));
 		}
