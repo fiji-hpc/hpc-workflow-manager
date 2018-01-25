@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedList;
@@ -234,7 +235,7 @@ public class BenchmarkJobManager {
 			final String separator = ";";
 			
 			ResultFileTask processedTask = null;			
-			List<ResultFileJob> values = new LinkedList<>();
+			List<ResultFileJob> jobs = new LinkedList<>();
 			
 			BufferedReader reader = Files.newBufferedReader(filename);
 			while (null != (line = reader.readLine())) {
@@ -246,33 +247,38 @@ public class BenchmarkJobManager {
 				
 				String[] columns = line.split(separator);
 				
-				if (columns[0].equals("Task name")) {
+				if (columns[0].equals(Constants.STATISTICS_TASK_NAME)) {
 					
+					// If there is a task being processed, add all cached jobs to it and wrap it up
 					if (null != processedTask ) {
-						processedTask.jobs.addAll(values);							
-						
+						processedTask.jobs.addAll(jobs);
 						identifiedTasks.add(processedTask);
 					}
 					
+					// Start processing a new task
 					processedTask = new ResultFileTask(columns[1]);
-					values.clear();
+					jobs.clear();
 					
-				} else if (columns[0].equals("job ids")) {
+				} else if (columns[0].equals(Constants.STATISTICS_JOB_IDS)) {
+					
+					// Cache all found jobs
 					for (int i = 1; i < columns.length; i++) {
-						values.add(new ResultFileJob(columns[i]));
+						jobs.add(new ResultFileJob(columns[i]));
 					}
-				} else if (!columns[0].equals("jobs #")) {
+					
+				} else if (!columns[0].equals(Constants.STATISTICS_JOB_COUNT)) {
+					
+					// Save values of a given property to cached jobs
 					for (int i = 1; i < columns.length; i++) {
-						ResultFileJob resultFileJob;
-						resultFileJob = values.get(i - 1);
-						resultFileJob.setValue(columns[0], columns[i]);
+						jobs.get(i - 1).setValue(columns[0], columns[i]);
 					}
+					
 				} 
 			}
 			
+			// If there is a task being processed, add all cached jobs to it and wrap it up
 			if (null != processedTask ) {
-				processedTask.jobs.addAll(values);							
-				
+				processedTask.jobs.addAll(jobs);
 				identifiedTasks.add(processedTask);
 			}
 			
@@ -281,7 +287,9 @@ public class BenchmarkJobManager {
 		} 
 		
 		for (ResultFileTask task : identifiedTasks) {
-			System.out.println("Task " + task.name + " needed " + task.getJobCount() + " jobs and " + task.getAverageMemoryUsage() +" MB of memory in average.");
+			Object[] args = {task.name, task.getJobCount(), task.getAverageMemoryUsage()};
+			MessageFormat fmt = new MessageFormat(Constants.STATISTICS_OUTPUT_MESSAGE);
+			System.out.println(fmt.format(args));
 		}
 	}
 
