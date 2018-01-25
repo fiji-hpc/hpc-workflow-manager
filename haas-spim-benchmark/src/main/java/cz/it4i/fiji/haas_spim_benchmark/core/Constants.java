@@ -37,5 +37,5 @@ public interface Constants {
 		put("hdf5_xml_output", "Define hdf5 output");
 		put("resave_hdf5_output", "Resave output to hdf5");
 	}};
-	String STATISTICS_OUTPUT_MESSAGE = "{0} needed {1} {1,choice,0#jobs|1#job|1<jobs} and {2} MB of memory in average.";
+	String STATISTICS_SUMMARY_FILENAME = "summary.csv";
 }

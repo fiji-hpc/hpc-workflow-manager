@@ -2,12 +2,14 @@ package cz.it4i.fiji.haas_spim_benchmark.core;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Collection;
@@ -230,9 +232,12 @@ public class BenchmarkJobManager {
 		
 		List<ResultFileTask> identifiedTasks = new LinkedList<ResultFileTask>();
 		
+		final String newLineSeparator = "\n";
+		final String delimiter = ";";
+		final String summaryFileHeader = "Task;MemoryUsage;WallTime;JobCount";
+		
 		try {
 			String line = null;
-			final String separator = ";";
 			
 			ResultFileTask processedTask = null;			
 			List<ResultFileJob> jobs = new LinkedList<>();
@@ -245,7 +250,7 @@ public class BenchmarkJobManager {
 					continue;
 				}
 				
-				String[] columns = line.split(separator);
+				String[] columns = line.split(delimiter);
 				
 				if (columns[0].equals(Constants.STATISTICS_TASK_NAME)) {
 					
@@ -284,12 +289,29 @@ public class BenchmarkJobManager {
 			
 		} catch (IOException e) {
 			log.error(e.getMessage(), e);
-		} 
+		}
 		
-		for (ResultFileTask task : identifiedTasks) {
-			Object[] args = {Constants.STATISTICS_TASK_NAME_MAP.get(task.name), task.getJobCount(), task.getAverageMemoryUsage()};
-			MessageFormat fmt = new MessageFormat(Constants.STATISTICS_OUTPUT_MESSAGE);
-			System.out.println(fmt.format(args));
+		FileWriter fileWriter = null;		
+		try {			
+			fileWriter = new FileWriter(filename.getParent().toString() + "/" + Constants.STATISTICS_SUMMARY_FILENAME);
+			fileWriter.append(summaryFileHeader).append(newLineSeparator);
+			
+			for (ResultFileTask task : identifiedTasks) {
+				fileWriter.append(Constants.STATISTICS_TASK_NAME_MAP.get(task.name)).append(delimiter);
+				fileWriter.append(Double.toString(task.getAverageMemoryUsage())).append(delimiter);
+				fileWriter.append(Double.toString(task.getAverageWallTime())).append(delimiter);
+				fileWriter.append(Integer.toString(task.getJobCount()));
+				fileWriter.append(newLineSeparator);
+			}
+		} catch (Exception e) {
+			log.error(e.getMessage(), e);
+		} finally {
+			try {
+				fileWriter.flush();
+				fileWriter.close();
+			} catch (Exception e) {
+				log.error(e.getMessage(), e);
+			}
 		}
 	}
 
