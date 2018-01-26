@@ -2,7 +2,6 @@ package cz.it4i.fiji.haas_snakemake_spim.commands;
 
 import java.awt.Frame;
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
@@ -51,29 +50,27 @@ public class CheckStatusOfHaaS implements Command {
 
 	@Override
 	public void run() {
-		try {
-			jobManager = new JobManager(getWorkingDirectoryPath(),TestingConstants.getSettings());
-			if (uiService.isHeadless()) {
-				downloadAll();
-			} else {
-				CheckStatusOfHaaSWindow window;
-				window = ModalDialogs.doModal(new CheckStatusOfHaaSWindow(getFrame(), context),WindowConstants.DISPOSE_ON_CLOSE);
-				ProgressDialog dialog = ModalDialogs.doModal(new ProgressDialog(window),WindowConstants.DO_NOTHING_ON_CLOSE);
-				dialog.setTitle("Downloading info about jobs");
-				Collection<JobInfo> jobs = jobManager.getJobs();
-				int count = 0;
-				for (JobInfo ji : jobs) {
-					String item;
-					dialog.addItem(item = "job id:" + ji.getId());
-					window.addJob(ji);
-					dialog.itemDone(item);
-					dialog.setCount(count, jobs.size());
-					count++;
-				}
-				dialog.done();
+		jobManager = new JobManager(getWorkingDirectoryPath(), TestingConstants.getSettings());
+		if (uiService.isHeadless()) {
+			downloadAll();
+		} else {
+			CheckStatusOfHaaSWindow window;
+			window = ModalDialogs.doModal(new CheckStatusOfHaaSWindow(getFrame(), context),
+					WindowConstants.DISPOSE_ON_CLOSE);
+			ProgressDialog dialog = ModalDialogs.doModal(new ProgressDialog(window),
+					WindowConstants.DO_NOTHING_ON_CLOSE);
+			dialog.setTitle("Downloading info about jobs");
+			Collection<JobInfo> jobs = jobManager.getJobs();
+			int count = 0;
+			for (JobInfo ji : jobs) {
+				String item;
+				dialog.addItem(item = "job id:" + ji.getId());
+				window.addJob(ji);
+				dialog.itemDone(item);
+				dialog.setCount(count, jobs.size());
+				count++;
 			}
-		} catch (IOException e) {
-			log.error(e);
+			dialog.done();
 		}
 
 	}
@@ -92,7 +89,7 @@ public class CheckStatusOfHaaS implements Command {
 	}
 
 	private void downloadAll() {
-		for (JobInfo id : jobManager.getJobsNeedingDownload()) {
+		for (JobInfo id : jobManager.getJobs()) {
 			System.out.println("Job " + id.getId() + " needs download");
 			jobManager.downloadJob(id.getId(), new DummyProgress());
 		}
