@@ -69,7 +69,7 @@ public class CheckStatusOfHaaSController implements FXFrame.Controller {
 				}
 				JobInfo job = jobs.getSelectionModel().getSelectedItem();
 
-				if (job != null && job.needsDownload()) {
+				if (job != null) {
 					download.setDisable(false);
 				} else {
 					download.setDisable(true);
@@ -80,7 +80,7 @@ public class CheckStatusOfHaaSController implements FXFrame.Controller {
 
 	private void initTable() {
 		setCellValueFactory(0, j -> j.getId().toString());
-		setCellValueFactory(1, j -> j.getState().toString() + (j.needsDownload() ? " - needs download" : ""));
+		setCellValueFactory(1, j -> j.getState().toString());
 		setCellValueFactory(2, j -> j.getCreationTime().toString());
 		setCellValueFactory(3, j -> j.getStartTime().toString());
 		setCellValueFactory(4, j -> j.getEndTime().toString());

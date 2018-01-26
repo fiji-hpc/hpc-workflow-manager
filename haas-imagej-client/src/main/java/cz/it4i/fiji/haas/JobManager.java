@@ -63,20 +63,17 @@ public class JobManager {
 		return result;
 	}
 
-	public Iterable<JobInfo> getJobsNeedingDownload() {
-		return () -> jobs.stream().filter(j -> j.needsDownload()).map(j -> new JobInfo(j)).iterator();
-	}
-
-	public Collection<JobInfo> getJobs() throws IOException {
+	public Collection<JobInfo> getJobs() {
 		if (jobs == null) {
 			jobs = new LinkedList<>();
-			Files.list(this.workDirectory).filter(p -> Files.isDirectory(p) && Job.isJobPath(p)).forEach(p -> {
-				try {
-					jobs.add(new Job(p, this::getHaasClient));
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			});
+			try {
+				Files.list(this.workDirectory).filter(p -> Files.isDirectory(p) && Job.isJobPath(p)).forEach(p -> {
+						jobs.add(new Job(p, this::getHaasClient));
+					
+				});
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
 		}
 		return jobs.stream().map(j -> new JobInfo(j)).collect(Collectors.toList());
 	}
@@ -146,10 +143,6 @@ public class JobManager {
 			return job.getState();
 		}
 
-		public boolean needsDownload() {
-			return job.needsDownload();
-		}
-
 		public String getCreationTime() {
 			return getStringFromTimeSafely(job.getCreationTime());
 		}
@@ -163,11 +156,11 @@ public class JobManager {
 		}
 
 		public void downloadData(Progress notifier) {
-			downloadData(x -> true, notifier, false);
+			downloadData(x -> true, notifier);
 		}
 
-		public void downloadData(Predicate<String> predicate, Progress notifier, boolean allowAgain) {
-			job.download(predicate, notifier, allowAgain);
+		public void downloadData(Predicate<String> predicate, Progress notifier) {
+			job.download(predicate, notifier);
 			fireValueChangedEvent();
 
 		}
@@ -202,12 +195,12 @@ public class JobManager {
 			return job.openLocalFile(name);
 		}
 
-		public void setProperty(String name, String value) throws IOException {
+		public void setProperty(String name, String value) {
 			job.setProperty(name, value);
 
 		}
 
-		public String getProperty(String name) throws IOException {
+		public String getProperty(String name) {
 			return job.getProperty(name);
 		}
 

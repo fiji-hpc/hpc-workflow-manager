@@ -85,8 +85,7 @@ public class ManageSPIMBenchmark implements Command {
 		// Launch ImageJ as usual.
 		final ImageJ ij = new ImageJ();
 		ij.launch(args);
-
-		//ij.command().run(ManageSPIMBenchmark.class, true);
+		ij.command().run(ManageSPIMBenchmark.class, true);
 	}
 
 }
