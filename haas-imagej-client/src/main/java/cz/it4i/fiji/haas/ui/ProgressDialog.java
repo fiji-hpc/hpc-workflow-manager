@@ -49,10 +49,14 @@ public class ProgressDialog extends JDialog implements Progress {
 	public ProgressDialog(final Window owner) {
 		this(owner, null);
 	}
+	
+	public ProgressDialog(Window owner, String title) {
+		this(owner, title, null);
+	}
 
-	public ProgressDialog(final Window owner, final String title) {
+	public ProgressDialog(final Window owner, final String title, Runnable cancelableAction) {
 		super(owner, title);
-
+		boolean canCancel = cancelableAction != null;
 		final Container root = getContentPane();
 		root.setLayout(new BoxLayout(root, BoxLayout.Y_AXIS));
 		progress = new JProgressBar();
@@ -77,9 +81,12 @@ public class ProgressDialog extends JDialog implements Progress {
 			public void actionPerformed(final ActionEvent e) {
 				canceled = true;
 				ProgressDialog.this.dispose();
+				cancelableAction.run();
 			}
 		});
-		// buttons.add(cancel);
+		if(canCancel) {
+			buttons.add(cancel);
+		}
 		buttons.setMaximumSize(buttons.getMinimumSize());
 		root.add(buttons);
 

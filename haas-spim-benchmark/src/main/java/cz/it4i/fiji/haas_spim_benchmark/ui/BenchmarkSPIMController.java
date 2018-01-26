@@ -91,9 +91,9 @@ public class BenchmarkSPIMController implements FXFrame.Controller {
 
 	private void initMenu() {
 		TableViewContextMenu<Job> menu = new TableViewContextMenu<>(jobs);
-		menu.addItem("Create job", x -> executeJobActionAsync("Creating job", p -> manager.createJob()), j -> true);
+		menu.addItem("Create job", x -> executeJobActionAsync("Creating job", false, p -> manager.createJob()), j -> true);
 		menu.addItem("Start job", job -> executeJobActionAsync("Starting job", p -> job.startJob(p)),
-				job -> notNullValue(job, j -> j.getState() == JobState.Configuring));
+				job -> notNullValue(job, j -> j.getState() == JobState.Configuring || j.getState() == JobState.Finished));
 		menu.addItem("Download result", job -> executeJobActionAsync("Downloading data", p -> job.downloadData(p)),
 				job -> notNullValue(job,
 						j -> EnumSet.of(JobState.Failed, JobState.Finished).contains(j.getState()) && !j.downloaded()));
@@ -118,15 +118,21 @@ public class BenchmarkSPIMController implements FXFrame.Controller {
 			log.error(e.getMessage(), e);
 		}});
 	}
-
+	
 	private void executeJobActionAsync(String title, P_JobAction action) {
+		executeJobActionAsync(title, true, action);
+	}
+
+	private void executeJobActionAsync(String title, boolean update, P_JobAction action) {
 		executorService.execute(() -> {
 			try {
 				ProgressDialog dialog = ModalDialogs.doModal(new ProgressDialog(root, title),
 						WindowConstants.DO_NOTHING_ON_CLOSE);
 				action.doAction(dialog);
 				dialog.done();
-				updateJobs();
+				if(update) {
+					updateJobs();
+				}
 			} catch (IOException e) {
 				log.error(e.getMessage(), e);
 			}
