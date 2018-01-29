@@ -116,6 +116,7 @@ public class Job {
 	}
 
 	public JobState getState() {
+		updateJobInfo();
 		return getJobInfo().getState();
 	}
 

@@ -1,15 +1,11 @@
 package cz.it4i.fiji.haas;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Calendar;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.List;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -20,7 +16,6 @@ import cz.it4i.fiji.haas_java_client.HaaSClient.UploadingFile;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.Settings;
 import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
-import javafx.beans.value.ObservableValueBase;
 import net.imagej.updater.util.Progress;
 
 public class JobManager {
@@ -41,29 +36,23 @@ public class JobManager {
 		this.settings = settings;
 	}
 
-	public JobInfo createJob() throws IOException {
+	public Job createJob() throws IOException {
 		Job job;
 		if (jobs == null) {
 			jobs = new LinkedList<>();
 		}
 		jobs.add(job = new Job(settings.getJobName(), workDirectory, this::getHaasClient));
-		return new JobInfo(job) {
-			@Override
-			public JobState getState() {
-				job.updateInfo();
-				return super.getState();
-			}
-		};
+		return job;
 	}
 
-	public JobInfo startJob(Iterable<UploadingFile> files, Progress notifier) throws IOException {
-		JobInfo result = createJob();
+	public Job startJob(Iterable<UploadingFile> files, Progress notifier) throws IOException {
+		Job result = createJob();
 		result.uploadFiles(files, notifier);
 		result.submit();
 		return result;
 	}
 
-	public Collection<JobInfo> getJobs() {
+	public Collection<Job> getJobs() {
 		if (jobs == null) {
 			jobs = new LinkedList<>();
 			try {
@@ -75,7 +64,7 @@ public class JobManager {
 				throw new RuntimeException(e);
 			}
 		}
-		return jobs.stream().map(j -> new JobInfo(j)).collect(Collectors.toList());
+		return jobs.stream().collect(Collectors.toList());
 	}
 
 	public void downloadJob(Long id, Progress notifier) {
@@ -114,100 +103,4 @@ public class JobManager {
 			return offset;
 		}
 	}
-
-	public static class JobInfo extends ObservableValueBase<JobInfo> {
-
-		private Job job;
-
-		public JobInfo(Job job) {
-			this.job = job;
-		}
-
-		public void uploadFiles(Iterable<UploadingFile> files, Progress notifier) {
-			job.uploadFiles(files,notifier);
-		}
-
-		public void uploadFilesByName(Iterable<String> files, Progress notifier) {
-			job.uploadFilesByName(files, notifier);
-		}
-
-		public void submit() {
-			job.submit();
-		}
-
-		public Long getId() {
-			return job.getJobId();
-		}
-
-		public JobState getState() {
-			return job.getState();
-		}
-
-		public String getCreationTime() {
-			return getStringFromTimeSafely(job.getCreationTime());
-		}
-
-		public String getStartTime() {
-			return getStringFromTimeSafely(job.getStartTime());
-		}
-
-		public String getEndTime() {
-			return getStringFromTimeSafely(job.getEndTime());
-		}
-
-		public void downloadData(Progress notifier) {
-			downloadData(x -> true, notifier);
-		}
-
-		public void downloadData(Predicate<String> predicate, Progress notifier) {
-			job.download(predicate, notifier);
-			fireValueChangedEvent();
-
-		}
-
-		public void waitForStart() {
-			// TODO Auto-generated method stub
-
-		}
-
-		public void updateInfo() {
-			job.updateInfo();
-		}
-
-		@Override
-		public JobInfo getValue() {
-			return this;
-		}
-
-		public Path storeDataInWorkdirectory(UploadingFile uploadingFile) throws IOException {
-			return job.storeDataInWorkdirectory(uploadingFile);
-		}
-
-		public List<String> getOutput(Iterable<JobSynchronizableFile> files) {
-			return job.getOutput(files);
-		}
-
-		private String getStringFromTimeSafely(Calendar time) {
-			return time != null ? time.getTime().toString() : "N/A";
-		}
-
-		public InputStream openLocalFile(String name) throws IOException {
-			return job.openLocalFile(name);
-		}
-
-		public void setProperty(String name, String value) {
-			job.setProperty(name, value);
-
-		}
-
-		public String getProperty(String name) {
-			return job.getProperty(name);
-		}
-
-		public Path getDirectory() {
-			return job.getDirectory();
-		}
-
-	}
-
 }

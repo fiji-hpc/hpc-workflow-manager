@@ -14,7 +14,7 @@ import cz.it4i.fiji.haas.ui.DummyProgress;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
 import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager;
-import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.Job;
+import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.BenchmarkJob;
 import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkSPIMParameters;
 
 public class RunBenchmark {
@@ -23,7 +23,7 @@ public class RunBenchmark {
 	public static class CreateJob {
 		public static void main(String[] args) throws IOException {
 			BenchmarkJobManager benchmarkJobManager = new BenchmarkJobManager(getBenchmarkSPIMParameters());
-			Job ji = benchmarkJobManager.createJob();
+			BenchmarkJob ji = benchmarkJobManager.createJob();
 			log.info("job: " + ji.getId() + " created.");
 		}
 	}
@@ -31,7 +31,7 @@ public class RunBenchmark {
 	public static class ProcessJobs {
 		public static void main(String[] args) throws IOException {
 			BenchmarkJobManager benchmarkJobManager = new BenchmarkJobManager(getBenchmarkSPIMParameters());
-			for (Job job : benchmarkJobManager.getJobs()) {
+			for (BenchmarkJob job : benchmarkJobManager.getJobs()) {
 				JobState state;
 				log.info("job: " + job.getId() + " hasStatus " + (state = job.getState()));
 				if (state == JobState.Configuring) {
