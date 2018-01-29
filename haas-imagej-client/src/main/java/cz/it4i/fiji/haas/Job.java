@@ -54,8 +54,9 @@ public class Job {
 		long id = client.createJob(name, Collections.emptyList());
 		jobDir = basePath.resolve("" + id);
 		propertyHolder = new PropertyHolder(jobDir.resolve(JOB_INFO_FILE));
-		setName(name);
 		Files.createDirectory(jobDir);
+		setName(name);
+		
 	}
 
 	public void setName(String name) {
