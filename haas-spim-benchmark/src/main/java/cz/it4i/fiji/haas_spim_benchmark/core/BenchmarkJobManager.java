@@ -21,6 +21,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
 
+import cz.it4i.fiji.haas.HaaSOutputHolder;
+import cz.it4i.fiji.haas.HaaSOutputSource;
 import cz.it4i.fiji.haas.JobManager;
 import cz.it4i.fiji.haas.JobManager.JobInfo;
 import cz.it4i.fiji.haas.JobManager.JobSynchronizableFile;
@@ -28,6 +30,7 @@ import cz.it4i.fiji.haas.UploadingFileFromResource;
 import cz.it4i.fiji.haas_java_client.HaaSClient;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.Settings;
+import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
 import javafx.beans.value.ObservableValueBase;
 import net.imagej.updater.util.Progress;
 
@@ -38,14 +41,19 @@ public class BenchmarkJobManager {
 	private static Logger log = LoggerFactory
 			.getLogger(cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.class);
 
-	public final class Job extends ObservableValueBase<Job> {
+	public final class Job extends ObservableValueBase<Job> implements HaaSOutputSource {
 		private JobInfo jobInfo;
 
 		private JobState oldState;
+		
+		private HaaSOutputHolder outputOfSnakemake;
+
+		private Collection<Task> tasks;
 
 		public Job(JobInfo ji) {
 			super();
 			this.jobInfo = ji;
+			outputOfSnakemake = new HaaSOutputHolder(getValue(), SynchronizableFileType.StandardErrorFile);
 		}
 
 		public void startJob(Progress progress) throws IOException {
@@ -139,6 +147,18 @@ public class BenchmarkJobManager {
 			return jobInfo.getDirectory();
 		}
 		
+		public Collection<Task> getTasks() {
+			if(tasks == null) {
+				fillTasks();
+			}
+			return tasks;
+		}
+		
+
+		private void fillTasks() {
+			String snakeMakeoutput = outputOfSnakemake.getActualOutput();
+			
+		}
 
 		private void setDownloaded(boolean b) {
 			jobInfo.setProperty(JOB_HAS_DATA_TO_DOWNLOAD_PROPERTY, b + "");
