@@ -22,8 +22,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
 
-import cz.it4i.fiji.haas.Job;
+<<<<<<< HEAD
+import cz.it4i.fiji.haas.HaaSOutputHolder;
 import cz.it4i.fiji.haas.HaaSOutputSource;
+=======
+import cz.it4i.fiji.haas.Job;
+>>>>>>> master
 import cz.it4i.fiji.haas.JobManager;
 import cz.it4i.fiji.haas.JobManager.JobSynchronizableFile;
 import cz.it4i.fiji.haas.UploadingFileFromResource;
@@ -41,9 +45,15 @@ public class BenchmarkJobManager {
 	private static Logger log = LoggerFactory
 			.getLogger(cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.class);
 
-	public final class BenchmarkJob extends ObservableValueBase<BenchmarkJob> implements HaaSOutputSource {
+<<<<<<< HEAD
+	public final class Job extends ObservableValueBase<Job> implements HaaSOutputSource {
+		private JobInfo jobInfo;
+
+=======
+	public final class BenchmarkJob extends ObservableValueBase<BenchmarkJob> {
 		
 		private Job job;
+>>>>>>> master
 		private JobState oldState;
 		
 		private HaaSOutputHolder outputOfSnakemake;
@@ -52,8 +62,12 @@ public class BenchmarkJobManager {
 
 		public BenchmarkJob(Job job) {
 			super();
-			this.job = job;
+<<<<<<< HEAD
+			this.jobInfo = ji;
 			outputOfSnakemake = new HaaSOutputHolder(getValue(), SynchronizableFileType.StandardErrorFile);
+=======
+			this.job = job;
+>>>>>>> master
 		}
 
 		public void startJob(Progress progress) throws IOException {
@@ -152,6 +166,7 @@ public class BenchmarkJobManager {
 			return job.getDirectory();
 		}
 		
+<<<<<<< HEAD
 		public Collection<Task> getTasks() {
 			if(tasks == null) {
 				fillTasks();
@@ -164,6 +179,9 @@ public class BenchmarkJobManager {
 			String snakeMakeoutput = outputOfSnakemake.getActualOutput();
 			
 		}
+
+=======
+>>>>>>> master
 		private void setDownloaded(boolean b) {
 			job.setProperty(JOB_HAS_DATA_TO_DOWNLOAD_PROPERTY, b + "");
 		}
