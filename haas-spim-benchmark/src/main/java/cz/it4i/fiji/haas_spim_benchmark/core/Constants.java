@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public interface Constants {
-	long HAAS_UPDATE_TIMEOUT = 1000;
+	long HAAS_UPDATE_TIMEOUT = 30000;
 	String HAAS_JOB_NAME = "HaaSSPIMBenchmark";
 	int HAAS_CLUSTER_NODE_TYPE = 6;
 	int HAAS_TEMPLATE_ID = 4;
