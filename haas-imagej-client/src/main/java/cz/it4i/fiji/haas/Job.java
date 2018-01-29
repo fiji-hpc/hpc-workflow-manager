@@ -92,7 +92,7 @@ public class Job {
 
 	
 
-	synchronized public long getJobId() {
+	synchronized public long getId() {
 		if (jobId == null) {
 			jobId = getJobId(jobDir);
 		}
@@ -112,7 +112,7 @@ public class Job {
 	}
 
 	synchronized public void download(Predicate<String> predicate, Progress notifier) {
-		haasClientSupplier.get().download(getJobId(), jobDir, predicate, new P_ProgressNotifierAdapter(notifier));
+		haasClientSupplier.get().download(getId(), jobDir, predicate, new P_ProgressNotifierAdapter(notifier));
 	}
 
 	public JobState getState() {
@@ -168,7 +168,7 @@ public class Job {
 	}
 
 	private void updateJobInfo() {
-		jobInfo = haasClientSupplier.get().obtainJobInfo(getJobId());
+		jobInfo = haasClientSupplier.get().obtainJobInfo(getId());
 	}
 
 	private static boolean isValidPath(Path path) {

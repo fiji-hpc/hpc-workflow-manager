@@ -54,51 +54,51 @@ public class BenchmarkJobManager {
 			String outputName = getOutputName(job.openLocalFile(Constants.CONFIG_YAML));
 			job.submit();
 			job.setProperty(Constants.SPIM_OUTPUT_FILENAME_PATTERN, outputName);
+			fireValueChangedEvent();
 			setDownloaded(false);
 		}
 
 		public JobState getState() {
-			job.updateInfo();
 			return oldState = job.getState();
 		}
 
 		public void downloadData(Progress progress) throws IOException {
-			if (this.job.getState() == JobState.Finished) {
-				String filePattern = this.job.getProperty(Constants.SPIM_OUTPUT_FILENAME_PATTERN);
-				this.job.download(downloadFinishedData(filePattern), progress);
-			} else if (this.job.getState() == JobState.Failed) {
-				this.job.download(downloadFailedData(), progress);
+			if (job.getState() == JobState.Finished) {
+				String filePattern = job.getProperty(Constants.SPIM_OUTPUT_FILENAME_PATTERN);
+				job.download(downloadFinishedData(filePattern), progress);
+			} else if (job.getState() == JobState.Failed) {
+				job.download(downloadFailedData(), progress);
 			}
 			fireValueChangedEvent();
 			setDownloaded(true);
 		}
 
 		public void downloadStatistics(Progress progress) throws IOException {			
-			this.job.download(BenchmarkJobManager.downloadStatistics(), progress);
+			job.download(BenchmarkJobManager.downloadStatistics(), progress);
 			fireValueChangedEvent();
-			Path resultFile = this.job.getDirectory().resolve(Constants.BENCHMARK_RESULT_FILE);
+			Path resultFile = job.getDirectory().resolve(Constants.BENCHMARK_RESULT_FILE);
 			if (resultFile != null)
 				BenchmarkJobManager.formatResultFile(resultFile);
 		}
 
 		public List<String> getOutput(List<JobSynchronizableFile> files) {
-			return this.job.getOutput(files);
+			return job.getOutput(files);
 		}
 
 		public long getId() {
-			return this.job.getJobId();
+			return job.getId();
 		}
 
 		public String getCreationTime() {
-			return getStringFromTimeSafely(this.job.getCreationTime());
+			return getStringFromTimeSafely(job.getCreationTime());
 		}
 
 		public String getStartTime() {
-			return getStringFromTimeSafely(this.job.getStartTime());
+			return getStringFromTimeSafely(job.getStartTime());
 		}
 
 		public String getEndTime() {
-			return getStringFromTimeSafely(this.job.getEndTime());
+			return getStringFromTimeSafely(job.getEndTime());
 		}
 		
 		private String getStringFromTimeSafely(Calendar time) {
@@ -112,7 +112,7 @@ public class BenchmarkJobManager {
 
 		@Override
 		public int hashCode() {
-			return Long.hashCode(this.job.getJobId());
+			return Long.hashCode(job.getId());
 		}
 
 		@Override
@@ -125,31 +125,32 @@ public class BenchmarkJobManager {
 		}
 
 		public void update(BenchmarkJob benchmarkJob) {
-			if (benchmarkJob.job.getState() != oldState) {
+			job = benchmarkJob.job;
+			if (benchmarkJob.job.getState() != oldState)
 				fireValueChangedEvent();
-			}
 		}
-
+		
 		public boolean downloaded() {
 			return getDownloaded();
 		}
 
 		public BenchmarkJob update() {
-			this.job.updateInfo();
+			job.updateInfo();
+			if (!job.getState().equals(oldState))
+				fireValueChangedEvent();
 			return this;
 		}
 
 		public Path getDirectory() {
-			return this.job.getDirectory();
+			return job.getDirectory();
 		}
 		
-
 		private void setDownloaded(boolean b) {
-			this.job.setProperty(JOB_HAS_DATA_TO_DOWNLOAD_PROPERTY, b + "");
+			job.setProperty(JOB_HAS_DATA_TO_DOWNLOAD_PROPERTY, b + "");
 		}
 		
 		private boolean getDownloaded() {
-			String downloadedStr = this.job.getProperty(JOB_HAS_DATA_TO_DOWNLOAD_PROPERTY);
+			String downloadedStr = job.getProperty(JOB_HAS_DATA_TO_DOWNLOAD_PROPERTY);
 			return downloadedStr != null && Boolean.parseBoolean(downloadedStr);
 		}
 	}

@@ -68,7 +68,7 @@ public class JobManager {
 	}
 
 	public void downloadJob(Long id, Progress notifier) {
-		Iterator<Job> job = jobs.stream().filter(j -> j.getJobId() == id).iterator();
+		Iterator<Job> job = jobs.stream().filter(j -> j.getId() == id).iterator();
 		assert job.hasNext();
 		job.next().download(notifier);
 
