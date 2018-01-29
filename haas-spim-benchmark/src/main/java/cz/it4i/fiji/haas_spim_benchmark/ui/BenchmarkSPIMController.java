@@ -33,7 +33,7 @@ import cz.it4i.fiji.haas.ui.ProgressDialog;
 import cz.it4i.fiji.haas.ui.TableViewContextMenu;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager;
-import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.Job;
+import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.BenchmarkJob;
 import cz.it4i.fiji.haas_spim_benchmark.core.Constants;
 import cz.it4i.fiji.haas_spim_benchmark.core.FXFrameExecutorService;
 import javafx.fxml.FXML;
@@ -43,7 +43,7 @@ import net.imagej.updater.util.Progress;
 
 public class BenchmarkSPIMController implements FXFrame.Controller {
 
-	private static boolean notNullValue(Job j, Predicate<Job> pred) {
+	private static boolean notNullValue(BenchmarkJob j, Predicate<BenchmarkJob> pred) {
 		if (j == null) {
 			return false;
 		} else {
@@ -52,7 +52,7 @@ public class BenchmarkSPIMController implements FXFrame.Controller {
 	}
 
 	@FXML
-	private TableView<Job> jobs;
+	private TableView<BenchmarkJob> jobs;
 
 	private BenchmarkJobManager manager;
 
@@ -97,7 +97,7 @@ public class BenchmarkSPIMController implements FXFrame.Controller {
 	}
 
 	private void initMenu() {
-		TableViewContextMenu<Job> menu = new TableViewContextMenu<>(jobs);
+		TableViewContextMenu<BenchmarkJob> menu = new TableViewContextMenu<>(jobs);
 		menu.addItem("Create job", x -> executeWSCallAsync("Creating job", p -> manager.createJob()),
 				j -> true);
 		menu.addItem("Start job", job -> executeWSCallAsync("Starting job", p -> job.startJob(p)),
@@ -118,7 +118,7 @@ public class BenchmarkSPIMController implements FXFrame.Controller {
 
 	}
 
-	private void open(Job j) {
+	private void open(BenchmarkJob j) {
 		executorServiceUI.execute(() -> {
 			Desktop desktop = Desktop.getDesktop();
 			try {
@@ -174,15 +174,15 @@ public class BenchmarkSPIMController implements FXFrame.Controller {
 			executorServiceUI.execute(() -> {
 				
 
-				Set<Job> old = new HashSet<Job>(jobs.getItems());
-				Map<Job, Job> actual;
+				Set<BenchmarkJob> old = new HashSet<BenchmarkJob>(jobs.getItems());
+				Map<BenchmarkJob, BenchmarkJob> actual;
 				try {
 					actual = manager.getJobs().stream().
 							collect(Collectors.toMap(job -> job, job -> job));
 				} catch (IOException e) {
 					throw new RuntimeException(e);
 				}
-				for (Job job : old) {
+				for (BenchmarkJob job : old) {
 					if (!actual.containsKey(job)) {
 						jobs.getItems().remove(job);
 					} else {
@@ -191,7 +191,7 @@ public class BenchmarkSPIMController implements FXFrame.Controller {
 				}
 				progress.done();
 				executorServiceFX.execute(() -> {
-					for (Job job : actual.keySet()) {
+					for (BenchmarkJob job : actual.keySet()) {
 						if (!old.contains(job)) {
 							jobs.getItems().add(job);
 						}
@@ -211,9 +211,9 @@ public class BenchmarkSPIMController implements FXFrame.Controller {
 	}
 
 	@SuppressWarnings("unchecked")
-	private void setCellValueFactory(int index, Function<Job, String> mapper) {
-		((TableColumn<Job, String>) jobs.getColumns().get(index))
-				.setCellValueFactory(f -> new ObservableValueAdapter<Job, String>(f.getValue(), mapper));
+	private void setCellValueFactory(int index, Function<BenchmarkJob, String> mapper) {
+		((TableColumn<BenchmarkJob, String>) jobs.getColumns().get(index))
+				.setCellValueFactory(f -> new ObservableValueAdapter<BenchmarkJob, String>(f.getValue(), mapper));
 
 	}
 

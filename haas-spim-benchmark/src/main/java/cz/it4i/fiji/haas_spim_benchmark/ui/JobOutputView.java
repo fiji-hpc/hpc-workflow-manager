@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory;
 
 import cz.it4i.fiji.haas.JobManager.JobSynchronizableFile;
 import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
-import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.Job;
+import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.BenchmarkJob;
 
 public class JobOutputView {
 	@SuppressWarnings("unused")
@@ -28,11 +28,11 @@ public class JobOutputView {
 	private Timer timer;
 	private JDialog theDialog;
 	private JTextArea theText;
-	private Job job;
+	private BenchmarkJob job;
 	private ExecutorService executor;
 	private long readedChars = 0;
 
-	public JobOutputView(Window parent, ExecutorService executor, Job job, long refreshTimeout) {
+	public JobOutputView(Window parent, ExecutorService executor, BenchmarkJob job, long refreshTimeout) {
 		this.job = job;
 		this.executor = executor;
 		constructFrame(parent);

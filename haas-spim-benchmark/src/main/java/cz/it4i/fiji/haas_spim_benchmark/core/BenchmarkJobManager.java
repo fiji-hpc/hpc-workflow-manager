@@ -10,6 +10,7 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -21,8 +22,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
 
+import cz.it4i.fiji.haas.Job;
 import cz.it4i.fiji.haas.JobManager;
-import cz.it4i.fiji.haas.JobManager.JobInfo;
 import cz.it4i.fiji.haas.JobManager.JobSynchronizableFile;
 import cz.it4i.fiji.haas.UploadingFileFromResource;
 import cz.it4i.fiji.haas_java_client.HaaSClient;
@@ -38,114 +39,118 @@ public class BenchmarkJobManager {
 	private static Logger log = LoggerFactory
 			.getLogger(cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.class);
 
-	public final class Job extends ObservableValueBase<Job> {
-		private JobInfo jobInfo;
-
+	public final class BenchmarkJob extends ObservableValueBase<BenchmarkJob> {
+		
+		private Job job;
 		private JobState oldState;
 
-		public Job(JobInfo ji) {
+		public BenchmarkJob(Job job) {
 			super();
-			this.jobInfo = ji;
+			this.job = job;
 		}
 
 		public void startJob(Progress progress) throws IOException {
-			jobInfo.uploadFilesByName(Arrays.asList(Constants.CONFIG_YAML), progress);
-			String outputName = getOutputName(jobInfo.openLocalFile(Constants.CONFIG_YAML));
-			jobInfo.submit();
-			jobInfo.setProperty(Constants.SPIM_OUTPUT_FILENAME_PATTERN, outputName);
+			job.uploadFilesByName(Arrays.asList(Constants.CONFIG_YAML), progress);
+			String outputName = getOutputName(job.openLocalFile(Constants.CONFIG_YAML));
+			job.submit();
+			job.setProperty(Constants.SPIM_OUTPUT_FILENAME_PATTERN, outputName);
+			fireValueChangedEvent();
 			setDownloaded(false);
 		}
 
 		public JobState getState() {
-			return oldState = jobInfo.getState();
+			return oldState = job.getState();
 		}
 
 		public void downloadData(Progress progress) throws IOException {
-			JobInfo ji = jobInfo;
-			if (ji.getState() == JobState.Finished) {
-				String filePattern = ji.getProperty(Constants.SPIM_OUTPUT_FILENAME_PATTERN);
-				ji.downloadData(downloadFinishedData(filePattern), progress);
-			} else if (ji.getState() == JobState.Failed) {
-				ji.downloadData(downloadFailedData(), progress);
+			if (job.getState() == JobState.Finished) {
+				String filePattern = job.getProperty(Constants.SPIM_OUTPUT_FILENAME_PATTERN);
+				job.download(downloadFinishedData(filePattern), progress);
+			} else if (job.getState() == JobState.Failed) {
+				job.download(downloadFailedData(), progress);
 			}
+			fireValueChangedEvent();
 			setDownloaded(true);
 		}
 
-		public void downloadStatistics(Progress progress) throws IOException {
-			JobInfo ji = jobInfo;
-			ji.downloadData(BenchmarkJobManager.downloadStatistics(), progress);
-			Path resultFile = ji.getDirectory().resolve(Constants.BENCHMARK_RESULT_FILE);
+		public void downloadStatistics(Progress progress) throws IOException {			
+			job.download(BenchmarkJobManager.downloadStatistics(), progress);
+			fireValueChangedEvent();
+			Path resultFile = job.getDirectory().resolve(Constants.BENCHMARK_RESULT_FILE);
 			if (resultFile != null)
 				BenchmarkJobManager.formatResultFile(resultFile);
 		}
 
 		public List<String> getOutput(List<JobSynchronizableFile> files) {
-			return jobInfo.getOutput(files);
+			return job.getOutput(files);
 		}
 
 		public long getId() {
-			return jobInfo.getId();
+			return job.getId();
 		}
 
 		public String getCreationTime() {
-			return jobInfo.getCreationTime();
+			return getStringFromTimeSafely(job.getCreationTime());
 		}
 
 		public String getStartTime() {
-			return jobInfo.getStartTime();
+			return getStringFromTimeSafely(job.getStartTime());
 		}
 
 		public String getEndTime() {
-			return jobInfo.getEndTime();
+			return getStringFromTimeSafely(job.getEndTime());
+		}
+		
+		private String getStringFromTimeSafely(Calendar time) {
+			return time != null ? time.getTime().toString() : "N/A";
 		}
 
 		@Override
-		public Job getValue() {
+		public BenchmarkJob getValue() {
 			return this;
 		}
 
 		@Override
 		public int hashCode() {
-			return jobInfo.getId().hashCode();
+			return Long.hashCode(job.getId());
 		}
 
 		@Override
 		public boolean equals(Object obj) {
-			if (obj instanceof Job) {
-				Job job = (Job) obj;
+			if (obj instanceof BenchmarkJob) {
+				BenchmarkJob job = (BenchmarkJob) obj;
 				return job.getId() == getId();
-
 			}
 			return false;
 		}
 
-		public void update(Job job) {
-			jobInfo = job.jobInfo;
-			if (jobInfo.getState() != oldState) {
+		public void update(BenchmarkJob benchmarkJob) {
+			job = benchmarkJob.job;
+			if (benchmarkJob.job.getState() != oldState)
 				fireValueChangedEvent();
-			}
 		}
-
+		
 		public boolean downloaded() {
 			return getDownloaded();
 		}
 
-		public Job update() {
-			jobInfo.updateInfo();
+		public BenchmarkJob update() {
+			job.updateInfo();
+			if (!job.getState().equals(oldState))
+				fireValueChangedEvent();
 			return this;
 		}
 
 		public Path getDirectory() {
-			return jobInfo.getDirectory();
+			return job.getDirectory();
 		}
 		
-
 		private void setDownloaded(boolean b) {
-			jobInfo.setProperty(JOB_HAS_DATA_TO_DOWNLOAD_PROPERTY, b + "");
+			job.setProperty(JOB_HAS_DATA_TO_DOWNLOAD_PROPERTY, b + "");
 		}
 		
 		private boolean getDownloaded() {
-			String downloadedStr = jobInfo.getProperty(JOB_HAS_DATA_TO_DOWNLOAD_PROPERTY);
+			String downloadedStr = job.getProperty(JOB_HAS_DATA_TO_DOWNLOAD_PROPERTY);
 			return downloadedStr != null && Boolean.parseBoolean(downloadedStr);
 		}
 	}
@@ -156,13 +161,13 @@ public class BenchmarkJobManager {
 		jobManager = new JobManager(params.workingDirectory(), constructSettingsFromParams(params));
 	}
 
-	public Job createJob() throws IOException {
-		JobInfo jobInfo = jobManager.createJob();
-		jobInfo.storeDataInWorkdirectory(getUploadingFile());
-		return convertJob(jobInfo);
+	public BenchmarkJob createJob() throws IOException {
+		Job job = jobManager.createJob();
+		job.storeDataInWorkdirectory(getUploadingFile());
+		return convertJob(job);
 	}
 
-	public Collection<Job> getJobs() throws IOException {
+	public Collection<BenchmarkJob> getJobs() throws IOException {
 		return jobManager.getJobs().stream().map(this::convertJob).collect(Collectors.toList());
 	}
 
@@ -171,8 +176,8 @@ public class BenchmarkJobManager {
 		return new UploadingFileFromResource("", Constants.CONFIG_YAML);
 	}
 
-	private Job convertJob(JobInfo jobInfo) {
-		return new Job(jobInfo);
+	private BenchmarkJob convertJob(Job job) {
+		return new BenchmarkJob(job);
 	}
 
 	private String getOutputName(InputStream openLocalFile) throws IOException {
