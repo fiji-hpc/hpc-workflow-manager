@@ -10,12 +10,14 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import cz.it4i.fiji.haas.ui.FXFrame;
+import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.BenchmarkJob;
 import cz.it4i.fiji.haas_spim_benchmark.core.Constants;
 import cz.it4i.fiji.haas_spim_benchmark.core.Task;
 import cz.it4i.fiji.haas_spim_benchmark.core.TaskComputation;
 import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
+import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 
@@ -47,6 +49,7 @@ public class SPIMPipelineProgressViewController implements FXFrame.Controller {
 		this.job = job;
 	}
 
+	@SuppressWarnings("unchecked")
 	private void fillTable() {
 		List<Task> tasks = job.getTasks();
 		if (tasks == null) {
@@ -64,15 +67,32 @@ public class SPIMPipelineProgressViewController implements FXFrame.Controller {
 
 			for (TaskComputation tc : computations) {
 				this.tasks.getColumns().add(new TableColumn<>(tc.getTimepoint() + ""));
-				int index = i;
-				FXFrame.Controller.setCellValueFactory(this.tasks, i, (Function<Task, String>) v -> {
-					List<TaskComputation> items = v.getComputations();
-					if (items.size() >= index) {
-						return "";
+				int index = i++;
+
+				FXFrame.Controller.setCellValueFactory(this.tasks, index, (Function<Task, JobState>) v -> {
+					if (v.getComputations().size() >= index) {
+						return v.getComputations().get(index - 1).getState();
 					} else {
-						return v.getComputations().get(index).getState().toString();
+						return null;
 					}
 				});
+				((TableColumn<ObservableValue<Task>, JobState>)this.tasks.getColumns().get(index)).setCellFactory(column->new TableCell<ObservableValue<Task>,JobState>(){
+					@Override
+			        protected void updateItem(JobState state, boolean empty) {
+						if (state == null || empty) {
+			                setText(null);
+			                setStyle("");
+			            } else {
+			                // Format date.
+			                setText(state + "");
+			                if(state == JobState.Unknown) {
+			                	setStyle("-fx-background-color: yellow");
+			                }
+			            }
+						
+					}
+				});
+
 			}
 
 			this.tasks.getItems()

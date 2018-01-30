@@ -55,9 +55,10 @@ public class FXFrame<C extends FXFrame.Controller> extends JDialog {
 		}
 		
 		@SuppressWarnings("unchecked")
-		static public <U,T extends ObservableValue<U>> void setCellValueFactory(TableView<T> tableView,int index, Function<U, String> mapper) {
-			((TableColumn<T, String>) tableView.getColumns().get(index))
-					.setCellValueFactory(f -> new ObservableValueAdapter<U, String>(f.getValue(), mapper));
+		static public <U,T extends ObservableValue<U>,V> void setCellValueFactory(TableView<T> tableView,int index, Function<U, V> mapper) {
+			((TableColumn<T, V>) tableView.getColumns().get(index))
+					.setCellValueFactory(f -> new ObservableValueAdapter<U, V>(f.getValue(), mapper));
+			//((TableColumn<T, String>) tableView.getColumns().get(index)).setCellFactory(f->f.set);
 
 		}
 	}
