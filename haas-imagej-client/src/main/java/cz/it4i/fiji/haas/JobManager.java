@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.stream.Collectors;
@@ -20,6 +21,10 @@ import net.imagej.updater.util.Progress;
 
 public class JobManager {
 
+	interface JobManager4Job {
+		boolean remove(Job job);
+	}
+	
 	@SuppressWarnings("unused")
 	private static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas.JobManager.class);
 
@@ -31,6 +36,14 @@ public class JobManager {
 
 	private Settings settings;
 
+	private JobManager4Job remover = new JobManager4Job() {
+		
+		@Override
+		public boolean remove(Job job) {
+			return jobs.remove(job);
+		}
+	};
+	
 	public JobManager(Path workDirectory, Settings settings) {
 		this.workDirectory = workDirectory;
 		this.settings = settings;
@@ -41,7 +54,7 @@ public class JobManager {
 		if (jobs == null) {
 			jobs = new LinkedList<>();
 		}
-		jobs.add(job = new Job(settings.getJobName(), workDirectory, this::getHaasClient));
+		jobs.add(job = new Job(remover, settings.getJobName(), workDirectory, this::getHaasClient));
 		return job;
 	}
 
@@ -57,14 +70,14 @@ public class JobManager {
 			jobs = new LinkedList<>();
 			try {
 				Files.list(this.workDirectory).filter(p -> Files.isDirectory(p) && Job.isJobPath(p)).forEach(p -> {
-						jobs.add(new Job(p, this::getHaasClient));
+						jobs.add(new Job(remover, p, this::getHaasClient));
 					
 				});
 			} catch (IOException e) {
-				throw new RuntimeException(e);
+				log.error(e.getMessage(),e);
 			}
 		}
-		return jobs.stream().collect(Collectors.toList());
+		return Collections.unmodifiableCollection(jobs);
 	}
 
 	public void downloadJob(Long id, Progress notifier) {

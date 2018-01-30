@@ -97,9 +97,10 @@ public class BenchmarkSPIMController implements FXFrame.Controller {
 	private void initMenu() {
 		TableViewContextMenu<ObservableValue<BenchmarkJob>> menu = new TableViewContextMenu<>(jobs);
 		menu.addItem("Create job", x -> executeWSCallAsync("Creating job", p -> manager.createJob()), j -> true);
-		menu.addItem("Start job", job -> executeWSCallAsync("Starting job", p -> job.getValue().startJob(p)),
-				job -> notNullValue(job,
-						j -> j.getState() == JobState.Configuring || j.getState() == JobState.Finished));
+		menu.addItem("Start job", job -> executeWSCallAsync("Starting job", p -> {
+			job.getValue().startJob(p);
+			registry.get(job.getValue()).update();
+		}), job -> notNullValue(job, j -> j.getState() == JobState.Configuring || j.getState() == JobState.Finished));
 
 		menu.addItem("Show progress", job -> {
 			try {
@@ -123,7 +124,7 @@ public class BenchmarkSPIMController implements FXFrame.Controller {
 				j -> new JobOutputView(root, executorServiceUI, j.getValue(), Constants.HAAS_UPDATE_TIMEOUT),
 				job -> notNullValue(job,
 						j -> EnumSet.of(JobState.Failed, JobState.Finished, JobState.Running).contains(j.getState())));
-		menu.addItem("Open", j -> open(j.getValue()), x -> true);
+		menu.addItem("Open", j -> open(j.getValue()), x -> notNullValue(x, j -> true));
 		menu.addItem("Update table", job -> updateJobs(), j -> true);
 
 	}
@@ -162,14 +163,13 @@ public class BenchmarkSPIMController implements FXFrame.Controller {
 
 	private void updateJobs(boolean showProgress) {
 		executorServiceWS.execute(() -> {
+			Progress progress = showProgress
+					? ModalDialogs.doModal(new ProgressDialog(root, "Updating jobs"),
+							WindowConstants.DO_NOTHING_ON_CLOSE)
+					: new DummyProgress();
 
 			registry.update();
-			executorServiceUI.execute(() -> {
-				Progress progress = showProgress
-						? ModalDialogs.doModal(new ProgressDialog(root, "Updating jobs"),
-								WindowConstants.DO_NOTHING_ON_CLOSE)
-						: new DummyProgress();
-
+			executorServiceFX.execute(() -> {
 				try {
 					Collection<BenchmarkJob> jobs = manager.getJobs();
 					Set<ObservableValue<BenchmarkJob>> actual = new HashSet<>(this.jobs.getItems());
@@ -184,18 +184,23 @@ public class BenchmarkSPIMController implements FXFrame.Controller {
 				}
 
 				progress.done();
-
 			});
 		});
 	}
 
 	private void initTable() {
-		registry = new ObservableBenchmarkJobRegistry(bj -> jobs.getItems().remove(registry.get(bj)));
+		registry = new ObservableBenchmarkJobRegistry(bj -> remove(bj));
 		setCellValueFactory(0, j -> j.getId() + "");
 		setCellValueFactory(1, j -> j.getState().toString());
 		setCellValueFactory(2, j -> j.getCreationTime().toString());
 		setCellValueFactory(3, j -> j.getStartTime().toString());
 		setCellValueFactory(4, j -> j.getEndTime().toString());
+	}
+
+	private void remove(BenchmarkJob bj) {
+
+		jobs.getItems().remove(registry.get(bj));
+		bj.remove();
 	}
 
 	private void setCellValueFactory(int index, Function<BenchmarkJob, String> mapper) {

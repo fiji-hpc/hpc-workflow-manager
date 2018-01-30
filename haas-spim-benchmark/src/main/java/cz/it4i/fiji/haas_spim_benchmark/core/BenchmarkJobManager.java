@@ -199,6 +199,10 @@ public class BenchmarkJobManager {
 			String downloadedStr = job.getProperty(JOB_HAS_DATA_TO_DOWNLOAD_PROPERTY);
 			return downloadedStr != null && Boolean.parseBoolean(downloadedStr);
 		}
+
+		public boolean remove() {
+			return job.remove();
+		}
 	}
 
 	public BenchmarkJobManager(BenchmarkSPIMParameters params) throws IOException {

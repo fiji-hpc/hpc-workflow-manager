@@ -4,46 +4,58 @@ import java.util.function.Function;
 
 import javafx.beans.value.ObservableValueBase;
 
-public class UpdatableObservableValue<T> extends ObservableValueBase<T>{
+public class UpdatableObservableValue<T> extends ObservableValueBase<T> {
 
 	public enum UpdateStatus {
-		Deleted,
-		Updated,
-		NotUpdated
+		Deleted, Updated, NotUpdated
 	}
-	
+
 	private T wrapped;
-	private Function<T,UpdateStatus> updateFunction;
-	
-	
-	public UpdatableObservableValue(T wrapped, Function<T, UpdateStatus> updateFunction) {
+	private Function<T, UpdateStatus> updateFunction;
+	private Object oldState;
+	private Function<T, Object> stateProvider;
+
+	public UpdatableObservableValue(T wrapped, Function<T, UpdateStatus> updateFunction,
+			Function<T, Object> stateProvider) {
 		super();
 		this.wrapped = wrapped;
 		this.updateFunction = updateFunction;
-		
+		this.stateProvider = stateProvider;
+		oldState = stateProvider.apply(wrapped);
 	}
 
 	@Override
 	public T getValue() {
-		
+
 		return wrapped;
 	}
 
 	public UpdateStatus update() {
 		UpdateStatus status = updateFunction.apply(wrapped);
+		Object state = stateProvider.apply(wrapped);
+		boolean fire = true;
 		switch (status) {
+		case NotUpdated:
+			fire = false;
+			if (oldState == null && state != null || oldState != null && (state == null || !oldState.equals(state))) {
+				fire = true;
+			}
 		case Updated:
-			fireValueChangedEvent();
+			oldState = state;
+			if (fire) {
+				fireValueChangedEvent();
+			}
 		default:
 			return status;
 		}
 
 	}
+
 	@Override
 	public int hashCode() {
 		return wrapped.hashCode();
 	}
-	
+
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
@@ -61,6 +73,5 @@ public class UpdatableObservableValue<T> extends ObservableValueBase<T>{
 			return false;
 		return true;
 	}
-	
-	
+
 }

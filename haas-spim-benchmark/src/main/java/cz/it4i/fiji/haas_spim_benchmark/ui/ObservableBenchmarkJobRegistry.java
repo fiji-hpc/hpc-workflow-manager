@@ -11,7 +11,7 @@ import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.BenchmarkJob;
 public class ObservableBenchmarkJobRegistry extends ObservableValueRegistry<BenchmarkJob> {
 
 	public ObservableBenchmarkJobRegistry(Consumer<BenchmarkJob> removeConsumer) {
-		super(t -> update(t), removeConsumer);
+		super(t -> update(t), t -> t.getState(), removeConsumer);
 	}
 
 	private static UpdateStatus update(BenchmarkJob t) {
@@ -20,7 +20,9 @@ public class ObservableBenchmarkJobRegistry extends ObservableValueRegistry<Benc
 		if (!Files.isDirectory(t.getDirectory())) {
 			return UpdateStatus.Deleted;
 		}
-		return oldState != t.getState() ? UpdateStatus.Updated : UpdateStatus.NotUpdated;
+		UpdateStatus result = oldState != t.getState() ? UpdateStatus.Updated : UpdateStatus.NotUpdated;
+
+		return result;
 	}
 
 }
