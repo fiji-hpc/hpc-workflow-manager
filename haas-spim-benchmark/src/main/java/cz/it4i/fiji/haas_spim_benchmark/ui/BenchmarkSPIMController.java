@@ -5,9 +5,9 @@ import java.awt.Window;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -17,7 +17,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import javax.swing.WindowConstants;
 
@@ -34,22 +33,23 @@ import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager;
 import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.BenchmarkJob;
 import cz.it4i.fiji.haas_spim_benchmark.core.Constants;
 import cz.it4i.fiji.haas_spim_benchmark.core.FXFrameExecutorService;
+import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
 import javafx.scene.control.TableView;
 import net.imagej.updater.util.Progress;
 
 public class BenchmarkSPIMController implements FXFrame.Controller {
 
-	private static boolean notNullValue(BenchmarkJob j, Predicate<BenchmarkJob> pred) {
-		if (j == null) {
+	private static boolean notNullValue(ObservableValue<BenchmarkJob> j, Predicate<BenchmarkJob> pred) {
+		if (j == null || j.getValue() == null) {
 			return false;
 		} else {
-			return pred.test(j);
+			return pred.test(j.getValue());
 		}
 	}
 
 	@FXML
-	private TableView<BenchmarkJob> jobs;
+	private TableView<ObservableValue<BenchmarkJob>> jobs;
 
 	private BenchmarkJobManager manager;
 
@@ -60,6 +60,7 @@ public class BenchmarkSPIMController implements FXFrame.Controller {
 	private Executor executorServiceFX = new FXFrameExecutorService();
 
 	private Timer timer;
+	private ObservableBenchmarkJobRegistry registry;
 
 	private static Logger log = LoggerFactory
 			.getLogger(cz.it4i.fiji.haas_spim_benchmark.ui.BenchmarkSPIMController.class);
@@ -94,15 +95,15 @@ public class BenchmarkSPIMController implements FXFrame.Controller {
 	}
 
 	private void initMenu() {
-		TableViewContextMenu<BenchmarkJob> menu = new TableViewContextMenu<>(jobs);
+		TableViewContextMenu<ObservableValue<BenchmarkJob>> menu = new TableViewContextMenu<>(jobs);
 		menu.addItem("Create job", x -> executeWSCallAsync("Creating job", p -> manager.createJob()), j -> true);
-		menu.addItem("Start job", job -> executeWSCallAsync("Starting job", p -> job.startJob(p)),
+		menu.addItem("Start job", job -> executeWSCallAsync("Starting job", p -> job.getValue().startJob(p)),
 				job -> notNullValue(job,
 						j -> j.getState() == JobState.Configuring || j.getState() == JobState.Finished));
 
 		menu.addItem("Show progress", job -> {
 			try {
-				new SPIMPipelineProgressViewWindow(root, job).setVisible(true);
+				new SPIMPipelineProgressViewWindow(root, job.getValue()).setVisible(true);
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				log.error(e.getMessage(), e);
@@ -110,17 +111,19 @@ public class BenchmarkSPIMController implements FXFrame.Controller {
 		}, job -> notNullValue(job, j -> j.getState() == JobState.Running || j.getState() == JobState.Finished
 				|| j.getState() == JobState.Failed));
 
-		menu.addItem("Download result", job -> executeWSCallAsync("Downloading data", p -> job.downloadData(p)),
+		menu.addItem("Download result",
+				job -> executeWSCallAsync("Downloading data", p -> job.getValue().downloadData(p)),
 				job -> notNullValue(job,
 						j -> EnumSet.of(JobState.Failed, JobState.Finished).contains(j.getState()) && !j.downloaded()));
 		menu.addItem("Download statistics",
-				job -> executeWSCallAsync("Downloading data", p -> job.downloadStatistics(p)),
+				job -> executeWSCallAsync("Downloading data", p -> job.getValue().downloadStatistics(p)),
 				job -> notNullValue(job, j -> j.getState() == JobState.Finished));
 
-		menu.addItem("Show output", j -> new JobOutputView(root, executorServiceUI, j, Constants.HAAS_UPDATE_TIMEOUT),
+		menu.addItem("Show output",
+				j -> new JobOutputView(root, executorServiceUI, j.getValue(), Constants.HAAS_UPDATE_TIMEOUT),
 				job -> notNullValue(job,
 						j -> EnumSet.of(JobState.Failed, JobState.Finished, JobState.Running).contains(j.getState())));
-		menu.addItem("Open", j -> open(j), x -> true);
+		menu.addItem("Open", j -> open(j.getValue()), x -> true);
 		menu.addItem("Update table", job -> updateJobs(), j -> true);
 
 	}
@@ -158,46 +161,36 @@ public class BenchmarkSPIMController implements FXFrame.Controller {
 	}
 
 	private void updateJobs(boolean showProgress) {
-		executorServiceUI.execute(() -> {
-			Progress progress = showProgress
-					? ModalDialogs.doModal(new ProgressDialog(root, "Updating jobs"),
-							WindowConstants.DO_NOTHING_ON_CLOSE)
-					: new DummyProgress();
-			try {
-				manager.getJobs().forEach(job -> job.update());
-			} catch (IOException e1) {
-				throw new RuntimeException(e1);
-			}
-			executorServiceUI.execute(() -> {
+		executorServiceWS.execute(() -> {
 
-				Set<BenchmarkJob> old = new HashSet<BenchmarkJob>(jobs.getItems());
-				Map<BenchmarkJob, BenchmarkJob> actual;
+			registry.update();
+			executorServiceUI.execute(() -> {
+				Progress progress = showProgress
+						? ModalDialogs.doModal(new ProgressDialog(root, "Updating jobs"),
+								WindowConstants.DO_NOTHING_ON_CLOSE)
+						: new DummyProgress();
+
 				try {
-					actual = manager.getJobs().stream().collect(Collectors.toMap(job -> job, job -> job));
-				} catch (IOException e) {
-					throw new RuntimeException(e);
-				}
-				for (BenchmarkJob job : old) {
-					if (!actual.containsKey(job)) {
-						jobs.getItems().remove(job);
-					} else {
-						job.update(actual.get(job));
-					}
-				}
-				progress.done();
-				executorServiceFX.execute(() -> {
-					for (BenchmarkJob job : actual.keySet()) {
-						if (!old.contains(job)) {
-							jobs.getItems().add(job);
+					Collection<BenchmarkJob> jobs = manager.getJobs();
+					Set<ObservableValue<BenchmarkJob>> actual = new HashSet<>(this.jobs.getItems());
+					for (BenchmarkJob bj : jobs) {
+						ObservableValue<BenchmarkJob> value = registry.addIfAbsent(bj);
+						if (!actual.contains(value)) {
+							this.jobs.getItems().add(value);
 						}
 					}
-				});
+				} catch (IOException e) {
+					log.error(e.getMessage(), e);
+				}
+
+				progress.done();
+
 			});
 		});
-
 	}
 
 	private void initTable() {
+		registry = new ObservableBenchmarkJobRegistry(bj -> jobs.getItems().remove(registry.get(bj)));
 		setCellValueFactory(0, j -> j.getId() + "");
 		setCellValueFactory(1, j -> j.getState().toString());
 		setCellValueFactory(2, j -> j.getCreationTime().toString());

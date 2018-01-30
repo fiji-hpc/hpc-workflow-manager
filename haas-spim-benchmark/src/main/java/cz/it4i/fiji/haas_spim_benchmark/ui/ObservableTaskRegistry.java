@@ -3,26 +3,26 @@ package cz.it4i.fiji.haas_spim_benchmark.ui;
 import java.util.function.Consumer;
 
 import cz.it4i.fiji.haas.ui.ObservableValueRegistry;
+import cz.it4i.fiji.haas.ui.UpdatableObservableValue.UpdateStatus;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_spim_benchmark.core.Task;
 import cz.it4i.fiji.haas_spim_benchmark.core.TaskComputation;
 
-public class ObservableTaskRegistry extends ObservableValueRegistry<Task>{
+public class ObservableTaskRegistry extends ObservableValueRegistry<Task> {
 
-	public ObservableTaskRegistry(
-			Consumer<Task> removeConsumer) {
-		super(x->true, t->update(t), removeConsumer);
+	public ObservableTaskRegistry(Consumer<Task> removeConsumer) {
+		super(t -> update(t), removeConsumer);
 	}
 
-	private static boolean update(Task t) {
-		boolean result = true;
+	private static UpdateStatus update(Task t) {
+		boolean updated = false;
 		t.update();
-		for(TaskComputation tc: t.getComputations()) {
+		for (TaskComputation tc : t.getComputations()) {
 			JobState oldState = tc.getState();
 			tc.update();
-			result &= oldState == tc.getState();
+			updated |= oldState != tc.getState();
 		}
-		return result;
+		return updated ? UpdateStatus.Updated : UpdateStatus.NotUpdated;
 	}
 
 	

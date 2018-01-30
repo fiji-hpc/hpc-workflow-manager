@@ -43,7 +43,7 @@ public class SPIMPipelineProgressViewController implements FXFrame.Controller {
 
 	public void setBenchmarkJob(BenchmarkJob job) {
 		this.job = job;
-		registry = new ObservableTaskRegistry(task -> tasks.getItems().remove(registry.remove(task)));
+		registry = new ObservableTaskRegistry(task -> tasks.getItems().remove(registry.get(task)));
 		fillTable();
 	}
 

@@ -6,37 +6,44 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import cz.it4i.fiji.haas.ui.UpdatableObservableValue.UpdateStatus;
 import javafx.beans.value.ObservableValue;
 
 public class ObservableValueRegistry<T> {
 
-	private Function<T, Boolean> updateFunction;
-	private Function<T, Boolean> validateFunction;
+	private Function<T,UpdateStatus> updateFunction;
 	private Consumer<T> removeConsumer;
 	
 	
-	public ObservableValueRegistry(Function<T, Boolean> validateFunction, Function<T, Boolean> updateFunction,
+	public ObservableValueRegistry(Function<T, UpdateStatus> updateFunction,
 			Consumer<T> removeConsumer) {
 		super();
-		this.validateFunction = validateFunction;
 		this.updateFunction = updateFunction;
-		this.removeConsumer = removeConsumer;
+		this.removeConsumer = t-> {
+			removeConsumer.accept(t);
+			remove(t);
+		};
+		
 	}
 
 	private Map<T,UpdatableObservableValue<T>> map = new HashMap<>(); 
 	
 	public  ObservableValue<T> addIfAbsent(T value) {
-		UpdatableObservableValue<T> uov = map.computeIfAbsent(value, v-> new UpdatableObservableValue<T>(v, updateFunction, validateFunction));
+		UpdatableObservableValue<T> uov = map.computeIfAbsent(value, v-> new UpdatableObservableValue<T>(v, updateFunction));
 		return uov;
 	}
 	
-	public ObservableValue<T> remove(T value) {
+	public ObservableValue<T> get(T value) {
+		return map.get(value);
+	}
+	
+	private ObservableValue<T> remove(T value) {
 		return map.get(value);
 	}
 	
 	public void update() {
 		for (UpdatableObservableValue<T> value : new LinkedList<>(map.values())) {
-			if(!value.update()) {
+			if(value.update() == UpdateStatus.Deleted) {
 				removeConsumer.accept(value.getValue());
 			}
 		}

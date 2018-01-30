@@ -33,7 +33,6 @@ import cz.it4i.fiji.haas_java_client.HaaSClient;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.Settings;
 import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
-import javafx.beans.value.ObservableValueBase;
 import net.imagej.updater.util.Progress;
 
 public class BenchmarkJobManager {
@@ -46,10 +45,9 @@ public class BenchmarkJobManager {
 	private JobManager jobManager;
 	
 
-	public final class BenchmarkJob extends ObservableValueBase<BenchmarkJob> implements HaaSOutputSource {
+	public final class BenchmarkJob implements HaaSOutputSource {
 		
 		private Job job;
-		private JobState oldState;
 		
 		private HaaSOutputHolder outputOfSnakemake;
 
@@ -67,11 +65,12 @@ public class BenchmarkJobManager {
 				return false;
 			}
 		};
-
+		
+		
 		public BenchmarkJob(Job job) {
 			super();
 			this.job = job;
-			outputOfSnakemake = new HaaSOutputHolderImpl(getValue(), SynchronizableFileType.StandardErrorFile);
+			outputOfSnakemake = new HaaSOutputHolderImpl(this, SynchronizableFileType.StandardErrorFile);
 		}
 
 		public void startJob(Progress progress) throws IOException {
@@ -79,12 +78,11 @@ public class BenchmarkJobManager {
 			String outputName = getOutputName(job.openLocalFile(Constants.CONFIG_YAML));
 			job.submit();
 			job.setProperty(Constants.SPIM_OUTPUT_FILENAME_PATTERN, outputName);
-			fireValueChangedEvent();
 			setDownloaded(false);
 		}
 
 		public JobState getState() {
-			return oldState = job.getState();
+			return job.getState();
 		}
 
 		public void downloadData(Progress progress) throws IOException {
@@ -94,13 +92,12 @@ public class BenchmarkJobManager {
 			} else if (job.getState() == JobState.Failed) {
 				job.download(downloadFailedData(), progress);
 			}
-			fireValueChangedEvent();
+			
 			setDownloaded(true);
 		}
 
 		public void downloadStatistics(Progress progress) throws IOException {			
 			job.download(BenchmarkJobManager.downloadStatistics(), progress);
-			fireValueChangedEvent();
 			Path resultFile = job.getDirectory().resolve(Constants.BENCHMARK_RESULT_FILE);
 			if (resultFile != null)
 				BenchmarkJobManager.formatResultFile(resultFile);
@@ -131,11 +128,6 @@ public class BenchmarkJobManager {
 		}
 
 		@Override
-		public BenchmarkJob getValue() {
-			return this;
-		}
-
-		@Override
 		public int hashCode() {
 			return Long.hashCode(job.getId());
 		}
@@ -149,11 +141,6 @@ public class BenchmarkJobManager {
 			return false;
 		}
 
-		public void update(BenchmarkJob benchmarkJob) {
-			job = benchmarkJob.job;
-			if (benchmarkJob.job.getState() != oldState)
-				fireValueChangedEvent();
-		}
 		
 		public boolean downloaded() {
 			return getDownloaded();
@@ -161,11 +148,9 @@ public class BenchmarkJobManager {
 
 		public BenchmarkJob update() {
 			job.updateInfo();
-			if (!job.getState().equals(oldState))
-				fireValueChangedEvent();
 			return this;
 		}
-
+	
 		public Path getDirectory() {
 			return job.getDirectory();
 		}
