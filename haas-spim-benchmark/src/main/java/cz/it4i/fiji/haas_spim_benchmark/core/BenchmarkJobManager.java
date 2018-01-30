@@ -9,12 +9,14 @@ import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -49,13 +51,16 @@ public class BenchmarkJobManager {
 	public final class BenchmarkJob extends ObservableValueBase<BenchmarkJob> implements HaaSOutputSource {
 		
 		private Job job;
+		
 		private JobState oldState;
 		
-		private HaaSOutputHolder outputOfSnakemake;
-
 		private List<Task> tasks;
 
 		private SPIMComputationAccessor computationAccessor = new SPIMComputationAccessor() {
+			
+			private HaaSOutputHolder outputOfSnakemake =
+					new HaaSOutputHolderImpl(getValue(), SynchronizableFileType.StandardErrorFile);
+			
 			@Override
 			public String getActualOutput() {
 				return outputOfSnakemake.getActualOutput();
@@ -71,7 +76,6 @@ public class BenchmarkJobManager {
 		public BenchmarkJob(Job job) {
 			super();
 			this.job = job;
-			outputOfSnakemake = new HaaSOutputHolderImpl(getValue(), SynchronizableFileType.StandardErrorFile);
 		}
 
 		public void startJob(Progress progress) throws IOException {
@@ -98,7 +102,7 @@ public class BenchmarkJobManager {
 			setDownloaded(true);
 		}
 
-		public void downloadStatistics(Progress progress) throws IOException {			
+		public void downloadStatistics(Progress progress) throws IOException {
 			job.download(BenchmarkJobManager.downloadStatistics(), progress);
 			fireValueChangedEvent();
 			Path resultFile = job.getDirectory().resolve(Constants.BENCHMARK_RESULT_FILE);
@@ -171,33 +175,39 @@ public class BenchmarkJobManager {
 		}
 		
 		public List<Task> getTasks() {
-			if(tasks == null) {
+			if (tasks == null) {
 				fillTasks();
 			}
 			return tasks;
-		}
-		
+		}		
 
 		private void fillTasks() {
-			SPIMComputationAccessor accessor = computationAccessor;
-			String snakeMakeoutput = outputOfSnakemake.getActualOutput();
-			//TASK 1011 parse snakeOutput, create tasks base part:
-//Job counts:
-//			count	jobs
-//			1	define_output
-//			1	define_xml_tif
-//			1	done
-//			2	fusion
-//			1	hdf5_xml
-//			1	hdf5_xml_output
-//			2	registration
-//			2	resave_hdf5
-//			2	resave_hdf5_output
-//			1	timelapse
-//			1	xml_merge
-//			15
 			
+			final String OUTPUT_PARSING_JOB_COUNTS = "Job counts:";
+			final String OUTPUT_PARSING_TAB_DELIMITER = "\\t";
+			final int OUTPUT_PARSING_EXPECTED_NUMBER_OF_WORDS_PER_LINE = 2;
+			
+			tasks = new ArrayList<>();
+			Scanner scanner = new Scanner(computationAccessor.getActualOutput());
+			while (scanner.hasNextLine()) {
+				if (!scanner.nextLine().equals(OUTPUT_PARSING_JOB_COUNTS)) {
+					continue;
+				}				
+				scanner.nextLine();
+				
+				while (true) {
+					List<String> lineWords = Arrays.stream(scanner.nextLine().split(OUTPUT_PARSING_TAB_DELIMITER))
+							.filter(word -> word.length() > 0).collect(Collectors.toList());
+					if (lineWords.size() != OUTPUT_PARSING_EXPECTED_NUMBER_OF_WORDS_PER_LINE) {
+						break;
+					}
+					tasks.add(new Task(computationAccessor, lineWords.get(1), Integer.parseInt(lineWords.get(0))));
+				}
+				break;
+			}
+			scanner.close();
 		}
+		
 		private void setDownloaded(boolean b) {
 			job.setProperty(JOB_HAS_DATA_TO_DOWNLOAD_PROPERTY, b + "");
 		}
