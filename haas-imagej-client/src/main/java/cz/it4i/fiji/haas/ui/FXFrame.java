@@ -1,5 +1,6 @@
 package cz.it4i.fiji.haas.ui;
 
+import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.Window;
@@ -9,6 +10,7 @@ import java.net.URL;
 import java.util.function.Consumer;
 
 import javax.swing.JDialog;
+import javax.swing.JScrollPane;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,7 +60,10 @@ public class FXFrame<C extends FXFrame.Controller> extends JDialog {
 		this.controlerInit = controlerInit;
 		this.fxPanel = new P_JFXPanel();
 		Platform.setImplicitExit(false);
-		this.add(this.fxPanel);
+		this.setLayout(new BorderLayout());
+		JScrollPane scrollPane = new JScrollPane(this.fxPanel);
+		
+		this.add(scrollPane, BorderLayout.CENTER);
 
 		// The call to runLater() avoid a mix between JavaFX thread and Swing thread.
 		runOnFxThread(() -> initFX(fxPanel));
@@ -76,7 +81,7 @@ public class FXFrame<C extends FXFrame.Controller> extends JDialog {
 			URL res = FXFrame.class.getResource(fxmlFile);
 			loader.setLocation(res);
 			Parent rootLayout = (Parent) loader.load();
-
+			
 			// Show the scene containing the root layout.
 			Scene scene = new Scene(rootLayout);
 			this.fxPanel.setScene(scene);
