@@ -1,6 +1,7 @@
 package cz.it4i.fiji.haas_spim_benchmark.core;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -67,9 +68,9 @@ public class BenchmarkJobManager {
 			}
 			
 			@Override
-			public boolean fileExists(String fileName) {
-				// TASK 1011 modify interface of job for checking of file existence
-				return false;
+			public boolean fileExists(Path filePath) {
+				File f = new File(filePath.toString());
+				return f.exists() && !f.isDirectory();
 			}
 		};
 
@@ -147,8 +148,7 @@ public class BenchmarkJobManager {
 		@Override
 		public boolean equals(Object obj) {
 			if (obj instanceof BenchmarkJob) {
-				BenchmarkJob job = (BenchmarkJob) obj;
-				return job.getId() == getId();
+				return ((BenchmarkJob) obj).getId() == getId();
 			}
 			return false;
 		}
