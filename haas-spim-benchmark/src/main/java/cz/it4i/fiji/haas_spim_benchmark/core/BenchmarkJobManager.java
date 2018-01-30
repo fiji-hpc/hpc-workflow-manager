@@ -1,6 +1,7 @@
 package cz.it4i.fiji.haas_spim_benchmark.core;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -9,12 +10,14 @@ import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -22,6 +25,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
 
+import cz.it4i.fiji.haas.HaaSOutputHolder;
+import cz.it4i.fiji.haas.HaaSOutputHolderImpl;
+import cz.it4i.fiji.haas.HaaSOutputSource;
 import cz.it4i.fiji.haas.Job;
 import cz.it4i.fiji.haas.JobManager;
 import cz.it4i.fiji.haas.JobManager.JobSynchronizableFile;
@@ -29,6 +35,7 @@ import cz.it4i.fiji.haas.UploadingFileFromResource;
 import cz.it4i.fiji.haas_java_client.HaaSClient;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.Settings;
+import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
 import javafx.beans.value.ObservableValueBase;
 import net.imagej.updater.util.Progress;
 
@@ -39,10 +46,33 @@ public class BenchmarkJobManager {
 	private static Logger log = LoggerFactory
 			.getLogger(cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.class);
 
-	public final class BenchmarkJob extends ObservableValueBase<BenchmarkJob> {
+	private JobManager jobManager;
+	
+
+	public final class BenchmarkJob extends ObservableValueBase<BenchmarkJob> implements HaaSOutputSource {
 		
 		private Job job;
+		
 		private JobState oldState;
+		
+		private List<Task> tasks;
+
+		private SPIMComputationAccessor computationAccessor = new SPIMComputationAccessor() {
+			
+			private HaaSOutputHolder outputOfSnakemake =
+					new HaaSOutputHolderImpl(getValue(), SynchronizableFileType.StandardErrorFile);
+			
+			@Override
+			public String getActualOutput() {
+				return outputOfSnakemake.getActualOutput();
+			}
+			
+			@Override
+			public boolean fileExists(Path filePath) {
+				File f = new File(filePath.toString());
+				return f.exists() && !f.isDirectory();
+			}
+		};
 
 		public BenchmarkJob(Job job) {
 			super();
@@ -73,7 +103,7 @@ public class BenchmarkJobManager {
 			setDownloaded(true);
 		}
 
-		public void downloadStatistics(Progress progress) throws IOException {			
+		public void downloadStatistics(Progress progress) throws IOException {
 			job.download(BenchmarkJobManager.downloadStatistics(), progress);
 			fireValueChangedEvent();
 			Path resultFile = job.getDirectory().resolve(Constants.BENCHMARK_RESULT_FILE);
@@ -84,7 +114,7 @@ public class BenchmarkJobManager {
 		public List<String> getOutput(List<JobSynchronizableFile> files) {
 			return job.getOutput(files);
 		}
-
+		
 		public long getId() {
 			return job.getId();
 		}
@@ -118,8 +148,7 @@ public class BenchmarkJobManager {
 		@Override
 		public boolean equals(Object obj) {
 			if (obj instanceof BenchmarkJob) {
-				BenchmarkJob job = (BenchmarkJob) obj;
-				return job.getId() == getId();
+				return ((BenchmarkJob) obj).getId() == getId();
 			}
 			return false;
 		}
@@ -145,6 +174,40 @@ public class BenchmarkJobManager {
 			return job.getDirectory();
 		}
 		
+		public List<Task> getTasks() {
+			if (tasks == null) {
+				fillTasks();
+			}
+			return tasks;
+		}		
+
+		private void fillTasks() {
+			
+			final String OUTPUT_PARSING_JOB_COUNTS = "Job counts:";
+			final String OUTPUT_PARSING_TAB_DELIMITER = "\\t";
+			final int OUTPUT_PARSING_EXPECTED_NUMBER_OF_WORDS_PER_LINE = 2;
+			
+			tasks = new ArrayList<>();
+			Scanner scanner = new Scanner(computationAccessor.getActualOutput());
+			while (scanner.hasNextLine()) {
+				if (!scanner.nextLine().equals(OUTPUT_PARSING_JOB_COUNTS)) {
+					continue;
+				}				
+				scanner.nextLine();
+				
+				while (true) {
+					List<String> lineWords = Arrays.stream(scanner.nextLine().split(OUTPUT_PARSING_TAB_DELIMITER))
+							.filter(word -> word.length() > 0).collect(Collectors.toList());
+					if (lineWords.size() != OUTPUT_PARSING_EXPECTED_NUMBER_OF_WORDS_PER_LINE) {
+						break;
+					}
+					tasks.add(new Task(computationAccessor, lineWords.get(1), Integer.parseInt(lineWords.get(0))));
+				}
+				break;
+			}
+			scanner.close();
+		}
+		
 		private void setDownloaded(boolean b) {
 			job.setProperty(JOB_HAS_DATA_TO_DOWNLOAD_PROPERTY, b + "");
 		}
@@ -154,8 +217,6 @@ public class BenchmarkJobManager {
 			return downloadedStr != null && Boolean.parseBoolean(downloadedStr);
 		}
 	}
-
-	private JobManager jobManager;
 
 	public BenchmarkJobManager(BenchmarkSPIMParameters params) throws IOException {
 		jobManager = new JobManager(params.workingDirectory(), constructSettingsFromParams(params));
@@ -331,7 +392,6 @@ public class BenchmarkJobManager {
 	}
 
 	private static Settings constructSettingsFromParams(BenchmarkSPIMParameters params) {
-		// TODO Auto-generated method stub
 		return new Settings() {
 
 			@Override
