@@ -22,8 +22,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
 
-import cz.it4i.fiji.haas.Job;
+import cz.it4i.fiji.haas.HaaSOutputHolder;
+import cz.it4i.fiji.haas.HaaSOutputHolderImpl;
 import cz.it4i.fiji.haas.HaaSOutputSource;
+import cz.it4i.fiji.haas.Job;
 import cz.it4i.fiji.haas.JobManager;
 import cz.it4i.fiji.haas.JobManager.JobSynchronizableFile;
 import cz.it4i.fiji.haas.UploadingFileFromResource;
@@ -41,6 +43,9 @@ public class BenchmarkJobManager {
 	private static Logger log = LoggerFactory
 			.getLogger(cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.class);
 
+	private JobManager jobManager;
+	
+
 	public final class BenchmarkJob extends ObservableValueBase<BenchmarkJob> implements HaaSOutputSource {
 		
 		private Job job;
@@ -48,12 +53,25 @@ public class BenchmarkJobManager {
 		
 		private HaaSOutputHolder outputOfSnakemake;
 
-		private Collection<Task> tasks;
+		private List<Task> tasks;
+
+		private SPIMComputationAccessor computationAccessor = new SPIMComputationAccessor() {
+			@Override
+			public String getActualOutput() {
+				return outputOfSnakemake.getActualOutput();
+			}
+			
+			@Override
+			public boolean fileExists(String fileName) {
+				// TASK 1011 modify interface of job for checking of file existence
+				return false;
+			}
+		};
 
 		public BenchmarkJob(Job job) {
 			super();
 			this.job = job;
-			outputOfSnakemake = new HaaSOutputHolder(getValue(), SynchronizableFileType.StandardErrorFile);
+			outputOfSnakemake = new HaaSOutputHolderImpl(getValue(), SynchronizableFileType.StandardErrorFile);
 		}
 
 		public void startJob(Progress progress) throws IOException {
@@ -91,7 +109,7 @@ public class BenchmarkJobManager {
 		public List<String> getOutput(List<JobSynchronizableFile> files) {
 			return job.getOutput(files);
 		}
-
+		
 		public long getId() {
 			return job.getId();
 		}
@@ -152,7 +170,7 @@ public class BenchmarkJobManager {
 			return job.getDirectory();
 		}
 		
-		public Collection<Task> getTasks() {
+		public List<Task> getTasks() {
 			if(tasks == null) {
 				fillTasks();
 			}
@@ -161,7 +179,23 @@ public class BenchmarkJobManager {
 		
 
 		private void fillTasks() {
+			SPIMComputationAccessor accessor = computationAccessor;
 			String snakeMakeoutput = outputOfSnakemake.getActualOutput();
+			//TASK 1011 parse snakeOutput, create tasks base part:
+//Job counts:
+//			count	jobs
+//			1	define_output
+//			1	define_xml_tif
+//			1	done
+//			2	fusion
+//			1	hdf5_xml
+//			1	hdf5_xml_output
+//			2	registration
+//			2	resave_hdf5
+//			2	resave_hdf5_output
+//			1	timelapse
+//			1	xml_merge
+//			15
 			
 		}
 		private void setDownloaded(boolean b) {
@@ -173,8 +207,6 @@ public class BenchmarkJobManager {
 			return downloadedStr != null && Boolean.parseBoolean(downloadedStr);
 		}
 	}
-
-	private JobManager jobManager;
 
 	public BenchmarkJobManager(BenchmarkSPIMParameters params) throws IOException {
 		jobManager = new JobManager(params.workingDirectory(), constructSettingsFromParams(params));
@@ -350,7 +382,6 @@ public class BenchmarkJobManager {
 	}
 
 	private static Settings constructSettingsFromParams(BenchmarkSPIMParameters params) {
-		// TODO Auto-generated method stub
 		return new Settings() {
 
 			@Override

@@ -1,24 +1,36 @@
 package cz.it4i.fiji.haas_spim_benchmark.core;
 
 import java.util.Collection;
-
-import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.Job;
+import java.util.LinkedList;
 
 public class Task {
+	private SPIMComputationAccessor outputHolder;
 	private String description;
-	private Job job;
 	private Collection<TaskComputation> computations;
-	
-	public Task(Job job,String description) {
+	private int numComputations;
+
+	public Task(SPIMComputationAccessor outputHolder, String description, int numComputations) {
 		this.description = description;
-		this.job = job;
+		this.outputHolder = outputHolder;
+		this.numComputations = numComputations;
+	}
+
+	public Collection<TaskComputation> getComputations() {
+		if (computations == null) {
+			fillComputations();
+		}
+		return computations;
 	}
 
 	public String getDescription() {
 		return description;
 	}
-	
-	public Collection<Task> getPredecessors() {
-		return null;
+
+	private void fillComputations() {
+		computations = new LinkedList<>();
+		for (int i = 0; i < numComputations; i++) {
+			computations.add(new TaskComputation(outputHolder, this, i + 1));
+		}
 	}
+
 }
