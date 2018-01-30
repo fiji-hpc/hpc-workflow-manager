@@ -1,12 +1,12 @@
 package cz.it4i.fiji.haas_spim_benchmark.core;
 
-import java.util.Collection;
 import java.util.LinkedList;
+import java.util.List;
 
 public class Task {
 	private SPIMComputationAccessor outputHolder;
 	private String description;
-	private Collection<TaskComputation> computations;
+	private List<TaskComputation> computations;
 	private int numComputations;
 
 	public Task(SPIMComputationAccessor outputHolder, String description, int numComputations) {
@@ -15,7 +15,7 @@ public class Task {
 		this.numComputations = numComputations;
 	}
 
-	public Collection<TaskComputation> getComputations() {
+	public List<TaskComputation> getComputations() {
 		if (computations == null) {
 			fillComputations();
 		}
@@ -31,6 +31,11 @@ public class Task {
 		for (int i = 0; i < numComputations; i++) {
 			computations.add(new TaskComputation(outputHolder, this, i + 1));
 		}
+	}
+
+	public void update() {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

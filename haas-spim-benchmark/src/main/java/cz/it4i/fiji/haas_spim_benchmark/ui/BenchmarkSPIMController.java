@@ -15,7 +15,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -28,7 +27,6 @@ import org.slf4j.LoggerFactory;
 import cz.it4i.fiji.haas.ui.DummyProgress;
 import cz.it4i.fiji.haas.ui.FXFrame;
 import cz.it4i.fiji.haas.ui.ModalDialogs;
-import cz.it4i.fiji.haas.ui.ObservableValueAdapter;
 import cz.it4i.fiji.haas.ui.ProgressDialog;
 import cz.it4i.fiji.haas.ui.TableViewContextMenu;
 import cz.it4i.fiji.haas_java_client.JobState;
@@ -37,7 +35,6 @@ import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.BenchmarkJob;
 import cz.it4i.fiji.haas_spim_benchmark.core.Constants;
 import cz.it4i.fiji.haas_spim_benchmark.core.FXFrameExecutorService;
 import javafx.fxml.FXML;
-import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import net.imagej.updater.util.Progress;
 
@@ -98,11 +95,21 @@ public class BenchmarkSPIMController implements FXFrame.Controller {
 
 	private void initMenu() {
 		TableViewContextMenu<BenchmarkJob> menu = new TableViewContextMenu<>(jobs);
-		menu.addItem("Create job", x -> executeWSCallAsync("Creating job", p -> manager.createJob()),
-				j -> true);
+		menu.addItem("Create job", x -> executeWSCallAsync("Creating job", p -> manager.createJob()), j -> true);
 		menu.addItem("Start job", job -> executeWSCallAsync("Starting job", p -> job.startJob(p)),
 				job -> notNullValue(job,
 						j -> j.getState() == JobState.Configuring || j.getState() == JobState.Finished));
+
+		menu.addItem("Show progress", job -> {
+			try {
+				new SPIMPipelineProgressViewWindow(root, job).setVisible(true);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				log.error(e.getMessage(), e);
+			}
+		}, job -> notNullValue(job, j -> j.getState() == JobState.Running || j.getState() == JobState.Finished
+				|| j.getState() == JobState.Failed));
+
 		menu.addItem("Download result", job -> executeWSCallAsync("Downloading data", p -> job.downloadData(p)),
 				job -> notNullValue(job,
 						j -> EnumSet.of(JobState.Failed, JobState.Finished).contains(j.getState()) && !j.downloaded()));
@@ -129,31 +136,21 @@ public class BenchmarkSPIMController implements FXFrame.Controller {
 		});
 	}
 
-	private <V> void executeAsync(Executor executor, Callable<V> action, Consumer<V> postAction) {
-		executor.execute(() -> {
-			V result;
-			try {
-				result = action.call();
-				postAction.accept(result);
-			} catch (Exception e) {
-				log.error(e.getMessage(), e);
-			}
-			
-		});
-	}
-
 	private void executeWSCallAsync(String title, P_JobAction action) {
 		executeWSCallAsync(title, true, action);
 	}
 
 	private void executeWSCallAsync(String title, boolean update, P_JobAction action) {
-		executeAsync(executorServiceWS, (Callable<Void>) ()->{
+		FXFrame.Controller.executeAsync(executorServiceWS, (Callable<Void>) () -> {
 			ProgressDialog dialog = ModalDialogs.doModal(new ProgressDialog(root, title),
 					WindowConstants.DO_NOTHING_ON_CLOSE);
 			action.doAction(dialog);
 			dialog.done();
 			return null;
-		}, x-> {if(update)  updateJobs(); });
+		}, x -> {
+			if (update)
+				updateJobs();
+		});
 	}
 
 	private void updateJobs() {
@@ -172,13 +169,11 @@ public class BenchmarkSPIMController implements FXFrame.Controller {
 				throw new RuntimeException(e1);
 			}
 			executorServiceUI.execute(() -> {
-				
 
 				Set<BenchmarkJob> old = new HashSet<BenchmarkJob>(jobs.getItems());
 				Map<BenchmarkJob, BenchmarkJob> actual;
 				try {
-					actual = manager.getJobs().stream().
-							collect(Collectors.toMap(job -> job, job -> job));
+					actual = manager.getJobs().stream().collect(Collectors.toMap(job -> job, job -> job));
 				} catch (IOException e) {
 					throw new RuntimeException(e);
 				}
@@ -199,7 +194,7 @@ public class BenchmarkSPIMController implements FXFrame.Controller {
 				});
 			});
 		});
-		
+
 	}
 
 	private void initTable() {
@@ -210,11 +205,8 @@ public class BenchmarkSPIMController implements FXFrame.Controller {
 		setCellValueFactory(4, j -> j.getEndTime().toString());
 	}
 
-	@SuppressWarnings("unchecked")
 	private void setCellValueFactory(int index, Function<BenchmarkJob, String> mapper) {
-		((TableColumn<BenchmarkJob, String>) jobs.getColumns().get(index))
-				.setCellValueFactory(f -> new ObservableValueAdapter<BenchmarkJob, String>(f.getValue(), mapper));
-
+		FXFrame.Controller.setCellValueFactory(jobs, index, mapper);
 	}
 
 	private interface P_JobAction {

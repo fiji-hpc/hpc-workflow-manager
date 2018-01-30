@@ -29,6 +29,10 @@ public class TaskComputation {
 		updateState();//TASK 1011 it is not good idea update every time when state is requested 
 		return state != null?state:JobState.Configuring;
 	}
+	
+	public int getTimepoint() {
+		return timepoint;
+	}
 
 	private void updateState() {
 		String snakeOutput = outputHolder.getActualOutput();
@@ -64,6 +68,11 @@ public class TaskComputation {
 	//...
 	//
 	//or return
+	}
+
+	public void update() {
+		// TODO Auto-generated method stub
+		
 	}
 	
 }
