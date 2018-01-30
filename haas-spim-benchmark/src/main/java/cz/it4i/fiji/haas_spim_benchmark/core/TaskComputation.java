@@ -5,29 +5,29 @@ import java.util.LinkedList;
 
 import cz.it4i.fiji.haas_java_client.JobState;
 
-
 public class TaskComputation {
 
-	private SPIMComputationAccessor outputHolder;
-	private int timepoint;
+	private final SPIMComputationAccessor outputHolder;
+	private final Task task;
+	private final int timepoint;
+	
 	private Long id;
 	//TASK 1011 what states will be defined and how it will be defined
-	private JobState state;
-	private Task task;
+	private JobState state = JobState.Unknown;
 	private Collection<String> logs = new LinkedList<>();
 	private Collection<String> outputs = new LinkedList<>();
 	private Collection<String> inputs = new LinkedList<>();
 
 	
-	public TaskComputation(SPIMComputationAccessor outputHolder,Task task, int timepoint) {
+	public TaskComputation(SPIMComputationAccessor outputHolder, Task task, int timepoint) {
 		this.outputHolder = outputHolder;
-		this.timepoint = timepoint;
 		this.task = task;
+		this.timepoint = timepoint;
 	}
 
 	public JobState getState() {
 		updateState();//TASK 1011 it is not good idea update every time when state is requested 
-		return state != null?state:JobState.Configuring;
+		return state;
 	}
 
 	private void updateState() {
@@ -42,7 +42,7 @@ public class TaskComputation {
 	}
 
 	private Long getId() {
-		if(id == null) {
+		if (id == null) {
 			fillId();
 		}
 		return id;
