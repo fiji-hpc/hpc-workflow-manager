@@ -2,6 +2,7 @@ package cz.it4i.fiji.haas_spim_benchmark.core;
 
 import java.util.Collection;
 import java.util.LinkedList;
+import java.util.Scanner;
 
 import cz.it4i.fiji.haas_java_client.JobState;
 
@@ -10,10 +11,11 @@ public class TaskComputation {
 	private final SPIMComputationAccessor outputHolder;
 	private final Task task;
 	private final int timepoint;
+	private final Long id;
 	
-	private Long id;
 	//TASK 1011 what states will be defined and how it will be defined
 	private JobState state = JobState.Unknown;
+	
 	private Collection<String> logs = new LinkedList<>();
 	private Collection<String> outputs = new LinkedList<>();
 	private Collection<String> inputs = new LinkedList<>();
@@ -23,6 +25,7 @@ public class TaskComputation {
 		this.outputHolder = outputHolder;
 		this.task = task;
 		this.timepoint = timepoint;
+		this.id = resolveId();
 	}
 
 	public JobState getState() {
@@ -31,39 +34,50 @@ public class TaskComputation {
 	}
 
 	private void updateState() {
-		String snakeOutput = outputHolder.getActualOutput();
-		Long id = getId();
-		if(id == null) {
+		//TASK 1011 This should never happen, add some error handling to resolveId()
+		if (id == null) {
 			return;
 		}
+		
+		String snakeOutput = outputHolder.getActualOutput();
+
 		//TASK 1011 
 		//resolve if job is queued (defined id), started (exists log file), finished (in log is Finished job 10.) or
 		//or failed (some error in log)
 	}
 
 	private Long getId() {
-		if (id == null) {
-			fillId();
-		}
 		return id;
 	}
 
-	private void fillId() {
-		//TASK 1011 
-		//find timepoint-th occurence of
-//rule resave_hdf5:
-//    input: HisRFP_test-01-00.h5_xml, HisRFP_test_first.xml
-//    output: HisRFP_test-01-00.h5, HisRFP_test-01-00.h5_hdf5
-//    log: logs/b2_resave_hdf5-01.log
-//    jobid: 7
-//    wildcards: xml_base=HisRFP_test, file_id=01
+	private Long resolveId() {
 		
-	//resave_hdf5 == task.getDescription()
-	//jobid -> id
-	//input->inputs
-	//...
-	//
-	//or return
+		final String OUTPUT_PARSING_RULE = "rule ";
+		final String OUTPUT_PARSING_JOB_ID = "jobid: ";
+		final String OUTPUT_PARSING_COLON = ":";
+		final String desiredPattern = OUTPUT_PARSING_RULE + task.getDescription() + OUTPUT_PARSING_COLON;
+		
+		Scanner scanner = new Scanner(outputHolder.getActualOutput());
+		int jobsToSkip = timepoint - 1;
+		do {
+			if (scanner.nextLine().equals(desiredPattern)) {
+				jobsToSkip--;
+			}
+		} while (jobsToSkip >= 0 && scanner.hasNextLine());
+		
+		String currentLine;
+		Long resolvedId = null;
+		while (scanner.hasNextLine()) {
+			currentLine = scanner.nextLine();
+			if (!currentLine.contains(OUTPUT_PARSING_JOB_ID)) {
+				continue;
+			}
+			resolvedId = Long.parseLong(currentLine.split(OUTPUT_PARSING_JOB_ID)[1]);
+			break;
+		}
+		scanner.close();
+		
+		return resolvedId;
 	}
 	
 }
