@@ -68,8 +68,8 @@ public class BenchmarkJobManager {
 			}
 			
 			@Override
-			public boolean fileExists(Path filePath) {
-				File f = new File(filePath.toString());
+			public boolean fileExists(String filePath) {
+				File f = new File(filePath);
 				return f.exists() && !f.isDirectory();
 			}
 		};

@@ -5,5 +5,5 @@ import java.nio.file.Path;
 import cz.it4i.fiji.haas.HaaSOutputHolder;
 
 public interface SPIMComputationAccessor extends HaaSOutputHolder {
-	boolean fileExists(Path fileName);
+	boolean fileExists(String fileName);
 }
