@@ -306,6 +306,15 @@ public class HaaSClient {
 		}
 	}
 	
+	public Collection<String> getChangedFiles(long jobId) {
+		try {
+			return Arrays.asList(fileTransfer.listChangedFilesForJob(jobId, getSessionID()));
+		} catch (RemoteException | ServiceException e) {
+			throw new HaaSClientException(e);
+		}
+	}
+	
+	
 	private void doSubmitJob(long jobId) throws RemoteException, ServiceException {
 		getJobManagement().submitJob(jobId, getSessionID());
 	}

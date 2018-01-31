@@ -13,8 +13,8 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import org.scijava.log.LogService;
-import org.scijava.plugin.Parameter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import cz.it4i.fiji.haas.JobManager.JobManager4Job;
 import cz.it4i.fiji.haas.JobManager.JobSynchronizableFile;
@@ -36,8 +36,7 @@ public class Job {
 
 	private static String JOB_INFO_FILE = ".jobinfo";
 
-	@Parameter
-	private LogService log;
+	private static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas.Job.class);
 
 	private Path jobDir;
 
@@ -120,7 +119,7 @@ public class Job {
 
 	synchronized public void download(Predicate<String> predicate, Progress notifier) {
 		try (HaaSFileTransfer fileTransfer = haasClientSupplier.get().startFileTransfer(jobId, new P_ProgressNotifierAdapter(notifier))) {
-			fileTransfer.download(fileTransfer.getChangedFiles().stream().filter(predicate).collect(Collectors.toList()), jobDir);
+			fileTransfer.download(haasClientSupplier.get().getChangedFiles(jobId).stream().filter(predicate).collect(Collectors.toList()), jobDir);
 		}
 	}
 
@@ -243,6 +242,8 @@ public class Job {
 		}
 
 	}
+
+	
 
 	
 

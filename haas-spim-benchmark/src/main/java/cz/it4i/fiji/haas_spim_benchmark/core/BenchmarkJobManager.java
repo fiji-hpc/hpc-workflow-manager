@@ -203,6 +203,7 @@ public class BenchmarkJobManager {
 		public boolean remove() {
 			return job.remove();
 		}
+		
 	}
 
 	public BenchmarkJobManager(BenchmarkSPIMParameters params) throws IOException {

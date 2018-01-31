@@ -46,7 +46,7 @@ public class TestHaaSJavaClientWithSPIM {
 			client.downloadPartsOfJobFiles(jobId, taskFileOffset).forEach(jfc -> showJFC(jfc));
 			if (info.getState() == JobState.Finished) {
 				try (HaaSFileTransfer fileTransfer = client.startFileTransfer(jobId, HaaSClient.DUMMY_NOTIFIER)) {
-					fileTransfer.download(fileTransfer.getChangedFiles(), workDir);
+					fileTransfer.download(client.getChangedFiles(jobId), workDir);
 				}
 
 			}

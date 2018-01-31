@@ -4,11 +4,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.rmi.RemoteException;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.jcraft.jsch.JSchException;
 
@@ -20,13 +21,14 @@ import cz.it4i.fiji.scpclient.ScpClient;
 
 class HaaSFileTransferImp implements HaaSFileTransfer {
 
+	private static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas_java_client.HaaSFileTransferImp.class);
+
 	private FileTransferMethodExt ft;
 	private ScpClient scpClient;
 	private FileTransferWsSoap fileTransfer;
 	private String sessionId;
 	private long jobId;
 	private ProgressNotifier notifier;
-
 
 	public HaaSFileTransferImp(FileTransferMethodExt ft, String sessionId, long jobId, FileTransferWsSoap fileTransfer,
 			ScpClient scpClient, ProgressNotifier notifier) {
@@ -37,15 +39,6 @@ class HaaSFileTransferImp implements HaaSFileTransfer {
 		this.sessionId = sessionId;
 		this.jobId = jobId;
 		this.notifier = notifier;
-	}
-
-	@Override
-	public Collection<String> getChangedFiles() {
-		try {
-			return Arrays.asList(fileTransfer.listChangedFilesForJob(jobId, sessionId));
-		} catch (RemoteException e) {
-			throw new HaaSClientException(e);
-		}
 	}
 
 	@Override
@@ -110,6 +103,17 @@ class HaaSFileTransferImp implements HaaSFileTransfer {
 		} catch (JSchException | IOException e) {
 			throw new HaaSClientException(e);
 		}
+	}
+
+	@Override
+	public List<Long> obtainSize(List<String> files) {
+		try {
+			return HaaSClient.getSizes(files.stream()
+					.map(filename -> "'" + ft.getSharedBasepath() + "/" + filename + "'").collect(Collectors.toList()), scpClient, notifier);
+		} catch (JSchException | IOException e) {
+			throw new HaaSClientException(e);
+		}
+
 	}
 
 }
