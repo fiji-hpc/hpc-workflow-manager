@@ -308,7 +308,7 @@ public class HaaSClient {
 	
 	public Collection<String> getChangedFiles(long jobId) {
 		try {
-			return Arrays.asList(fileTransfer.listChangedFilesForJob(jobId, getSessionID()));
+			return Arrays.asList(getFileTransfer().listChangedFilesForJob(jobId, getSessionID()));
 		} catch (RemoteException | ServiceException e) {
 			throw new HaaSClientException(e);
 		}
