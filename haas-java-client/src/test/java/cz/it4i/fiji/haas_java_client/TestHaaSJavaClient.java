@@ -16,17 +16,17 @@ import org.slf4j.LoggerFactory;
 import cz.it4i.fiji.haas_java_client.HaaSClient.SynchronizableFiles;
 import cz.it4i.fiji.haas_java_client.proxy.JobFileContentExt;
 
-
 public class TestHaaSJavaClient {
 
 	private static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas_java_client.TestHaaSJavaClient.class);
-	
+
 	public static void main(String[] args) throws ServiceException, IOException {
 		Map<String, String> params = new HashMap<>();
 		params.put("inputParam", "someStringParam");
 		Path baseDir = Paths.get("/home/koz01/aaa");
-		HaaSClient client = new HaaSClient(TestingConstants.getSettings(1l, 600,7l, "DD-17-31"));
-		long jobId = client.start(Arrays.asList(Paths.get("/home/koz01/aaa/vecmath.jar")), "TestOutRedirect", params.entrySet());
+		HaaSClient client = new HaaSClient(TestingConstants.getSettings(1l, 600, 7l, "DD-17-31"));
+		long jobId = client.start(Arrays.asList(Paths.get("/home/koz01/aaa/vecmath.jar")), "TestOutRedirect",
+				params.entrySet());
 		Path workDir = baseDir.resolve("" + jobId);
 		if (!Files.isDirectory(workDir)) {
 			Files.createDirectories(workDir);
@@ -45,7 +45,9 @@ public class TestHaaSJavaClient {
 			}
 			client.downloadPartsOfJobFiles(jobId, taskFileOffset).forEach(jfc -> showJFC(jfc));
 			if (info.getState() == JobState.Finished) {
-				client.download(jobId,workDir);
+				try (HaaSFileTransfer fileTransfer = client.startFileTransfer(jobId, HaaSClient.DUMMY_NOTIFIER)) {
+					fileTransfer.download(fileTransfer.getChangedFiles(), workDir);
+				}
 			}
 			log.info("JobId :" + jobId + ", state" + info.getState());
 		} while (info.getState() != JobState.Canceled && info.getState() != JobState.Failed

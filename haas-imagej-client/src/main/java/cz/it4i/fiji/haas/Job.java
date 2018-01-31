@@ -20,6 +20,7 @@ import cz.it4i.fiji.haas.JobManager.JobManager4Job;
 import cz.it4i.fiji.haas.JobManager.JobSynchronizableFile;
 import cz.it4i.fiji.haas_java_client.HaaSClient;
 import cz.it4i.fiji.haas_java_client.HaaSClient.UploadingFile;
+import cz.it4i.fiji.haas_java_client.HaaSFileTransfer;
 import cz.it4i.fiji.haas_java_client.JobInfo;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.ProgressNotifier;
@@ -75,8 +76,9 @@ public class Job {
 
 	public void uploadFiles(Iterable<UploadingFile> files, Progress notifier) {
 		HaaSClient client = this.haasClientSupplier.get();
-
-		client.uploadFiles(jobId, files, new P_ProgressNotifierAdapter(notifier));
+		try(HaaSFileTransfer transfer = client.startFileTransfer(getId(), new P_ProgressNotifierAdapter(notifier))){
+			transfer.upload(files);
+		}
 	}
 
 	public void uploadFilesByName(Iterable<String> files, Progress notifier) {
@@ -117,7 +119,9 @@ public class Job {
 	}
 
 	synchronized public void download(Predicate<String> predicate, Progress notifier) {
-		haasClientSupplier.get().download(getId(), jobDir, predicate, new P_ProgressNotifierAdapter(notifier));
+		try (HaaSFileTransfer fileTransfer = haasClientSupplier.get().startFileTransfer(jobId, new P_ProgressNotifierAdapter(notifier))) {
+			fileTransfer.download(fileTransfer.getChangedFiles().stream().filter(predicate).collect(Collectors.toList()), jobDir);
+		}
 	}
 
 	public JobState getState() {

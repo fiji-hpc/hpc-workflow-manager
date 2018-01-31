@@ -67,6 +67,9 @@ public class ScpClient implements Closeable {
 	}
 
 	public boolean download(String lfile, Path rfile, TransferFileProgress progress) throws JSchException, IOException {
+		if (!Files.exists(rfile.getParent())) {
+			Files.createDirectories(rfile.getParent());
+		}
 		try (OutputStream os = Files.newOutputStream(rfile)) {
 			return download(lfile, os, progress);
 		}

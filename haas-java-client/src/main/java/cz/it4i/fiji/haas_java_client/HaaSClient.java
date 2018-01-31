@@ -15,7 +15,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -48,7 +47,60 @@ import cz.it4i.fiji.scpclient.ScpClient;
 
 public class HaaSClient {
 
-	private static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas_java_client.HaaSClient.class);
+	public static List<Long> getSizes(List<String> asList, ScpClient scpClient, ProgressNotifier notifier)
+			throws JSchException, IOException {
+		List<Long> result = new LinkedList<>();
+
+		String item;
+		notifier.addItem(item = "Checking sizes");
+		for (String lfile : asList) {
+			result.add(scpClient.size(lfile));
+			notifier.setItemCount(result.size(), asList.size());
+		}
+		notifier.itemDone(item);
+		return result;
+	}
+
+	public static UploadingFile getUploadingFile(Path file) {
+		return new UploadingFile() {
+
+			@Override
+			public InputStream getInputStream() {
+				try {
+					return Files.newInputStream(file);
+				} catch (IOException e) {
+					log.error(e.getMessage(), e);
+					throw new RuntimeException(e);
+				}
+			}
+
+			@Override
+			public String getName() {
+				return file.getFileName().toString();
+			}
+
+			@Override
+			public long getLength() {
+				try {
+					return Files.size(file);
+				} catch (IOException e) {
+					log.error(e.getMessage(), e);
+					throw new RuntimeException(e);
+				}
+			}
+
+			@Override
+			public long getLastTime() {
+				try {
+					return Files.getLastModifiedTime(file).toMillis();
+				} catch (IOException e) {
+					log.error(e.getMessage(), e);
+					throw new RuntimeException(e);
+				}
+			}
+
+		};
+	}
 
 	public interface UploadingFile {
 		InputStream getInputStream();
@@ -93,6 +145,8 @@ public class HaaSClient {
 		}
 	}
 
+	private static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas_java_client.HaaSClient.class);
+
 	private String sessionID;
 
 	private UserAndLimitationManagementWsSoap userAndLimitationManagement;
@@ -109,7 +163,7 @@ public class HaaSClient {
 
 	private String projectId;
 
-	private ProgressNotifier dummyNotifier = new ProgressNotifier() {
+	public static ProgressNotifier DUMMY_NOTIFIER = new ProgressNotifier() {
 
 		@Override
 		public void setTitle(String title) {
@@ -164,7 +218,7 @@ public class HaaSClient {
 	public long start(Iterable<Path> files, String name, Collection<Entry<String, String>> templateParameters) {
 		Iterable<UploadingFile> uploadingFiles = StreamSupport.stream(files.spliterator(), false)
 				.map(HaaSClient::getUploadingFile).collect(Collectors.toList());
-		return start(uploadingFiles, name, templateParameters, dummyNotifier);
+		return start(uploadingFiles, name, templateParameters, DUMMY_NOTIFIER);
 	}
 
 	public long start(Iterable<UploadingFile> files, String name, Collection<Entry<String, String>> templateParameters,
@@ -172,11 +226,13 @@ public class HaaSClient {
 		notifier.setTitle("Starting job");
 		try {
 			long jobId = doCreateJob(name, templateParameters);
-			doUploadFiles(jobId, files, notifier);
+			try (HaaSFileTransfer transfer = startFileTransfer(jobId, notifier)) {
+				transfer.upload(files);
+			}
 			doSubmitJob(jobId);
 			return jobId;
-		} catch (ServiceException | JSchException | IOException e) {
-			throw new RuntimeException(e);
+		} catch (ServiceException | IOException e) {
+			throw new HaaSClientException(e);
 		}
 
 	}
@@ -189,19 +245,21 @@ public class HaaSClient {
 		}
 	}
 
-	public void uploadFiles(long jobId, Iterable<UploadingFile> files, ProgressNotifier notifier) {
+	public HaaSFileTransfer startFileTransfer(long jobId, ProgressNotifier notifier) {
 		try {
-			doUploadFiles(jobId, files, notifier);
-		} catch (ServiceException | JSchException | IOException e) {
-			throw new RuntimeException(e);
+			FileTransferMethodExt ft = getFileTransfer().getFileTransferMethod(jobId, getSessionID());
+			return new HaaSFileTransferImp(ft, getSessionID(), jobId, getFileTransfer(), getScpClient(ft), notifier);
+		} catch (RemoteException | ServiceException | UnsupportedEncodingException | JSchException e) {
+			throw new HaaSClientException(e);
 		}
+
 	}
 
 	public void submitJob(long jobId) {
 		try {
 			doSubmitJob(jobId);
 		} catch (RemoteException | ServiceException e) {
-			throw new RuntimeException(e);
+			throw new HaaSClientException(e);
 		}
 	}
 
@@ -247,124 +305,9 @@ public class HaaSClient {
 			throw new HaaSClientException(e);
 		}
 	}
-
-	public void download(long jobId, Path workDir) {
-		download(jobId, workDir, dummyNotifier);
-	}
-
-	public void download(long jobId, Path workDirectory, final ProgressNotifier notifier) {
-		download(jobId, workDirectory, val -> true, notifier);
-	}
-
-	public void download(long jobId, Path workDirectory, Predicate<String> function, final ProgressNotifier notifier) {
-		try {
-			notifier.setTitle("Downloading");
-			FileTransferMethodExt ft = getFileTransfer().getFileTransferMethod(jobId, getSessionID());
-			try (ScpClient scpClient = getScpClient(ft)) {
-				String[] filesArray = getFileTransfer().listChangedFilesForJob(jobId, getSessionID());
-				Collection<String> files = Arrays.asList(filesArray).stream().filter(function)
-						.collect(Collectors.toList());
-				List<Long> fileSizes = getSizes(
-						files.stream().map(filename -> "'" + ft.getSharedBasepath() + "/" + filename + "'").collect(
-								Collectors.toList()),
-						scpClient, new P_ProgressNotifierDecorator4Size(notifier));
-				final long totalFileSize = fileSizes.stream().mapToLong(i -> i.longValue()).sum();
-				TransferFileProgressForHaaSClient progress = new TransferFileProgressForHaaSClient(totalFileSize,
-						notifier);
-				int idx = 0;
-				for (String fileName : files) {
-					fileName = fileName.replaceFirst("/", "");
-					Path rFile = workDirectory.resolve(fileName);
-					if (!Files.exists(rFile.getParent())) {
-						Files.createDirectories(rFile.getParent());
-					}
-					String fileToDownload = "'" + ft.getSharedBasepath() + "/" + fileName + "'";
-					String item;
-					progress.addItem(item = fileName);
-					progress.startNewFile(fileSizes.get(idx));
-					scpClient.download(fileToDownload, rFile, progress);
-					progress.itemDone(item);
-					idx++;
-				}
-			}
-			getFileTransfer().endFileTransfer(jobId, ft, getSessionID());
-			notifier.done();
-
-		} catch (IOException | JSchException | ServiceException e) {
-			throw new HaaSClientException(e);
-		}
-	}
-
-	public static UploadingFile getUploadingFile(Path file) {
-		return new UploadingFile() {
-
-			@Override
-			public InputStream getInputStream() {
-				try {
-					return Files.newInputStream(file);
-				} catch (IOException e) {
-					log.error(e.getMessage(), e);
-					throw new RuntimeException(e);
-				}
-			}
-
-			@Override
-			public String getName() {
-				return file.getFileName().toString();
-			}
-
-			@Override
-			public long getLength() {
-				try {
-					return Files.size(file);
-				} catch (IOException e) {
-					log.error(e.getMessage(), e);
-					throw new RuntimeException(e);
-				}
-			}
-
-			@Override
-			public long getLastTime() {
-				try {
-					return Files.getLastModifiedTime(file).toMillis();
-				} catch (IOException e) {
-					log.error(e.getMessage(), e);
-					throw new RuntimeException(e);
-				}
-			}
-
-		};
-	}
-
+	
 	private void doSubmitJob(long jobId) throws RemoteException, ServiceException {
 		getJobManagement().submitJob(jobId, getSessionID());
-	}
-
-	private void doUploadFiles(long jobId, Iterable<UploadingFile> files, ProgressNotifier notifier)
-			throws RemoteException, ServiceException, JSchException, IOException, UnsupportedEncodingException {
-		FileTransferMethodExt fileTransfer = getFileTransfer().getFileTransferMethod(jobId, getSessionID());
-		List<Long> totalSizes = StreamSupport.stream(files.spliterator(), false).map(f -> f.getLength())
-				.collect(Collectors.toList());
-		long totalSize = totalSizes.stream().mapToLong(l -> l.longValue()).sum();
-		TransferFileProgressForHaaSClient progress = new TransferFileProgressForHaaSClient(totalSize, notifier);
-		try (ScpClient scpClient = getScpClient(fileTransfer)) {
-			int index = 0;
-			for (UploadingFile file : files) {
-				String item;
-				progress.startNewFile(totalSizes.get(index));
-				notifier.addItem(item = "Uploading file: " + file.getName());
-				String destFile = "'" + fileTransfer.getSharedBasepath() + "/" + file.getName() + "'";
-				try (InputStream is = file.getInputStream()) {
-					boolean result = scpClient.upload(is, destFile, file.getLength(), file.getLastTime(), progress);
-					notifier.itemDone(item);
-					if (!result) {
-						throw new HaaSClientException("Uploading of " + file + " to " + destFile + " failed");
-					}
-				}
-				index++;
-			}
-		}
-		getFileTransfer().endFileTransfer(jobId, fileTransfer, getSessionID());
 	}
 
 	private long doCreateJob(String name, Collection<Entry<String, String>> templateParameters)
@@ -373,20 +316,6 @@ public class HaaSClient {
 		JobSpecificationExt jobSpecification = createJobSpecification(name, Arrays.asList(taskSpec));
 		SubmittedJobInfoExt job = getJobManagement().createJob(jobSpecification, getSessionID());
 		return job.getId();
-	}
-
-	private List<Long> getSizes(List<String> asList, ScpClient scpClient, ProgressNotifier notifier)
-			throws JSchException, IOException {
-		List<Long> result = new LinkedList<>();
-
-		String item;
-		notifier.addItem(item = "Checking sizes");
-		for (String lfile : asList) {
-			result.add(scpClient.size(lfile));
-			notifier.setItemCount(result.size(), asList.size());
-		}
-		notifier.itemDone(item);
-		return result;
 	}
 
 	private ScpClient getScpClient(FileTransferMethodExt fileTransfer)
@@ -476,7 +405,7 @@ public class HaaSClient {
 		return sessionID;
 	}
 
-	private class P_ProgressNotifierDecorator4Size extends P_ProgressNotifierDecorator {
+	public static class P_ProgressNotifierDecorator4Size extends P_ProgressNotifierDecorator {
 
 		private static final int SIZE_RATIO = 20;
 
@@ -492,7 +421,7 @@ public class HaaSClient {
 		}
 	}
 
-	private class P_ProgressNotifierDecorator implements ProgressNotifier {
+	public static class P_ProgressNotifierDecorator implements ProgressNotifier {
 		private ProgressNotifier notifier;
 
 		public P_ProgressNotifierDecorator(ProgressNotifier notifier) {
