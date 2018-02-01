@@ -52,7 +52,6 @@ public class SPIMPipelineProgressViewController implements FXFrame.Controller {
 	}
 	
 	private static String toCss(Color color) {
-		// TODO Auto-generated method stub
 		return "rgb(" + Math.round(color.getRed() * 255.0) + "," 
 				      + Math.round(color.getGreen() * 255.0) + "," 
 				      + Math.round(color.getBlue() * 255.0) + ")";

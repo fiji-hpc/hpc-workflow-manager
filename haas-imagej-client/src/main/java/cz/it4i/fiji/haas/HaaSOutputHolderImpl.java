@@ -10,7 +10,6 @@ public class HaaSOutputHolderImpl implements HaaSOutputHolder {
 	private HaaSOutputSource source;
 	private SynchronizableFileType type;
 	public HaaSOutputHolderImpl(HaaSOutputSource source, SynchronizableFileType typeForHold) {
-		super();
 		this.source = source;
 		this.type = typeForHold;
 	}

@@ -214,7 +214,6 @@ public class Job {
 		private Progress progress;
 
 		public P_ProgressNotifierAdapter(Progress progress) {
-			super();
 			this.progress = progress;
 		}
 

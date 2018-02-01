@@ -13,7 +13,6 @@ public class SPIMComputationAccessorDecoratorWithTimeout implements SPIMComputat
 	private P_ResultCacheHolder<Set<String>> changedFilesCache;
 
 	public SPIMComputationAccessorDecoratorWithTimeout(SPIMComputationAccessor decorated, long intervalForQueryInMs) {
-		super();
 		this.intervalForQueryInMs = intervalForQueryInMs;
 		outputCache = new P_ResultCacheHolder<>(x -> decorated.getActualOutput());
 		changedFilesCache = new P_ResultCacheHolder<>(set -> {
@@ -44,7 +43,6 @@ public class SPIMComputationAccessorDecoratorWithTimeout implements SPIMComputat
 		private Function<T, T> producer;
 
 		public P_ResultCacheHolder(Function<T, T> producer) {
-			super();
 			this.producer = producer;
 		}
 

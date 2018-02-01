@@ -13,7 +13,6 @@ public class PropertyHolder {
 	private Properties properties;
 
 	public PropertyHolder(Path storage) {
-		super();
 		this.storage = storage;
 	}
 

@@ -40,7 +40,6 @@ public class ScpClient implements Closeable {
 	}
 
 	public ScpClient(String hostName, String username, Identity privateKeyFile) throws JSchException {
-		super();
 		init(hostName, username, privateKeyFile);
 	}
 

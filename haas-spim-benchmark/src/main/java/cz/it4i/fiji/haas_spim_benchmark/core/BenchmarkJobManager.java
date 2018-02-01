@@ -59,7 +59,6 @@ public class BenchmarkJobManager {
 		
 		
 		public BenchmarkJob(Job job) {
-			super();
 			this.job = job;
 			computationAccessor = new SPIMComputationAccessor() {
 				

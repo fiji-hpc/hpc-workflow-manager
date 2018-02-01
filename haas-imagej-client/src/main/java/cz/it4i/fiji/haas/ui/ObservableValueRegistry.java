@@ -18,7 +18,6 @@ public class ObservableValueRegistry<T> {
 	
 	public ObservableValueRegistry(Function<T, UpdateStatus> updateFunction,Function<T,Object> stateProvider,
 			Consumer<T> removeConsumer) {
-		super();
 		this.updateFunction = updateFunction;
 		this.stateProvider = stateProvider;
 		this.removeConsumer = t-> {

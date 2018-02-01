@@ -17,7 +17,6 @@ public class UpdatableObservableValue<T> extends ObservableValueBase<T> {
 
 	public UpdatableObservableValue(T wrapped, Function<T, UpdateStatus> updateFunction,
 			Function<T, Object> stateProvider) {
-		super();
 		this.wrapped = wrapped;
 		this.updateFunction = updateFunction;
 		this.stateProvider = stateProvider;
