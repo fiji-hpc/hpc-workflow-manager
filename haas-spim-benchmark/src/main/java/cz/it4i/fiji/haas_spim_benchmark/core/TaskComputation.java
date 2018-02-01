@@ -57,25 +57,29 @@ public class TaskComputation {
 			}
 			state = JobState.Running;					
 		}
-				
+		
 		// Finally, look up any traces that the job has failed or finished
-		final String OUTPUT_PARSING_FINISHED_JOB = "Finished job ";
-		final String desiredPatternFinishedJob = OUTPUT_PARSING_FINISHED_JOB + id.toString();
-		final String OUTPUT_PARSING_ERRONEOUS_JOB = "Error job ";
-		final String desiredPatternErroneousJob = OUTPUT_PARSING_ERRONEOUS_JOB + id.toString();
-		Scanner scanner = new Scanner(computationAccessor.getActualOutput().substring(positionInOutput));
-		String currentLine;
-		while (scanner.hasNextLine()) {
-			currentLine = scanner.nextLine();
-			if (currentLine.contains(desiredPatternErroneousJob)) {
-				state = JobState.Failed;
-				break;
-			} else if (currentLine.contains(desiredPatternFinishedJob)) {
-				state = JobState.Finished;
-				break;
+		if (state == JobState.Running) {
+					
+			final String OUTPUT_PARSING_FINISHED_JOB = "Finished job ";
+			final String desiredPatternFinishedJob = OUTPUT_PARSING_FINISHED_JOB + id.toString();
+			final String OUTPUT_PARSING_ERRONEOUS_JOB = "Error job ";
+			final String desiredPatternErroneousJob = OUTPUT_PARSING_ERRONEOUS_JOB + id.toString();
+			
+			Scanner scanner = new Scanner(computationAccessor.getActualOutput().substring(positionInOutput));
+			String currentLine;
+			while (scanner.hasNextLine()) {
+				currentLine = scanner.nextLine();
+				if (currentLine.contains(desiredPatternErroneousJob)) {
+					state = JobState.Failed;
+					break;
+				} else if (currentLine.contains(desiredPatternFinishedJob)) {
+					state = JobState.Finished;
+					break;
+				}
 			}
+			scanner.close();
 		}
-		scanner.close();
 	}
 	
 	private int findPositionInOutput() {
