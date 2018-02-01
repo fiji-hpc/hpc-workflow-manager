@@ -23,7 +23,7 @@ public class SPIMComputationAccessorDecoratorWithTimeout implements SPIMComputat
 				set.clear();
 			}
 			set.addAll(decorated.getChangedFiles());
-			return null;
+			return set;
 		});
 	}
 
