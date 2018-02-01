@@ -91,7 +91,7 @@ public class SPIMPipelineProgressViewController implements FXFrame.Controller {
 				public void run() {
 					fillTable();
 				}
-			}, Constants.HAAS_UPDATE_TIMEOUT / 10);
+			}, Constants.HAAS_UPDATE_TIMEOUT / Constants.UI_TO_HAAS_FREQUENCY_UPDATE_RATIO);
 		} else {
 			List<TaskComputation> computations = tasks.stream().map(task -> task.getComputations())
 					.collect(Collectors.<List<TaskComputation>>maxBy((a, b) -> a.size() - b.size())).get();
