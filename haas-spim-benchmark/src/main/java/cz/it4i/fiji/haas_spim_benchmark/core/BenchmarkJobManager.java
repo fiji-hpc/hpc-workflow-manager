@@ -100,7 +100,7 @@ public class BenchmarkJobManager {
 			if (job.getState() == JobState.Finished) {
 				String filePattern = job.getProperty(SPIM_OUTPUT_FILENAME_PATTERN);
 				job.download(downloadFinishedData(filePattern), progress);
-			} else if (job.getState() == JobState.Failed) {
+			} else if (job.getState() == JobState.Failed ||  job.getState() == JobState.Canceled) {
 				job.download(downloadFailedData(), progress);
 			}
 			
@@ -214,6 +214,10 @@ public class BenchmarkJobManager {
 		public boolean remove() {
 			return job.remove();
 		}
+
+		public void cancelJob() {
+			job.cancelJob();
+		}
 		
 	}
 
@@ -289,9 +293,8 @@ public class BenchmarkJobManager {
 			Path path = getPathSafely(name);
 			if (path == null)
 				return false;
-			
 			return path.getFileName().toString().startsWith("snakejob.")
-					|| path.getParent().getFileName().toString().equals("logs");
+					|| path.getParent() != null && path.getParent().getFileName() != null && path.getParent().getFileName().toString().equals("logs");
 		};
 	}
 	

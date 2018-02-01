@@ -247,6 +247,10 @@ public class Job {
 		return haasClientSupplier.get().getChangedFiles(getId());
 	}
 
+	public void cancelJob() {
+		haasClientSupplier.get().cancelJob(jobId);
+	}
+
 	
 
 	

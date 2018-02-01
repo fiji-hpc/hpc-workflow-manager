@@ -102,6 +102,11 @@ public class BenchmarkSPIMController implements FXFrame.Controller {
 			registry.get(job.getValue()).update();
 		}), job -> notNullValue(job, j -> j.getState() == JobState.Configuring || j.getState() == JobState.Finished));
 
+		menu.addItem("Cancel job", job -> executeWSCallAsync("Canceling job", p -> {
+			job.getValue().cancelJob();
+			registry.get(job.getValue()).update();
+		}), job -> notNullValue(job, j -> j.getState() == JobState.Running));
+
 		menu.addItem("Show progress", job -> {
 			try {
 				new SPIMPipelineProgressViewWindow(root, job.getValue()).setVisible(true);
@@ -115,7 +120,8 @@ public class BenchmarkSPIMController implements FXFrame.Controller {
 		menu.addItem("Download result",
 				job -> executeWSCallAsync("Downloading data", p -> job.getValue().downloadData(p)),
 				job -> notNullValue(job,
-						j -> EnumSet.of(JobState.Failed, JobState.Finished).contains(j.getState()) && !j.downloaded()));
+						j -> EnumSet.of(JobState.Failed, JobState.Finished, JobState.Canceled).contains(j.getState())
+								&& !j.downloaded()));
 		menu.addItem("Download statistics",
 				job -> executeWSCallAsync("Downloading data", p -> job.getValue().downloadStatistics(p)),
 				job -> notNullValue(job, j -> j.getState() == JobState.Finished));
@@ -148,8 +154,11 @@ public class BenchmarkSPIMController implements FXFrame.Controller {
 		FXFrame.Controller.executeAsync(executorServiceWS, (Callable<Void>) () -> {
 			ProgressDialog dialog = ModalDialogs.doModal(new ProgressDialog(root, title),
 					WindowConstants.DO_NOTHING_ON_CLOSE);
-			action.doAction(dialog);
-			dialog.done();
+			try {
+				action.doAction(dialog);
+			} finally {
+				dialog.done();
+			}
 			return null;
 		}, x -> {
 			if (update)
