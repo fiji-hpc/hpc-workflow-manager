@@ -6,18 +6,21 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import org.scijava.log.LogService;
-import org.scijava.plugin.Parameter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import cz.it4i.fiji.haas.JobManager.JobManager4Job;
 import cz.it4i.fiji.haas.JobManager.JobSynchronizableFile;
 import cz.it4i.fiji.haas_java_client.HaaSClient;
 import cz.it4i.fiji.haas_java_client.HaaSClient.UploadingFile;
+import cz.it4i.fiji.haas_java_client.HaaSFileTransfer;
 import cz.it4i.fiji.haas_java_client.JobInfo;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.ProgressNotifier;
@@ -33,8 +36,7 @@ public class Job {
 
 	private static String JOB_INFO_FILE = ".jobinfo";
 
-	@Parameter
-	private LogService log;
+	private static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas.Job.class);
 
 	private Path jobDir;
 
@@ -48,8 +50,10 @@ public class Job {
 	
 	private PropertyHolder propertyHolder;
 
-	public Job(String name, Path basePath, Supplier<HaaSClient> haasClientSupplier) throws IOException {
-		this(haasClientSupplier);
+	private JobManager4Job jobManager;
+
+	public Job(JobManager4Job jobManager, String name, Path basePath, Supplier<HaaSClient> haasClientSupplier) throws IOException {
+		this(jobManager,haasClientSupplier);
 		HaaSClient client = this.haasClientSupplier.get();
 		long id = client.createJob(name, Collections.emptyList());
 		jobDir = basePath.resolve("" + id);
@@ -63,16 +67,17 @@ public class Job {
 		setProperty(JOB_NAME, name);
 	}
 
-	public Job(Path p, Supplier<HaaSClient> haasClientSupplier) {
-		this(haasClientSupplier);
+	public Job(JobManager4Job jobManager,Path p, Supplier<HaaSClient> haasClientSupplier) {
+		this(jobManager, haasClientSupplier);
 		jobDir = p;
 		propertyHolder = new PropertyHolder(jobDir.resolve(JOB_INFO_FILE));
 	}
 
 	public void uploadFiles(Iterable<UploadingFile> files, Progress notifier) {
 		HaaSClient client = this.haasClientSupplier.get();
-
-		client.uploadFiles(jobId, files, new P_ProgressNotifierAdapter(notifier));
+		try(HaaSFileTransfer transfer = client.startFileTransfer(getId(), new P_ProgressNotifierAdapter(notifier))){
+			transfer.upload(files);
+		}
 	}
 
 	public void uploadFilesByName(Iterable<String> files, Progress notifier) {
@@ -86,8 +91,9 @@ public class Job {
 		client.submitJob(jobId);
 	}
 
-	private Job(Supplier<HaaSClient> haasClientSupplier) {
+	private Job(JobManager4Job jobManager, Supplier<HaaSClient> haasClientSupplier) {
 		this.haasClientSupplier = haasClientSupplier;
+		this.jobManager = jobManager;
 	}
 
 	
@@ -112,11 +118,12 @@ public class Job {
 	}
 
 	synchronized public void download(Predicate<String> predicate, Progress notifier) {
-		haasClientSupplier.get().download(getId(), jobDir, predicate, new P_ProgressNotifierAdapter(notifier));
+		try (HaaSFileTransfer fileTransfer = haasClientSupplier.get().startFileTransfer(jobId, new P_ProgressNotifierAdapter(notifier))) {
+			fileTransfer.download(haasClientSupplier.get().getChangedFiles(jobId).stream().filter(predicate).collect(Collectors.toList()), jobDir);
+		}
 	}
 
 	public JobState getState() {
-		updateJobInfo();
 		return getJobInfo().getState();
 	}
 
@@ -158,6 +165,23 @@ public class Job {
 
 	public Path getDirectory() {
 		return jobDir;
+	}
+	
+	public boolean remove() {
+		boolean result;
+		if((result = jobManager.remove(this)) && Files.isDirectory(jobDir) ) {
+			List<Path> pathsToDelete;
+			try {
+				pathsToDelete = Files.walk(jobDir).sorted(Comparator.reverseOrder()).collect(Collectors.toList());
+				for(Path path : pathsToDelete) {
+				    Files.deleteIfExists(path);
+				}
+			} catch (IOException e) {
+				log.error(e.getMessage(), e);
+			}
+			
+		}
+		return result;
 	}
 	
 	private JobInfo getJobInfo() {
@@ -218,5 +242,9 @@ public class Job {
 		}
 
 	}
+
+	
+
+	
 
 }

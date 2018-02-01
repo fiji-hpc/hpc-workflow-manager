@@ -1,23 +1,30 @@
 package cz.it4i.fiji.haas.ui;
 
+import java.awt.BorderLayout;
 import java.awt.Dimension;
-import java.awt.Frame;
 import java.awt.Window;
 import java.awt.im.InputMethodRequests;
 import java.io.IOException;
 import java.net.URL;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Executor;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import javax.swing.JDialog;
+import javax.swing.JScrollPane;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javafx.application.Platform;
+import javafx.beans.value.ObservableValue;
 import javafx.embed.swing.JFXPanel;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
 
 public class FXFrame<C extends FXFrame.Controller> extends JDialog {
 
@@ -34,6 +41,26 @@ public class FXFrame<C extends FXFrame.Controller> extends JDialog {
 
 	public interface Controller {
 		void init(Window frame);
+		static public <V> void executeAsync(Executor executor, Callable<V> action, Consumer<V> postAction) {
+			executor.execute(() -> {
+				V result;
+				try {
+					result = action.call();
+					postAction.accept(result);
+				} catch (Exception e) {
+					log.error(e.getMessage(), e);
+				}
+				
+			});
+		}
+		
+		@SuppressWarnings("unchecked")
+		static public <U,T extends ObservableValue<U>,V> void setCellValueFactory(TableView<T> tableView,int index, Function<U, V> mapper) {
+			((TableColumn<T, V>) tableView.getColumns().get(index))
+					.setCellValueFactory(f -> new ObservableValueAdapter<U, V>(f.getValue(), mapper));
+			//((TableColumn<T, String>) tableView.getColumns().get(index)).setCellFactory(f->f.set);
+
+		}
 	}
 
 	private static final long serialVersionUID = 1L;
@@ -46,8 +73,8 @@ public class FXFrame<C extends FXFrame.Controller> extends JDialog {
 		this(null, fxmlFile);
 	}
 
-	public FXFrame(Frame applicationFrame, String string) {
-		super(applicationFrame);
+	public FXFrame(Window applicationFrame, String string) {
+		super(applicationFrame,ModalityType.MODELESS);
 		fxmlFile = string;
 	}
 
@@ -58,7 +85,10 @@ public class FXFrame<C extends FXFrame.Controller> extends JDialog {
 		this.controlerInit = controlerInit;
 		this.fxPanel = new P_JFXPanel();
 		Platform.setImplicitExit(false);
-		this.add(this.fxPanel);
+		this.setLayout(new BorderLayout());
+		JScrollPane scrollPane = new JScrollPane(this.fxPanel);
+		
+		this.add(scrollPane, BorderLayout.CENTER);
 
 		// The call to runLater() avoid a mix between JavaFX thread and Swing thread.
 		runOnFxThread(() -> initFX(fxPanel));
@@ -76,7 +106,7 @@ public class FXFrame<C extends FXFrame.Controller> extends JDialog {
 			URL res = FXFrame.class.getResource(fxmlFile);
 			loader.setLocation(res);
 			Parent rootLayout = (Parent) loader.load();
-
+			
 			// Show the scene containing the root layout.
 			Scene scene = new Scene(rootLayout);
 			this.fxPanel.setScene(scene);

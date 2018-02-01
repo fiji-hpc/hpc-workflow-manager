@@ -5,6 +5,9 @@ import java.util.LinkedList;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javafx.event.EventHandler;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
@@ -12,6 +15,8 @@ import javafx.scene.control.TableView;
 import javafx.scene.input.ContextMenuEvent;
 
 public class TableViewContextMenu<T> {
+	@SuppressWarnings("unused")
+	private static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas.ui.TableViewContextMenu.class);
 	private Collection<P_MenuItem> items = new LinkedList<TableViewContextMenu<T>.P_MenuItem>();
 	private ContextMenu cm;
 	private TableView<T> tableView;
@@ -24,6 +29,7 @@ public class TableViewContextMenu<T> {
 			@Override
 			public void handle(ContextMenuEvent event) {
 				T selected = getSelectedItem();
+				
 				for (P_MenuItem item : items) {
 					item.updateEnable(selected);
 				}

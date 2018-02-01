@@ -51,6 +51,13 @@ public class TaskComputation {
 		updateState();//TASK 1011 it is not good idea update every time when state is requested 
 		return state;
 	}
+	
+	public void update() {
+	}
+
+	public int getTimepoint() {
+		return timepoint;
+	}
 
 	private void updateState() {
 		//TASK 1011 This should never happen, add some error handling to resolveId()

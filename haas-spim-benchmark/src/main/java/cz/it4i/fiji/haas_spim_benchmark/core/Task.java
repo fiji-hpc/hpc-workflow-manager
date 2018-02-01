@@ -1,11 +1,11 @@
 package cz.it4i.fiji.haas_spim_benchmark.core;
 
-import java.util.Collection;
 import java.util.LinkedList;
+import java.util.List;
 
 public class Task {
 	private final String description;
-	private final Collection<TaskComputation> computations;
+	private final List<TaskComputation> computations;
 
 	public Task(SPIMComputationAccessor outputHolder, String description, int numComputations) {
 		this.description = description;
@@ -20,7 +20,12 @@ public class Task {
 		return description;
 	}
 	
-	public Collection<TaskComputation> getComputations() {
+	public List<TaskComputation> getComputations() {
 		return computations;
+	}
+
+	public void update() {
+		// TODO Auto-generated method stub
+		
 	}
 }
