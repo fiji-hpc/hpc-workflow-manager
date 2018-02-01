@@ -3,7 +3,10 @@ package cz.it4i.fiji.haas_spim_benchmark.ui;
 import java.awt.Window;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.function.Function;
@@ -20,8 +23,40 @@ import javafx.fxml.FXML;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.paint.Color;
 
 public class SPIMPipelineProgressViewController implements FXFrame.Controller {
+
+	protected static final String RUNNING_STATE_COMPUTATION = Color.YELLOW.toString();
+
+	protected static final String FINISHED_STATE_COMPUTATION = null;
+
+	protected static final String UNKNOWN_STATE_COMPUTATION = Color.GRAY.toString();
+
+	private static final Map<JobState, Color> taskExecutionState2Color = new HashMap<>();
+	static {
+		taskExecutionState2Color.put(JobState.Running, Color.YELLOW);
+		taskExecutionState2Color.put(JobState.Finished, Color.GREEN);
+		taskExecutionState2Color.put(JobState.Failed, Color.RED);
+		taskExecutionState2Color.put(JobState.Unknown, Color.GRAY);
+	}
+	
+	private static String getColorTaskExecState(JobState jobState) {
+		Color result = null;
+		if(jobState == null) {
+			result = Color.GRAY;
+		} else {
+			result = taskExecutionState2Color.get(jobState);
+		}
+		return toCss(result != null? result : Color.ORANGE);
+	}
+	
+	private static String toCss(Color color) {
+		// TODO Auto-generated method stub
+		return "rgb(" + Math.round(color.getRed() * 255.0) + "," 
+				      + Math.round(color.getGreen() * 255.0) + "," 
+				      + Math.round(color.getBlue() * 255.0) + ")";
+	}
 
 	@FXML
 	private TableView<ObservableValue<Task>> tasks;
@@ -49,7 +84,6 @@ public class SPIMPipelineProgressViewController implements FXFrame.Controller {
 		this.job = job;
 	}
 
-	@SuppressWarnings("unchecked")
 	private void fillTable() {
 		List<Task> tasks = job.getTasks();
 		if (tasks == null) {
@@ -69,29 +103,7 @@ public class SPIMPipelineProgressViewController implements FXFrame.Controller {
 				this.tasks.getColumns().add(new TableColumn<>(tc.getTimepoint() + ""));
 				int index = i++;
 
-				FXFrame.Controller.setCellValueFactory(this.tasks, index, (Function<Task, JobState>) v -> {
-					if (v.getComputations().size() >= index) {
-						return v.getComputations().get(index - 1).getState();
-					} else {
-						return null;
-					}
-				});
-				((TableColumn<ObservableValue<Task>, JobState>)this.tasks.getColumns().get(index)).setCellFactory(column->new TableCell<ObservableValue<Task>,JobState>(){
-					@Override
-			        protected void updateItem(JobState state, boolean empty) {
-						if (state == null || empty) {
-			                setText(null);
-			                setStyle("");
-			            } else {
-			                // Format date.
-			                setText(state + "");
-			                if(state == JobState.Unknown) {
-			                	setStyle("-fx-background-color: yellow");
-			                }
-			            }
-						
-					}
-				});
+				constructCellFactory(index);
 
 			}
 
@@ -105,6 +117,30 @@ public class SPIMPipelineProgressViewController implements FXFrame.Controller {
 			}, Constants.HAAS_UPDATE_TIMEOUT, Constants.HAAS_UPDATE_TIMEOUT);
 
 		}
+	}
+
+	@SuppressWarnings("unchecked")
+	private void constructCellFactory(int index) {
+		FXFrame.Controller.setCellValueFactory(this.tasks, index, (Function<Task, Optional<JobState>>) v -> {
+			if (v.getComputations().size() >= index) {
+				return Optional.of(v.getComputations().get(index - 1).getState());
+			} else {
+				return null;
+			}
+		});
+		((TableColumn<ObservableValue<Task>, Optional<JobState>>)this.tasks.getColumns().get(index)).setCellFactory(column->new TableCell<ObservableValue<Task>,Optional<JobState>>(){
+			@Override
+		    protected void updateItem(Optional<JobState> state, boolean empty) {
+				if (state == null || empty) {
+		            setText(null);
+		            setStyle("");
+		        } else {
+		            // Format date.
+		            setText( "" + (state.isPresent()?state.get():"N/A"));
+		            setStyle("-fx-background-color: " + getColorTaskExecState(state.get()));
+		        } 
+			}
+		});
 	}
 
 	private void updateTable() {
