@@ -17,7 +17,6 @@ public class ObservableValueAdapter<S, T> implements ObservableValue<T> {
 	private Map<ChangeListener<? super T>, ChangeListener<? super S>> mapOfListeners = new HashMap<>();
 
 	public ObservableValueAdapter(ObservableValue<S> decorated, Function<S, T> map) {
-		super();
 		this.adapted = decorated;
 		this.transformation = map;
 	}

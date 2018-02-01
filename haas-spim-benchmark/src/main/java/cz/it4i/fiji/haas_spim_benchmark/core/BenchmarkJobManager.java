@@ -1,5 +1,11 @@
 package cz.it4i.fiji.haas_spim_benchmark.core;
 
+import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.BENCHMARK_RESULT_FILE;
+import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.HAAS_UPDATE_TIMEOUT;
+import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.SPIM_OUTPUT_FILENAME_PATTERN;
+import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.STATISTICS_TASK_NAME_MAP;
+import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.UI_TO_HAAS_FREQUENCY_UPDATE_RATIO;
+
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
@@ -59,7 +65,6 @@ public class BenchmarkJobManager {
 		
 		
 		public BenchmarkJob(Job job) {
-			super();
 			this.job = job;
 			computationAccessor = new SPIMComputationAccessor() {
 				
@@ -76,14 +81,14 @@ public class BenchmarkJobManager {
 				};
 			};
 			
-			computationAccessor = new SPIMComputationAccessorDecoratorWithTimeout(computationAccessor, Constants.HAAS_UPDATE_TIMEOUT);
+			computationAccessor = new SPIMComputationAccessorDecoratorWithTimeout(computationAccessor, HAAS_UPDATE_TIMEOUT/UI_TO_HAAS_FREQUENCY_UPDATE_RATIO);
 		}
 
 		public void startJob(Progress progress) throws IOException {
 			job.uploadFilesByName(Arrays.asList(Constants.CONFIG_YAML), progress);
 			String outputName = getOutputName(job.openLocalFile(Constants.CONFIG_YAML));
 			job.submit();
-			job.setProperty(Constants.SPIM_OUTPUT_FILENAME_PATTERN, outputName);
+			job.setProperty(SPIM_OUTPUT_FILENAME_PATTERN, outputName);
 			setDownloaded(false);
 		}
 
@@ -93,7 +98,7 @@ public class BenchmarkJobManager {
 
 		public void downloadData(Progress progress) throws IOException {
 			if (job.getState() == JobState.Finished) {
-				String filePattern = job.getProperty(Constants.SPIM_OUTPUT_FILENAME_PATTERN);
+				String filePattern = job.getProperty(SPIM_OUTPUT_FILENAME_PATTERN);
 				job.download(downloadFinishedData(filePattern), progress);
 			} else if (job.getState() == JobState.Failed) {
 				job.download(downloadFailedData(), progress);
@@ -104,7 +109,7 @@ public class BenchmarkJobManager {
 
 		public void downloadStatistics(Progress progress) throws IOException {
 			job.download(BenchmarkJobManager.downloadStatistics(), progress);
-			Path resultFile = job.getDirectory().resolve(Constants.BENCHMARK_RESULT_FILE);
+			Path resultFile = job.getDirectory().resolve(BENCHMARK_RESULT_FILE);
 			if (resultFile != null)
 				BenchmarkJobManager.formatResultFile(resultFile);
 		}
@@ -193,7 +198,7 @@ public class BenchmarkJobManager {
 			scanner.close();
 			
 			// Order tasks chronologically
-			List<String> chronologicList = Constants.STATISTICS_TASK_NAME_MAP.keySet().stream().collect(Collectors.toList());
+			List<String> chronologicList = STATISTICS_TASK_NAME_MAP.keySet().stream().collect(Collectors.toList());
 			Collections.sort(tasks, Comparator.comparingInt(task -> chronologicList.indexOf(task.getDescription())));
 		}
 		

@@ -9,7 +9,6 @@ abstract public class PipelineBase<T extends PipelineBase<?,?>,S> {
 	
 	
 	public PipelineBase( S id) {
-		super();
 		this.id = id;
 	}
 

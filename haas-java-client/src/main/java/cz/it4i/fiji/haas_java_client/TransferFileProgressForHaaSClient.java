@@ -15,7 +15,6 @@ class TransferFileProgressForHaaSClient implements TransferFileProgress {
 	
 	
 	public TransferFileProgressForHaaSClient(long totalSize, ProgressNotifier notifier) {
-		super();
 		this.totalSize = totalSize;
 		this.notifier = notifier;
 	}

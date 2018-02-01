@@ -207,7 +207,6 @@ public class HaaSClient {
 	}
 
 	public HaaSClient(Settings settings) {
-		super();
 		this.settings = settings;
 		this.templateId = settings.getTemplateId();
 		this.timeOut = settings.getTimeout();
@@ -434,7 +433,6 @@ public class HaaSClient {
 		private ProgressNotifier notifier;
 
 		public P_ProgressNotifierDecorator(ProgressNotifier notifier) {
-			super();
 			this.notifier = notifier;
 		}
 

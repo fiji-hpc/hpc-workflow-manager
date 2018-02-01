@@ -102,7 +102,6 @@ public class JobManager {
 		private long offset;
 
 		public JobSynchronizableFile(SynchronizableFileType type, long offset) {
-			super();
 			this.type = type;
 			this.offset = offset;
 		}

@@ -55,7 +55,6 @@ public class TableViewContextMenu<T> {
 		private Predicate<T> enableHandler;
 
 		public P_MenuItem(String text, Consumer<T> eventHandler, Predicate<T> enableHandler) {
-			super();
 			this.enableHandler = enableHandler;
 			item = new MenuItem(text);
 			item.setOnAction(e -> eventHandler.accept(getSelectedItem()));
