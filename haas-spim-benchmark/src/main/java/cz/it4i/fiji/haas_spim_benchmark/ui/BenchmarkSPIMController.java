@@ -129,7 +129,7 @@ public class BenchmarkSPIMController implements FXFrame.Controller {
 		menu.addItem("Show output",
 				j -> new JobOutputView(root, executorServiceUI, j.getValue(), Constants.HAAS_UPDATE_TIMEOUT),
 				job -> notNullValue(job,
-						j -> EnumSet.of(JobState.Failed, JobState.Finished, JobState.Running).contains(j.getState())));
+						j -> EnumSet.of(JobState.Failed, JobState.Finished, JobState.Running, JobState.Canceled).contains(j.getState())));
 		menu.addItem("Open", j -> open(j.getValue()), x -> notNullValue(x, j -> true));
 		menu.addItem("Update table", job -> updateJobs(), j -> true);
 
