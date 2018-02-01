@@ -4,7 +4,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public interface Constants {
-	long HAAS_UPDATE_TIMEOUT = 30000;
+	int HAAS_UPDATE_TIMEOUT = 30000;
+	short UI_TO_HAAS_FREQUENCY_UPDATE_RATIO = 10;
 	String HAAS_JOB_NAME = "HaaSSPIMBenchmark";
 	int HAAS_CLUSTER_NODE_TYPE = 6;
 	int HAAS_TEMPLATE_ID = 4;
@@ -39,4 +40,5 @@ public interface Constants {
 		put("done", "Done");
 	}};
 	String STATISTICS_SUMMARY_FILENAME = "summary.csv";
+	
 }

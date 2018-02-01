@@ -32,7 +32,6 @@ class HaaSFileTransferImp implements HaaSFileTransfer {
 
 	public HaaSFileTransferImp(FileTransferMethodExt ft, String sessionId, long jobId, FileTransferWsSoap fileTransfer,
 			ScpClient scpClient, ProgressNotifier notifier) {
-		super();
 		this.ft = ft;
 		this.scpClient = scpClient;
 		this.fileTransfer = fileTransfer;

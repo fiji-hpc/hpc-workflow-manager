@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -213,7 +214,6 @@ public class Job {
 		private Progress progress;
 
 		public P_ProgressNotifierAdapter(Progress progress) {
-			super();
 			this.progress = progress;
 		}
 
@@ -241,6 +241,10 @@ public class Job {
 			progress.done();
 		}
 
+	}
+
+	public Collection<String> getChangedFiles() {
+		return haasClientSupplier.get().getChangedFiles(getId());
 	}
 
 	
