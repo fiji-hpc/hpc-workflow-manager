@@ -24,6 +24,7 @@ public class TaskComputation {
 		}
 	}
 
+	private final SPIMComputationAccessor computationAccessor;
 	private final Task task;
 	private final int timepoint;
 	private final Collection<String> inputs;
@@ -34,14 +35,16 @@ public class TaskComputation {
 	//TASK 1011 what states will be defined and how it will be defined
 	private JobState state = JobState.Unknown;
 	
-	public TaskComputation(SPIMComputationAccessor outputHolder, Task task, int timepoint) {
+	public TaskComputation(SPIMComputationAccessor computationAccessor, Task task, int timepoint) {
+		this.computationAccessor = computationAccessor;
 		this.task = task;
-		this.timepoint = timepoint;		
-		ParsedTaskComputationValues parsedValues = parseStuff(outputHolder);
+		this.timepoint = timepoint;
+		ParsedTaskComputationValues parsedValues = parseStuff(computationAccessor);
 		this.inputs = parsedValues.inputs;
 		this.outputs = parsedValues.outputs;
 		this.logs = parsedValues.logs;
 		this.id = parsedValues.id;
+		updateState();
 	}
 
 	public JobState getState() {
@@ -59,14 +62,39 @@ public class TaskComputation {
 	private void updateState() {
 		//TASK 1011 This should never happen, add some error handling to resolveId()
 		if (id == null) {
+			state = JobState.Unknown;
 			return;
 		}
 		
-		//String snakeOutput = outputHolder.getActualOutput();
-
-		//TASK 1011 
-		//resolve if job is queued (defined id), started (exists log file), finished (in log is Finished job 10.) or
-		//or failed (some error in log)
+		state = JobState.Queued;
+		
+		// Check whether a log file exists
+		if (!logs.stream().anyMatch(logFile -> computationAccessor.fileExists(logFile))) {
+			return;
+		}
+		
+		state = JobState.Running;
+		
+		// Check whether the corresponding job has finished
+		final String OUTPUT_PARSING_FINISHED_JOB = "Finished job ";
+		final String desiredPatternFinishedJob = OUTPUT_PARSING_FINISHED_JOB + id.toString();
+		final String OUTPUT_PARSING_ERRONEOUS_JOB = "Error job ";
+		final String desiredPatternErroneousJob = OUTPUT_PARSING_ERRONEOUS_JOB + id.toString();
+		String currentLine;
+		Scanner scanner = new Scanner(computationAccessor.getActualOutput());
+		while (scanner.hasNextLine()) {
+			currentLine = scanner.nextLine();
+			if (currentLine.contains(desiredPatternErroneousJob)) {
+				state = JobState.Failed;
+				break;
+			} else if (currentLine.contains(desiredPatternFinishedJob)) {
+				state = JobState.Finished;
+				break;
+			}
+		}
+		scanner.close();
+		
+		return;
 	}
 
 	private Long getId() {

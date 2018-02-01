@@ -14,6 +14,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -65,8 +67,8 @@ public class BenchmarkJobManager {
 			}
 			
 			@Override
-			public boolean fileExists(Path filePath) {
-				File f = new File(filePath.toString());
+			public boolean fileExists(String filePath) {
+				File f = new File(job.getDirectory().resolve(filePath).toString());
 				return f.exists() && !f.isDirectory();
 			}
 		};
@@ -189,6 +191,10 @@ public class BenchmarkJobManager {
 				break;
 			}
 			scanner.close();
+			
+			// Order tasks chronologically
+			List<String> chronologicList = Constants.STATISTICS_TASK_NAME_MAP.keySet().stream().collect(Collectors.toList());
+			Collections.sort(tasks, Comparator.comparingInt(task -> chronologicList.indexOf(task.getDescription())));
 		}
 		
 		private void setDownloaded(boolean b) {

@@ -1,6 +1,6 @@
 package cz.it4i.fiji.haas_spim_benchmark.core;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public interface Constants {
@@ -22,7 +22,7 @@ public interface Constants {
 	String STATISTICS_RESOURCES_WALL_TIME = "resources_used.walltime";
 	String STATISTICS_RESOURCES_CPU_PERCENTAGE = "resources_used.cpupercent";
 	
-	Map<String, String> STATISTICS_TASK_NAME_MAP = new HashMap<String, String>() {
+	Map<String, String> STATISTICS_TASK_NAME_MAP = new LinkedHashMap<String, String>() {
 		private static final long serialVersionUID = 1L;
 	{
 		put("define_xml_tif", "Define dataset");
@@ -36,6 +36,7 @@ public interface Constants {
 		put("define_output", "Define output");
 		put("hdf5_xml_output", "Define hdf5 output");
 		put("resave_hdf5_output", "Resave output to hdf5");
+		put("done", "Done");
 	}};
 	String STATISTICS_SUMMARY_FILENAME = "summary.csv";
 }
