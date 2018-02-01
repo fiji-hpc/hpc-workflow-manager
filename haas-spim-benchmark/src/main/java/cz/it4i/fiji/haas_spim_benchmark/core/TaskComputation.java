@@ -11,13 +11,14 @@ public class TaskComputation {
 	private final SPIMComputationAccessor computationAccessor;
 	private final Task task;
 	private final int timepoint;
+	
+	private JobState state;
+	private int positionInOutput;
+	
 	private Collection<String> inputs;
 	private Collection<String> outputs;
 	private Collection<String> logs;
 	private Long id;
-
-	private JobState state;
-	private int positionInOutput;
 	
 	public TaskComputation(SPIMComputationAccessor computationAccessor, Task task, int timepoint) {
 		this.computationAccessor = computationAccessor;
@@ -43,20 +44,17 @@ public class TaskComputation {
 		// Should the state be undefined (null), try to look up job position in the computation output
 		if (state == null) {
 			positionInOutput = findPositionInOutput();
-			if (0 > positionInOutput) {
-				return; // Job position has not been found, the state remains undefined
+			if (0 > positionInOutput || !resolveJobParameters()) {
+				return; // Job position has not been found or its parameters could not be resolved
 			}
-			
-			resolveJobParameters();
 			state = JobState.Queued;
 		}
 		
 		// Should the state be queued, try to find out whether a log file exists
 		if (state == JobState.Queued ) {
 			if (!logs.stream().anyMatch(logFile -> computationAccessor.fileExists(logFile))) {
-				return; // No log file exists yet, therefore remain in the queued state
+				return; // No log file exists yet
 			}
-			
 			state = JobState.Running;					
 		}
 				
@@ -94,7 +92,7 @@ public class TaskComputation {
 		return taskComputationLineIndex;
 	}
 	
-	private void resolveJobParameters() {
+	private boolean resolveJobParameters() {
 		
 		final String OUTPUT_PARSING_COMMA_SPACE = ", ";
 		final String OUTPUT_PARSING_INPUTS = "input: ";
@@ -120,6 +118,8 @@ public class TaskComputation {
 			}
 		}
 		scanner.close();
+		
+		return !(inputs == null || outputs == null || logs == null || id == null);
 	}
 	
 }
