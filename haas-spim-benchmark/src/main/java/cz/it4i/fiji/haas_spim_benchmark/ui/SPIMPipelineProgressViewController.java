@@ -6,7 +6,6 @@ import java.awt.event.WindowEvent;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.function.Function;
@@ -40,21 +39,20 @@ public class SPIMPipelineProgressViewController implements FXFrame.Controller {
 		taskExecutionState2Color.put(JobState.Failed, Color.RED);
 		taskExecutionState2Color.put(JobState.Unknown, Color.GRAY);
 	}
-	
+
 	private static String getColorTaskExecState(JobState jobState) {
 		Color result = null;
-		if(jobState == null) {
+		if (jobState == null) {
 			result = Color.GRAY;
 		} else {
 			result = taskExecutionState2Color.get(jobState);
 		}
-		return toCss(result != null? result : Color.ORANGE);
+		return toCss(result != null ? result : Color.ORANGE);
 	}
-	
+
 	private static String toCss(Color color) {
-		return "rgb(" + Math.round(color.getRed() * 255.0) + "," 
-				      + Math.round(color.getGreen() * 255.0) + "," 
-				      + Math.round(color.getBlue() * 255.0) + ")";
+		return "rgb(" + Math.round(color.getRed() * 255.0) + "," + Math.round(color.getGreen() * 255.0) + ","
+				+ Math.round(color.getBlue() * 255.0) + ")";
 	}
 
 	@FXML
@@ -120,26 +118,26 @@ public class SPIMPipelineProgressViewController implements FXFrame.Controller {
 
 	@SuppressWarnings("unchecked")
 	private void constructCellFactory(int index) {
-		FXFrame.Controller.setCellValueFactory(this.tasks, index, (Function<Task, Optional<JobState>>) v -> {
+		FXFrame.Controller.setCellValueFactory(this.tasks, index, (Function<Task, TaskComputation>) v -> {
 			if (v.getComputations().size() >= index) {
-				return Optional.of(v.getComputations().get(index - 1).getState());
+				return v.getComputations().get(index - 1);
 			} else {
 				return null;
 			}
 		});
-		((TableColumn<ObservableValue<Task>, Optional<JobState>>)this.tasks.getColumns().get(index)).setCellFactory(column->new TableCell<ObservableValue<Task>,Optional<JobState>>(){
-			@Override
-		    protected void updateItem(Optional<JobState> state, boolean empty) {
-				if (state == null || empty) {
-		            setText(null);
-		            setStyle("");
-		        } else {
-		            // Format date.
-		            setText( "" + (state.isPresent()?state.get():"N/A"));
-		            setStyle("-fx-background-color: " + getColorTaskExecState(state.get()));
-		        } 
-			}
-		});
+		((TableColumn<ObservableValue<Task>, TaskComputation>) this.tasks.getColumns().get(index))
+				.setCellFactory(column -> new TableCell<ObservableValue<Task>, TaskComputation>() {
+					@Override
+					protected void updateItem(TaskComputation computation, boolean empty) {
+						if (computation == null || empty) {
+							setText(null);
+							setStyle("");
+						} else {
+							setText("" + (computation != null ? computation.getState() : "N/A"));
+							setStyle("-fx-background-color: " + getColorTaskExecState(computation.getState()));
+						}
+					}
+				});
 	}
 
 	private void updateTable() {
