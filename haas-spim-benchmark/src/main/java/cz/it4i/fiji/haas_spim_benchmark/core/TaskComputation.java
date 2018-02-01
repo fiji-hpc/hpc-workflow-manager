@@ -2,53 +2,32 @@ package cz.it4i.fiji.haas_spim_benchmark.core;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.LinkedList;
 import java.util.Scanner;
 
 import cz.it4i.fiji.haas_java_client.JobState;
 
 public class TaskComputation {
-	
-	// A single-purpose class dedicated to help with TaskComputation members initialization
-	private class ParsedTaskComputationValues {
-		private final Collection<String> logs;
-		private final Collection<String> inputs;
-		private final Collection<String> outputs;
-		private final Long id;
-		
-		public ParsedTaskComputationValues(Collection<String> inputs, Collection<String> outputs, Collection<String> logs, Long id) {
-			this.inputs = inputs;
-			this.outputs = outputs;
-			this.logs = logs;
-			this.id = id;
-		}
-	}
 
 	private final SPIMComputationAccessor computationAccessor;
 	private final Task task;
 	private final int timepoint;
-	private final Collection<String> inputs;
-	private final Collection<String> outputs;
-	private final Collection<String> logs;
-	private final Long id;
-	
-	//TASK 1011 what states will be defined and how it will be defined
-	private JobState state = JobState.Unknown;
+	private Collection<String> inputs;
+	private Collection<String> outputs;
+	private Collection<String> logs;
+	private Long id;
+
+	private JobState state;
+	private int positionInOutput;
 	
 	public TaskComputation(SPIMComputationAccessor computationAccessor, Task task, int timepoint) {
 		this.computationAccessor = computationAccessor;
 		this.task = task;
 		this.timepoint = timepoint;
-		ParsedTaskComputationValues parsedValues = parseStuff(computationAccessor);
-		this.inputs = parsedValues.inputs;
-		this.outputs = parsedValues.outputs;
-		this.logs = parsedValues.logs;
-		this.id = parsedValues.id;
 		updateState();
 	}
 
 	public JobState getState() {
-		updateState();//TASK 1011 it is not good idea update every time when state is requested 
+		updateState();
 		return state;
 	}
 	
@@ -60,28 +39,34 @@ public class TaskComputation {
 	}
 
 	private void updateState() {
-		//TASK 1011 This should never happen, add some error handling to resolveId()
-		if (id == null) {
-			state = JobState.Unknown;
-			return;
+
+		// Should the state be undefined (null), try to look up job position in the computation output
+		if (state == null) {
+			positionInOutput = findPositionInOutput();
+			if (0 > positionInOutput) {
+				return; // Job position has not been found, the state remains undefined
+			}
+			
+			resolveJobParameters();
+			state = JobState.Queued;
 		}
 		
-		state = JobState.Queued;
-		
-		// Check whether a log file exists
-		if (!logs.stream().anyMatch(logFile -> computationAccessor.fileExists(logFile))) {
-			return;
+		// Should the state be queued, try to find out whether a log file exists
+		if (state == JobState.Queued ) {
+			if (!logs.stream().anyMatch(logFile -> computationAccessor.fileExists(logFile))) {
+				return; // No log file exists yet, therefore remain in the queued state
+			}
+			
+			state = JobState.Running;					
 		}
-		
-		state = JobState.Running;
-		
-		// Check whether the corresponding job has finished
+				
+		// Finally, look up any traces that the job has failed or finished
 		final String OUTPUT_PARSING_FINISHED_JOB = "Finished job ";
 		final String desiredPatternFinishedJob = OUTPUT_PARSING_FINISHED_JOB + id.toString();
 		final String OUTPUT_PARSING_ERRONEOUS_JOB = "Error job ";
 		final String desiredPatternErroneousJob = OUTPUT_PARSING_ERRONEOUS_JOB + id.toString();
+		Scanner scanner = new Scanner(computationAccessor.getActualOutput().substring(positionInOutput));
 		String currentLine;
-		Scanner scanner = new Scanner(computationAccessor.getActualOutput());
 		while (scanner.hasNextLine()) {
 			currentLine = scanner.nextLine();
 			if (currentLine.contains(desiredPatternErroneousJob)) {
@@ -93,55 +78,48 @@ public class TaskComputation {
 			}
 		}
 		scanner.close();
-		
-		return;
 	}
-
-	private Long getId() {
-		return id;
-	}
-
-	private ParsedTaskComputationValues parseStuff(SPIMComputationAccessor outputHolder) {
+	
+	private int findPositionInOutput() {
 		
 		final String OUTPUT_PARSING_RULE = "rule ";
 		final String OUTPUT_PARSING_COLON = ":";
-		final String OUTPUT_PARSING_COMMA_SPACE = ", ";
 		final String desiredPattern = OUTPUT_PARSING_RULE + task.getDescription() + OUTPUT_PARSING_COLON;
 		
+		int taskComputationLineIndex = -1;
+		for (int i = 0; i < timepoint; i++) {
+			taskComputationLineIndex = computationAccessor.getActualOutput().indexOf(desiredPattern, taskComputationLineIndex);
+		}
+		
+		return taskComputationLineIndex;
+	}
+	
+	private void resolveJobParameters() {
+		
+		final String OUTPUT_PARSING_COMMA_SPACE = ", ";
 		final String OUTPUT_PARSING_INPUTS = "input: ";
 		final String OUTPUT_PARSING_OUTPUTS = "output: ";
 		final String OUTPUT_PARSING_LOGS = "log: ";
 		final String OUTPUT_PARSING_JOB_ID = "jobid: ";
 		
-		Scanner scanner = new Scanner(outputHolder.getActualOutput());
-		int jobsToSkip = timepoint;
-		while (scanner.hasNextLine() && jobsToSkip > 0) {
-			if (scanner.nextLine().equals(desiredPattern)) {
-				jobsToSkip--;
-			}
-		}
-		
+		Scanner scanner = new Scanner(computationAccessor.getActualOutput().substring(positionInOutput));
 		String currentLine;
-		Collection<String> resolvedInputs = new LinkedList<>();
-		Collection<String> resolvedOutputs = new LinkedList<>();
-		Collection<String> resolvedLogs = new LinkedList<>();
-		Long resolvedId = null;
 		while (scanner.hasNextLine()) {
 			currentLine = scanner.nextLine();
 			if (currentLine.contains(OUTPUT_PARSING_INPUTS)) {
-				resolvedInputs = Arrays.asList(currentLine.split(OUTPUT_PARSING_INPUTS)[1].split(OUTPUT_PARSING_COMMA_SPACE));
+				inputs = Arrays.asList(currentLine.split(OUTPUT_PARSING_INPUTS)[1].split(OUTPUT_PARSING_COMMA_SPACE));
 			} else if (currentLine.contains(OUTPUT_PARSING_OUTPUTS)) {
-				resolvedOutputs = Arrays.asList(currentLine.split(OUTPUT_PARSING_OUTPUTS)[1].split(OUTPUT_PARSING_COMMA_SPACE));
+				outputs = Arrays.asList(currentLine.split(OUTPUT_PARSING_OUTPUTS)[1].split(OUTPUT_PARSING_COMMA_SPACE));
 			} else if (currentLine.contains(OUTPUT_PARSING_LOGS)) {
-				resolvedLogs = Arrays.asList(currentLine.split(OUTPUT_PARSING_LOGS)[1].split(OUTPUT_PARSING_COMMA_SPACE));
-			} else if (currentLine.contains(OUTPUT_PARSING_JOB_ID)) {
-				resolvedId = Long.parseLong(currentLine.split(OUTPUT_PARSING_JOB_ID)[1]);
+				logs = Arrays.asList(currentLine.split(OUTPUT_PARSING_LOGS)[1].split(OUTPUT_PARSING_COMMA_SPACE));
+			} else 
+			if (currentLine.contains(OUTPUT_PARSING_JOB_ID)) {
+				id = Long.parseLong(currentLine.split(OUTPUT_PARSING_JOB_ID)[1]);
 			} else if (currentLine.trim().isEmpty()) {
 				break;				
 			}
 		}
 		scanner.close();
-		
-		return new ParsedTaskComputationValues(resolvedInputs, resolvedOutputs, resolvedLogs, resolvedId);
-	}	
+	}
+	
 }
