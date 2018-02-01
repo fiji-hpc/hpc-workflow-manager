@@ -314,6 +314,14 @@ public class HaaSClient {
 	}
 	
 	
+	public void cancelJob(Long jobId) {
+		try {
+			getJobManagement().cancelJob(jobId, getSessionID());
+		} catch (RemoteException | ServiceException e) {
+			throw new HaaSClientException(e);
+		}
+	}
+
 	private void doSubmitJob(long jobId) throws RemoteException, ServiceException {
 		getJobManagement().submitJob(jobId, getSessionID());
 	}
