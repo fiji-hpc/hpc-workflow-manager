@@ -1,9 +1,13 @@
 package cz.it4i.fiji.haas_spim_benchmark.core;
 
-import java.nio.file.Path;
+import java.util.Collection;
 
 import cz.it4i.fiji.haas.HaaSOutputHolder;
 
 public interface SPIMComputationAccessor extends HaaSOutputHolder {
-	boolean fileExists(String fileName);
+	default boolean fileExists(String fileName) {
+		return getChangedFiles().contains(fileName); 
+	}
+	
+	Collection<String> getChangedFiles();
 }

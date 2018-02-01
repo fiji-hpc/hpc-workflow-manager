@@ -1,7 +1,6 @@
 package cz.it4i.fiji.haas_spim_benchmark.core;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -56,27 +55,28 @@ public class BenchmarkJobManager {
 		
 		private List<Task> tasks;
 
-		private SPIMComputationAccessor computationAccessor = new SPIMComputationAccessor() {
-			
-			private HaaSOutputHolder outputOfSnakemake =
-					new HaaSOutputHolderImpl(BenchmarkJob.this, SynchronizableFileType.StandardErrorFile);
-			
-			@Override
-			public String getActualOutput() {
-				return outputOfSnakemake.getActualOutput();
-			}
-			
-			@Override
-			public boolean fileExists(String filePath) {
-				File f = new File(job.getDirectory().resolve(filePath).toString());
-				return f.exists() && !f.isDirectory();
-			}
-		};
+		private SPIMComputationAccessor computationAccessor;
 		
 		
 		public BenchmarkJob(Job job) {
 			super();
 			this.job = job;
+			computationAccessor = new SPIMComputationAccessor() {
+				
+				private HaaSOutputHolder outputOfSnakemake =
+						new HaaSOutputHolderImpl(BenchmarkJob.this, SynchronizableFileType.StandardErrorFile);
+				
+				@Override
+				public String getActualOutput() {
+					return outputOfSnakemake.getActualOutput();
+				}
+				
+				public java.util.Collection<String> getChangedFiles() {
+					return job.getChangedFiles();
+				};
+			};
+			
+			computationAccessor = new SPIMComputationAccessorDecoratorWithTimeout(computationAccessor, Constants.HAAS_UPDATE_TIMEOUT);
 		}
 
 		public void startJob(Progress progress) throws IOException {
