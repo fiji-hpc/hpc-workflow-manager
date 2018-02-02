@@ -170,6 +170,8 @@ public class BenchmarkJobManager {
 			if (tasks == null) {
 				fillTasks();
 			}
+			// Carry on in output processing
+			processOutput();
 			return tasks;
 		}		
 
@@ -203,8 +205,7 @@ public class BenchmarkJobManager {
 			List<String> chronologicList = STATISTICS_TASK_NAME_MAP.keySet().stream().collect(Collectors.toList());
 			Collections.sort(tasks, Comparator.comparingInt(task -> chronologicList.indexOf(task.getDescription())));
 			
-			// Carry on in output processing
-			processOutput();
+			
 		}
 		
 		private void processOutput() {
