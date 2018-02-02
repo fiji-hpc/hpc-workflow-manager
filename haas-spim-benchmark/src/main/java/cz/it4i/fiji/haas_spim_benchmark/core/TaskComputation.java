@@ -9,7 +9,6 @@ import cz.it4i.fiji.haas_java_client.JobState;
 public class TaskComputation {
 
 	private final SPIMComputationAccessor computationAccessor;
-	private final Task task;
 	private final int timepoint;
 	
 	private JobState state;
@@ -20,36 +19,68 @@ public class TaskComputation {
 	private Collection<String> logs;
 	private Long id;
 	
-	public TaskComputation(SPIMComputationAccessor computationAccessor, Task task, int timepoint) {
+	/**
+	 * Creates a TaskComputation object
+	 * Note: At the time of creation, the job parameters are not populated
+	*/
+	public TaskComputation(SPIMComputationAccessor computationAccessor, int timepoint) {
 		this.computationAccessor = computationAccessor;
-		this.task = task;
 		this.timepoint = timepoint;
+		this.state = JobState.Unknown;
 		updateState();
 	}
-
+	
+	/**
+	 * @return current job state
+	 */
 	public JobState getState() {
-		updateState();
 		return state;
 	}
 	
-	public void update() {
-	}
-
+	/**
+	 * @return job timepoint
+	 */
 	public int getTimepoint() {
 		return timepoint;
+	}
+	
+	/**
+	 * @return job id
+	 */
+	public Long getId() {
+		return id;
+	}
+	
+	// TODO: Method stub
+	public void update() {
+		
+	}
+	
+	/**
+	 * Populates parameters of the current object by searching the output
+	 * @param positionInOutput: Index of the output position to search from
+	 * @return success flag
+	 */
+	public boolean populateParameters(int positionInOutput) {
+		
+		// Should the state be different than unknown, there is no need to populate parameters
+		if (state != JobState.Unknown) {
+			return false;
+		}
+		
+		this.positionInOutput = positionInOutput;
+		if (!resolveJobParameters()) {
+			return false;
+		}
+		
+		state = JobState.Queued;		
+		updateState();
+		
+		return true;
 	}
 
 	private void updateState() {
 
-		// Should the state be undefined (null), try to look up job position in the computation output
-		if (state == null) {
-			positionInOutput = findPositionInOutput();
-			if (0 > positionInOutput || !resolveJobParameters()) {
-				return; // Job position has not been found or its parameters could not be resolved
-			}
-			state = JobState.Queued;
-		}
-		
 		// Should the state be queued, try to find out whether a log file exists
 		if (state == JobState.Queued ) {
 			if (!logs.stream().anyMatch(logFile -> computationAccessor.fileExists(logFile))) {
@@ -81,21 +112,7 @@ public class TaskComputation {
 			scanner.close();
 		}
 	}
-	
-	private int findPositionInOutput() {
 		
-		final String OUTPUT_PARSING_RULE = "rule ";
-		final String OUTPUT_PARSING_COLON = ":";
-		final String desiredPattern = OUTPUT_PARSING_RULE + task.getDescription() + OUTPUT_PARSING_COLON;
-		
-		int taskComputationLineIndex = -1;
-		for (int i = 0; i < timepoint; i++) {
-			taskComputationLineIndex = computationAccessor.getActualOutput().indexOf(desiredPattern, taskComputationLineIndex);
-		}
-		
-		return taskComputationLineIndex;
-	}
-	
 	private boolean resolveJobParameters() {
 		
 		final String OUTPUT_PARSING_COMMA_SPACE = ", ";

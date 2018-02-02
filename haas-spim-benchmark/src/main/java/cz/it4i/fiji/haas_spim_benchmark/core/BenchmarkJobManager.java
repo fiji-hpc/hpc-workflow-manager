@@ -63,6 +63,8 @@ public class BenchmarkJobManager {
 
 		private SPIMComputationAccessor computationAccessor;
 		
+		private int processedOutputLength = 0;
+		
 		
 		public BenchmarkJob(Job job) {
 			this.job = job;
@@ -200,6 +202,39 @@ public class BenchmarkJobManager {
 			// Order tasks chronologically
 			List<String> chronologicList = STATISTICS_TASK_NAME_MAP.keySet().stream().collect(Collectors.toList());
 			Collections.sort(tasks, Comparator.comparingInt(task -> chronologicList.indexOf(task.getDescription())));
+			
+			// Carry on in output processing
+			processOutput();
+		}
+		
+		private void processOutput() {
+			
+			final String OUTPUT_PARSING_RULE = "rule ";
+			final String OUTPUT_PARSING_COLON = ":";
+			
+			String output = computationAccessor.getActualOutput().substring(processedOutputLength);
+			int outputLengthToBeProcessed = output.length();
+			
+			int ruleRelativeIndex = -1;
+			int colonRelativeIndex = -1;
+			while (true) {
+				
+				ruleRelativeIndex = output.indexOf(OUTPUT_PARSING_RULE, colonRelativeIndex);
+				colonRelativeIndex = output.indexOf(OUTPUT_PARSING_COLON, ruleRelativeIndex);
+				
+				if (ruleRelativeIndex == -1 || colonRelativeIndex == -1) {
+					break;
+				}
+
+				String taskDescription = output.substring(ruleRelativeIndex + OUTPUT_PARSING_RULE.length(), colonRelativeIndex);				
+				List<Task> task = tasks.stream().filter(t -> t.getDescription().equals(taskDescription)).collect(Collectors.toList());
+				if (1 == task.size()) {
+					// TODO: Consider throwing an exception
+					task.get(0).populateTaskComputationParameters(processedOutputLength + ruleRelativeIndex);
+				}				
+			}
+			
+			processedOutputLength = processedOutputLength + outputLengthToBeProcessed;
 		}
 		
 		private void setDownloaded(boolean b) {
