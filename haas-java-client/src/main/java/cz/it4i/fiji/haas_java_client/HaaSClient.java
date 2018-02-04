@@ -402,7 +402,7 @@ public class HaaSClient {
 
 	private JobManagementWsSoap getJobManagement() throws ServiceException {
 		if (jobManagement == null) {
-			jobManagement = new JobManagementWsLocator().getJobManagementWsSoap12();
+			jobManagement = new JobManagementWsLocator().getJobManagementWsSoap();
 		}
 		return jobManagement;
 	}

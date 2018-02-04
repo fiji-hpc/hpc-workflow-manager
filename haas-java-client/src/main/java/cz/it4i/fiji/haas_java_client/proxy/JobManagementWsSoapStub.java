@@ -16,7 +16,7 @@ public class JobManagementWsSoapStub extends org.apache.axis.client.Stub impleme
     static org.apache.axis.description.OperationDesc [] _operations;
 
     static {
-        _operations = new org.apache.axis.description.OperationDesc[5];
+        _operations = new org.apache.axis.description.OperationDesc[6];
         _initOperationDesc1();
     }
 
@@ -67,6 +67,18 @@ public class JobManagementWsSoapStub extends org.apache.axis.client.Stub impleme
         _operations[2] = oper;
 
         oper = new org.apache.axis.description.OperationDesc();
+        oper.setName("DeleteJob");
+        param = new org.apache.axis.description.ParameterDesc(new javax.xml.namespace.QName("http://hpcaas.it4i.cz/", "submittedJobInfoId"), org.apache.axis.description.ParameterDesc.IN, new javax.xml.namespace.QName("http://www.w3.org/2001/XMLSchema", "long"), long.class, false, false);
+        oper.addParameter(param);
+        param = new org.apache.axis.description.ParameterDesc(new javax.xml.namespace.QName("http://hpcaas.it4i.cz/", "sessionCode"), org.apache.axis.description.ParameterDesc.IN, new javax.xml.namespace.QName("http://www.w3.org/2001/XMLSchema", "string"), java.lang.String.class, false, false);
+        param.setOmittable(true);
+        oper.addParameter(param);
+        oper.setReturnType(org.apache.axis.encoding.XMLType.AXIS_VOID);
+        oper.setStyle(org.apache.axis.constants.Style.WRAPPED);
+        oper.setUse(org.apache.axis.constants.Use.LITERAL);
+        _operations[3] = oper;
+
+        oper = new org.apache.axis.description.OperationDesc();
         oper.setName("ListJobsForCurrentUser");
         param = new org.apache.axis.description.ParameterDesc(new javax.xml.namespace.QName("http://hpcaas.it4i.cz/", "sessionCode"), org.apache.axis.description.ParameterDesc.IN, new javax.xml.namespace.QName("http://www.w3.org/2001/XMLSchema", "string"), java.lang.String.class, false, false);
         param.setOmittable(true);
@@ -78,7 +90,7 @@ public class JobManagementWsSoapStub extends org.apache.axis.client.Stub impleme
         param.setItemQName(new javax.xml.namespace.QName("http://hpcaas.it4i.cz/", "SubmittedJobInfoExt"));
         oper.setStyle(org.apache.axis.constants.Style.WRAPPED);
         oper.setUse(org.apache.axis.constants.Use.LITERAL);
-        _operations[3] = oper;
+        _operations[4] = oper;
 
         oper = new org.apache.axis.description.OperationDesc();
         oper.setName("GetCurrentInfoForJob");
@@ -92,7 +104,7 @@ public class JobManagementWsSoapStub extends org.apache.axis.client.Stub impleme
         oper.setReturnQName(new javax.xml.namespace.QName("http://hpcaas.it4i.cz/", "GetCurrentInfoForJobResult"));
         oper.setStyle(org.apache.axis.constants.Style.WRAPPED);
         oper.setUse(org.apache.axis.constants.Use.LITERAL);
-        _operations[4] = oper;
+        _operations[5] = oper;
 
     }
 
@@ -440,12 +452,39 @@ public class JobManagementWsSoapStub extends org.apache.axis.client.Stub impleme
 }
     }
 
-    public cz.it4i.fiji.haas_java_client.proxy.SubmittedJobInfoExt[] listJobsForCurrentUser(java.lang.String sessionCode) throws java.rmi.RemoteException {
+    public void deleteJob(long submittedJobInfoId, java.lang.String sessionCode) throws java.rmi.RemoteException {
         if (super.cachedEndpoint == null) {
             throw new org.apache.axis.NoEndPointException();
         }
         org.apache.axis.client.Call _call = createCall();
         _call.setOperation(_operations[3]);
+        _call.setUseSOAPAction(true);
+        _call.setSOAPActionURI("http://hpcaas.it4i.cz/DeleteJob");
+        _call.setEncodingStyle(null);
+        _call.setProperty(org.apache.axis.client.Call.SEND_TYPE_ATTR, Boolean.FALSE);
+        _call.setProperty(org.apache.axis.AxisEngine.PROP_DOMULTIREFS, Boolean.FALSE);
+        _call.setSOAPVersion(org.apache.axis.soap.SOAPConstants.SOAP11_CONSTANTS);
+        _call.setOperationName(new javax.xml.namespace.QName("http://hpcaas.it4i.cz/", "DeleteJob"));
+
+        setRequestHeaders(_call);
+        setAttachments(_call);
+ try {        java.lang.Object _resp = _call.invoke(new java.lang.Object[] {new java.lang.Long(submittedJobInfoId), sessionCode});
+
+        if (_resp instanceof java.rmi.RemoteException) {
+            throw (java.rmi.RemoteException)_resp;
+        }
+        extractAttachments(_call);
+  } catch (org.apache.axis.AxisFault axisFaultException) {
+  throw axisFaultException;
+}
+    }
+
+    public cz.it4i.fiji.haas_java_client.proxy.SubmittedJobInfoExt[] listJobsForCurrentUser(java.lang.String sessionCode) throws java.rmi.RemoteException {
+        if (super.cachedEndpoint == null) {
+            throw new org.apache.axis.NoEndPointException();
+        }
+        org.apache.axis.client.Call _call = createCall();
+        _call.setOperation(_operations[4]);
         _call.setUseSOAPAction(true);
         _call.setSOAPActionURI("http://hpcaas.it4i.cz/ListJobsForCurrentUser");
         _call.setEncodingStyle(null);
@@ -479,7 +518,7 @@ public class JobManagementWsSoapStub extends org.apache.axis.client.Stub impleme
             throw new org.apache.axis.NoEndPointException();
         }
         org.apache.axis.client.Call _call = createCall();
-        _call.setOperation(_operations[4]);
+        _call.setOperation(_operations[5]);
         _call.setUseSOAPAction(true);
         _call.setSOAPActionURI("http://hpcaas.it4i.cz/GetCurrentInfoForJob");
         _call.setEncodingStyle(null);

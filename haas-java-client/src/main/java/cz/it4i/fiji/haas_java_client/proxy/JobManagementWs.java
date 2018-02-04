@@ -13,9 +13,4 @@ public interface JobManagementWs extends javax.xml.rpc.Service {
     public cz.it4i.fiji.haas_java_client.proxy.JobManagementWsSoap getJobManagementWsSoap() throws javax.xml.rpc.ServiceException;
 
     public cz.it4i.fiji.haas_java_client.proxy.JobManagementWsSoap getJobManagementWsSoap(java.net.URL portAddress) throws javax.xml.rpc.ServiceException;
-    public java.lang.String getJobManagementWsSoap12Address();
-
-    public cz.it4i.fiji.haas_java_client.proxy.JobManagementWsSoap getJobManagementWsSoap12() throws javax.xml.rpc.ServiceException;
-
-    public cz.it4i.fiji.haas_java_client.proxy.JobManagementWsSoap getJobManagementWsSoap12(java.net.URL portAddress) throws javax.xml.rpc.ServiceException;
 }

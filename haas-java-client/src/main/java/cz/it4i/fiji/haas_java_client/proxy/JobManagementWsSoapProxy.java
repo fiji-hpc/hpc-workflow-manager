@@ -62,6 +62,12 @@ public class JobManagementWsSoapProxy implements cz.it4i.fiji.haas_java_client.p
     return jobManagementWsSoap.cancelJob(submittedJobInfoId, sessionCode);
   }
   
+  public void deleteJob(long submittedJobInfoId, java.lang.String sessionCode) throws java.rmi.RemoteException{
+    if (jobManagementWsSoap == null)
+      _initJobManagementWsSoapProxy();
+    jobManagementWsSoap.deleteJob(submittedJobInfoId, sessionCode);
+  }
+  
   public cz.it4i.fiji.haas_java_client.proxy.SubmittedJobInfoExt[] listJobsForCurrentUser(java.lang.String sessionCode) throws java.rmi.RemoteException{
     if (jobManagementWsSoap == null)
       _initJobManagementWsSoapProxy();

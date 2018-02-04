@@ -22,7 +22,7 @@ public class JobManagementWsLocator extends org.apache.axis.client.Service imple
     }
 
     // Use to get a proxy class for JobManagementWsSoap
-    private java.lang.String JobManagementWsSoap_address = "http://utepstorage.it4i.cz/HaasWsFiji/JobManagementWs.asmx";
+    private java.lang.String JobManagementWsSoap_address = "http://utepstorage.it4i.cz/HaasWsFiji/JobManagementWS.asmx";
 
     public java.lang.String getJobManagementWsSoapAddress() {
         return JobManagementWsSoap_address;
@@ -65,68 +65,16 @@ public class JobManagementWsLocator extends org.apache.axis.client.Service imple
         JobManagementWsSoap_address = address;
     }
 
-
-    // Use to get a proxy class for JobManagementWsSoap12
-    private java.lang.String JobManagementWsSoap12_address = "http://utepstorage.it4i.cz/HaasWsFiji/JobManagementWs.asmx";
-
-    public java.lang.String getJobManagementWsSoap12Address() {
-        return JobManagementWsSoap12_address;
-    }
-
-    // The WSDD service name defaults to the port name.
-    private java.lang.String JobManagementWsSoap12WSDDServiceName = "JobManagementWsSoap12";
-
-    public java.lang.String getJobManagementWsSoap12WSDDServiceName() {
-        return JobManagementWsSoap12WSDDServiceName;
-    }
-
-    public void setJobManagementWsSoap12WSDDServiceName(java.lang.String name) {
-        JobManagementWsSoap12WSDDServiceName = name;
-    }
-
-    public cz.it4i.fiji.haas_java_client.proxy.JobManagementWsSoap getJobManagementWsSoap12() throws javax.xml.rpc.ServiceException {
-       java.net.URL endpoint;
-        try {
-            endpoint = new java.net.URL(JobManagementWsSoap12_address);
-        }
-        catch (java.net.MalformedURLException e) {
-            throw new javax.xml.rpc.ServiceException(e);
-        }
-        return getJobManagementWsSoap12(endpoint);
-    }
-
-    public cz.it4i.fiji.haas_java_client.proxy.JobManagementWsSoap getJobManagementWsSoap12(java.net.URL portAddress) throws javax.xml.rpc.ServiceException {
-        try {
-            cz.it4i.fiji.haas_java_client.proxy.JobManagementWsSoap12Stub _stub = new cz.it4i.fiji.haas_java_client.proxy.JobManagementWsSoap12Stub(portAddress, this);
-            _stub.setPortName(getJobManagementWsSoap12WSDDServiceName());
-            return _stub;
-        }
-        catch (org.apache.axis.AxisFault e) {
-            return null;
-        }
-    }
-
-    public void setJobManagementWsSoap12EndpointAddress(java.lang.String address) {
-        JobManagementWsSoap12_address = address;
-    }
-
     /**
      * For the given interface, get the stub implementation.
      * If this service has no port for the given interface,
      * then ServiceException is thrown.
-     * This service has multiple ports for a given interface;
-     * the proxy implementation returned may be indeterminate.
      */
     public java.rmi.Remote getPort(Class serviceEndpointInterface) throws javax.xml.rpc.ServiceException {
         try {
             if (cz.it4i.fiji.haas_java_client.proxy.JobManagementWsSoap.class.isAssignableFrom(serviceEndpointInterface)) {
                 cz.it4i.fiji.haas_java_client.proxy.JobManagementWsSoapStub _stub = new cz.it4i.fiji.haas_java_client.proxy.JobManagementWsSoapStub(new java.net.URL(JobManagementWsSoap_address), this);
                 _stub.setPortName(getJobManagementWsSoapWSDDServiceName());
-                return _stub;
-            }
-            if (cz.it4i.fiji.haas_java_client.proxy.JobManagementWsSoap.class.isAssignableFrom(serviceEndpointInterface)) {
-                cz.it4i.fiji.haas_java_client.proxy.JobManagementWsSoap12Stub _stub = new cz.it4i.fiji.haas_java_client.proxy.JobManagementWsSoap12Stub(new java.net.URL(JobManagementWsSoap12_address), this);
-                _stub.setPortName(getJobManagementWsSoap12WSDDServiceName());
                 return _stub;
             }
         }
@@ -149,9 +97,6 @@ public class JobManagementWsLocator extends org.apache.axis.client.Service imple
         if ("JobManagementWsSoap".equals(inputPortName)) {
             return getJobManagementWsSoap();
         }
-        else if ("JobManagementWsSoap12".equals(inputPortName)) {
-            return getJobManagementWsSoap12();
-        }
         else  {
             java.rmi.Remote _stub = getPort(serviceEndpointInterface);
             ((org.apache.axis.client.Stub) _stub).setPortName(portName);
@@ -169,7 +114,6 @@ public class JobManagementWsLocator extends org.apache.axis.client.Service imple
         if (ports == null) {
             ports = new java.util.HashSet();
             ports.add(new javax.xml.namespace.QName("http://hpcaas.it4i.cz/", "JobManagementWsSoap"));
-            ports.add(new javax.xml.namespace.QName("http://hpcaas.it4i.cz/", "JobManagementWsSoap12"));
         }
         return ports.iterator();
     }
@@ -181,10 +125,6 @@ public class JobManagementWsLocator extends org.apache.axis.client.Service imple
         
 if ("JobManagementWsSoap".equals(portName)) {
             setJobManagementWsSoapEndpointAddress(address);
-        }
-        else 
-if ("JobManagementWsSoap12".equals(portName)) {
-            setJobManagementWsSoap12EndpointAddress(address);
         }
         else 
 { // Unknown Port Name

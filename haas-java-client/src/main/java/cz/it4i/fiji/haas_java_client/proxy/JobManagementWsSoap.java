@@ -11,6 +11,7 @@ public interface JobManagementWsSoap extends java.rmi.Remote {
     public cz.it4i.fiji.haas_java_client.proxy.SubmittedJobInfoExt createJob(cz.it4i.fiji.haas_java_client.proxy.JobSpecificationExt specification, java.lang.String sessionCode) throws java.rmi.RemoteException;
     public cz.it4i.fiji.haas_java_client.proxy.SubmittedJobInfoExt submitJob(long createdJobInfoId, java.lang.String sessionCode) throws java.rmi.RemoteException;
     public cz.it4i.fiji.haas_java_client.proxy.SubmittedJobInfoExt cancelJob(long submittedJobInfoId, java.lang.String sessionCode) throws java.rmi.RemoteException;
+    public void deleteJob(long submittedJobInfoId, java.lang.String sessionCode) throws java.rmi.RemoteException;
     public cz.it4i.fiji.haas_java_client.proxy.SubmittedJobInfoExt[] listJobsForCurrentUser(java.lang.String sessionCode) throws java.rmi.RemoteException;
     public cz.it4i.fiji.haas_java_client.proxy.SubmittedJobInfoExt getCurrentInfoForJob(long submittedJobInfoId, java.lang.String sessionCode) throws java.rmi.RemoteException;
 }
