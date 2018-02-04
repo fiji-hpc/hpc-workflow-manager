@@ -5,6 +5,11 @@ encoding//src/main/java/cz/it4i/fiji/haas_java_client/proxy/ClusterNodeTypeExt.j
 encoding//src/main/java/cz/it4i/fiji/haas_java_client/proxy/CommandTemplateExt.java=UTF-8
 encoding//src/main/java/cz/it4i/fiji/haas_java_client/proxy/CommandTemplateParameterExt.java=UTF-8
 encoding//src/main/java/cz/it4i/fiji/haas_java_client/proxy/CommandTemplateParameterValueExt.java=UTF-8
+encoding//src/main/java/cz/it4i/fiji/haas_java_client/proxy/DataTransferMethodExt.java=UTF-8
+encoding//src/main/java/cz/it4i/fiji/haas_java_client/proxy/DataTransferWs.java=UTF-8
+encoding//src/main/java/cz/it4i/fiji/haas_java_client/proxy/DataTransferWsLocator.java=UTF-8
+encoding//src/main/java/cz/it4i/fiji/haas_java_client/proxy/DataTransferWsSoap.java=UTF-8
+encoding//src/main/java/cz/it4i/fiji/haas_java_client/proxy/DataTransferWsSoapStub.java=UTF-8
 encoding//src/main/java/cz/it4i/fiji/haas_java_client/proxy/DigitalSignatureCredentialsExt.java=UTF-8
 encoding//src/main/java/cz/it4i/fiji/haas_java_client/proxy/EnvironmentVariableExt.java=UTF-8
 encoding//src/main/java/cz/it4i/fiji/haas_java_client/proxy/FileTransferMethodExt.java=UTF-8
