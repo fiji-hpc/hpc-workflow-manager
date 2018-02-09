@@ -24,7 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import cz.it4i.fiji.haas.ui.DummyProgress;
-import cz.it4i.fiji.haas.ui.FXFrame;
+import cz.it4i.fiji.haas.ui.JFXPanelWithController;
 import cz.it4i.fiji.haas.ui.ModalDialogs;
 import cz.it4i.fiji.haas.ui.ProgressDialog;
 import cz.it4i.fiji.haas.ui.TableViewContextMenu;
@@ -39,7 +39,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.TableView;
 import net.imagej.updater.util.Progress;
 
-public class BenchmarkSPIMController implements FXFrame.Controller {
+public class BenchmarkSPIMController implements JFXPanelWithController.Controller {
 
 	private static boolean notNullValue(ObservableValue<BenchmarkJob> j, Predicate<BenchmarkJob> pred) {
 		if (j == null || j.getValue() == null) {
@@ -160,7 +160,7 @@ public class BenchmarkSPIMController implements FXFrame.Controller {
 	}
 
 	private void executeWSCallAsync(String title, boolean update, P_JobAction action) {
-		FXFrame.Controller.executeAsync(executorServiceWS, (Callable<Void>) () -> {
+		JFXPanelWithController.Controller.executeAsync(executorServiceWS, (Callable<Void>) () -> {
 			ProgressDialog dialog = ModalDialogs.doModal(new ProgressDialog(root, title),
 					WindowConstants.DO_NOTHING_ON_CLOSE);
 			try {
@@ -222,7 +222,7 @@ public class BenchmarkSPIMController implements FXFrame.Controller {
 	}
 
 	private void setCellValueFactory(int index, Function<BenchmarkJob, String> mapper) {
-		FXFrame.Controller.setCellValueFactory(jobs, index, mapper);
+		JFXPanelWithController.Controller.setCellValueFactory(jobs, index, mapper);
 	}
 
 	private interface P_JobAction {

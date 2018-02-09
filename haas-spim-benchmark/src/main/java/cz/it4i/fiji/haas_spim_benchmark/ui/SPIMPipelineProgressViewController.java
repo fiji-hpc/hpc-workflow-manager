@@ -12,7 +12,7 @@ import java.util.TimerTask;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import cz.it4i.fiji.haas.ui.FXFrame;
+import cz.it4i.fiji.haas.ui.JFXPanelWithController;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.BenchmarkJob;
 import cz.it4i.fiji.haas_spim_benchmark.core.Constants;
@@ -25,7 +25,7 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.paint.Color;
 
-public class SPIMPipelineProgressViewController implements FXFrame.Controller {
+public class SPIMPipelineProgressViewController implements JFXPanelWithController.Controller {
 
 	protected static final String RUNNING_STATE_COMPUTATION = Color.YELLOW.toString();
 
@@ -92,15 +92,16 @@ public class SPIMPipelineProgressViewController implements FXFrame.Controller {
 				}
 			}, Constants.HAAS_UPDATE_TIMEOUT / Constants.UI_TO_HAAS_FREQUENCY_UPDATE_RATIO);
 		} else {
-			
+
 			Optional<List<TaskComputation>> optional = tasks.stream().map(task -> task.getComputations())
 					.collect(Collectors.<List<TaskComputation>>maxBy((a, b) -> a.size() - b.size()));
-			if(!optional.isPresent()) {
+			if (!optional.isPresent()) {
 				return;
 			}
-			List<TaskComputation> computations = optional.get(); 
+			List<TaskComputation> computations = optional.get();
 			int i = 0;
-			FXFrame.Controller.setCellValueFactory(this.tasks, i++, (Function<Task, String>) v -> v.getDescription());
+			JFXPanelWithController.Controller.setCellValueFactory(this.tasks, i++,
+					(Function<Task, String>) v -> v.getDescription());
 
 			for (TaskComputation tc : computations) {
 				this.tasks.getColumns().add(new TableColumn<>(tc.getTimepoint() + ""));
@@ -124,7 +125,7 @@ public class SPIMPipelineProgressViewController implements FXFrame.Controller {
 
 	@SuppressWarnings("unchecked")
 	private void constructCellFactory(int index) {
-		FXFrame.Controller.setCellValueFactory(this.tasks, index, (Function<Task, TaskComputation>) v -> {
+		JFXPanelWithController.Controller.setCellValueFactory(this.tasks, index, (Function<Task, TaskComputation>) v -> {
 			if (v.getComputations().size() >= index) {
 				return v.getComputations().get(index - 1);
 			} else {
