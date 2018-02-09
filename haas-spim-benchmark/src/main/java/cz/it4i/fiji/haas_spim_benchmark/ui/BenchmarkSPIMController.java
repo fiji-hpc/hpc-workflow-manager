@@ -2,8 +2,6 @@ package cz.it4i.fiji.haas_spim_benchmark.ui;
 
 import java.awt.Desktop;
 import java.awt.Window;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.EnumSet;
@@ -23,8 +21,9 @@ import javax.swing.WindowConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import cz.it4i.fiji.haas.ui.CloseableControl;
 import cz.it4i.fiji.haas.ui.DummyProgress;
-import cz.it4i.fiji.haas.ui.JFXPanelWithController;
+import cz.it4i.fiji.haas.ui.InitiableControl;
 import cz.it4i.fiji.haas.ui.ModalDialogs;
 import cz.it4i.fiji.haas.ui.ProgressDialog;
 import cz.it4i.fiji.haas.ui.TableViewContextMenu;
@@ -37,9 +36,10 @@ import cz.it4i.fiji.haas_spim_benchmark.core.FXFrameExecutorService;
 import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
 import javafx.scene.control.TableView;
+import javafx.scene.layout.BorderPane;
 import net.imagej.updater.util.Progress;
 
-public class BenchmarkSPIMController implements JFXPanelWithController.Controller {
+public class BenchmarkSPIMController extends BorderPane implements CloseableControl,InitiableControl{
 
 	private static boolean notNullValue(ObservableValue<BenchmarkJob> j, Predicate<BenchmarkJob> pred) {
 		if (j == null || j.getValue() == null) {
@@ -66,8 +66,14 @@ public class BenchmarkSPIMController implements JFXPanelWithController.Controlle
 	private static Logger log = LoggerFactory
 			.getLogger(cz.it4i.fiji.haas_spim_benchmark.ui.BenchmarkSPIMController.class);
 
-	@Override
-	public void init(Window frame) {
+	public BenchmarkSPIMController(BenchmarkJobManager manager) {
+		this.manager = manager;
+		CloseableControl.initRootAndController("BenchmarkSPIM.fxml", this);
+		
+	}
+	
+	public void init(Window root) {
+		this.root = root;
 		executorServiceWS = Executors.newSingleThreadExecutor();
 		executorServiceUI = Executors.newSingleThreadExecutor();
 		timer = new Timer();
@@ -77,22 +83,10 @@ public class BenchmarkSPIMController implements JFXPanelWithController.Controlle
 				updateJobs(false);
 			}
 		}, Constants.HAAS_UPDATE_TIMEOUT, Constants.HAAS_UPDATE_TIMEOUT);
-		root = frame;
 		initTable();
 		initMenu();
 		updateJobs();
-		root.addWindowListener(new WindowAdapter() {
-			@Override
-			public void windowClosed(WindowEvent e) {
-				super.windowClosed(e);
-				dispose();
-			}
-		});
-	}
-
-	public void setManager(BenchmarkJobManager manager) {
-		this.manager = manager;
-
+		
 	}
 
 	private void initMenu() {
@@ -160,7 +154,7 @@ public class BenchmarkSPIMController implements JFXPanelWithController.Controlle
 	}
 
 	private void executeWSCallAsync(String title, boolean update, P_JobAction action) {
-		JFXPanelWithController.Controller.executeAsync(executorServiceWS, (Callable<Void>) () -> {
+		CloseableControl.executeAsync(executorServiceWS, (Callable<Void>) () -> {
 			ProgressDialog dialog = ModalDialogs.doModal(new ProgressDialog(root, title),
 					WindowConstants.DO_NOTHING_ON_CLOSE);
 			try {
@@ -187,22 +181,24 @@ public class BenchmarkSPIMController implements JFXPanelWithController.Controlle
 					: new DummyProgress();
 
 			registry.update();
-			executorServiceFX.execute(() -> {
-				try {
-					Collection<BenchmarkJob> jobs = manager.getJobs();
+			try {
+				Collection<BenchmarkJob> jobs = manager.getJobs();
+				
 					Set<ObservableValue<BenchmarkJob>> actual = new HashSet<>(this.jobs.getItems());
 					for (BenchmarkJob bj : jobs) {
-						ObservableValue<BenchmarkJob> value = registry.addIfAbsent(bj);
+					ObservableValue<BenchmarkJob> value = registry.addIfAbsent(bj);
+					executorServiceFX.execute(() -> {
 						if (!actual.contains(value)) {
 							this.jobs.getItems().add(value);
 						}
-					}
-				} catch (IOException e) {
-					log.error(e.getMessage(), e);
+					});
 				}
-
 				progress.done();
-			});
+				
+			} catch (IOException e) {
+				log.error(e.getMessage(), e);
+			}
+
 		});
 	}
 
@@ -222,14 +218,14 @@ public class BenchmarkSPIMController implements JFXPanelWithController.Controlle
 	}
 
 	private void setCellValueFactory(int index, Function<BenchmarkJob, String> mapper) {
-		JFXPanelWithController.Controller.setCellValueFactory(jobs, index, mapper);
+		CloseableControl.setCellValueFactory(jobs, index, mapper);
 	}
 
 	private interface P_JobAction {
 		public void doAction(Progress p) throws IOException;
 	}
 
-	private void dispose() {
+	public void close() {
 		executorServiceUI.shutdown();
 		executorServiceWS.shutdown();
 		timer.cancel();

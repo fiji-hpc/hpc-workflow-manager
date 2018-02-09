@@ -1,21 +1,22 @@
 package cz.it4i.fiji.haas_spim_benchmark.ui;
 
-import java.awt.Window;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import cz.it4i.fiji.haas.ui.JFXPanelWithController;
+import cz.it4i.fiji.haas.ui.CloseableControl;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.BenchmarkJob;
 import cz.it4i.fiji.haas_spim_benchmark.core.Constants;
+import cz.it4i.fiji.haas_spim_benchmark.core.FXFrameExecutorService;
 import cz.it4i.fiji.haas_spim_benchmark.core.Task;
 import cz.it4i.fiji.haas_spim_benchmark.core.TaskComputation;
 import javafx.beans.value.ObservableValue;
@@ -23,9 +24,10 @@ import javafx.fxml.FXML;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.paint.Color;
 
-public class SPIMPipelineProgressViewController implements JFXPanelWithController.Controller {
+public class SPIMPipelineProgressViewController extends BorderPane implements CloseableControl{
 
 	protected static final String RUNNING_STATE_COMPUTATION = Color.YELLOW.toString();
 
@@ -62,24 +64,22 @@ public class SPIMPipelineProgressViewController implements JFXPanelWithControlle
 	private BenchmarkJob job;
 	private Timer timer;
 	private ObservableTaskRegistry registry;
+	private ExecutorService executorServiceWS;
+	private Executor executorFx = new FXFrameExecutorService();
 
-	@Override
-	public void init(Window frame) {
-		frame.addWindowListener(new WindowAdapter() {
-			@Override
-			public void windowClosed(WindowEvent e) {
-				super.windowClosed(e);
-				dispose();
-			}
-
-		});
+	public SPIMPipelineProgressViewController(BenchmarkJob job) {
+		this.job = job;
+		executorServiceWS = Executors.newSingleThreadExecutor();
+		init();
+	}
+	
+	private void init() {
+		CloseableControl.initRootAndController("SPIMPipelineProgressView.fxml", this);
 		timer = new Timer();
 		registry = new ObservableTaskRegistry(task -> tasks.getItems().remove(registry.get(task)));
-		fillTable();
-	}
-
-	public void setBenchmarkJob(BenchmarkJob job) {
-		this.job = job;
+		executorServiceWS.execute(() -> {
+			fillTable();
+		});
 	}
 
 	private void fillTable() {
@@ -99,33 +99,31 @@ public class SPIMPipelineProgressViewController implements JFXPanelWithControlle
 				return;
 			}
 			List<TaskComputation> computations = optional.get();
-			int i = 0;
-			JFXPanelWithController.Controller.setCellValueFactory(this.tasks, i++,
-					(Function<Task, String>) v -> v.getDescription());
-
-			for (TaskComputation tc : computations) {
-				this.tasks.getColumns().add(new TableColumn<>(tc.getTimepoint() + ""));
-				int index = i++;
-
-				constructCellFactory(index);
-
-			}
-
-			this.tasks.getItems()
-					.addAll((tasks.stream().map(task -> registry.addIfAbsent(task)).collect(Collectors.toList())));
+			List<ObservableValue<Task>> taskList = (tasks.stream().map(task -> registry.addIfAbsent(task))
+					.collect(Collectors.toList()));
+			executorFx.execute(() -> {
+				int i = 0;
+				CloseableControl.setCellValueFactory(this.tasks, i++,
+						(Function<Task, String>) v -> v.getDescription());
+				for (TaskComputation tc : computations) {
+					this.tasks.getColumns().add(new TableColumn<>(tc.getTimepoint() + ""));
+					int index = i++;
+					constructCellFactory(index);
+				}
+				this.tasks.getItems().addAll(taskList);
+			});
 			timer.schedule(new TimerTask() {
 				@Override
 				public void run() {
 					updateTable();
 				}
 			}, Constants.HAAS_UPDATE_TIMEOUT, Constants.HAAS_UPDATE_TIMEOUT);
-
 		}
 	}
 
 	@SuppressWarnings("unchecked")
 	private void constructCellFactory(int index) {
-		JFXPanelWithController.Controller.setCellValueFactory(this.tasks, index, (Function<Task, TaskComputation>) v -> {
+		CloseableControl.setCellValueFactory(this.tasks, index, (Function<Task, TaskComputation>) v -> {
 			if (v.getComputations().size() >= index) {
 				return v.getComputations().get(index - 1);
 			} else {
@@ -140,7 +138,7 @@ public class SPIMPipelineProgressViewController implements JFXPanelWithControlle
 							setText(null);
 							setStyle("");
 						} else {
-							setText("" + (computation != null ? computation.getState() : "N/A"));
+							//setText("" + (computation != null ? computation.getState() : "N/A"));
 							setStyle("-fx-background-color: " + getColorTaskExecState(computation.getState()));
 						}
 					}
@@ -151,7 +149,8 @@ public class SPIMPipelineProgressViewController implements JFXPanelWithControlle
 		registry.update();
 	}
 
-	private void dispose() {
+	public void close() {
 		timer.cancel();
+		executorServiceWS.shutdown();
 	}
 }

@@ -11,8 +11,8 @@ public class SPIMPipelineProgressViewWindow extends FXFrame<SPIMPipelineProgress
 	private static final long serialVersionUID = 1L;
 
 	public SPIMPipelineProgressViewWindow(Window applicationFrame,BenchmarkJob job) throws IOException {
-		super(applicationFrame, "/cz/it4i/fiji/haas_spim_benchmark/ui/SPIMPipelineProgressView.fxml");
-		init(controller->controller.setBenchmarkJob(job));
+		super(applicationFrame,()->new SPIMPipelineProgressViewController(job));
+		
 	}
 
 	
