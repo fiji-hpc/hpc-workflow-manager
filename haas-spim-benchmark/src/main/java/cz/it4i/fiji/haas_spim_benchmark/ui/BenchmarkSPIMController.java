@@ -127,12 +127,15 @@ public class BenchmarkSPIMController implements FXFrame.Controller {
 				job -> executeWSCallAsync("Downloading data", p -> job.getValue().downloadStatistics(p)),
 				job -> notNullValue(job, j -> j.getState() == JobState.Finished));
 
+		menu.addItem("Explore errors", job -> job.getValue().exploreErrors(),
+				job -> notNullValue(job, j -> j.getState().equals(JobState.Failed)));
+
 		menu.addItem("Show output",
 				j -> new JobOutputView(root, executorServiceUI, j.getValue(), Constants.HAAS_UPDATE_TIMEOUT),
 				job -> notNullValue(job,
 						j -> EnumSet.of(JobState.Failed, JobState.Finished, JobState.Running, JobState.Canceled)
 								.contains(j.getState())));
-		menu.addItem("Open", j -> open(j.getValue()), x -> notNullValue(x, j -> true));
+		menu.addItem("Open working directory", j -> open(j.getValue()), x -> notNullValue(x, j -> true));
 		menu.addItem("Update table", job -> updateJobs(), j -> true);
 
 	}

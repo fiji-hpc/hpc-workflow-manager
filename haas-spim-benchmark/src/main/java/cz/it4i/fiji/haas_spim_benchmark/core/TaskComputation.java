@@ -2,6 +2,8 @@ package cz.it4i.fiji.haas_spim_benchmark.core;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Scanner;
 
 import cz.it4i.fiji.haas_java_client.JobState;
@@ -20,13 +22,16 @@ public class TaskComputation {
 	private Collection<String> logs;
 	private Long id;
 
+	private final List<BenchmarkError> errors;
+	
 	/**
-	 * Creates a TaskComputation object Note: At the time of creation, the job
-	 * parameters are not populated
+	 * Creates a TaskComputation object. At the time of creation, the job parameters
+	 * are not populated
 	 */
 	public TaskComputation(SPIMComputationAccessor computationAccessor, int timepoint) {
 		this.computationAccessor = computationAccessor;
 		this.timepoint = timepoint;
+		this.errors = new LinkedList<BenchmarkError>();
 		this.state = JobState.Unknown;
 		updateState();
 	}
@@ -56,6 +61,13 @@ public class TaskComputation {
 	// TODO: Method stub
 	public void update() {
 
+	}
+	
+	/**
+	 * @return computations errors
+	 */
+	public Collection<BenchmarkError> getErrors() {
+		return errors;
 	}
 
 	/**
@@ -108,6 +120,7 @@ public class TaskComputation {
 				currentLine = scanner.nextLine();
 				if (currentLine.contains(desiredPatternErroneousJob)) {
 					state = JobState.Failed;
+					errors.add(new BenchmarkError(currentLine));
 					break;
 				} else if (currentLine.contains(desiredPatternFinishedJob)) {
 					state = JobState.Finished;
