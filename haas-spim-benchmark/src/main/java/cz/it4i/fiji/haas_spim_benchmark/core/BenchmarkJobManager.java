@@ -15,7 +15,6 @@ import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
@@ -27,6 +26,7 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,26 +53,27 @@ public class BenchmarkJobManager {
 			.getLogger(cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.class);
 
 	private JobManager jobManager;
-	
 
 	public final class BenchmarkJob implements HaaSOutputSource {
 		
 		private Job job;
-		
-		private List<Task> tasks;
+
+		private final List<Task> tasks;
+		private final List<BenchmarkError> nonTaskSpecificErrors;
 
 		private SPIMComputationAccessor computationAccessor;
 		
 		private int processedOutputLength = 0;
 		
-		
 		public BenchmarkJob(Job job) {
 			this.job = job;
+			tasks = new LinkedList<Task>();
+			nonTaskSpecificErrors = new LinkedList<BenchmarkError>();
+
 			computationAccessor = new SPIMComputationAccessor() {
 				
-				private HaaSOutputHolder outputOfSnakemake =
-						new HaaSOutputHolderImpl(BenchmarkJob.this, SynchronizableFileType.StandardErrorFile);
-				
+				private HaaSOutputHolder outputOfSnakemake = new HaaSOutputHolderImpl(BenchmarkJob.this,
+						SynchronizableFileType.StandardErrorFile);
 				@Override
 				public String getActualOutput() {
 					return outputOfSnakemake.getActualOutput();
@@ -83,7 +84,8 @@ public class BenchmarkJobManager {
 				};
 			};
 			
-			computationAccessor = new SPIMComputationAccessorDecoratorWithTimeout(computationAccessor, HAAS_UPDATE_TIMEOUT/UI_TO_HAAS_FREQUENCY_UPDATE_RATIO);
+			computationAccessor = new SPIMComputationAccessorDecoratorWithTimeout(computationAccessor,
+					HAAS_UPDATE_TIMEOUT / UI_TO_HAAS_FREQUENCY_UPDATE_RATIO);
 		}
 
 		public void startJob(Progress progress) throws IOException {
@@ -102,7 +104,7 @@ public class BenchmarkJobManager {
 			if (job.getState() == JobState.Finished) {
 				String filePattern = job.getProperty(SPIM_OUTPUT_FILENAME_PATTERN);
 				job.download(downloadFinishedData(filePattern), progress);
-			} else if (job.getState() == JobState.Failed ||  job.getState() == JobState.Canceled) {
+			} else if (job.getState() == JobState.Failed || job.getState() == JobState.Canceled) {
 				job.download(downloadFailedData(), progress);
 			}
 			
@@ -153,7 +155,6 @@ public class BenchmarkJobManager {
 			return false;
 		}
 
-		
 		public boolean downloaded() {
 			return getDownloaded();
 		}
@@ -167,28 +168,44 @@ public class BenchmarkJobManager {
 		}
 		
 		public List<Task> getTasks() {
-			if (tasks == null) {
+			if (tasks.isEmpty()) {
 				fillTasks();
 			}
-			// Carry on in output processing
+			// Carry on with output processing
 			processOutput();
 			return tasks;
-		}		
+		}
 
 		private void fillTasks() {
-			
+
 			final String OUTPUT_PARSING_JOB_COUNTS = "Job counts:";
 			final String OUTPUT_PARSING_TAB_DELIMITER = "\\t";
 			final int OUTPUT_PARSING_EXPECTED_NUMBER_OF_WORDS_PER_LINE = 2;
-			
-			tasks = new ArrayList<>();
+			final String OUTPUT_PARSING_ERROR = "Error";
+
 			Scanner scanner = new Scanner(computationAccessor.getActualOutput());
+			String currentLine;
 			while (scanner.hasNextLine()) {
-				if (!scanner.nextLine().equals(OUTPUT_PARSING_JOB_COUNTS)) {
+				currentLine = scanner.nextLine().trim();
+
+				if (currentLine.contains(OUTPUT_PARSING_ERROR)) {
+					String errorMessage = "";
+					while (!currentLine.isEmpty()) {
+						errorMessage += currentLine;
+						if (!scanner.hasNextLine()) {
+							break;
+						}
+						currentLine = scanner.nextLine().trim();
+					};
+					nonTaskSpecificErrors.add(new BenchmarkError(errorMessage));
+					break;
+				}
+
+				if (!currentLine.equals(OUTPUT_PARSING_JOB_COUNTS)) {
 					continue;
-				}				
+				}
 				scanner.nextLine();
-				
+
 				while (true) {
 					List<String> lineWords = Arrays.stream(scanner.nextLine().split(OUTPUT_PARSING_TAB_DELIMITER))
 							.filter(word -> word.length() > 0).collect(Collectors.toList());
@@ -200,48 +217,64 @@ public class BenchmarkJobManager {
 				break;
 			}
 			scanner.close();
-			
+
 			// Order tasks chronologically
-			List<String> chronologicList = STATISTICS_TASK_NAME_MAP.keySet().stream().collect(Collectors.toList());
-			Collections.sort(tasks, Comparator.comparingInt(task -> chronologicList.indexOf(task.getDescription())));
-			
-			
+			if (!tasks.isEmpty()) {
+				List<String> chronologicList = STATISTICS_TASK_NAME_MAP.keySet().stream().collect(Collectors.toList());
+				Collections.sort(tasks,
+						Comparator.comparingInt(task -> chronologicList.indexOf(task.getDescription())));
+			}
+
 		}
-		
+
 		private void processOutput() {
-			
+
 			final String OUTPUT_PARSING_RULE = "rule ";
 			final String OUTPUT_PARSING_COLON = ":";
-			
+
 			String output = computationAccessor.getActualOutput().substring(processedOutputLength);
 			int outputLengthToBeProcessed = output.length();
-			
+
 			int ruleRelativeIndex = -1;
 			int colonRelativeIndex = -1;
 			while (true) {
-				
+
 				ruleRelativeIndex = output.indexOf(OUTPUT_PARSING_RULE, colonRelativeIndex);
 				colonRelativeIndex = output.indexOf(OUTPUT_PARSING_COLON, ruleRelativeIndex);
-				
+
 				if (ruleRelativeIndex == -1 || colonRelativeIndex == -1) {
 					break;
 				}
 
-				String taskDescription = output.substring(ruleRelativeIndex + OUTPUT_PARSING_RULE.length(), colonRelativeIndex);				
-				List<Task> task = tasks.stream().filter(t -> t.getDescription().equals(taskDescription)).collect(Collectors.toList());
+				String taskDescription = output.substring(ruleRelativeIndex + OUTPUT_PARSING_RULE.length(),
+						colonRelativeIndex);
+				List<Task> task = tasks.stream().filter(t -> t.getDescription().equals(taskDescription))
+						.collect(Collectors.toList());
 				if (1 == task.size()) {
 					// TODO: Consider throwing an exception
 					task.get(0).populateTaskComputationParameters(processedOutputLength + ruleRelativeIndex);
-				}				
+				}
 			}
-			
+
 			processedOutputLength = processedOutputLength + outputLengthToBeProcessed;
 		}
-		
+
+		public void exploreErrors() {
+			for (BenchmarkError error : getErrors() ) {
+				System.out.println(error.getPlainDescription());
+			}
+		}
+
+		private List<BenchmarkError> getErrors() {
+			getTasks();
+			Stream<BenchmarkError> taskSpecificErrors = tasks.stream().flatMap(s -> s.getErrors().stream());
+			return Stream.concat(nonTaskSpecificErrors.stream(), taskSpecificErrors).collect(Collectors.toList());
+		}
+
 		private void setDownloaded(boolean b) {
 			job.setProperty(JOB_HAS_DATA_TO_DOWNLOAD_PROPERTY, b + "");
 		}
-		
+
 		private boolean getDownloaded() {
 			String downloadedStr = job.getProperty(JOB_HAS_DATA_TO_DOWNLOAD_PROPERTY);
 			return downloadedStr != null && Boolean.parseBoolean(downloadedStr);
@@ -254,7 +287,7 @@ public class BenchmarkJobManager {
 		public void cancelJob() {
 			job.cancelJob();
 		}
-		
+
 	}
 
 	public BenchmarkJobManager(BenchmarkSPIMParameters params) throws IOException {
@@ -270,7 +303,6 @@ public class BenchmarkJobManager {
 	public Collection<BenchmarkJob> getJobs() throws IOException {
 		return jobManager.getJobs().stream().map(this::convertJob).collect(Collectors.toList());
 	}
-
 
 	private HaaSClient.UploadingFile getUploadingFile() {
 		return new UploadingFileFromResource("", Constants.CONFIG_YAML);
@@ -306,7 +338,7 @@ public class BenchmarkJobManager {
 			Path path = getPathSafely(name);
 			if (path == null)
 				return false;
-			
+
 			String fileName = path.getFileName().toString();
 			return fileName.startsWith(filePattern) && fileName.endsWith("h5") || fileName.equals(filePattern + ".xml")
 					|| fileName.equals(Constants.BENCHMARK_RESULT_FILE);
@@ -318,7 +350,7 @@ public class BenchmarkJobManager {
 			Path path = getPathSafely(name);
 			if (path == null)
 				return false;
-			
+
 			String fileName = path.getFileName().toString();
 			return fileName.equals(Constants.BENCHMARK_RESULT_FILE);
 		};
@@ -330,86 +362,87 @@ public class BenchmarkJobManager {
 			if (path == null)
 				return false;
 			return path.getFileName().toString().startsWith("snakejob.")
-					|| path.getParent() != null && path.getParent().getFileName() != null && path.getParent().getFileName().toString().equals("logs");
+					|| path.getParent() != null && path.getParent().getFileName() != null
+							&& path.getParent().getFileName().toString().equals("logs");
 		};
 	}
-	
+
 	private static Path getPathSafely(String name) {
 		try {
 			return Paths.get(name);
-		} catch(InvalidPathException ex) {
+		} catch (InvalidPathException ex) {
 			return null;
 		}
 	}
-	
+
 	private static void formatResultFile(Path filename) throws FileNotFoundException {
-		
+
 		List<ResultFileTask> identifiedTasks = new LinkedList<ResultFileTask>();
-		
+
 		final String newLineSeparator = "\n";
 		final String delimiter = ";";
 		final String summaryFileHeader = "Task;MemoryUsage;WallTime;JobCount";
-		
+
 		try {
 			String line = null;
-			
-			ResultFileTask processedTask = null;			
+
+			ResultFileTask processedTask = null;
 			List<ResultFileJob> jobs = new LinkedList<>();
-			
+
 			BufferedReader reader = Files.newBufferedReader(filename);
 			while (null != (line = reader.readLine())) {
-				
+
 				line = line.trim();
 				if (line.isEmpty()) {
 					continue;
 				}
-				
+
 				String[] columns = line.split(delimiter);
-				
+
 				if (columns[0].equals(Constants.STATISTICS_TASK_NAME)) {
-					
+
 					// If there is a task being processed, add all cached jobs to it and wrap it up
-					if (null != processedTask ) {
+					if (null != processedTask) {
 						processedTask.jobs.addAll(jobs);
 						identifiedTasks.add(processedTask);
 					}
-					
+
 					// Start processing a new task
 					processedTask = new ResultFileTask(columns[1]);
 					jobs.clear();
-					
+
 				} else if (columns[0].equals(Constants.STATISTICS_JOB_IDS)) {
-					
+
 					// Cache all found jobs
 					for (int i = 1; i < columns.length; i++) {
 						jobs.add(new ResultFileJob(columns[i]));
 					}
-					
+
 				} else if (!columns[0].equals(Constants.STATISTICS_JOB_COUNT)) {
-					
+
 					// Save values of a given property to cached jobs
 					for (int i = 1; i < columns.length; i++) {
 						jobs.get(i - 1).setValue(columns[0], columns[i]);
 					}
-					
-				} 
+
+				}
 			}
-			
+
 			// If there is a task being processed, add all cached jobs to it and wrap it up
-			if (null != processedTask ) {
+			if (null != processedTask) {
 				processedTask.jobs.addAll(jobs);
 				identifiedTasks.add(processedTask);
 			}
-			
+
 		} catch (IOException e) {
 			log.error(e.getMessage(), e);
 		}
-		
-		FileWriter fileWriter = null;		
-		try {			
+
+		FileWriter fileWriter = null;
+		try {
 			fileWriter = new FileWriter(filename.getParent().toString() + "/" + Constants.STATISTICS_SUMMARY_FILENAME);
 			fileWriter.append(summaryFileHeader).append(newLineSeparator);
-			
+
 			for (ResultFileTask task : identifiedTasks) {
 				fileWriter.append(Constants.STATISTICS_TASK_NAME_MAP.get(task.name)).append(delimiter);
 				fileWriter.append(Double.toString(task.getAverageMemoryUsage())).append(delimiter);
