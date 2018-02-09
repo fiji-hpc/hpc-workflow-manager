@@ -17,17 +17,28 @@ import javafx.scene.Parent;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 
-public interface CloseableControl extends Closeable{
+public interface CloseableControl extends Closeable {
 
 	public static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas.ui.CloseableControl.class);
-	
+
 	@Override
-	void close() ;
-	
+	void close();
+
 	static void initRootAndController(String string, Parent parent) {
 		FXMLLoader fxmlLoader = new FXMLLoader(parent.getClass().getResource(string));
+		fxmlLoader.setControllerFactory(c -> {
+			try {
+				if (c.equals(parent.getClass())) {
+					return parent;
+				} else {
+					return c.newInstance();
+				}
+			} catch (InstantiationException | IllegalAccessException e) {
+				throw new RuntimeException(e);
+			}
+		});
 		fxmlLoader.setRoot(parent);
-		fxmlLoader.setController(parent);
+		// fxmlLoader.setController(parent);
 
 		try {
 			fxmlLoader.load();
@@ -48,7 +59,7 @@ public interface CloseableControl extends Closeable{
 			}
 		});
 	}
-	
+
 	static public void runOnFxThread(Runnable runnable) {
 		if (Platform.isFxApplicationThread()) {
 			runnable.run();
