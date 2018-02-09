@@ -5,8 +5,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.google.common.collect.Streams;
-
 import cz.it4i.fiji.haas_java_client.JobState;
 
 public class Task {

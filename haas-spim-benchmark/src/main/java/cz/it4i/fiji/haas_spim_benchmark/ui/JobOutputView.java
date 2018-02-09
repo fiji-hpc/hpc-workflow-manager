@@ -31,10 +31,12 @@ public class JobOutputView {
 	private BenchmarkJob job;
 	private ExecutorService executor;
 	private long readedChars = 0;
+	private SynchronizableFileType fileType;
 
-	public JobOutputView(Window parent, ExecutorService executor, BenchmarkJob job, long refreshTimeout) {
+	public JobOutputView(Window parent, ExecutorService executor, BenchmarkJob job,SynchronizableFileType fileType ,long refreshTimeout) {
 		this.job = job;
 		this.executor = executor;
+		this.fileType = fileType;
 		constructFrame(parent);
 		parent.addWindowListener(new WindowAdapter() {
 			@Override
@@ -58,7 +60,7 @@ public class JobOutputView {
 	}
 
 	private void constructFrame(Window parent) {
-		theDialog = new JDialog(parent, "Output of job: " + (job!=null?job.getId():"N/A"));
+		theDialog = new JDialog(parent, "Output of job: " + (job!=null?job.getId():"N/A") + " - " + fileType);
 		theDialog.setPreferredSize(new Dimension(500, 500));
 		theDialog.setLocation(550, 400);
 		JPanel jPanel = new JPanel(new BorderLayout());
@@ -86,7 +88,7 @@ public class JobOutputView {
 
 	private void updateView() {
 		executor.execute(() -> {
-			JobSynchronizableFile file = new JobSynchronizableFile(SynchronizableFileType.StandardErrorFile,
+			JobSynchronizableFile file = new JobSynchronizableFile(fileType,
 					readedChars);
 			String output;
 			if (job != null) {

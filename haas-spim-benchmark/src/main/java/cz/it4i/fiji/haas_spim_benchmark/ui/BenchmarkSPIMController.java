@@ -29,6 +29,7 @@ import cz.it4i.fiji.haas.ui.ModalDialogs;
 import cz.it4i.fiji.haas.ui.ProgressDialog;
 import cz.it4i.fiji.haas.ui.TableViewContextMenu;
 import cz.it4i.fiji.haas_java_client.JobState;
+import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
 import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager;
 import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.BenchmarkJob;
 import cz.it4i.fiji.haas_spim_benchmark.core.Constants;
@@ -131,7 +132,10 @@ public class BenchmarkSPIMController implements FXFrame.Controller {
 				job -> notNullValue(job, j -> j.getState().equals(JobState.Failed)));
 
 		menu.addItem("Show output",
-				j -> new JobOutputView(root, executorServiceUI, j.getValue(), Constants.HAAS_UPDATE_TIMEOUT),
+				j -> {
+					new JobOutputView(root, executorServiceUI, j.getValue(),SynchronizableFileType.StandardErrorFile, Constants.HAAS_UPDATE_TIMEOUT);
+					new JobOutputView(root, executorServiceUI, j.getValue(),SynchronizableFileType.StandardOutputFile, Constants.HAAS_UPDATE_TIMEOUT);
+				},
 				job -> notNullValue(job,
 						j -> EnumSet.of(JobState.Failed, JobState.Finished, JobState.Running, JobState.Canceled)
 								.contains(j.getState())));
