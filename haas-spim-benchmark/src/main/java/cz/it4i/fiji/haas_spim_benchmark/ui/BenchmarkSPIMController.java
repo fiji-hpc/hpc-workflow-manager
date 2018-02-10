@@ -174,6 +174,9 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 	}
 
 	private void updateJobs(boolean showProgress) {
+		if(manager == null) {
+			return;
+		}
 		executorServiceWS.execute(() -> {
 			Progress progress = showProgress
 					? ModalDialogs.doModal(new ProgressDialog(root, "Updating jobs"),
