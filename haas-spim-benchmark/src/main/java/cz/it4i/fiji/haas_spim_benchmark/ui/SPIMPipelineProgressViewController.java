@@ -13,7 +13,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import cz.it4i.fiji.haas.ui.CloseableControl;
-import cz.it4i.fiji.haas.ui.ResizeableControl;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.BenchmarkJob;
 import cz.it4i.fiji.haas_spim_benchmark.core.Constants;
@@ -28,7 +27,7 @@ import javafx.scene.control.TableView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.paint.Color;
 
-public class SPIMPipelineProgressViewController extends BorderPane implements CloseableControl, ResizeableControl{
+public class SPIMPipelineProgressViewController extends BorderPane implements CloseableControl{
 
 	private static final String EMPTY_VALUE = "\u2007\u2007\u2007";
 
@@ -83,11 +82,6 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 		executorServiceWS.shutdown();
 	}
 
-	@Override
-	public void setSize(double width, double height) {
-		tasks.setPrefSize(width, height);
-	}
-	
 	private void init() {
 		CloseableControl.initRootAndController("SPIMPipelineProgressView.fxml", this);
 		tasks.setPrefWidth(PREFERRED_WIDTH);

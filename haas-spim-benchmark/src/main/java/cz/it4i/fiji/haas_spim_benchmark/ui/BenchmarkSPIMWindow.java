@@ -1,6 +1,6 @@
 package cz.it4i.fiji.haas_spim_benchmark.ui;
 
-import java.awt.Frame;
+import java.awt.Window;
 import java.io.IOException;
 
 import cz.it4i.fiji.haas.ui.FXFrame;
@@ -14,8 +14,8 @@ public class BenchmarkSPIMWindow extends FXFrame<BenchmarkSPIMController>{
 	
 
 	
-	public BenchmarkSPIMWindow(Frame applicationFrame, BenchmarkSPIMParameters params) throws IOException {
-		super(applicationFrame,()->{
+	public BenchmarkSPIMWindow(Window parentWindow, BenchmarkSPIMParameters params) throws IOException {
+		super(parentWindow,()->{
 			try {
 				return new BenchmarkSPIMController(new BenchmarkJobManager(params));
 			} catch (IOException e) {

@@ -27,8 +27,8 @@ public abstract class FXFrame<T extends Parent&CloseableControl> extends JDialog
 		this(null,fxSupplier);
 	}
 
-	public FXFrame(Window applicationFrame, Supplier<T> fxSupplier) {
-		super(applicationFrame, ModalityType.MODELESS);
+	public FXFrame(Window parent, Supplier<T> fxSupplier) {
+		super(parent, ModalityType.MODELESS);
 		fxPanel = new JFXPanel<>(fxSupplier);
 		if (fxPanel.getControl() instanceof InitiableControl) {
 			InitiableControl control = (InitiableControl) fxPanel.getControl();

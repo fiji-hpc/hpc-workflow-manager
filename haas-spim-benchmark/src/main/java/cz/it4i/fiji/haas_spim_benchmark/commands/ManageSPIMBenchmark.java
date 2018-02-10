@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 
+import javax.swing.JDialog;
 import javax.swing.WindowConstants;
 
 import org.scijava.Context;
@@ -19,7 +20,6 @@ import org.scijava.widget.UIComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import cz.it4i.fiji.haas.ui.ModalDialogs;
 import cz.it4i.fiji.haas_spim_benchmark.ui.BenchmarkSPIMWindow;
 import net.imagej.ImageJ;
 
@@ -58,9 +58,12 @@ public class ManageSPIMBenchmark implements Command {
 	@Override
 	public void run() {
 		try {
-			ModalDialogs.doModal(
-					new BenchmarkSPIMWindow(getFrame(), new BenchmarkSPIMParametersImpl(
-							userName, password, phone, email, Paths.get(workDirectory.getPath()))), WindowConstants.DISPOSE_ON_CLOSE);
+			JDialog dialog = 
+					new BenchmarkSPIMWindow(null, new BenchmarkSPIMParametersImpl(userName, password, phone,
+							email, Paths.get(workDirectory.getPath())));
+			dialog.setTitle("SPIM workflow computation manager");
+			dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+			dialog.setVisible(true);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			log.error(e.getMessage(), e);
