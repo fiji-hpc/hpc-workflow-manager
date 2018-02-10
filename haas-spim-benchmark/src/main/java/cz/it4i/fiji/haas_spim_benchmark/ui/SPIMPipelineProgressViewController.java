@@ -73,6 +73,11 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 		init();
 	}
 	
+	public void close() {
+		timer.cancel();
+		executorServiceWS.shutdown();
+	}
+
 	private void init() {
 		CloseableControl.initRootAndController("SPIMPipelineProgressView.fxml", this);
 		timer = new Timer();
@@ -110,6 +115,7 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 					int index = i++;
 					constructCellFactory(index);
 				}
+				fixNotVisibleColumn();
 				this.tasks.getItems().addAll(taskList);
 			});
 			timer.schedule(new TimerTask() {
@@ -138,7 +144,7 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 							setText(null);
 							setStyle("");
 						} else {
-							//setText("" + (computation != null ? computation.getState() : "N/A"));
+							setText(null);
 							setStyle("-fx-background-color: " + getColorTaskExecState(computation.getState()));
 						}
 					}
@@ -149,8 +155,7 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 		registry.update();
 	}
 
-	public void close() {
-		timer.cancel();
-		executorServiceWS.shutdown();
+	private void fixNotVisibleColumn() {
+		this.tasks.getColumns().add(new TableColumn<>("                 "));
 	}
 }
