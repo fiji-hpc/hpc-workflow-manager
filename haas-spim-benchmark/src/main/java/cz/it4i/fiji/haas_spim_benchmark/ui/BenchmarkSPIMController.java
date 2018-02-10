@@ -26,6 +26,7 @@ import cz.it4i.fiji.haas.ui.DummyProgress;
 import cz.it4i.fiji.haas.ui.InitiableControl;
 import cz.it4i.fiji.haas.ui.ModalDialogs;
 import cz.it4i.fiji.haas.ui.ProgressDialog;
+import cz.it4i.fiji.haas.ui.ResizeableControl;
 import cz.it4i.fiji.haas.ui.TableViewContextMenu;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
@@ -39,7 +40,7 @@ import javafx.scene.control.TableView;
 import javafx.scene.layout.BorderPane;
 import net.imagej.updater.util.Progress;
 
-public class BenchmarkSPIMController extends BorderPane implements CloseableControl,InitiableControl{
+public class BenchmarkSPIMController extends BorderPane implements CloseableControl,InitiableControl,ResizeableControl{
 
 	private static boolean notNullValue(ObservableValue<BenchmarkJob> j, Predicate<BenchmarkJob> pred) {
 		if (j == null || j.getValue() == null) {
@@ -89,6 +90,11 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 		
 	}
 
+	@Override
+	public void setSize(double width, double height) {
+		jobs.setPrefSize(width, height);
+	}
+	
 	private void initMenu() {
 		TableViewContextMenu<ObservableValue<BenchmarkJob>> menu = new TableViewContextMenu<>(jobs);
 		menu.addItem("Create job", x -> executeWSCallAsync("Creating job", p -> manager.createJob()), j -> true);

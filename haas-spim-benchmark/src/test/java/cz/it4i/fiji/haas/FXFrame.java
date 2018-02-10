@@ -1,4 +1,4 @@
-package cz.it4i.fiji.haas.ui;
+package cz.it4i.fiji.haas;
 
 import java.awt.BorderLayout;
 import java.awt.Window;
@@ -13,10 +13,12 @@ import javax.swing.JDialog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import cz.it4i.fiji.haas.ui.CloseableControl;
+import cz.it4i.fiji.haas.ui.InitiableControl;
+import cz.it4i.fiji.haas.ui.ResizeableControl;
 import javafx.scene.Parent;
 
-
-public abstract class FXFrame<T extends Parent&CloseableControl> extends JDialog {
+public abstract class FXFrame<T extends Parent & CloseableControl> extends JDialog {
 
 	@SuppressWarnings("unused")
 	private static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas.ui.FXFrame.class);
@@ -24,7 +26,7 @@ public abstract class FXFrame<T extends Parent&CloseableControl> extends JDialog
 	private JFXPanel<T> fxPanel;
 
 	public FXFrame(Supplier<T> fxSupplier) {
-		this(null,fxSupplier);
+		this(null, fxSupplier);
 	}
 
 	public FXFrame(Window applicationFrame, Supplier<T> fxSupplier) {
@@ -37,7 +39,7 @@ public abstract class FXFrame<T extends Parent&CloseableControl> extends JDialog
 		init();
 	}
 
-		/**
+	/**
 	 * Create the JFXPanel that make the link between Swing (IJ) and JavaFX plugin.
 	 */
 	private void init() {
@@ -48,6 +50,7 @@ public abstract class FXFrame<T extends Parent&CloseableControl> extends JDialog
 				getFxPanel().getControl().close();
 			}
 		});
+
 		if (fxPanel.getControl() instanceof ResizeableControl) {
 			ResizeableControl resizable = (ResizeableControl) fxPanel.getControl();
 			addComponentListener(new ComponentAdapter() {
@@ -57,13 +60,13 @@ public abstract class FXFrame<T extends Parent&CloseableControl> extends JDialog
 				}
 			});
 		}
+
 		this.setLayout(new BorderLayout());
-		//JScrollPane scrollPane = new JScrollPane(this.fxPanel);
+		// JScrollPane scrollPane = new JScrollPane(this.fxPanel);
 		this.add(fxPanel, BorderLayout.CENTER);
 		CloseableControl.runOnFxThread(() -> this.pack());
-		
-	}
 
+	}
 
 	public JFXPanel<T> getFxPanel() {
 		return fxPanel;

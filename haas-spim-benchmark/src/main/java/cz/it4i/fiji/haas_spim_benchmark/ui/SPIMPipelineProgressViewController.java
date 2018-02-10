@@ -13,6 +13,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import cz.it4i.fiji.haas.ui.CloseableControl;
+import cz.it4i.fiji.haas.ui.ResizeableControl;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.BenchmarkJob;
 import cz.it4i.fiji.haas_spim_benchmark.core.Constants;
@@ -27,7 +28,11 @@ import javafx.scene.control.TableView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.paint.Color;
 
-public class SPIMPipelineProgressViewController extends BorderPane implements CloseableControl{
+public class SPIMPipelineProgressViewController extends BorderPane implements CloseableControl, ResizeableControl{
+
+	private static final String EMPTY_VALUE = "\u2007\u2007\u2007";
+
+	private static final int PREFERRED_WIDTH = 900;
 
 	protected static final String RUNNING_STATE_COMPUTATION = Color.YELLOW.toString();
 
@@ -78,8 +83,14 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 		executorServiceWS.shutdown();
 	}
 
+	@Override
+	public void setSize(double width, double height) {
+		tasks.setPrefSize(width, height);
+	}
+	
 	private void init() {
 		CloseableControl.initRootAndController("SPIMPipelineProgressView.fxml", this);
+		tasks.setPrefWidth(PREFERRED_WIDTH);
 		timer = new Timer();
 		registry = new ObservableTaskRegistry(task -> tasks.getItems().remove(registry.get(task)));
 		executorServiceWS.execute(() -> {
@@ -141,10 +152,10 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 					@Override
 					protected void updateItem(TaskComputation computation, boolean empty) {
 						if (computation == null || empty) {
-							setText(null);
+							setText(EMPTY_VALUE);
 							setStyle("");
 						} else {
-							setText(null);
+							setText(EMPTY_VALUE);
 							setStyle("-fx-background-color: " + getColorTaskExecState(computation.getState()));
 						}
 					}
@@ -156,6 +167,6 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 	}
 
 	private void fixNotVisibleColumn() {
-		this.tasks.getColumns().add(new TableColumn<>("                 "));
+		//this.tasks.getColumns().add(new TableColumn<>("                 "));
 	}
 }

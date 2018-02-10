@@ -4,9 +4,9 @@
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.layout.BorderPane?>
 
-<fx:root maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="912.0" type="BorderPane" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="cz.it4i.fiji.haas_spim_benchmark.ui.BenchmarkSPIMController">
+<fx:root type="BorderPane" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="cz.it4i.fiji.haas_spim_benchmark.ui.BenchmarkSPIMController">
    <center>
-      <TableView fx:id="jobs" prefHeight="400.0" prefWidth="675.0" BorderPane.alignment="CENTER">
+      <TableView fx:id="jobs" BorderPane.alignment="CENTER">
         <columns>
           <TableColumn prefWidth="75.0" text="Job Id" />
           <TableColumn prefWidth="149.0" text="Status" />

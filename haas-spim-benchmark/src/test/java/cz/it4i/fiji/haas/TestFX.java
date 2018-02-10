@@ -3,11 +3,11 @@ package cz.it4i.fiji.haas;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
-import cz.it4i.fiji.haas.ui.FXFrame;
 import cz.it4i.fiji.haas_spim_benchmark.ui.BenchmarkSPIMController;
 
 public class TestFX {
 	public static void main(String[] args) {
+		@SuppressWarnings("serial")
 		class Window extends FXFrame<BenchmarkSPIMController>{
 
 			public Window() {
