@@ -10,6 +10,10 @@ import javafx.application.Platform;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 
+/**
+ * JFXPanel makes the link between Swing (IJ) and JavaFX plugin.
+ */
+
 public class JFXPanel<T extends Parent> extends javafx.embed.swing.JFXPanel {
 	private static final long serialVersionUID = 1L;
 
@@ -17,15 +21,14 @@ public class JFXPanel<T extends Parent> extends javafx.embed.swing.JFXPanel {
 	private static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas.ui.JFXPanel.class);
 
 	private T control;
-	
+
 	public JFXPanel(Supplier<T> fxSupplier) {
 		Platform.setImplicitExit(false);
-		// The call to runLater() avoid a mix between JavaFX thread and Swing thread.
 		control = fxSupplier.get();
-		initFX();
+		// The call to runLater() avoid a mix between JavaFX thread and Swing thread.
+		CloseableControl.runOnFxThread(() -> initFX());
 	}
 
-	
 	private void initFX() {
 		// Init the root layout
 		// Show the scene containing the root layout.
@@ -38,7 +41,6 @@ public class JFXPanel<T extends Parent> extends javafx.embed.swing.JFXPanel {
 		this.setMinimumSize(dim);
 		this.setMaximumSize(dim);
 		this.setPreferredSize(dim);
-		// this.setSize((int) scene.getWidth(), (int) scene.getHeight());
 	};
 	
 	public T getControl() {

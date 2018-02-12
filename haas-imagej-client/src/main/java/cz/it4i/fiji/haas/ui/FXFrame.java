@@ -37,9 +37,6 @@ public abstract class FXFrame<T extends Parent&CloseableControl> extends JDialog
 		init();
 	}
 
-		/**
-	 * Create the JFXPanel that make the link between Swing (IJ) and JavaFX plugin.
-	 */
 	private void init() {
 		addWindowListener(new WindowAdapter() {
 			@Override
