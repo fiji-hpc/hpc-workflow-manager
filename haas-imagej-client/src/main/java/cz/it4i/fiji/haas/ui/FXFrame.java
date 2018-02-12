@@ -57,7 +57,7 @@ public abstract class FXFrame<T extends Parent&CloseableControl> extends JDialog
 		this.setLayout(new BorderLayout());
 		//JScrollPane scrollPane = new JScrollPane(this.fxPanel);
 		this.add(fxPanel, BorderLayout.CENTER);
-		CloseableControl.runOnFxThread(() -> this.pack());
+		JavaFXRoutines.runOnFxThread(() -> this.pack());
 		
 	}
 

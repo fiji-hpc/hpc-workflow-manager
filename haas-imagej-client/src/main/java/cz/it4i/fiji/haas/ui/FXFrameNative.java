@@ -24,7 +24,7 @@ public abstract class FXFrameNative<T extends Parent&CloseableControl> {
 
 	public FXFrameNative(Window applicationFrame, Supplier<T> fxSupplier) {
 		new javafx.embed.swing.JFXPanel();
-		CloseableControl.runOnFxThread(() -> {
+		JavaFXRoutines.runOnFxThread(() -> {
 			stage = new Stage();
 			stage.setTitle("My New Stage Title");
 			stage.setScene(new Scene(fxSupplier.get(), 450, 450));
@@ -33,7 +33,7 @@ public abstract class FXFrameNative<T extends Parent&CloseableControl> {
 	}
 	
 	public void setVisible(boolean b) {
-		CloseableControl.runOnFxThread(() -> {
+		JavaFXRoutines.runOnFxThread(() -> {
 			if(b) {
 				stage.show();
 			} else {

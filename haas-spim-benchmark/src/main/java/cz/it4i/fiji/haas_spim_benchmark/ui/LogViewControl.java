@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 
 import cz.it4i.fiji.haas.ui.CloseableControl;
 import cz.it4i.fiji.haas.ui.FXFrameNative;
+import cz.it4i.fiji.haas.ui.JavaFXRoutines;
 import javafx.fxml.FXML;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextArea;
@@ -15,7 +16,7 @@ public class LogViewControl extends BorderPane implements CloseableControl {
 	private static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas_spim_benchmark.ui.LogViewControl.class);
 
 	public LogViewControl() {
-		CloseableControl.initRootAndController("LogView.fxml", this);
+		JavaFXRoutines.initRootAndController("LogView.fxml", this);
 	}
 
 	public static void main(String[] args) {

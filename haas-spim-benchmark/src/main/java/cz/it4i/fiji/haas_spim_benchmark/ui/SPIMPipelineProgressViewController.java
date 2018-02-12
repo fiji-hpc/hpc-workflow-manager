@@ -13,6 +13,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import cz.it4i.fiji.haas.ui.CloseableControl;
+import cz.it4i.fiji.haas.ui.JavaFXRoutines;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.BenchmarkJob;
 import cz.it4i.fiji.haas_spim_benchmark.core.Constants;
@@ -83,7 +84,7 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 	}
 
 	private void init() {
-		CloseableControl.initRootAndController("SPIMPipelineProgressView.fxml", this);
+		JavaFXRoutines.initRootAndController("SPIMPipelineProgressView.fxml", this);
 		tasks.setPrefWidth(PREFERRED_WIDTH);
 		timer = new Timer();
 		registry = new ObservableTaskRegistry(task -> tasks.getItems().remove(registry.get(task)));
@@ -113,7 +114,7 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 					.collect(Collectors.toList()));
 			executorFx.execute(() -> {
 				int i = 0;
-				CloseableControl.setCellValueFactory(this.tasks, i++,
+				JavaFXRoutines.setCellValueFactory(this.tasks, i++,
 						(Function<Task, String>) v -> v.getDescription());
 				for (TaskComputation tc : computations) {
 					this.tasks.getColumns().add(new TableColumn<>(tc.getTimepoint() + ""));
@@ -134,7 +135,7 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 
 	@SuppressWarnings("unchecked")
 	private void constructCellFactory(int index) {
-		CloseableControl.setCellValueFactory(this.tasks, index, (Function<Task, TaskComputation>) v -> {
+		JavaFXRoutines.setCellValueFactory(this.tasks, index, (Function<Task, TaskComputation>) v -> {
 			if (v.getComputations().size() >= index) {
 				return v.getComputations().get(index - 1);
 			} else {

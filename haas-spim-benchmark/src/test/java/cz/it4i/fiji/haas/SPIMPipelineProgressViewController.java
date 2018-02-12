@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 import cz.it4i.fiji.haas.ui.CloseableControl;
+import cz.it4i.fiji.haas.ui.JavaFXRoutines;
 import cz.it4i.fiji.haas.ui.ResizeableControl;
 import cz.it4i.fiji.haas_java_client.JobState;
 import javafx.beans.value.ObservableValue;
@@ -64,14 +65,14 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 	}
 
 	private void init() {
-		CloseableControl.initRootAndController("SPIMPipelineProgressView.fxml", this);
+		JavaFXRoutines.initRootAndController("SPIMPipelineProgressView.fxml", this);
 		fillTable();
 
 	}
 
 	private void fillTable() {
 
-		CloseableControl.setCellValueFactory(this.tasks, 0, (Function<String, String>) v -> v);
+		JavaFXRoutines.setCellValueFactory(this.tasks, 0, (Function<String, String>) v -> v);
 		for (int i = 1; i <= 91; i++) {
 			this.tasks.getColumns().add(new TableColumn<>(i + ""));
 			constructCellFactory(i);
@@ -91,7 +92,7 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 
 	@SuppressWarnings("unchecked")
 	private void constructCellFactory(int index) {
-		CloseableControl.setCellValueFactory(this.tasks, index, (Function<String, String>) v -> {
+		JavaFXRoutines.setCellValueFactory(this.tasks, index, (Function<String, String>) v -> {
 			return v;
 		});
 		((TableColumn<ObservableValue<String>, String>) this.tasks.getColumns().get(index)).setCellFactory(column -> {

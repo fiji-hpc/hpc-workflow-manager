@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import cz.it4i.fiji.haas.ui.CloseableControl;
 import cz.it4i.fiji.haas.ui.InitiableControl;
+import cz.it4i.fiji.haas.ui.JavaFXRoutines;
 import cz.it4i.fiji.haas.ui.ResizeableControl;
 import javafx.scene.Parent;
 
@@ -64,7 +65,7 @@ public abstract class FXFrame<T extends Parent & CloseableControl> extends JDial
 		this.setLayout(new BorderLayout());
 		// JScrollPane scrollPane = new JScrollPane(this.fxPanel);
 		this.add(fxPanel, BorderLayout.CENTER);
-		CloseableControl.runOnFxThread(() -> this.pack());
+		JavaFXRoutines.runOnFxThread(() -> this.pack());
 
 	}
 

@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import cz.it4i.fiji.haas.ui.CloseableControl;
 import cz.it4i.fiji.haas.ui.DummyProgress;
 import cz.it4i.fiji.haas.ui.InitiableControl;
+import cz.it4i.fiji.haas.ui.JavaFXRoutines;
 import cz.it4i.fiji.haas.ui.ModalDialogs;
 import cz.it4i.fiji.haas.ui.ProgressDialog;
 import cz.it4i.fiji.haas.ui.TableViewContextMenu;
@@ -68,7 +69,7 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 
 	public BenchmarkSPIMController(BenchmarkJobManager manager) {
 		this.manager = manager;
-		CloseableControl.initRootAndController("BenchmarkSPIM.fxml", this);
+		JavaFXRoutines.initRootAndController("BenchmarkSPIM.fxml", this);
 		
 	}
 	
@@ -156,7 +157,7 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 	}
 
 	private void executeWSCallAsync(String title, boolean update, P_JobAction action) {
-		CloseableControl.executeAsync(executorServiceWS, (Callable<Void>) () -> {
+		JavaFXRoutines.executeAsync(executorServiceWS, (Callable<Void>) () -> {
 			ProgressDialog dialog = ModalDialogs.doModal(new ProgressDialog(root, title),
 					WindowConstants.DO_NOTHING_ON_CLOSE);
 			try {
@@ -223,7 +224,7 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 	}
 
 	private void setCellValueFactory(int index, Function<BenchmarkJob, String> mapper) {
-		CloseableControl.setCellValueFactory(jobs, index, mapper);
+		JavaFXRoutines.setCellValueFactory(jobs, index, mapper);
 	}
 
 	private interface P_JobAction {

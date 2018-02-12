@@ -26,7 +26,7 @@ public class JFXPanel<T extends Parent> extends javafx.embed.swing.JFXPanel {
 		Platform.setImplicitExit(false);
 		control = fxSupplier.get();
 		// The call to runLater() avoid a mix between JavaFX thread and Swing thread.
-		CloseableControl.runOnFxThread(() -> initFX());
+		JavaFXRoutines.runOnFxThread(() -> initFX());
 	}
 
 	private void initFX() {
