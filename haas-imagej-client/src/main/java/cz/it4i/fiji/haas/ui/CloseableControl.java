@@ -38,14 +38,18 @@ public interface CloseableControl extends Closeable {
 			}
 		});
 		fxmlLoader.setRoot(parent);
-		// fxmlLoader.setController(parent);
-
-		try {
-			fxmlLoader.load();
-		} catch (IOException exception) {
-			throw new RuntimeException(exception);
-		}
-
+		Object explicitController = null;
+		do {
+			fxmlLoader.setController(explicitController);
+			try {
+				fxmlLoader.load();
+			} catch (IOException exception) {
+				throw new RuntimeException(exception);
+			}
+			if(fxmlLoader.getController() == null) {
+				explicitController = parent;
+			}
+		} while(fxmlLoader.getController() == null);
 	}
 
 	static public <V> void executeAsync(Executor executor, Callable<V> action, Consumer<V> postAction) {
@@ -73,8 +77,6 @@ public interface CloseableControl extends Closeable {
 			Function<U, V> mapper) {
 		((TableColumn<T, V>) tableView.getColumns().get(index))
 				.setCellValueFactory(f -> new ObservableValueAdapter<U, V>(f.getValue(), mapper));
-		// ((TableColumn<T, String>)
-		// tableView.getColumns().get(index)).setCellFactory(f->f.set);
 
 	}
 
