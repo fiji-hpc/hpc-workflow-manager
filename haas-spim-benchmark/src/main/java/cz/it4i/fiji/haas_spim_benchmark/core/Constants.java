@@ -22,6 +22,7 @@ public interface Constants {
 	String STATISTICS_RESOURCES_MEMORY_USAGE = "resources_used.mem";
 	String STATISTICS_RESOURCES_WALL_TIME = "resources_used.walltime";
 	String STATISTICS_RESOURCES_CPU_PERCENTAGE = "resources_used.cpupercent";
+	String STATISTICS_RESOURCES_START_TIME = "stime";
 	
 	Map<String, String> STATISTICS_TASK_NAME_MAP = new LinkedHashMap<String, String>() {
 		private static final long serialVersionUID = 1L;

@@ -381,7 +381,7 @@ public class BenchmarkJobManager {
 
 		final String newLineSeparator = "\n";
 		final String delimiter = ";";
-		final String summaryFileHeader = "Task;MemoryUsage;WallTime;JobCount";
+		final String summaryFileHeader = "Task;AvgMemoryUsage;AvgWallTime;MaxWallTime;JobCount";
 
 		try {
 			String line = null;
@@ -447,6 +447,8 @@ public class BenchmarkJobManager {
 				fileWriter.append(Constants.STATISTICS_TASK_NAME_MAP.get(task.name)).append(delimiter);
 				fileWriter.append(Double.toString(task.getAverageMemoryUsage())).append(delimiter);
 				fileWriter.append(Double.toString(task.getAverageWallTime())).append(delimiter);
+				fileWriter.append(Double.toString(task.getMaximumWallTime())).append(delimiter);
+				fileWriter.append(Double.toString(task.getTotalTime())).append(delimiter);
 				fileWriter.append(Integer.toString(task.getJobCount()));
 				fileWriter.append(newLineSeparator);
 			}
