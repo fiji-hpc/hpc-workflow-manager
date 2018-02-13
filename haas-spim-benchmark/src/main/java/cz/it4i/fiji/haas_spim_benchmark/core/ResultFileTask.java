@@ -4,18 +4,53 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.util.Collection;
+import java.util.DoubleSummaryStatistics;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import com.google.common.collect.Streams;
 
 public class ResultFileTask {
-	String name;
-	LinkedList<ResultFileJob> jobs;
+	private String name;
+	private List<ResultFileJob> jobs;
+	private DoubleSummaryStatistics memoryUsageStats;
+	private DoubleSummaryStatistics startTimeStats;
+	private DoubleSummaryStatistics wallTimeStats;
+	private DoubleSummaryStatistics endTimeStats;
+	private DoubleSummaryStatistics cpuPercentageStats;
 
 	public ResultFileTask(String name) {
 		this.name = name;
 		this.jobs = new LinkedList<ResultFileJob>();
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setJobs(List<ResultFileJob> jobs) {
+
+		this.jobs.addAll(jobs);
+		
+		// Calculate start and wall time values
+		DateTimeFormatter formatter = new DateTimeFormatterBuilder()
+				.appendOptional(DateTimeFormatter.ofPattern("EEE MMM dd kk:mm:ss z yyyy"))
+				.appendOptional(DateTimeFormatter.ofPattern("EEE MMM dd kk:mm:ss yyyy")).toFormatter();		
+		Collection<Double> startTimeValues = retrieveValues(Constants.STATISTICS_RESOURCES_START_TIME)
+				.map(s -> (double) LocalDateTime.parse(s, formatter).getSecond()).collect(Collectors.toList());
+		Collection<Double> wallTimeValues = retrieveValues(Constants.STATISTICS_RESOURCES_WALL_TIME)
+				.map(s -> Double.parseDouble(s)).collect(Collectors.toList());
+		
+		// Calculate stats
+		memoryUsageStats = retrieveValues(Constants.STATISTICS_RESOURCES_MEMORY_USAGE).map(s -> Double.parseDouble(s))
+				.collect(Collectors.summarizingDouble((Double::doubleValue)));
+		startTimeStats = startTimeValues.stream().collect(Collectors.summarizingDouble((Double::doubleValue)));
+		wallTimeStats = wallTimeValues.stream().collect(Collectors.summarizingDouble((Double::doubleValue)));
+		endTimeStats = Streams.zip(startTimeValues.stream(), wallTimeValues.stream(), (stv, wtv) -> stv + wtv)
+				.collect(Collectors.summarizingDouble((Double::doubleValue)));
+		cpuPercentageStats = retrieveValues(Constants.STATISTICS_RESOURCES_CPU_PERCENTAGE)
+				.map(s -> Double.parseDouble(s)).collect(Collectors.summarizingDouble((Double::doubleValue)));
 	}
 
 	public int getJobCount() {
@@ -23,40 +58,23 @@ public class ResultFileTask {
 	}
 
 	public double getAverageMemoryUsage() {
-		return getAverage(Constants.STATISTICS_RESOURCES_MEMORY_USAGE);
+		return memoryUsageStats.getAverage();
 	}
 
 	public double getAverageWallTime() {
-		return getAverage(Constants.STATISTICS_RESOURCES_WALL_TIME);
+		return wallTimeStats.getAverage();
 	}
 
 	public double getMaximumWallTime() {
-		return getMaximum(Constants.STATISTICS_RESOURCES_WALL_TIME);
+		return wallTimeStats.getMax();
 	}
 
 	public double getTotalTime() {
-		DateTimeFormatter formatter = new DateTimeFormatterBuilder()
-				.appendOptional(DateTimeFormatter.ofPattern("EEE MMM dd kk:mm:ss z yyyy"))
-				.appendOptional(DateTimeFormatter.ofPattern("EEE MMM dd kk:mm:ss yyyy")).toFormatter();
-		Collection<Double> startTimeValues = retrieveValues(Constants.STATISTICS_RESOURCES_START_TIME)
-				.map(s -> (double) LocalDateTime.parse(s, formatter).getSecond()).collect(Collectors.toList());
-		Stream<Double> wallTimeValues = retrieveValues(Constants.STATISTICS_RESOURCES_WALL_TIME)
-				.map(s -> Double.parseDouble(s));
-		Stream<Double> endTimeValues = Streams.zip(startTimeValues.stream(), wallTimeValues, (stv, wtv) -> stv + wtv);
-		return endTimeValues.mapToDouble(s -> s).max().getAsDouble()
-				- startTimeValues.stream().mapToDouble(s -> s).min().getAsDouble();
+		return endTimeStats.getMax() - startTimeStats.getMin();
 	}
 
 	public double getAverageCpuPercentage() {
-		return getAverage(Constants.STATISTICS_RESOURCES_CPU_PERCENTAGE);
-	}
-
-	private Double getAverage(String propertyName) {
-		return retrieveValues(propertyName).mapToDouble(s -> Double.parseDouble(s)).average().getAsDouble();
-	}
-
-	private Double getMaximum(String propertyName) {
-		return retrieveValues(propertyName).mapToDouble(s -> Double.parseDouble(s)).max().getAsDouble();
+		return cpuPercentageStats.getAverage();
 	}
 
 	private Stream<String> retrieveValues(String propertyName) {

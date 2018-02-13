@@ -403,7 +403,7 @@ public class BenchmarkJobManager {
 
 					// If there is a task being processed, add all cached jobs to it and wrap it up
 					if (null != processedTask) {
-						processedTask.jobs.addAll(jobs);
+						processedTask.setJobs(jobs);
 						identifiedTasks.add(processedTask);
 					}
 
@@ -430,7 +430,7 @@ public class BenchmarkJobManager {
 
 			// If there is a task being processed, add all cached jobs to it and wrap it up
 			if (null != processedTask) {
-				processedTask.jobs.addAll(jobs);
+				processedTask.setJobs(jobs);
 				identifiedTasks.add(processedTask);
 			}
 
@@ -444,7 +444,7 @@ public class BenchmarkJobManager {
 			fileWriter.append(summaryFileHeader).append(newLineSeparator);
 
 			for (ResultFileTask task : identifiedTasks) {
-				fileWriter.append(Constants.STATISTICS_TASK_NAME_MAP.get(task.name)).append(delimiter);
+				fileWriter.append(Constants.STATISTICS_TASK_NAME_MAP.get(task.getName())).append(delimiter);
 				fileWriter.append(Double.toString(task.getAverageMemoryUsage())).append(delimiter);
 				fileWriter.append(Double.toString(task.getAverageWallTime())).append(delimiter);
 				fileWriter.append(Double.toString(task.getMaximumWallTime())).append(delimiter);
