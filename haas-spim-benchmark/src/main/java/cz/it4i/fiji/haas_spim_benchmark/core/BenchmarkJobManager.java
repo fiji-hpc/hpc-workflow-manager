@@ -381,7 +381,7 @@ public class BenchmarkJobManager {
 
 		final String newLineSeparator = "\n";
 		final String delimiter = ";";
-		final String summaryFileHeader = "Task;AvgMemoryUsage;AvgWallTime;MaxWallTime;JobCount";
+		final String summaryFileHeader = "Task;AvgMemoryUsage;AvgWallTime;MaxWallTime;TotalTime;JobCount";
 
 		try {
 			String line = null;

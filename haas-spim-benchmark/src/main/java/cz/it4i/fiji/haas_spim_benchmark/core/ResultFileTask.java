@@ -1,7 +1,13 @@
 package cz.it4i.fiji.haas_spim_benchmark.core;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.util.Collection;
 import java.util.LinkedList;
-import java.util.stream.DoubleStream;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import com.google.common.collect.Streams;
 
 public class ResultFileTask {
 	String name;
@@ -29,29 +35,31 @@ public class ResultFileTask {
 	}
 
 	public double getTotalTime() {
-		DoubleStream startTimeValues = retrieveValuesAsDouble(Constants.STATISTICS_RESOURCES_START_TIME);
-		DoubleStream wallTimeValues = retrieveValuesAsDouble(Constants.STATISTICS_RESOURCES_WALL_TIME);
-		DoubleStream endTimeValues = startTimeValues.flatMap(st -> wallTimeValues.map(wt -> st + wt));
-		return endTimeValues.max().getAsDouble() - startTimeValues.min().getAsDouble();
+		DateTimeFormatter formatter = new DateTimeFormatterBuilder()
+				.appendOptional(DateTimeFormatter.ofPattern("EEE MMM dd kk:mm:ss z yyyy"))
+				.appendOptional(DateTimeFormatter.ofPattern("EEE MMM dd kk:mm:ss yyyy")).toFormatter();
+		Collection<Double> startTimeValues = retrieveValues(Constants.STATISTICS_RESOURCES_START_TIME)
+				.map(s -> (double) LocalDateTime.parse(s, formatter).getSecond()).collect(Collectors.toList());
+		Stream<Double> wallTimeValues = retrieveValues(Constants.STATISTICS_RESOURCES_WALL_TIME)
+				.map(s -> Double.parseDouble(s));
+		Stream<Double> endTimeValues = Streams.zip(startTimeValues.stream(), wallTimeValues, (stv, wtv) -> stv + wtv);
+		return endTimeValues.mapToDouble(s -> s).max().getAsDouble()
+				- startTimeValues.stream().mapToDouble(s -> s).min().getAsDouble();
 	}
 
 	public double getAverageCpuPercentage() {
 		return getAverage(Constants.STATISTICS_RESOURCES_CPU_PERCENTAGE);
 	}
-	
-	private Double getAverage(String propertyName) {
-		return retrieveValuesAsDouble(propertyName).average().getAsDouble();
-	}
 
-	private Double getMinimum(String propertyName) {
-		return retrieveValuesAsDouble(propertyName).min().getAsDouble();
+	private Double getAverage(String propertyName) {
+		return retrieveValues(propertyName).mapToDouble(s -> Double.parseDouble(s)).average().getAsDouble();
 	}
 
 	private Double getMaximum(String propertyName) {
-		return retrieveValuesAsDouble(propertyName).max().getAsDouble();
+		return retrieveValues(propertyName).mapToDouble(s -> Double.parseDouble(s)).max().getAsDouble();
 	}
 
-	private DoubleStream retrieveValuesAsDouble(String propertyName) {
-		return jobs.stream().mapToDouble(job -> Double.parseDouble(job.getValue(propertyName)));
+	private Stream<String> retrieveValues(String propertyName) {
+		return jobs.stream().map(job -> job.getValue(propertyName));
 	}
 }
