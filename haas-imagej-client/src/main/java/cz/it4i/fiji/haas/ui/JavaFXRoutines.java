@@ -12,14 +12,18 @@ import org.slf4j.LoggerFactory;
 import javafx.application.Platform;
 import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 
 public interface JavaFXRoutines {
 
-	static void initRootAndController(String string, Parent parent) {
-		FXMLLoader fxmlLoader = new FXMLLoader(parent.getClass().getResource(string));
+	static void initRootAndController(String string, Object parent) {
+		initRootAndController(string, parent, false);
+	}
+	
+	static void initRootAndController(String string, Object parent, boolean setController) {
+		FXMLLoader fxmlLoader = null;
+		fxmlLoader = new FXMLLoader(parent.getClass().getResource(string));
 		fxmlLoader.setControllerFactory(c -> {
 			try {
 				if (c.equals(parent.getClass())) {
@@ -32,18 +36,18 @@ public interface JavaFXRoutines {
 			}
 		});
 		fxmlLoader.setRoot(parent);
-		Object explicitController = null;
-		do {
-			fxmlLoader.setController(explicitController);
-			try {
-				fxmlLoader.load();
-			} catch (IOException exception) {
-				throw new RuntimeException(exception);
-			}
-			if(fxmlLoader.getController() == null) {
-				explicitController = parent;
-			}
-		} while(fxmlLoader.getController() == null);
+		if(setController) {
+			fxmlLoader.setController(parent);
+		}
+		try {
+			fxmlLoader.load();
+		} catch (IOException exception) {
+			throw new RuntimeException(exception);
+		}
+		if (fxmlLoader.getController() == null) {
+			throw new IllegalStateException("Not set controller.");
+		}
+
 	}
 
 	@SuppressWarnings("unchecked")
@@ -51,7 +55,7 @@ public interface JavaFXRoutines {
 			Function<U, V> mapper) {
 		((TableColumn<T, V>) tableView.getColumns().get(index))
 				.setCellValueFactory(f -> new ObservableValueAdapter<U, V>(f.getValue(), mapper));
-	
+
 	}
 
 	static public void runOnFxThread(Runnable runnable) {
@@ -62,7 +66,7 @@ public interface JavaFXRoutines {
 		}
 	}
 
-	//TODO move to own class in the future
+	// TODO move to own class in the future
 	static public <V> void executeAsync(Executor executor, Callable<V> action, Consumer<V> postAction) {
 		executor.execute(() -> {
 			V result;

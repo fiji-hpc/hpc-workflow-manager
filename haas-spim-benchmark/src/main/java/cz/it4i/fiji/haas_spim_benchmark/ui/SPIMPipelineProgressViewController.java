@@ -72,10 +72,26 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 	private ExecutorService executorServiceWS;
 	private Executor executorFx = new FXFrameExecutorService();
 
-	public SPIMPipelineProgressViewController(BenchmarkJob job) {
-		this.job = job;
+	public SPIMPipelineProgressViewController() {
 		executorServiceWS = Executors.newSingleThreadExecutor();
 		init();
+		
+	}
+	
+	public SPIMPipelineProgressViewController(BenchmarkJob job) {
+		executorServiceWS = Executors.newSingleThreadExecutor();
+		init();
+		setJob(job);
+	}
+
+	public void setJob(BenchmarkJob job) {
+		if(this.job != null) {
+			throw new IllegalStateException("Job already set");
+		}
+		this.job = job;
+		executorServiceWS.execute(() -> {
+			fillTable();
+		});
 	}
 	
 	public void close() {
@@ -88,9 +104,7 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 		tasks.setPrefWidth(PREFERRED_WIDTH);
 		timer = new Timer();
 		registry = new ObservableTaskRegistry(task -> tasks.getItems().remove(registry.get(task)));
-		executorServiceWS.execute(() -> {
-			fillTable();
-		});
+		
 	}
 
 	private void fillTable() {

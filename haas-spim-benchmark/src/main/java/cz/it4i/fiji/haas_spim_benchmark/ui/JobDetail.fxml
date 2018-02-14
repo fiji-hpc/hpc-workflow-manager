@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import cz.it4i.fiji.haas_spim_benchmark.ui.LogViewControl?>
+<?import cz.it4i.fiji.haas_spim_benchmark.ui.SPIMPipelineProgressViewController?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+
+
+<fx:root type="TabPane" xmlns:fx="http://javafx.com/fxml/1"
+	xmlns="http://javafx.com/javafx/8.0.65" fx:controller="cz.it4i.fiji.haas_spim_benchmark.ui.JobDetailControl">
+	<tabs>
+		<Tab id="progress" text="Progress">
+			<content>
+				<HBox>
+					<SPIMPipelineProgressViewController
+						HBox.hgrow="ALWAYS" />
+
+				</HBox>
+			</content>
+		</Tab>
+		<Tab id="out" text="Standart out">
+			<content>
+				<HBox>
+					<LogViewControl HBox.hgrow="ALWAYS" />
+
+				</HBox>
+			</content>
+		</Tab>
+		<Tab id="error" text="Error out">
+			<content>
+				<HBox>
+					<LogViewControl HBox.hgrow="ALWAYS" />
+				</HBox>
+			</content>
+
+		</Tab>
+	</tabs>
+</fx:root>
