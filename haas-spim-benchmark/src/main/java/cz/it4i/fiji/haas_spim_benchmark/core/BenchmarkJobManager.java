@@ -434,6 +434,10 @@ public class BenchmarkJobManager {
 			log.error(e.getMessage(), e);
 			return;
 		}
+		
+		// Order tasks chronologically
+		List<String> chronologicList = STATISTICS_TASK_NAME_MAP.keySet().stream().collect(Collectors.toList());
+		Collections.sort(identifiedTasks, Comparator.comparingInt(t -> chronologicList.indexOf(t.getName())));
 
 		FileWriter fileWriter = null;
 		try {
