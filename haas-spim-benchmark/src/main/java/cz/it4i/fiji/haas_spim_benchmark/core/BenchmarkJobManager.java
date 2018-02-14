@@ -3,7 +3,7 @@ package cz.it4i.fiji.haas_spim_benchmark.core;
 import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.BENCHMARK_RESULT_FILE;
 import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.HAAS_UPDATE_TIMEOUT;
 import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.SPIM_OUTPUT_FILENAME_PATTERN;
-import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.STATISTICS_TASK_NAME_MAP;
+import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.BENCHMARK_TASK_NAME_MAP;
 import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.UI_TO_HAAS_FREQUENCY_UPDATE_RATIO;
 
 import java.io.BufferedReader;
@@ -220,7 +220,7 @@ public class BenchmarkJobManager {
 
 			// Order tasks chronologically
 			if (!tasks.isEmpty()) {
-				List<String> chronologicList = STATISTICS_TASK_NAME_MAP.keySet().stream().collect(Collectors.toList());
+				List<String> chronologicList = BENCHMARK_TASK_NAME_MAP.keySet().stream().collect(Collectors.toList());
 				Collections.sort(tasks,
 						Comparator.comparingInt(task -> chronologicList.indexOf(task.getDescription())));
 			}
@@ -436,7 +436,7 @@ public class BenchmarkJobManager {
 		}
 		
 		// Order tasks chronologically
-		List<String> chronologicList = STATISTICS_TASK_NAME_MAP.keySet().stream().collect(Collectors.toList());
+		List<String> chronologicList = BENCHMARK_TASK_NAME_MAP.keySet().stream().collect(Collectors.toList());
 		Collections.sort(identifiedTasks, Comparator.comparingInt(t -> chronologicList.indexOf(t.getName())));
 
 		FileWriter fileWriter = null;
@@ -446,7 +446,7 @@ public class BenchmarkJobManager {
 			fileWriter.append(Constants.SUMMARY_FILE_HEADER).append(Constants.NEW_LINE_SEPARATOR);
 
 			for (ResultFileTask task : identifiedTasks) {
-				fileWriter.append(Constants.STATISTICS_TASK_NAME_MAP.get(task.getName())).append(Constants.DELIMITER);
+				fileWriter.append(Constants.BENCHMARK_TASK_NAME_MAP.get(task.getName())).append(Constants.DELIMITER);
 				fileWriter.append(Double.toString(task.getAverageMemoryUsage())).append(Constants.DELIMITER);
 				fileWriter.append(Double.toString(task.getAverageWallTime())).append(Constants.DELIMITER);
 				fileWriter.append(Double.toString(task.getMaximumWallTime())).append(Constants.DELIMITER);

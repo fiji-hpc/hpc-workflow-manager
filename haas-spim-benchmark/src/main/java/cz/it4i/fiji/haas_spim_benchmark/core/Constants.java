@@ -20,6 +20,26 @@ public interface Constants {
 	String CONFIG_YAML = "config.yaml";
 	String BENCHMARK_RESULT_FILE = "benchmark_result.csv";
 	
+	// This map is considered as ground truth for chronologic task sorting
+	Map<String, String> BENCHMARK_TASK_NAME_MAP = new LinkedHashMap<String, String>() {
+		private static final long serialVersionUID = 1L;
+		{
+			put("define_xml_czi", "Define dataset");
+			put("define_xml_tif", "Define dataset");
+			put("hdf5_xml", "Define hdf5 dataset");
+			put("resave_hdf5", "Resave to hdf5");
+			put("registration", "Detection and registration");
+			put("xml_merge", "Merge xml");
+			put("timelapse", "Time lapse registration");
+			put("fusion", "Average fusion");
+			put("external_transform", "External transformation");
+			put("deconvolution", "Deconvolution GPU");
+			put("define_output", "Define output");
+			put("hdf5_xml_output", "Define hdf5 output");
+			put("resave_hdf5_output", "Resave output to hdf5");
+			put("done", "Done");
+		}};
+	
 	String STATISTICS_TASK_NAME = "Task name";
 	String STATISTICS_JOB_IDS = "job ids";
 	String STATISTICS_JOB_COUNT = "jobs #";
@@ -27,26 +47,6 @@ public interface Constants {
 	String STATISTICS_RESOURCES_WALL_TIME = "resources_used.walltime";
 	String STATISTICS_RESOURCES_CPU_PERCENTAGE = "resources_used.cpupercent";
 	String STATISTICS_RESOURCES_START_TIME = "stime";
-	
-	// This map is considered as ground truth for chronologic task sorting
-	Map<String, String> STATISTICS_TASK_NAME_MAP = new LinkedHashMap<String, String>() {
-		private static final long serialVersionUID = 1L;
-	{
-		put("define_xml_czi", "Define dataset");
-		put("define_xml_tif", "Define dataset");
-		put("hdf5_xml", "Define hdf5 dataset");
-		put("resave_hdf5", "Resave to hdf5");
-		put("registration", "Detection and registration");
-		put("xml_merge", "Merge xml");
-		put("timelapse", "Time lapse registration");
-		put("fusion", "Average fusion");
-		put("external_transform", "External transformation");
-		put("deconvolution", "Deconvolution GPU");
-		put("define_output", "Define output");
-		put("hdf5_xml_output", "Define hdf5 output");
-		put("resave_hdf5_output", "Resave output to hdf5");
-		put("done", "Done");
-	}};
 	
 	String STATISTICS_SUMMARY_FILENAME = "summary.csv";
 	String SUMMARY_FILE_HEADER = "Task;AvgMemoryUsage;AvgWallTime;MaxWallTime;TotalTime;JobCount";
