@@ -11,6 +11,10 @@ public interface Constants {
 	int HAAS_TEMPLATE_ID = 4;
 	String HAAS_PROJECT_ID = "DD-17-31";
 	int HAAS_TIMEOUT = 9600;
+	
+	final String NEW_LINE_SEPARATOR = "\n";
+	final String DELIMITER = ";";
+	final String FORWARD_SLASH = "/";
 
 	String SPIM_OUTPUT_FILENAME_PATTERN = "spim.outputFilenamePattern";
 	String CONFIG_YAML = "config.yaml";
@@ -27,6 +31,7 @@ public interface Constants {
 	Map<String, String> STATISTICS_TASK_NAME_MAP = new LinkedHashMap<String, String>() {
 		private static final long serialVersionUID = 1L;
 	{
+		put("define_xml_czi", "Define dataset");
 		put("define_xml_tif", "Define dataset");
 		put("hdf5_xml", "Define hdf5 dataset");
 		put("resave_hdf5", "Resave to hdf5");
@@ -40,6 +45,7 @@ public interface Constants {
 		put("resave_hdf5_output", "Resave output to hdf5");
 		put("done", "Done");
 	}};
-	String STATISTICS_SUMMARY_FILENAME = "summary.csv";
 	
+	String STATISTICS_SUMMARY_FILENAME = "summary.csv";
+	String SUMMARY_FILE_HEADER = "Task;AvgMemoryUsage;AvgWallTime;MaxWallTime;TotalTime;JobCount";
 }

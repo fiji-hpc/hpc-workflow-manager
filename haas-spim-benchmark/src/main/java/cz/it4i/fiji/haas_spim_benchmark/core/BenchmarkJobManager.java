@@ -379,10 +379,6 @@ public class BenchmarkJobManager {
 
 		List<ResultFileTask> identifiedTasks = new LinkedList<ResultFileTask>();
 
-		final String newLineSeparator = "\n";
-		final String delimiter = ";";
-		final String summaryFileHeader = "Task;AvgMemoryUsage;AvgWallTime;MaxWallTime;TotalTime;JobCount";
-
 		try {
 			String line = null;
 
@@ -397,7 +393,7 @@ public class BenchmarkJobManager {
 					continue;
 				}
 
-				String[] columns = line.split(delimiter);
+				String[] columns = line.split(Constants.DELIMITER);
 
 				if (columns[0].equals(Constants.STATISTICS_TASK_NAME)) {
 
@@ -436,30 +432,32 @@ public class BenchmarkJobManager {
 
 		} catch (IOException e) {
 			log.error(e.getMessage(), e);
+			return;
 		}
 
 		FileWriter fileWriter = null;
 		try {
-			fileWriter = new FileWriter(filename.getParent().toString() + "/" + Constants.STATISTICS_SUMMARY_FILENAME);
-			fileWriter.append(summaryFileHeader).append(newLineSeparator);
+			fileWriter = new FileWriter(
+					filename.getParent().toString() + Constants.FORWARD_SLASH + Constants.STATISTICS_SUMMARY_FILENAME);
+			fileWriter.append(Constants.SUMMARY_FILE_HEADER).append(Constants.NEW_LINE_SEPARATOR);
 
 			for (ResultFileTask task : identifiedTasks) {
-				fileWriter.append(Constants.STATISTICS_TASK_NAME_MAP.get(task.getName())).append(delimiter);
-				fileWriter.append(Double.toString(task.getAverageMemoryUsage())).append(delimiter);
-				fileWriter.append(Double.toString(task.getAverageWallTime())).append(delimiter);
-				fileWriter.append(Double.toString(task.getMaximumWallTime())).append(delimiter);
-				fileWriter.append(Double.toString(task.getTotalTime())).append(delimiter);
+				fileWriter.append(Constants.STATISTICS_TASK_NAME_MAP.get(task.getName())).append(Constants.DELIMITER);
+				fileWriter.append(Double.toString(task.getAverageMemoryUsage())).append(Constants.DELIMITER);
+				fileWriter.append(Double.toString(task.getAverageWallTime())).append(Constants.DELIMITER);
+				fileWriter.append(Double.toString(task.getMaximumWallTime())).append(Constants.DELIMITER);
+				fileWriter.append(Double.toString(task.getTotalTime())).append(Constants.DELIMITER);
 				fileWriter.append(Integer.toString(task.getJobCount()));
-				fileWriter.append(newLineSeparator);
+				fileWriter.append(Constants.NEW_LINE_SEPARATOR);
 			}
 
-			Double pipelineStart = identifiedTasks.stream()
-					.min(Comparator.comparingDouble(t -> t.getEarliestStartInSeconds())).get().getEarliestStartInSeconds();
+			Double pipelineStart = identifiedTasks.stream() //
+					.mapToDouble(t -> t.getEarliestStartInSeconds()).min().getAsDouble();
 
-			Double pipelineEnd = identifiedTasks.stream()
-					.max(Comparator.comparingDouble(t -> t.getLatestEndInSeconds())).get().getLatestEndInSeconds();
-			
-			fileWriter.append(newLineSeparator);
+			Double pipelineEnd = identifiedTasks.stream() //
+					.mapToDouble(t -> t.getLatestEndInSeconds()).max().getAsDouble();
+
+			fileWriter.append(Constants.NEW_LINE_SEPARATOR);
 			fileWriter.append("Pipeline duration: " + (pipelineEnd - pipelineStart));
 
 		} catch (Exception e) {
