@@ -33,6 +33,7 @@ public class ResultFileTask {
 
 	public void setJobs(List<ResultFileJob> jobs) {
 
+		this.jobs.clear();
 		this.jobs.addAll(jobs);
 
 		// Calculate start and wall time values
