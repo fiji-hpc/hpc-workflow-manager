@@ -260,7 +260,7 @@ public class BenchmarkJobManager {
 		}
 
 		public void exploreErrors() {
-			for (BenchmarkError error : getErrors() ) {
+			for (BenchmarkError error : getErrors()) {
 				System.out.println(error.getPlainDescription());
 			}
 		}
@@ -452,6 +452,16 @@ public class BenchmarkJobManager {
 				fileWriter.append(Integer.toString(task.getJobCount()));
 				fileWriter.append(newLineSeparator);
 			}
+
+			Double pipelineStart = identifiedTasks.stream()
+					.min(Comparator.comparingDouble(t -> t.getEarliestStartInSeconds())).get().getEarliestStartInSeconds();
+
+			Double pipelineEnd = identifiedTasks.stream()
+					.max(Comparator.comparingDouble(t -> t.getLatestEndInSeconds())).get().getLatestEndInSeconds();
+			
+			fileWriter.append(newLineSeparator);
+			fileWriter.append("Pipeline duration: " + (pipelineEnd - pipelineStart));
+
 		} catch (Exception e) {
 			log.error(e.getMessage(), e);
 		} finally {
