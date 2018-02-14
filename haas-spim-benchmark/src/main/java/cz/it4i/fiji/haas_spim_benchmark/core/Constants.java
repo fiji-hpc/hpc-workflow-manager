@@ -28,6 +28,7 @@ public interface Constants {
 	String STATISTICS_RESOURCES_CPU_PERCENTAGE = "resources_used.cpupercent";
 	String STATISTICS_RESOURCES_START_TIME = "stime";
 	
+	// This map is considered as ground truth for chronologic task sorting
 	Map<String, String> STATISTICS_TASK_NAME_MAP = new LinkedHashMap<String, String>() {
 		private static final long serialVersionUID = 1L;
 	{
@@ -39,6 +40,7 @@ public interface Constants {
 		put("xml_merge", "Merge xml");
 		put("timelapse", "Time lapse registration");
 		put("fusion", "Average fusion");
+		put("external_transform", "External transformation");
 		put("deconvolution", "Deconvolution GPU");
 		put("define_output", "Define output");
 		put("hdf5_xml_output", "Define hdf5 output");
