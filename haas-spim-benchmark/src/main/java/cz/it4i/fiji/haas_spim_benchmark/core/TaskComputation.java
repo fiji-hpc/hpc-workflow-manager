@@ -11,6 +11,7 @@ import cz.it4i.fiji.haas_java_client.JobState;
 public class TaskComputation {
 
 	private final SPIMComputationAccessor computationAccessor;
+	private final String taskDescription;
 	private final int timepoint;
 
 	private JobState state;
@@ -28,8 +29,9 @@ public class TaskComputation {
 	 * Creates a TaskComputation object. At the time of creation, the job parameters
 	 * are not populated
 	 */
-	public TaskComputation(SPIMComputationAccessor computationAccessor, int timepoint) {
+	public TaskComputation(SPIMComputationAccessor computationAccessor, String taskDescription, int timepoint) {
 		this.computationAccessor = computationAccessor;
+		this.taskDescription = taskDescription;
 		this.timepoint = timepoint;
 		this.errors = new LinkedList<BenchmarkError>();
 		this.state = JobState.Unknown;
@@ -111,8 +113,8 @@ public class TaskComputation {
 
 			final String OUTPUT_PARSING_FINISHED_JOB = "Finished job ";
 			final String desiredPatternFinishedJob = OUTPUT_PARSING_FINISHED_JOB + id.toString();
-			final String OUTPUT_PARSING_ERRONEOUS_JOB = "Error job ";
-			final String desiredPatternErroneousJob = OUTPUT_PARSING_ERRONEOUS_JOB + id.toString();
+			final String OUTPUT_PARSING_ERRONEOUS_JOB = "Error in job ";
+			final String desiredPatternErroneousJob = OUTPUT_PARSING_ERRONEOUS_JOB + taskDescription;
 
 			Scanner scanner = new Scanner(computationAccessor.getActualOutput().substring(positionInOutput));
 			String currentLine;

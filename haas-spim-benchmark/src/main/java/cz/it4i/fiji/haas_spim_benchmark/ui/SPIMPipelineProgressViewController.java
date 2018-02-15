@@ -129,7 +129,7 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 			executorFx.execute(() -> {
 				int i = 0;
 				JavaFXRoutines.setCellValueFactory(this.tasks, i++,
-						(Function<Task, String>) v -> v.getDescription());
+						(Function<Task, String>) v -> Constants.BENCHMARK_TASK_NAME_MAP.get(v.getDescription()));
 				for (TaskComputation tc : computations) {
 					this.tasks.getColumns().add(new TableColumn<>(tc.getTimepoint() + ""));
 					int index = i++;

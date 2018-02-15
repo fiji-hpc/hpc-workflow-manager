@@ -3,7 +3,7 @@ package cz.it4i.fiji.haas_spim_benchmark.core;
 import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.BENCHMARK_RESULT_FILE;
 import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.HAAS_UPDATE_TIMEOUT;
 import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.SPIM_OUTPUT_FILENAME_PATTERN;
-import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.STATISTICS_TASK_NAME_MAP;
+import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.BENCHMARK_TASK_NAME_MAP;
 import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.UI_TO_HAAS_FREQUENCY_UPDATE_RATIO;
 
 import java.io.BufferedReader;
@@ -63,7 +63,7 @@ public class BenchmarkJobManager {
 
 		private SPIMComputationAccessor computationAccessor;
 		
-		private int processedOutputLength = 0;
+		private int processedOutputLength;
 		
 		public BenchmarkJob(Job job) {
 			this.job = job;
@@ -74,6 +74,7 @@ public class BenchmarkJobManager {
 				
 				private HaaSOutputHolder outputOfSnakemake = new HaaSOutputHolderImpl(BenchmarkJob.this,
 						SynchronizableFileType.StandardErrorFile);
+
 				@Override
 				public String getActualOutput() {
 					return outputOfSnakemake.getActualOutput();
@@ -168,11 +169,17 @@ public class BenchmarkJobManager {
 		}
 		
 		public List<Task> getTasks() {
+			
+			// If no tasks have been identified, try to search through the output
 			if (tasks.isEmpty()) {
 				fillTasks();
 			}
-			// Carry on with output processing
-			processOutput();
+			
+			// Should you (finally) have some, try to parse the output further, otherwise just give up
+			if (!tasks.isEmpty() ) {
+				processOutput();				
+			}
+			
 			return tasks;
 		}
 
@@ -181,30 +188,56 @@ public class BenchmarkJobManager {
 			final String OUTPUT_PARSING_JOB_COUNTS = "Job counts:";
 			final String OUTPUT_PARSING_TAB_DELIMITER = "\\t";
 			final int OUTPUT_PARSING_EXPECTED_NUMBER_OF_WORDS_PER_LINE = 2;
-			final String OUTPUT_PARSING_ERROR = "Error";
+			final String OUTPUT_PARSING_WORKFLOW_ERROR = "WorkflowError";
+			final String OUTPUT_PARSING_VALUE_ERROR = "ValueError";
 
-			Scanner scanner = new Scanner(computationAccessor.getActualOutput());
-			String currentLine;
-			while (scanner.hasNextLine()) {
-				currentLine = scanner.nextLine().trim();
+			processedOutputLength = -1;
+			int readJobCountIndex = -1;
+			boolean found = false;
+			String output = computationAccessor.getActualOutput();
 
-				if (currentLine.contains(OUTPUT_PARSING_ERROR)) {
-					String errorMessage = "";
-					while (!currentLine.isEmpty()) {
-						errorMessage += currentLine;
-						if (!scanner.hasNextLine()) {
-							break;
-						}
-						currentLine = scanner.nextLine().trim();
-					};
-					nonTaskSpecificErrors.add(new BenchmarkError(errorMessage));
+			// Found last job count definition
+			while (true) {
+				readJobCountIndex = output.indexOf(OUTPUT_PARSING_JOB_COUNTS, processedOutputLength + 1);
+
+				if (readJobCountIndex < 0) {
 					break;
 				}
+				
+				found = true;
+				processedOutputLength = readJobCountIndex;
+			}
 
-				if (!currentLine.equals(OUTPUT_PARSING_JOB_COUNTS)) {
+			// If no job count definition has been found, search through the output and list all errors
+			if (!found) {
+				Scanner scanner = new Scanner(computationAccessor.getActualOutput());
+				String currentLine;
+				while (scanner.hasNextLine()) {
+					currentLine = scanner.nextLine().trim();
+					if (currentLine.contains(OUTPUT_PARSING_WORKFLOW_ERROR) //
+							|| currentLine.contains(OUTPUT_PARSING_VALUE_ERROR)) {
+						String errorMessage = "";
+						while (!currentLine.isEmpty()) {
+							errorMessage += currentLine;
+							if (!scanner.hasNextLine()) {
+								break;
+							}
+							currentLine = scanner.nextLine().trim();
+						}						
+						nonTaskSpecificErrors.add(new BenchmarkError(errorMessage));
+					}
+				}
+				scanner.close();
+				return;
+			}
+
+			// After the job count definition, task specification is expected
+			Scanner scanner = new Scanner(output.substring(processedOutputLength));
+			scanner.nextLine(); // Immediately after job count definition, task specification table header is expected
+			while (scanner.hasNextLine()) {
+				if (scanner.nextLine().trim().isEmpty()) {
 					continue;
 				}
-				scanner.nextLine();
 
 				while (true) {
 					List<String> lineWords = Arrays.stream(scanner.nextLine().split(OUTPUT_PARSING_TAB_DELIMITER))
@@ -220,11 +253,10 @@ public class BenchmarkJobManager {
 
 			// Order tasks chronologically
 			if (!tasks.isEmpty()) {
-				List<String> chronologicList = STATISTICS_TASK_NAME_MAP.keySet().stream().collect(Collectors.toList());
+				List<String> chronologicList = BENCHMARK_TASK_NAME_MAP.keySet().stream().collect(Collectors.toList());
 				Collections.sort(tasks,
 						Comparator.comparingInt(task -> chronologicList.indexOf(task.getDescription())));
 			}
-
 		}
 
 		private void processOutput() {
@@ -260,7 +292,7 @@ public class BenchmarkJobManager {
 		}
 
 		public void exploreErrors() {
-			for (BenchmarkError error : getErrors() ) {
+			for (BenchmarkError error : getErrors()) {
 				System.out.println(error.getPlainDescription());
 			}
 		}
@@ -379,10 +411,6 @@ public class BenchmarkJobManager {
 
 		List<ResultFileTask> identifiedTasks = new LinkedList<ResultFileTask>();
 
-		final String newLineSeparator = "\n";
-		final String delimiter = ";";
-		final String summaryFileHeader = "Task;MemoryUsage;WallTime;JobCount";
-
 		try {
 			String line = null;
 
@@ -397,13 +425,13 @@ public class BenchmarkJobManager {
 					continue;
 				}
 
-				String[] columns = line.split(delimiter);
+				String[] columns = line.split(Constants.DELIMITER);
 
 				if (columns[0].equals(Constants.STATISTICS_TASK_NAME)) {
 
 					// If there is a task being processed, add all cached jobs to it and wrap it up
 					if (null != processedTask) {
-						processedTask.jobs.addAll(jobs);
+						processedTask.setJobs(jobs);
 						identifiedTasks.add(processedTask);
 					}
 
@@ -430,26 +458,44 @@ public class BenchmarkJobManager {
 
 			// If there is a task being processed, add all cached jobs to it and wrap it up
 			if (null != processedTask) {
-				processedTask.jobs.addAll(jobs);
+				processedTask.setJobs(jobs);
 				identifiedTasks.add(processedTask);
 			}
 
 		} catch (IOException e) {
 			log.error(e.getMessage(), e);
+			return;
 		}
+		
+		// Order tasks chronologically
+		List<String> chronologicList = BENCHMARK_TASK_NAME_MAP.keySet().stream().collect(Collectors.toList());
+		Collections.sort(identifiedTasks, Comparator.comparingInt(t -> chronologicList.indexOf(t.getName())));
 
 		FileWriter fileWriter = null;
 		try {
-			fileWriter = new FileWriter(filename.getParent().toString() + "/" + Constants.STATISTICS_SUMMARY_FILENAME);
-			fileWriter.append(summaryFileHeader).append(newLineSeparator);
+			fileWriter = new FileWriter(
+					filename.getParent().toString() + Constants.FORWARD_SLASH + Constants.STATISTICS_SUMMARY_FILENAME);
+			fileWriter.append(Constants.SUMMARY_FILE_HEADER).append(Constants.NEW_LINE_SEPARATOR);
 
 			for (ResultFileTask task : identifiedTasks) {
-				fileWriter.append(Constants.STATISTICS_TASK_NAME_MAP.get(task.name)).append(delimiter);
-				fileWriter.append(Double.toString(task.getAverageMemoryUsage())).append(delimiter);
-				fileWriter.append(Double.toString(task.getAverageWallTime())).append(delimiter);
+				fileWriter.append(Constants.BENCHMARK_TASK_NAME_MAP.get(task.getName())).append(Constants.DELIMITER);
+				fileWriter.append(Double.toString(task.getAverageMemoryUsage())).append(Constants.DELIMITER);
+				fileWriter.append(Double.toString(task.getAverageWallTime())).append(Constants.DELIMITER);
+				fileWriter.append(Double.toString(task.getMaximumWallTime())).append(Constants.DELIMITER);
+				fileWriter.append(Double.toString(task.getTotalTime())).append(Constants.DELIMITER);
 				fileWriter.append(Integer.toString(task.getJobCount()));
-				fileWriter.append(newLineSeparator);
+				fileWriter.append(Constants.NEW_LINE_SEPARATOR);
 			}
+
+			Double pipelineStart = identifiedTasks.stream() //
+					.mapToDouble(t -> t.getEarliestStartInSeconds()).min().getAsDouble();
+
+			Double pipelineEnd = identifiedTasks.stream() //
+					.mapToDouble(t -> t.getLatestEndInSeconds()).max().getAsDouble();
+
+			fileWriter.append(Constants.NEW_LINE_SEPARATOR);
+			fileWriter.append("Pipeline duration: " + (pipelineEnd - pipelineStart));
+
 		} catch (Exception e) {
 			log.error(e.getMessage(), e);
 		} finally {
