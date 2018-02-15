@@ -20,7 +20,7 @@ public class Task {
 		this.description = description;
 		this.computations = new LinkedList<>();
 		for (int i = 0; i < numOfExpectedComputations; i++) {
-			computations.add(new TaskComputation(computationAccessor, i + 1));
+			computations.add(new TaskComputation(computationAccessor, description, i + 1));
 		}
 	}
 

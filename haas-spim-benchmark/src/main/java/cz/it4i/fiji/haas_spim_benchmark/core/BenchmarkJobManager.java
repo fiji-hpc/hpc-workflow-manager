@@ -63,7 +63,7 @@ public class BenchmarkJobManager {
 
 		private SPIMComputationAccessor computationAccessor;
 		
-		private int processedOutputLength = 0;
+		private int processedOutputLength;
 		
 		public BenchmarkJob(Job job) {
 			this.job = job;
@@ -74,6 +74,7 @@ public class BenchmarkJobManager {
 				
 				private HaaSOutputHolder outputOfSnakemake = new HaaSOutputHolderImpl(BenchmarkJob.this,
 						SynchronizableFileType.StandardErrorFile);
+
 				@Override
 				public String getActualOutput() {
 					return outputOfSnakemake.getActualOutput();
@@ -168,11 +169,17 @@ public class BenchmarkJobManager {
 		}
 		
 		public List<Task> getTasks() {
+			
+			// If no tasks have been identified, try to search through the output
 			if (tasks.isEmpty()) {
 				fillTasks();
 			}
-			// Carry on with output processing
-			processOutput();
+			
+			// Should you (finally) have some, try to parse the output further, otherwise just give up
+			if (!tasks.isEmpty() ) {
+				processOutput();				
+			}
+			
 			return tasks;
 		}
 
@@ -181,30 +188,56 @@ public class BenchmarkJobManager {
 			final String OUTPUT_PARSING_JOB_COUNTS = "Job counts:";
 			final String OUTPUT_PARSING_TAB_DELIMITER = "\\t";
 			final int OUTPUT_PARSING_EXPECTED_NUMBER_OF_WORDS_PER_LINE = 2;
-			final String OUTPUT_PARSING_ERROR = "Error";
+			final String OUTPUT_PARSING_WORKFLOW_ERROR = "WorkflowError";
+			final String OUTPUT_PARSING_VALUE_ERROR = "ValueError";
 
-			Scanner scanner = new Scanner(computationAccessor.getActualOutput());
-			String currentLine;
-			while (scanner.hasNextLine()) {
-				currentLine = scanner.nextLine().trim();
+			processedOutputLength = -1;
+			int readJobCountIndex = -1;
+			boolean found = false;
+			String output = computationAccessor.getActualOutput();
 
-				if (currentLine.contains(OUTPUT_PARSING_ERROR)) {
-					String errorMessage = "";
-					while (!currentLine.isEmpty()) {
-						errorMessage += currentLine;
-						if (!scanner.hasNextLine()) {
-							break;
-						}
-						currentLine = scanner.nextLine().trim();
-					};
-					nonTaskSpecificErrors.add(new BenchmarkError(errorMessage));
+			// Found last job count definition
+			while (true) {
+				readJobCountIndex = output.indexOf(OUTPUT_PARSING_JOB_COUNTS, processedOutputLength + 1);
+
+				if (readJobCountIndex < 0) {
 					break;
 				}
+				
+				found = true;
+				processedOutputLength = readJobCountIndex;
+			}
 
-				if (!currentLine.equals(OUTPUT_PARSING_JOB_COUNTS)) {
+			// If no job count definition has been found, search through the output and list all errors
+			if (!found) {
+				Scanner scanner = new Scanner(computationAccessor.getActualOutput());
+				String currentLine;
+				while (scanner.hasNextLine()) {
+					currentLine = scanner.nextLine().trim();
+					if (currentLine.contains(OUTPUT_PARSING_WORKFLOW_ERROR) //
+							|| currentLine.contains(OUTPUT_PARSING_VALUE_ERROR)) {
+						String errorMessage = "";
+						while (!currentLine.isEmpty()) {
+							errorMessage += currentLine;
+							if (!scanner.hasNextLine()) {
+								break;
+							}
+							currentLine = scanner.nextLine().trim();
+						}						
+						nonTaskSpecificErrors.add(new BenchmarkError(errorMessage));
+					}
+				}
+				scanner.close();
+				return;
+			}
+
+			// After the job count definition, task specification is expected
+			Scanner scanner = new Scanner(output.substring(processedOutputLength));
+			scanner.nextLine(); // Immediately after job count definition, task specification table header is expected
+			while (scanner.hasNextLine()) {
+				if (scanner.nextLine().trim().isEmpty()) {
 					continue;
 				}
-				scanner.nextLine();
 
 				while (true) {
 					List<String> lineWords = Arrays.stream(scanner.nextLine().split(OUTPUT_PARSING_TAB_DELIMITER))
@@ -224,7 +257,6 @@ public class BenchmarkJobManager {
 				Collections.sort(tasks,
 						Comparator.comparingInt(task -> chronologicList.indexOf(task.getDescription())));
 			}
-
 		}
 
 		private void processOutput() {
