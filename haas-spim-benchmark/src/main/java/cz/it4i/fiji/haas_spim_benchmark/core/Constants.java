@@ -16,10 +16,6 @@ public interface Constants {
 	final String DELIMITER = ";";
 	final String FORWARD_SLASH = "/";
 	
-	final String NEW_LINE_SEPARATOR = "\n";
-	final String DELIMITER = ";";
-	final String FORWARD_SLASH = "/";
-
 	String SPIM_OUTPUT_FILENAME_PATTERN = "spim.outputFilenamePattern";
 	String CONFIG_YAML = "config.yaml";
 	String BENCHMARK_RESULT_FILE = "benchmark_result.csv";
