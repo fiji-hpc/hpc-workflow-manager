@@ -48,8 +48,7 @@ public class Extractor {
 					continue;
 				}
 				if (line.startsWith("Task name:")) {
-					valueCollector.flush(collector);
-					collector.writeToOuput(pw);
+					write(pw, collector, valueCollector);
 					collector = new P_Collector(line.split(":")[1].trim());
 				} else if (line.startsWith("Job Id:")) {
 					collector.addJob(line.split(":")[1].trim());
@@ -62,11 +61,19 @@ public class Extractor {
 					}
 				}
 			}
+			if(valueCollector != null) {
+				write(pw, collector, valueCollector);;
+			}
 		} catch (IOException e) {
 			log.log(Level.SEVERE, e.getMessage(), e);
 		} finally {
 			pw.flush();
 		}
+	}
+
+	private void write(PrintWriter pw, P_Collector collector, P_ValueCollector valueCollector) {
+		valueCollector.flush(collector);
+		collector.writeToOuput(pw);
 	}
 
 	private class P_Collector {

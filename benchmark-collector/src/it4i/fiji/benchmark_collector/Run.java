@@ -13,11 +13,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class Run {
+	@SuppressWarnings("unused")
+	private static Logger log = Logger.getLogger(it4i.fiji.benchmark_collector.Run.class.getName());
+	
+	
 	public static void main(String[] args) throws IOException {
 
 		try (DirectoryStream<Path> stream = Files.newDirectoryStream(Paths.get(args[0]), "snakejob.*.*.sh.e*")) {

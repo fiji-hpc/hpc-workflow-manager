@@ -1,9 +1,9 @@
 package cz.it4i.fiji.haas_spim_benchmark.core;
 
 import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.BENCHMARK_RESULT_FILE;
+import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.BENCHMARK_TASK_NAME_MAP;
 import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.HAAS_UPDATE_TIMEOUT;
 import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.SPIM_OUTPUT_FILENAME_PATTERN;
-import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.BENCHMARK_TASK_NAME_MAP;
 import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.UI_TO_HAAS_FREQUENCY_UPDATE_RATIO;
 
 import java.io.BufferedReader;
@@ -407,7 +407,7 @@ public class BenchmarkJobManager {
 		}
 	}
 
-	private static void formatResultFile(Path filename) throws FileNotFoundException {
+	public static void formatResultFile(Path filename) throws FileNotFoundException {
 
 		List<ResultFileTask> identifiedTasks = new LinkedList<ResultFileTask>();
 

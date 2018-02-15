@@ -7,7 +7,6 @@ import cz.it4i.fiji.haas.ui.CloseableControl;
 import cz.it4i.fiji.haas.ui.FXFrameNative;
 import cz.it4i.fiji.haas.ui.JavaFXRoutines;
 import javafx.fxml.FXML;
-import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.BorderPane;
 
@@ -35,12 +34,6 @@ public class LogViewControl extends BorderPane implements CloseableControl {
 		w.setVisible(true);
 
 	}
-
-	@FXML
-	private ScrollPane sp;
-
-	@FXML
-	private BorderPane bp;
 
 	@FXML
 	private TextArea ta;
