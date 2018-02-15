@@ -9,7 +9,7 @@ public class JobDetailControlRun {
 		class Window extends FXFrameNative<JobDetailControl> {
 
 			public Window() {
-				super(() -> new JobDetailControl());
+				super(() -> new JobDetailControl(null));
 
 			}
 

@@ -106,9 +106,9 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 			registry.get(job.getValue()).update();
 		}), job -> notNullValue(job, j -> j.getState() == JobState.Running));
 
-		menu.addItem("Show progress", job -> {
+		menu.addItem("Show details", job -> {
 			try {
-				new SPIMPipelineProgressViewWindow(root, job.getValue()).setVisible(true);
+				new JobDetailWindow(root, job.getValue()).setVisible(true);
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				log.error(e.getMessage(), e);
