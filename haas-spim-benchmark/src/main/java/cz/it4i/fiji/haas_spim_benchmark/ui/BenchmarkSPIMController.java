@@ -130,8 +130,8 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 
 		menu.addItem("Show output",
 				j -> {
-					new JobOutputView(root, executorServiceUI, j.getValue(),SynchronizableFileType.StandardErrorFile, Constants.HAAS_UPDATE_TIMEOUT);
-					new JobOutputView(root, executorServiceUI, j.getValue(),SynchronizableFileType.StandardOutputFile, Constants.HAAS_UPDATE_TIMEOUT);
+					new JobOutputView(root, executorServiceUI, j.getValue(),SynchronizableFileType.StandardErrorFile, job->job.getStandardError(), Constants.HAAS_UPDATE_TIMEOUT);
+					new JobOutputView(root, executorServiceUI, j.getValue(),SynchronizableFileType.StandardOutputFile, job->job.getStandardOutput(), Constants.HAAS_UPDATE_TIMEOUT);
 				},
 				job -> notNullValue(job,
 						j -> EnumSet.of(JobState.Failed, JobState.Finished, JobState.Running, JobState.Canceled)

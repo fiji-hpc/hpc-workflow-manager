@@ -9,6 +9,7 @@ import cz.it4i.fiji.haas_spim_benchmark.ui.JobOutputView;
 
 public class RunView {
 	public static void main(String[] args) {
-		new JobOutputView(new JFrame(), Executors.newSingleThreadExecutor(), null,SynchronizableFileType.StandardErrorFile, 3000);
+		new JobOutputView(new JFrame(), Executors.newSingleThreadExecutor(), null,
+				SynchronizableFileType.StandardErrorFile, x -> "", 3000);
 	}
 }

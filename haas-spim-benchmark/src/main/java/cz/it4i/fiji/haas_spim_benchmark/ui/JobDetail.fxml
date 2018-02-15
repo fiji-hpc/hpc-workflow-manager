@@ -23,7 +23,7 @@
 		<Tab closable="false" text="Standard out">
 			<content>
 				<HBox>
-					<LogViewControl HBox.hgrow="ALWAYS" />
+					<LogViewControl fx:id="errorOutput" HBox.hgrow="ALWAYS" />
 
 				</HBox>
 			</content>
@@ -31,7 +31,7 @@
 		<Tab closable="false" text="Error out">
 			<content>
 				<HBox>
-					<LogViewControl HBox.hgrow="ALWAYS" />
+					<LogViewControl fx:id="standardOutput" HBox.hgrow="ALWAYS" />
 				</HBox>
 			</content>
 

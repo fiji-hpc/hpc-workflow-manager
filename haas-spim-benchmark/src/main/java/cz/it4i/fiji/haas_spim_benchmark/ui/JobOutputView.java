@@ -5,10 +5,10 @@ import java.awt.Dimension;
 import java.awt.Window;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.util.Arrays;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ExecutorService;
+import java.util.function.Function;
 
 import javax.swing.JDialog;
 import javax.swing.JPanel;
@@ -18,7 +18,6 @@ import javax.swing.JTextArea;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import cz.it4i.fiji.haas.JobManager.JobSynchronizableFile;
 import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
 import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.BenchmarkJob;
 
@@ -32,11 +31,15 @@ public class JobOutputView {
 	private ExecutorService executor;
 	private long readedChars = 0;
 	private SynchronizableFileType fileType;
+	private Function<BenchmarkJob, String> outputProvider;
+	
+	
 
-	public JobOutputView(Window parent, ExecutorService executor, BenchmarkJob job,SynchronizableFileType fileType ,long refreshTimeout) {
+	public JobOutputView(Window parent, ExecutorService executor, BenchmarkJob job, SynchronizableFileType fileType, Function<BenchmarkJob,String> outputProvider,long refreshTimeout) {
 		this.job = job;
 		this.executor = executor;
 		this.fileType = fileType;
+		this.outputProvider = outputProvider;
 		constructFrame(parent);
 		parent.addWindowListener(new WindowAdapter() {
 			@Override
@@ -88,16 +91,14 @@ public class JobOutputView {
 
 	private void updateView() {
 		executor.execute(() -> {
-			JobSynchronizableFile file = new JobSynchronizableFile(fileType,
-					readedChars);
 			String output;
 			if (job != null) {
-				output = job.getOutput(Arrays.asList(file)).get(0);
+				output = outputProvider.apply(job);
 			} else {
 				output = "This is testing line\n";
 			}
-			readedChars += output.length();
-			theText.append(output);
+			theText.append(output.substring((int) readedChars));
+			readedChars = output.length();
 			theText.setCaretPosition(theText.getDocument().getLength());
 		});
 	}

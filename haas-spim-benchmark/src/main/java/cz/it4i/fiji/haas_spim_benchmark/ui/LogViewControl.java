@@ -6,6 +6,8 @@ import org.slf4j.LoggerFactory;
 import cz.it4i.fiji.haas.ui.CloseableControl;
 import cz.it4i.fiji.haas.ui.FXFrameNative;
 import cz.it4i.fiji.haas.ui.JavaFXRoutines;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.BorderPane;
@@ -38,10 +40,20 @@ public class LogViewControl extends BorderPane implements CloseableControl {
 	@FXML
 	private TextArea ta;
 
+	public void setObservable(ObservableValue<String> value) {
+		ta.setText(value.getValue());
+		value.addListener(new ChangeListener<String>() {
+
+			@Override
+			public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
+				ta.setText(newValue);
+			}
+		});
+	}
+	
 	@Override
 	public void close() {
 		// TODO Auto-generated method stub
 
 	}
-
 }

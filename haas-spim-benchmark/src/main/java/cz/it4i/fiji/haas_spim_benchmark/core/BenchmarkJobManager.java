@@ -34,10 +34,8 @@ import org.yaml.snakeyaml.Yaml;
 
 import cz.it4i.fiji.haas.HaaSOutputHolder;
 import cz.it4i.fiji.haas.HaaSOutputHolderImpl;
-import cz.it4i.fiji.haas.HaaSOutputSource;
 import cz.it4i.fiji.haas.Job;
 import cz.it4i.fiji.haas.JobManager;
-import cz.it4i.fiji.haas.JobManager.JobSynchronizableFile;
 import cz.it4i.fiji.haas.UploadingFileFromResource;
 import cz.it4i.fiji.haas_java_client.HaaSClient;
 import cz.it4i.fiji.haas_java_client.JobState;
@@ -48,45 +46,31 @@ import net.imagej.updater.util.Progress;
 public class BenchmarkJobManager {
 
 	private static final String JOB_HAS_DATA_TO_DOWNLOAD_PROPERTY = "job.needDownload";
-	
+
 	private static Logger log = LoggerFactory
 			.getLogger(cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.class);
 
 	private JobManager jobManager;
 
-	public final class BenchmarkJob implements HaaSOutputSource {
-		
+	public final class BenchmarkJob {
+
 		private Job job;
 
 		private final List<Task> tasks;
 		private final List<BenchmarkError> nonTaskSpecificErrors;
 
 		private SPIMComputationAccessor computationAccessor;
-		
+
+		private SPIMComputationAccessor computationAccessorForOutput;
+
 		private int processedOutputLength;
-		
+
 		public BenchmarkJob(Job job) {
 			this.job = job;
 			tasks = new LinkedList<Task>();
 			nonTaskSpecificErrors = new LinkedList<BenchmarkError>();
-
-			computationAccessor = new SPIMComputationAccessor() {
-				
-				private HaaSOutputHolder outputOfSnakemake = new HaaSOutputHolderImpl(BenchmarkJob.this,
-						SynchronizableFileType.StandardErrorFile);
-
-				@Override
-				public String getActualOutput() {
-					return outputOfSnakemake.getActualOutput();
-				}
-				
-				public java.util.Collection<String> getChangedFiles() {
-					return job.getChangedFiles();
-				};
-			};
-			
-			computationAccessor = new SPIMComputationAccessorDecoratorWithTimeout(computationAccessor,
-					HAAS_UPDATE_TIMEOUT / UI_TO_HAAS_FREQUENCY_UPDATE_RATIO);
+			computationAccessor = getComputationAccessor(SynchronizableFileType.StandardErrorFile);
+			computationAccessorForOutput = getComputationAccessor(SynchronizableFileType.StandardOutputFile);
 		}
 
 		public void startJob(Progress progress) throws IOException {
@@ -108,7 +92,7 @@ public class BenchmarkJobManager {
 			} else if (job.getState() == JobState.Failed || job.getState() == JobState.Canceled) {
 				job.download(downloadFailedData(), progress);
 			}
-			
+
 			setDownloaded(true);
 		}
 
@@ -119,10 +103,6 @@ public class BenchmarkJobManager {
 				BenchmarkJobManager.formatResultFile(resultFile);
 		}
 
-		public List<String> getOutput(List<JobSynchronizableFile> files) {
-			return job.getOutput(files);
-		}
-		
 		public long getId() {
 			return job.getId();
 		}
@@ -137,10 +117,6 @@ public class BenchmarkJobManager {
 
 		public String getEndTime() {
 			return getStringFromTimeSafely(job.getEndTime());
-		}
-		
-		private String getStringFromTimeSafely(Calendar time) {
-			return time != null ? time.getTime().toString() : "N/A";
 		}
 
 		@Override
@@ -163,24 +139,43 @@ public class BenchmarkJobManager {
 		public void update() {
 			job.updateInfo();
 		}
-	
+
 		public Path getDirectory() {
 			return job.getDirectory();
 		}
-		
+
 		public List<Task> getTasks() {
-			
+
 			// If no tasks have been identified, try to search through the output
 			if (tasks.isEmpty()) {
 				fillTasks();
 			}
-			
-			// Should you (finally) have some, try to parse the output further, otherwise just give up
-			if (!tasks.isEmpty() ) {
-				processOutput();				
+
+			// Should you (finally) have some, try to parse the output further, otherwise
+			// just give up
+			if (!tasks.isEmpty()) {
+				processOutput();
 			}
-			
+
 			return tasks;
+		}
+
+		public void exploreErrors() {
+			for (BenchmarkError error : getErrors()) {
+				System.out.println(error.getPlainDescription());
+			}
+		}
+
+		public String getStandardOutput() {
+			return computationAccessorForOutput.getActualOutput();
+		}
+
+		public String getStandardError() {
+			return computationAccessor.getActualOutput();
+		}
+
+		private String getStringFromTimeSafely(Calendar time) {
+			return time != null ? time.getTime().toString() : "N/A";
 		}
 
 		private void fillTasks() {
@@ -203,12 +198,13 @@ public class BenchmarkJobManager {
 				if (readJobCountIndex < 0) {
 					break;
 				}
-				
+
 				found = true;
 				processedOutputLength = readJobCountIndex;
 			}
 
-			// If no job count definition has been found, search through the output and list all errors
+			// If no job count definition has been found, search through the output and list
+			// all errors
 			if (!found) {
 				Scanner scanner = new Scanner(computationAccessor.getActualOutput());
 				String currentLine;
@@ -223,7 +219,7 @@ public class BenchmarkJobManager {
 								break;
 							}
 							currentLine = scanner.nextLine().trim();
-						}						
+						}
 						nonTaskSpecificErrors.add(new BenchmarkError(errorMessage));
 					}
 				}
@@ -233,7 +229,8 @@ public class BenchmarkJobManager {
 
 			// After the job count definition, task specification is expected
 			Scanner scanner = new Scanner(output.substring(processedOutputLength));
-			scanner.nextLine(); // Immediately after job count definition, task specification table header is expected
+			scanner.nextLine(); // Immediately after job count definition, task specification table header is
+								// expected
 			while (scanner.hasNextLine()) {
 				if (scanner.nextLine().trim().isEmpty()) {
 					continue;
@@ -291,10 +288,25 @@ public class BenchmarkJobManager {
 			processedOutputLength = processedOutputLength + outputLengthToBeProcessed;
 		}
 
-		public void exploreErrors() {
-			for (BenchmarkError error : getErrors()) {
-				System.out.println(error.getPlainDescription());
-			}
+		private SPIMComputationAccessor getComputationAccessor(SynchronizableFileType type) {
+			SPIMComputationAccessor result = new SPIMComputationAccessor() {
+
+				private HaaSOutputHolder outputOfSnakemake = new HaaSOutputHolderImpl(list -> job.getOutput(list),
+						type);
+
+				@Override
+				public String getActualOutput() {
+					return outputOfSnakemake.getActualOutput();
+				}
+
+				public java.util.Collection<String> getChangedFiles() {
+					return job.getChangedFiles();
+				};
+			};
+
+			result = new SPIMComputationAccessorDecoratorWithTimeout(result,
+					HAAS_UPDATE_TIMEOUT / UI_TO_HAAS_FREQUENCY_UPDATE_RATIO);
+			return result;
 		}
 
 		private List<BenchmarkError> getErrors() {
@@ -466,7 +478,7 @@ public class BenchmarkJobManager {
 			log.error(e.getMessage(), e);
 			return;
 		}
-		
+
 		// Order tasks chronologically
 		List<String> chronologicList = BENCHMARK_TASK_NAME_MAP.keySet().stream().collect(Collectors.toList());
 		Collections.sort(identifiedTasks, Comparator.comparingInt(t -> chronologicList.indexOf(t.getName())));
