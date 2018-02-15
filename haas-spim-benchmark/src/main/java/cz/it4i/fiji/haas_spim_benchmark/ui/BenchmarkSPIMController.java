@@ -114,7 +114,7 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 				log.error(e.getMessage(), e);
 			}
 		}, job -> notNullValue(job, j -> j.getState() == JobState.Running || j.getState() == JobState.Finished
-				|| j.getState() == JobState.Failed));
+				|| j.getState() == JobState.Failed || j.getState() == JobState.Canceled ));
 
 		menu.addItem("Download result",
 				job -> executeWSCallAsync("Downloading data", p -> job.getValue().downloadData(p)),
