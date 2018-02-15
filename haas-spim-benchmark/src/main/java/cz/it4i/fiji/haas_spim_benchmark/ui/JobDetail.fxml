@@ -20,7 +20,7 @@
 				</HBox>
 			</content>
 		</Tab>
-		<Tab closable="false" text="Standard out">
+		<Tab closable="false" text="Snakemake output">
 			<content>
 				<HBox>
 					<LogViewControl fx:id="errorOutput" HBox.hgrow="ALWAYS" />
@@ -28,7 +28,7 @@
 				</HBox>
 			</content>
 		</Tab>
-		<Tab closable="false" text="Error out">
+		<Tab closable="false" text="Other output">
 			<content>
 				<HBox>
 					<LogViewControl fx:id="standardOutput" HBox.hgrow="ALWAYS" />

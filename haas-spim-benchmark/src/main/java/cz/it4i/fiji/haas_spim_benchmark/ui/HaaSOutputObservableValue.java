@@ -3,6 +3,7 @@ package cz.it4i.fiji.haas_spim_benchmark.ui;
 import java.io.Closeable;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.Executors;
 import java.util.function.Supplier;
 
 import javafx.beans.value.ObservableValueBase;
@@ -16,6 +17,7 @@ public class HaaSOutputObservableValue extends ObservableValueBase<String> imple
 	public HaaSOutputObservableValue(Supplier<String> supplier, long timeout) {
 		super();
 		this.supplier = supplier;
+		timer = new Timer();
 		value = supplier.get();
 		timer.schedule(new TimerTask() {
 
