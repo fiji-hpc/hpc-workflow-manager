@@ -22,7 +22,7 @@ public class JobManagementWsLocator extends org.apache.axis.client.Service imple
     }
 
     // Use to get a proxy class for JobManagementWsSoap
-    private java.lang.String JobManagementWsSoap_address = "http://utepstorage.it4i.cz/HaasWsFiji/JobManagementWS.asmx";
+    private java.lang.String JobManagementWsSoap_address = "http://haas.vsb.cz/HaasWsFiji/JobManagementWS.asmx";
 
     public java.lang.String getJobManagementWsSoapAddress() {
         return JobManagementWsSoap_address;
