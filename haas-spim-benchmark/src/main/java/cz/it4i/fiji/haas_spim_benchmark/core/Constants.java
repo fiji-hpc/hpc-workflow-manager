@@ -10,7 +10,7 @@ public interface Constants {
 	int HAAS_CLUSTER_NODE_TYPE = 6;
 	int HAAS_TEMPLATE_ID = 4;
 	String HAAS_PROJECT_ID = "DD-17-31";
-	int HAAS_TIMEOUT = 9600;
+	int HAAS_TIMEOUT = 9600; //Walltime in seconds
 
 	String SPIM_OUTPUT_FILENAME_PATTERN = "spim.outputFilenamePattern";
 	String CONFIG_YAML = "config.yaml";

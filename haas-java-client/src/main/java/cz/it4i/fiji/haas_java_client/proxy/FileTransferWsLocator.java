@@ -22,7 +22,7 @@ public class FileTransferWsLocator extends org.apache.axis.client.Service implem
     }
 
     // Use to get a proxy class for FileTransferWsSoap
-    private java.lang.String FileTransferWsSoap_address = "http://utepstorage.it4i.cz/HaasWsFiji/FileTransferWs.asmx";
+    private java.lang.String FileTransferWsSoap_address = "http://haas.vsb.cz/HaasWsFiji/FileTransferWs.asmx";
 
     public java.lang.String getFileTransferWsSoapAddress() {
         return FileTransferWsSoap_address;
@@ -67,7 +67,7 @@ public class FileTransferWsLocator extends org.apache.axis.client.Service implem
 
 
     // Use to get a proxy class for FileTransferWsSoap12
-    private java.lang.String FileTransferWsSoap12_address = "http://utepstorage.it4i.cz/HaasWsFiji/FileTransferWs.asmx";
+    private java.lang.String FileTransferWsSoap12_address = "http://haas.vsb.cz/HaasWsFiji/FileTransferWs.asmx";
 
     public java.lang.String getFileTransferWsSoap12Address() {
         return FileTransferWsSoap12_address;

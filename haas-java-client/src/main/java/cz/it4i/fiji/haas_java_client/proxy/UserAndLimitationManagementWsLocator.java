@@ -22,7 +22,7 @@ public class UserAndLimitationManagementWsLocator extends org.apache.axis.client
     }
 
     // Use to get a proxy class for UserAndLimitationManagementWsSoap
-    private java.lang.String UserAndLimitationManagementWsSoap_address = "http://utepstorage.it4i.cz/HaasWsFiji/UserAndLimitationManagementWs.asmx";
+    private java.lang.String UserAndLimitationManagementWsSoap_address = "http://haas.vsb.cz/HaasWsFiji/UserAndLimitationManagementWs.asmx";
 
     public java.lang.String getUserAndLimitationManagementWsSoapAddress() {
         return UserAndLimitationManagementWsSoap_address;
@@ -67,7 +67,7 @@ public class UserAndLimitationManagementWsLocator extends org.apache.axis.client
 
 
     // Use to get a proxy class for UserAndLimitationManagementWsSoap12
-    private java.lang.String UserAndLimitationManagementWsSoap12_address = "http://utepstorage.it4i.cz/HaasWsFiji/UserAndLimitationManagementWs.asmx";
+    private java.lang.String UserAndLimitationManagementWsSoap12_address = "http://haas.vsb.cz/HaasWsFiji/UserAndLimitationManagementWs.asmx";
 
     public java.lang.String getUserAndLimitationManagementWsSoap12Address() {
         return UserAndLimitationManagementWsSoap12_address;
