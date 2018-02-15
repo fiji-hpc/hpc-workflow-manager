@@ -10,7 +10,11 @@ public interface Constants {
 	int HAAS_CLUSTER_NODE_TYPE = 6;
 	int HAAS_TEMPLATE_ID = 4;
 	String HAAS_PROJECT_ID = "DD-17-31";
-	int HAAS_TIMEOUT = 9600;
+	int HAAS_TIMEOUT = 9600; //Walltime in seconds
+	
+	final String NEW_LINE_SEPARATOR = "\n";
+	final String DELIMITER = ";";
+	final String FORWARD_SLASH = "/";
 	
 	final String NEW_LINE_SEPARATOR = "\n";
 	final String DELIMITER = ";";

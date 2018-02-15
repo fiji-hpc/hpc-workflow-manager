@@ -22,7 +22,7 @@ public class DataTransferWsLocator extends org.apache.axis.client.Service implem
     }
 
     // Use to get a proxy class for DataTransferWsSoap
-    private java.lang.String DataTransferWsSoap_address = "http://utepstorage.it4i.cz/HaasWsFiji/DataTransferWs.asmx";
+    private java.lang.String DataTransferWsSoap_address = "http://haas.vsb.cz/HaasWsFiji/DataTransferWs.asmx";
 
     public java.lang.String getDataTransferWsSoapAddress() {
         return DataTransferWsSoap_address;
