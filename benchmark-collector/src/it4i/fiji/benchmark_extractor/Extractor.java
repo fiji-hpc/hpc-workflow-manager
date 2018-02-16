@@ -62,7 +62,7 @@ public class Extractor {
 				}
 			}
 			if(valueCollector != null) {
-				write(pw, collector, valueCollector);;
+				write(pw, collector, valueCollector);
 			}
 		} catch (IOException e) {
 			log.log(Level.SEVERE, e.getMessage(), e);
