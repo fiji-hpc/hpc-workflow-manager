@@ -32,7 +32,7 @@ public class JobDetailControl extends TabPane implements CloseableControl {
 		observableValueRegistry = new HaaSOutputObservableValueRegistry(job,
 				Constants.HAAS_UPDATE_TIMEOUT / Constants.UI_TO_HAAS_FREQUENCY_UPDATE_RATIO);
 		errorOutput.setObservable(observableValueRegistry.createObservable(SynchronizableFileType.StandardErrorFile));
-		errorOutput.setObservable(observableValueRegistry.createObservable(SynchronizableFileType.StandardOutputFile));
+		standardOutput.setObservable(observableValueRegistry.createObservable(SynchronizableFileType.StandardOutputFile));
 		observableValueRegistry.start();
 	}
 

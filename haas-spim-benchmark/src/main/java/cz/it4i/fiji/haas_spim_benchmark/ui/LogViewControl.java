@@ -41,19 +41,18 @@ public class LogViewControl extends BorderPane implements CloseableControl {
 	private TextArea ta;
 
 	public void setObservable(ObservableValue<String> value) {
-		ta.setText(value.getValue());
+		JavaFXRoutines.runOnFxThread(()->ta.setText(value.getValue()));
 		value.addListener(new ChangeListener<String>() {
 
 			@Override
 			public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
-				ta.setText(newValue);
+				JavaFXRoutines.runOnFxThread(()->ta.setText(value.getValue()));
 			}
 		});
 	}
 	
 	@Override
 	public void close() {
-		// TODO Auto-generated method stub
-
+		//DO NOTHING
 	}
 }

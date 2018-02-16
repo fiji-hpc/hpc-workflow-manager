@@ -24,41 +24,44 @@ public class HaaSOutputObservableValueRegistry implements Closeable {
 	private static Logger log = LoggerFactory
 			.getLogger(cz.it4i.fiji.haas_spim_benchmark.ui.HaaSOutputObservableValueRegistry.class);
 
-	private Map<SynchronizableFileType, P_HaaSOutputObservableValue> observable = new HashMap<>();
-	private List<SynchronizableFileType> types;
+	private Map<SynchronizableFileType, P_HaaSOutputObservableValue> observable = new HashMap<>();	
+	private List<SynchronizableFileType> types = new LinkedList<>();
 	private Timer timer;
 	private HaaSOutputHolder holder;
 
 	private long timeout;
-	private final TimerTask task = new TimerTask() {
 
-		@Override
-		public void run() {
-			update();
-		}
-	};
 
-	public HaaSOutputObservableValueRegistry(HaaSOutputHolder holder,long timeout) {
+	public HaaSOutputObservableValueRegistry(HaaSOutputHolder holder, long timeout) {
 		super();
-		this.types = new LinkedList<SynchronizableFileType>(types);
-
 		this.holder = holder;
 		timer = new Timer();
 		this.timeout = timeout;
 	}
 
 	public void start() {
-		timer.schedule(task, 0);
-		timer.schedule(task, timeout, timeout);
+		timer.schedule(createTask(), 0);
+		timer.schedule(createTask(), timeout, timeout);
 	}
-	
+
+	private TimerTask createTask() {
+		return new TimerTask() {
+
+			@Override
+			public void run() {
+				update();
+			}
+		};
+	}
+
 	@Override
 	public void close() {
 		timer.cancel();
 	}
-	
+
 	public ObservableValue<String> createObservable(SynchronizableFileType type) {
 		ObservableValue<String> result;
+		types.add(type);
 		observable.put(type, (P_HaaSOutputObservableValue) (result = new P_HaaSOutputObservableValue()));
 		return result;
 	}
@@ -73,7 +76,7 @@ public class HaaSOutputObservableValueRegistry implements Closeable {
 
 		String value;
 
-		private void update(String value) {
+		private synchronized void update(String value) {
 			String oldValue = this.value;
 			this.value = value;
 			if (value != null && oldValue == null || value == null && oldValue != null
