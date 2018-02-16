@@ -20,6 +20,7 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -52,7 +53,7 @@ public class BenchmarkJobManager {
 
 	private JobManager jobManager;
 
-	public final class BenchmarkJob {
+	public final class BenchmarkJob implements HaaSOutputHolder{
 
 		private Job job;
 
@@ -61,16 +62,13 @@ public class BenchmarkJobManager {
 
 		private SPIMComputationAccessor computationAccessor;
 
-		private SPIMComputationAccessor computationAccessorForOutput;
-
 		private int processedOutputLength;
 
 		public BenchmarkJob(Job job) {
 			this.job = job;
 			tasks = new LinkedList<Task>();
 			nonTaskSpecificErrors = new LinkedList<BenchmarkError>();
-			computationAccessor = getComputationAccessor(SynchronizableFileType.StandardErrorFile);
-			computationAccessorForOutput = getComputationAccessor(SynchronizableFileType.StandardOutputFile);
+			computationAccessor = getComputationAccessor();
 		}
 
 		public void startJob(Progress progress) throws IOException {
@@ -166,12 +164,25 @@ public class BenchmarkJobManager {
 			}
 		}
 
-		public String getStandardOutput() {
-			return computationAccessorForOutput.getActualOutput();
+		public String getAnotherOutput() {
+			return computationAccessor.getActualOutput(Arrays.asList(SynchronizableFileType.StandardOutputFile)).get(0);
 		}
 
-		public String getStandardError() {
-			return computationAccessor.getActualOutput();
+		public String getSnakemakeOutput() {
+			return computationAccessor.getActualOutput(Arrays.asList(SynchronizableFileType.StandardErrorFile)).get(0);
+		}
+
+		public boolean remove() {
+			return job.remove();
+		}
+
+		public void cancelJob() {
+			job.cancelJob();
+		}
+
+		@Override
+		public List<String> getActualOutput(List<SynchronizableFileType> content) {
+			return computationAccessor.getActualOutput(content);
 		}
 
 		private String getStringFromTimeSafely(Calendar time) {
@@ -189,7 +200,7 @@ public class BenchmarkJobManager {
 			processedOutputLength = -1;
 			int readJobCountIndex = -1;
 			boolean found = false;
-			String output = computationAccessor.getActualOutput();
+			String output = getSnakemakeOutput();
 
 			// Found last job count definition
 			while (true) {
@@ -206,7 +217,7 @@ public class BenchmarkJobManager {
 			// If no job count definition has been found, search through the output and list
 			// all errors
 			if (!found) {
-				Scanner scanner = new Scanner(computationAccessor.getActualOutput());
+				Scanner scanner = new Scanner(getSnakemakeOutput());
 				String currentLine;
 				while (scanner.hasNextLine()) {
 					currentLine = scanner.nextLine().trim();
@@ -261,7 +272,7 @@ public class BenchmarkJobManager {
 			final String OUTPUT_PARSING_RULE = "rule ";
 			final String OUTPUT_PARSING_COLON = ":";
 
-			String output = computationAccessor.getActualOutput().substring(processedOutputLength);
+			String output = getSnakemakeOutput().substring(processedOutputLength);
 			int outputLengthToBeProcessed = output.length();
 
 			int ruleRelativeIndex = -1;
@@ -288,15 +299,14 @@ public class BenchmarkJobManager {
 			processedOutputLength = processedOutputLength + outputLengthToBeProcessed;
 		}
 
-		private SPIMComputationAccessor getComputationAccessor(SynchronizableFileType type) {
+		private SPIMComputationAccessor getComputationAccessor() {
 			SPIMComputationAccessor result = new SPIMComputationAccessor() {
 
-				private HaaSOutputHolder outputOfSnakemake = new HaaSOutputHolderImpl(list -> job.getOutput(list),
-						type);
+				private HaaSOutputHolder outputOfSnakemake = new HaaSOutputHolderImpl(list -> job.getOutput(list));
 
 				@Override
-				public String getActualOutput() {
-					return outputOfSnakemake.getActualOutput();
+				public List<String> getActualOutput(List<SynchronizableFileType> content) {
+					return outputOfSnakemake.getActualOutput(content);
 				}
 
 				public java.util.Collection<String> getChangedFiles() {
@@ -305,6 +315,8 @@ public class BenchmarkJobManager {
 			};
 
 			result = new SPIMComputationAccessorDecoratorWithTimeout(result,
+					new HashSet<>(Arrays.asList(SynchronizableFileType.StandardOutputFile,
+							SynchronizableFileType.StandardErrorFile)),
 					HAAS_UPDATE_TIMEOUT / UI_TO_HAAS_FREQUENCY_UPDATE_RATIO);
 			return result;
 		}
@@ -322,14 +334,6 @@ public class BenchmarkJobManager {
 		private boolean getDownloaded() {
 			String downloadedStr = job.getProperty(JOB_HAS_DATA_TO_DOWNLOAD_PROPERTY);
 			return downloadedStr != null && Boolean.parseBoolean(downloadedStr);
-		}
-
-		public boolean remove() {
-			return job.remove();
-		}
-
-		public void cancelJob() {
-			job.cancelJob();
 		}
 
 	}

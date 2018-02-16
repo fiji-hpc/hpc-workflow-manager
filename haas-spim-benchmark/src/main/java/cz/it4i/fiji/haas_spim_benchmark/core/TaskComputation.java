@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Scanner;
 
 import cz.it4i.fiji.haas_java_client.JobState;
+import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
 
 public class TaskComputation {
 
@@ -116,7 +117,7 @@ public class TaskComputation {
 			final String OUTPUT_PARSING_ERRONEOUS_JOB = "Error in job ";
 			final String desiredPatternErroneousJob = OUTPUT_PARSING_ERRONEOUS_JOB + taskDescription;
 
-			Scanner scanner = new Scanner(computationAccessor.getActualOutput().substring(positionInOutput));
+			Scanner scanner = new Scanner(getSnakemakeOutput().substring(positionInOutput));
 			String currentLine;
 			while (scanner.hasNextLine()) {
 				currentLine = scanner.nextLine();
@@ -141,7 +142,7 @@ public class TaskComputation {
 		final String OUTPUT_PARSING_LOGS = "log: ";
 		final String OUTPUT_PARSING_JOB_ID = "jobid: ";
 
-		Scanner scanner = new Scanner(computationAccessor.getActualOutput().substring(positionInOutput));
+		Scanner scanner = new Scanner(getSnakemakeOutput().substring(positionInOutput));
 		String currentLine;
 		while (scanner.hasNextLine()) {
 			currentLine = scanner.nextLine();
@@ -160,6 +161,10 @@ public class TaskComputation {
 		scanner.close();
 
 		return !(inputs == null || id == null);
+	}
+
+	private String getSnakemakeOutput() {
+		return computationAccessor.getActualOutput(Arrays.asList(SynchronizableFileType.StandardErrorFile)).get(0);
 	}
 
 }

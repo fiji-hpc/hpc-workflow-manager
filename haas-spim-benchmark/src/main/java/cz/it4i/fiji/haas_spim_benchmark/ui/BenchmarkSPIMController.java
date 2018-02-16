@@ -114,7 +114,7 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 				log.error(e.getMessage(), e);
 			}
 		}, job -> notNullValue(job, j -> j.getState() == JobState.Running || j.getState() == JobState.Finished
-				|| j.getState() == JobState.Failed));
+				|| j.getState() == JobState.Failed || j.getState() == JobState.Canceled));
 
 		menu.addItem("Download result",
 				job -> executeWSCallAsync("Downloading data", p -> job.getValue().downloadData(p)),
@@ -130,8 +130,8 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 
 		menu.addItem("Show output",
 				j -> {
-					new JobOutputView(root, executorServiceUI, j.getValue(),SynchronizableFileType.StandardErrorFile, job->job.getStandardError(), Constants.HAAS_UPDATE_TIMEOUT);
-					new JobOutputView(root, executorServiceUI, j.getValue(),SynchronizableFileType.StandardOutputFile, job->job.getStandardOutput(), Constants.HAAS_UPDATE_TIMEOUT);
+					new JobOutputView(root, executorServiceUI, j.getValue(),SynchronizableFileType.StandardErrorFile, job->job.getSnakemakeOutput(), Constants.HAAS_UPDATE_TIMEOUT);
+					new JobOutputView(root, executorServiceUI, j.getValue(),SynchronizableFileType.StandardOutputFile, job->job.getAnotherOutput(), Constants.HAAS_UPDATE_TIMEOUT);
 				},
 				job -> notNullValue(job,
 						j -> EnumSet.of(JobState.Failed, JobState.Finished, JobState.Running, JobState.Canceled)
