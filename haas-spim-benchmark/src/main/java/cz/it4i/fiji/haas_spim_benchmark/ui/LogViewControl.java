@@ -20,30 +20,12 @@ public class LogViewControl extends BorderPane implements CloseableControl {
 		JavaFXRoutines.initRootAndController("LogView.fxml", this);
 	}
 
-	public static void main(String[] args) {
-
-		class Window extends FXFrameNative<LogViewControl> {
-
-			public Window() {
-				super(() -> new LogViewControl());
-
-			}
-
-		}
-
-		Window w;
-		w = new Window();
-		w.setVisible(true);
-
-	}
-
 	@FXML
 	private TextArea ta;
 
 	public void setObservable(ObservableValue<String> value) {
 		JavaFXRoutines.runOnFxThread(()->ta.setText(value.getValue()));
 		value.addListener(new ChangeListener<String>() {
-
 			@Override
 			public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
 				JavaFXRoutines.runOnFxThread(()->ta.setText(value.getValue()));
