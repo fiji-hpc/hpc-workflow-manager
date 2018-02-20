@@ -23,15 +23,18 @@ import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.BenchmarkJob;
 
 public class JobOutputView {
 	@SuppressWarnings("unused")
-	private static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas_spim_benchmark.ui.JobOutputView.class);
-	private Timer timer;
+	private final static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas_spim_benchmark.ui.JobOutputView.class);
+
+	private final Timer timer;
+	private final BenchmarkJob job;
+	private final ExecutorService executor;
+	private final SynchronizableFileType fileType;
+	private final Function<BenchmarkJob, String> outputProvider;
+
 	private JDialog theDialog;
 	private JTextArea theText;
-	private BenchmarkJob job;
-	private ExecutorService executor;
-	private long readedChars = 0;
-	private SynchronizableFileType fileType;
-	private Function<BenchmarkJob, String> outputProvider;
+
+	private long numberOfReadChars = 0;
 	
 	
 
@@ -97,8 +100,8 @@ public class JobOutputView {
 			} else {
 				output = "This is testing line\n";
 			}
-			theText.append(output.substring((int) readedChars));
-			readedChars = output.length();
+			theText.append(output.substring((int) numberOfReadChars));
+			numberOfReadChars = output.length();
 			theText.setCaretPosition(theText.getDocument().getLength());
 		});
 	}

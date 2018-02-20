@@ -15,10 +15,10 @@ import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
 
 public class HaaSOutputHolderImpl implements HaaSOutputHolder {
 	@SuppressWarnings("unused")
-	private static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas.HaaSOutputHolderImpl.class);
+	private final static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas.HaaSOutputHolderImpl.class);
 
-	private Map<SynchronizableFileType, StringBuilder> results = new HashMap<>();
-	private HaaSOutputSource source;
+	private final Map<SynchronizableFileType, StringBuilder> results = new HashMap<>();
+	private final HaaSOutputSource source;
 
 	public HaaSOutputHolderImpl(HaaSOutputSource source) {
 		this.source = source;
@@ -38,8 +38,8 @@ public class HaaSOutputHolderImpl implements HaaSOutputHolder {
 	private synchronized void updateData(List<SynchronizableFileType> types) {
 		List<JobSynchronizableFile> files = types.stream().map(type -> new JobSynchronizableFile(type,
 				results.computeIfAbsent(type, x -> new StringBuilder()).length())).collect(Collectors.toList());
-		List<String> readed = source.getOutput(files);
-		Streams.zip(types.stream(), readed.stream(),
+		List<String> readedContent = source.getOutput(files);
+		Streams.zip(types.stream(), readedContent.stream(),
 				(type, content) -> (Runnable) (() -> results.get(type).append(content))).forEach(r -> r.run());
 	}
 }

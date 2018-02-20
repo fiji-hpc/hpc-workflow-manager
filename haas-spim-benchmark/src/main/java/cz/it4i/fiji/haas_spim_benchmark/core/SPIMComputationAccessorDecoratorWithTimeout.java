@@ -13,11 +13,11 @@ import java.util.stream.Collectors;
 import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
 
 public class SPIMComputationAccessorDecoratorWithTimeout implements SPIMComputationAccessor {
-	private long intervalForQueryInMs;
-	private P_ResultCacheHolder<List<String>> outputCache;
-	private P_ResultCacheHolder<Set<String>> changedFilesCache;
-	private Map<SynchronizableFileType, Integer> allowedTypesIndices = new HashMap<>();
-	private List<SynchronizableFileType> allowedTypes = new LinkedList<>();
+	private final long intervalForQueryInMs;
+	private final  P_ResultCacheHolder<List<String>> outputCache;
+	private final P_ResultCacheHolder<Set<String>> changedFilesCache;
+	private final Map<SynchronizableFileType, Integer> allowedTypesIndices = new HashMap<>();
+	private final List<SynchronizableFileType> allowedTypes = new LinkedList<>();
 
 	public SPIMComputationAccessorDecoratorWithTimeout(SPIMComputationAccessor decorated,
 			Set<SynchronizableFileType> allowedTypes, long intervalForQueryInMs) {

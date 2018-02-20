@@ -21,19 +21,18 @@ import javafx.beans.value.ObservableValueBase;
 public class HaaSOutputObservableValueRegistry implements Closeable {
 
 	@SuppressWarnings("unused")
-	private static Logger log = LoggerFactory
+	private final static Logger log = LoggerFactory
 			.getLogger(cz.it4i.fiji.haas_spim_benchmark.ui.HaaSOutputObservableValueRegistry.class);
 
-	private Map<SynchronizableFileType, P_HaaSOutputObservableValue> observable = new HashMap<>();	
-	private List<SynchronizableFileType> types = new LinkedList<>();
-	private Timer timer;
-	private HaaSOutputHolder holder;
+	private final Map<SynchronizableFileType, P_HaaSOutputObservableValue> observable = new HashMap<>();	
+	private final List<SynchronizableFileType> types = new LinkedList<>();
+	private final Timer timer;
+	private final HaaSOutputHolder holder;
 
 	private long timeout;
 
 
 	public HaaSOutputObservableValueRegistry(HaaSOutputHolder holder, long timeout) {
-		super();
 		this.holder = holder;
 		timer = new Timer();
 		this.timeout = timeout;

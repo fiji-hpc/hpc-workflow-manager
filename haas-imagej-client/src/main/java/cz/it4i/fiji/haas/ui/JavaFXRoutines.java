@@ -22,8 +22,7 @@ public interface JavaFXRoutines {
 	}
 	
 	static void initRootAndController(String string, Object parent, boolean setController) {
-		FXMLLoader fxmlLoader = null;
-		fxmlLoader = new FXMLLoader(parent.getClass().getResource(string));
+		FXMLLoader fxmlLoader = new FXMLLoader(parent.getClass().getResource(string));
 		fxmlLoader.setControllerFactory(c -> {
 			try {
 				if (c.equals(parent.getClass())) {
