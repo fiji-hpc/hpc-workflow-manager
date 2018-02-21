@@ -25,6 +25,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -53,17 +55,17 @@ public class BenchmarkJobManager {
 
 	private JobManager jobManager;
 
-	public final class BenchmarkJob implements HaaSOutputHolder{
+	public final class BenchmarkJob implements HaaSOutputHolder {
 
-		private Job job;
-
+		private final Job job;
 		private final List<Task> tasks;
 		private final List<BenchmarkError> nonTaskSpecificErrors;
-
-		private SPIMComputationAccessor computationAccessor;
-
+		private final SPIMComputationAccessor computationAccessor;
 		private int processedOutputLength;
-
+		private JobState verifiedState;
+		private boolean verifiedStateProcessed;
+		private CompletableFuture<JobState> running;
+	
 		public BenchmarkJob(Job job) {
 			this.job = job;
 			tasks = new LinkedList<Task>();
@@ -71,16 +73,63 @@ public class BenchmarkJobManager {
 			computationAccessor = getComputationAccessor();
 		}
 
-		public void startJob(Progress progress) throws IOException {
+		public synchronized void startJob(Progress progress) throws IOException {
 			job.uploadFilesByName(Arrays.asList(Constants.CONFIG_YAML), progress);
 			String outputName = getOutputName(job.openLocalFile(Constants.CONFIG_YAML));
+			verifiedState = null;
+			verifiedStateProcessed = false;
+			running = null;
 			job.submit();
 			job.setProperty(SPIM_OUTPUT_FILENAME_PATTERN, outputName);
 			setDownloaded(false);
 		}
 
 		public JobState getState() {
-			return job.getState();
+			return getStateAsync(r->r.run()).getNow(JobState.Unknown);
+		}
+		
+		public synchronized CompletableFuture<JobState> getStateAsync(Executor executor) {
+			if(running != null) {
+				return running;
+			}
+			return running = doGetStateAsync(executor);
+		}
+
+		private synchronized CompletableFuture<JobState> doGetStateAsync(Executor executor) {
+			JobState state = job.getState();
+			if (state != JobState.Finished) {
+				return CompletableFuture.completedFuture(state);
+			} else if (verifiedState != null) {
+				return CompletableFuture.completedFuture(verifiedState);
+			}
+			verifiedStateProcessed = true;
+			return CompletableFuture.supplyAsync(()->{
+				try {
+					verifiedState = Stream
+							.concat(Arrays.asList(state).stream(), getTasks().stream()
+									.flatMap(task -> task.getComputations().stream()).map(tc -> tc.getState()))
+							.max(new JobStateComparator()).get();
+
+					if (verifiedState != JobState.Finished && verifiedState != JobState.Canceled) {
+						verifiedState = JobState.Failed;
+					}
+					synchronized(BenchmarkJob.this) {
+						//test whether job was restarted - it sets running to null
+						if(!verifiedStateProcessed) {
+							verifiedState = null;
+							return doGetStateAsync(r->r.run()).getNow(null);
+						} 
+						running = null;
+						return verifiedState;
+					}
+				} finally {
+					synchronized(BenchmarkJob.this) {
+						if(running != null) {
+							running = null;
+						}
+					}
+				}
+			}, executor);
 		}
 
 		public void downloadData(Progress progress) throws IOException {
@@ -183,6 +232,11 @@ public class BenchmarkJobManager {
 		@Override
 		public List<String> getActualOutput(List<SynchronizableFileType> content) {
 			return computationAccessor.getActualOutput(content);
+		}
+		
+		@Override
+		public String toString() {
+			return "" + getId();
 		}
 
 		private String getStringFromTimeSafely(Calendar time) {
@@ -573,4 +627,5 @@ public class BenchmarkJobManager {
 			}
 		};
 	}
+
 }

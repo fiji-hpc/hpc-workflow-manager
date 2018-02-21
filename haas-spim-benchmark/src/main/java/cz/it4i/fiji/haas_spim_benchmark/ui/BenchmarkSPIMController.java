@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -36,11 +37,12 @@ import cz.it4i.fiji.haas_spim_benchmark.core.Constants;
 import cz.it4i.fiji.haas_spim_benchmark.core.FXFrameExecutorService;
 import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
+import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.layout.BorderPane;
 import net.imagej.updater.util.Progress;
 
-public class BenchmarkSPIMController extends BorderPane implements CloseableControl,InitiableControl{
+public class BenchmarkSPIMController extends BorderPane implements CloseableControl, InitiableControl {
 
 	private static boolean notNullValue(ObservableValue<BenchmarkJob> j, Predicate<BenchmarkJob> pred) {
 		if (j == null || j.getValue() == null) {
@@ -59,6 +61,7 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 
 	private ExecutorService executorServiceUI;
 	private ExecutorService executorServiceWS;
+	private ExecutorService executorServiceJobState = Executors.newWorkStealingPool();
 	private Executor executorServiceFX = new FXFrameExecutorService();
 
 	private Timer timer;
@@ -70,9 +73,9 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 	public BenchmarkSPIMController(BenchmarkJobManager manager) {
 		this.manager = manager;
 		JavaFXRoutines.initRootAndController("BenchmarkSPIM.fxml", this);
-		
+
 	}
-	
+
 	public void init(Window root) {
 		this.root = root;
 		executorServiceWS = Executors.newSingleThreadExecutor();
@@ -87,11 +90,9 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 		initTable();
 		initMenu();
 		updateJobs();
-		
+
 	}
 
-	
-	
 	private void initMenu() {
 		TableViewContextMenu<ObservableValue<BenchmarkJob>> menu = new TableViewContextMenu<>(jobs);
 		menu.addItem("Create job", x -> executeWSCallAsync("Creating job", p -> manager.createJob()), j -> true);
@@ -128,14 +129,13 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 		menu.addItem("Explore errors", job -> job.getValue().exploreErrors(),
 				job -> notNullValue(job, j -> j.getState().equals(JobState.Failed)));
 
-		menu.addItem("Show output",
-				j -> {
-					new JobOutputView(root, executorServiceUI, j.getValue(),SynchronizableFileType.StandardErrorFile, job->job.getSnakemakeOutput(), Constants.HAAS_UPDATE_TIMEOUT);
-					new JobOutputView(root, executorServiceUI, j.getValue(),SynchronizableFileType.StandardOutputFile, job->job.getAnotherOutput(), Constants.HAAS_UPDATE_TIMEOUT);
-				},
-				job -> notNullValue(job,
-						j -> EnumSet.of(JobState.Failed, JobState.Finished, JobState.Running, JobState.Canceled)
-								.contains(j.getState())));
+		menu.addItem("Show output", j -> {
+			new JobOutputView(root, executorServiceUI, j.getValue(), SynchronizableFileType.StandardErrorFile,
+					job -> job.getSnakemakeOutput(), Constants.HAAS_UPDATE_TIMEOUT);
+			new JobOutputView(root, executorServiceUI, j.getValue(), SynchronizableFileType.StandardOutputFile,
+					job -> job.getAnotherOutput(), Constants.HAAS_UPDATE_TIMEOUT);
+		}, job -> notNullValue(job, j -> EnumSet
+				.of(JobState.Failed, JobState.Finished, JobState.Running, JobState.Canceled).contains(j.getState())));
 		menu.addItem("Open working directory", j -> open(j.getValue()), x -> notNullValue(x, j -> true));
 		menu.addItem("Update table", job -> updateJobs(), j -> true);
 
@@ -177,7 +177,7 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 	}
 
 	private void updateJobs(boolean showProgress) {
-		if(manager == null) {
+		if (manager == null) {
 			return;
 		}
 		executorServiceWS.execute(() -> {
@@ -186,21 +186,22 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 							WindowConstants.DO_NOTHING_ON_CLOSE)
 					: new DummyProgress();
 
-			registry.update();
 			try {
 				Collection<BenchmarkJob> jobs = manager.getJobs();
-				
-					Set<ObservableValue<BenchmarkJob>> actual = new HashSet<>(this.jobs.getItems());
-					for (BenchmarkJob bj : jobs) {
-					ObservableValue<BenchmarkJob> value = registry.addIfAbsent(bj);
-					executorServiceFX.execute(() -> {
+				//jobs.forEach(bj->bj.getStateAsync(executorServiceJobState));
+				Set<ObservableValue<BenchmarkJob>> actual = new HashSet<>(this.jobs.getItems());
+				for (BenchmarkJob bj : jobs) {
+					registry.addIfAbsent(bj);
+				}
+				registry.update();
+				executorServiceFX.execute(() -> {
+					for (ObservableValue<BenchmarkJob> value : registry.getAllItems()) {
 						if (!actual.contains(value)) {
 							this.jobs.getItems().add(value);
 						}
-					});
-				}
+					}
+				});
 				progress.done();
-				
 			} catch (IOException e) {
 				log.error(e.getMessage(), e);
 			}
@@ -209,9 +210,10 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 	}
 
 	private void initTable() {
-		registry = new ObservableBenchmarkJobRegistry(bj -> remove(bj));
+		registry = new ObservableBenchmarkJobRegistry(bj -> remove(bj),executorServiceJobState);
 		setCellValueFactory(0, j -> j.getId() + "");
-		setCellValueFactory(1, j -> j.getState().toString());
+		setCellValueFactoryCompletable(1,
+				j -> j.getStateAsync(executorServiceJobState).thenApply(state -> "" + state));
 		setCellValueFactory(2, j -> j.getCreationTime().toString());
 		setCellValueFactory(3, j -> j.getStartTime().toString());
 		setCellValueFactory(4, j -> j.getEndTime().toString());
@@ -227,6 +229,17 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 		JavaFXRoutines.setCellValueFactory(jobs, index, mapper);
 	}
 
+	@SuppressWarnings("unchecked")
+	private void setCellValueFactoryCompletable(int index, Function<BenchmarkJob, CompletableFuture<String>> mapper) {
+		JavaFXRoutines.setCellValueFactory(jobs, index, mapper);
+		((TableColumn<ObservableValue<BenchmarkJob>, CompletableFuture<String>>) jobs.getColumns().get(index))
+				.setCellFactory(
+						column -> new JavaFXRoutines.TableCellAdapter<ObservableValue<BenchmarkJob>, CompletableFuture<String>>(
+								new JavaFXRoutines.FutureValueUpdater<ObservableValue<BenchmarkJob>, String, CompletableFuture<String>>(
+										new JavaFXRoutines.StringValueUpdater<ObservableValue<BenchmarkJob>>(),
+										executorServiceFX)));
+	}
+
 	private interface P_JobAction {
 		public void doAction(Progress p) throws IOException;
 	}
@@ -234,6 +247,7 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 	public void close() {
 		executorServiceUI.shutdown();
 		executorServiceWS.shutdown();
+		executorServiceJobState.shutdown();
 		timer.cancel();
 	}
 }

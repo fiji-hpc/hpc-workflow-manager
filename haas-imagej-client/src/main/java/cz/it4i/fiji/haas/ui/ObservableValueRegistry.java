@@ -1,10 +1,12 @@
 package cz.it4i.fiji.haas.ui;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import cz.it4i.fiji.haas.ui.UpdatableObservableValue.UpdateStatus;
 import javafx.beans.value.ObservableValue;
@@ -36,6 +38,10 @@ public class ObservableValueRegistry<T> {
 	
 	public UpdatableObservableValue<T> get(T value) {
 		return map.get(value);
+	}
+	
+	public Collection<ObservableValue<T>> getAllItems() {
+		return map.values().stream().map(val->(ObservableValue<T>)val).collect(Collectors.toList());
 	}
 	
 	protected ObservableValue<T> remove(T value) {
