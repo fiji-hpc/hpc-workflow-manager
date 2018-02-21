@@ -8,9 +8,45 @@ import java.util.Scanner;
 
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
+import io.scif.jj2000.j2k.NotImplementedError;
 
 public class TaskComputation {
 
+	public static class Log {
+		final private String name;
+		final private String content;
+		public Log(String name, String content) {
+			this.name = name;
+			this.content = content;
+		}
+		
+		public String getName() {
+			return name;
+		}
+		
+		public String getContent() {
+			return content;
+		}
+	}
+	
+	public static class File {
+		final private String name;
+		final private long size;
+		
+		public File(String name, long size) {
+			this.name = name;
+			this.size = size;
+		}
+		
+		public String getName() {
+			return name;
+		}
+		
+		public long getSize() {
+			return size;
+		}
+	}
+	
 	private final SPIMComputationAccessor computationAccessor;
 	private final String taskDescription;
 	private final int timepoint;
@@ -71,6 +107,10 @@ public class TaskComputation {
 	 */
 	public Collection<BenchmarkError> getErrors() {
 		return errors;
+	}
+	
+	public Collection<Log> getLogs() {
+		throw new NotImplementedError();
 	}
 
 	/**
