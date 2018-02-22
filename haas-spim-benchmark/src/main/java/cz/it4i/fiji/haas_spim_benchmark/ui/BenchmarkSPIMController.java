@@ -106,7 +106,7 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 			registry.get(job.getValue()).update();
 		}), job -> notNullValue(job, j -> j.getState() == JobState.Running));
 
-		menu.addItem("Show details", job -> {
+		menu.addItem("Execution details", job -> {
 			try {
 				new JobDetailWindow(root, job.getValue()).setVisible(true);
 			} catch (IOException e) {
