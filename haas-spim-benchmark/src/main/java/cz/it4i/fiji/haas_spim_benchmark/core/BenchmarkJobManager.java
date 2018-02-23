@@ -65,7 +65,7 @@ public class BenchmarkJobManager {
 		private JobState verifiedState;
 		private boolean verifiedStateProcessed;
 		private CompletableFuture<JobState> running;
-	
+
 		public BenchmarkJob(Job job) {
 			this.job = job;
 			tasks = new LinkedList<Task>();
@@ -85,18 +85,21 @@ public class BenchmarkJobManager {
 		}
 
 		public JobState getState() {
-			return getStateAsync(r->r.run()).getNow(JobState.Unknown);
+			return getStateAsync(r -> r.run()).getNow(JobState.Unknown);
 		}
-		
+
 		public synchronized CompletableFuture<JobState> getStateAsync(Executor executor) {
-			if(running != null) {
+			if (running != null) {
 				return running;
 			}
-			return running = doGetStateAsync(executor);
+			CompletableFuture<JobState> result = doGetStateAsync(executor);
+			if (!result.isCancelled() && !result.isCompletedExceptionally() && !result.isDone()) {
+				running = result;
+			}
+			return result;
 		}
 
 		private synchronized CompletableFuture<JobState> doGetStateAsync(Executor executor) {
-			job.updateInfo();
 			JobState state = job.getState();
 			if (state != JobState.Finished) {
 				return CompletableFuture.completedFuture(state);
@@ -104,7 +107,7 @@ public class BenchmarkJobManager {
 				return CompletableFuture.completedFuture(verifiedState);
 			}
 			verifiedStateProcessed = true;
-			return CompletableFuture.supplyAsync(()->{
+			return CompletableFuture.supplyAsync(() -> {
 				try {
 					verifiedState = Stream
 							.concat(Arrays.asList(state).stream(), getTasks().stream()
@@ -114,18 +117,18 @@ public class BenchmarkJobManager {
 					if (verifiedState != JobState.Finished && verifiedState != JobState.Canceled) {
 						verifiedState = JobState.Failed;
 					}
-					synchronized(BenchmarkJob.this) {
-						//test whether job was restarted - it sets running to null
-						if(!verifiedStateProcessed) {
+					synchronized (BenchmarkJob.this) {
+						// test whether job was restarted - it sets running to null
+						if (!verifiedStateProcessed) {
 							verifiedState = null;
-							return doGetStateAsync(r->r.run()).getNow(null);
-						} 
+							return doGetStateAsync(r -> r.run()).getNow(null);
+						}
 						running = null;
 						return verifiedState;
 					}
 				} finally {
-					synchronized(BenchmarkJob.this) {
-						if(running != null) {
+					synchronized (BenchmarkJob.this) {
+						if (running != null) {
 							running = null;
 						}
 					}
@@ -234,7 +237,7 @@ public class BenchmarkJobManager {
 		public List<String> getActualOutput(List<SynchronizableFileType> content) {
 			return computationAccessor.getActualOutput(content);
 		}
-		
+
 		@Override
 		public String toString() {
 			return "" + getId();

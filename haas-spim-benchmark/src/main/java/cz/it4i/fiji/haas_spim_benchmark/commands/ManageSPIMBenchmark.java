@@ -17,6 +17,7 @@ import org.scijava.widget.TextWidget;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import cz.it4i.fiji.haas_spim_benchmark.core.Constants;
 import cz.it4i.fiji.haas_spim_benchmark.ui.BenchmarkSPIMWindow;
 import net.imagej.ImageJ;
 
@@ -43,8 +44,6 @@ public class ManageSPIMBenchmark implements Command {
 	@Parameter(style = TextWidget.PASSWORD_STYLE)
 	private String password;
 	
-	@Parameter(style = TextWidget.FIELD_STYLE)
-	private String phone;
 	
 	@Parameter(style = TextWidget.FIELD_STYLE)
 	private String email;
@@ -56,7 +55,7 @@ public class ManageSPIMBenchmark implements Command {
 	public void run() {
 		try {
 			JDialog dialog = 
-					new BenchmarkSPIMWindow(null, new BenchmarkSPIMParametersImpl(userName, password, phone,
+					new BenchmarkSPIMWindow(null, new BenchmarkSPIMParametersImpl(userName, password, Constants.PHONE,
 							email, Paths.get(workingDirectory.getPath())));
 			dialog.setTitle("SPIM workflow computation manager");
 			dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
