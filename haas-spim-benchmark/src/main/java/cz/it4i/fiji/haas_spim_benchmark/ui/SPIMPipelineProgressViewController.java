@@ -38,6 +38,7 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 		taskExecutionState2Color.put(JobState.Running, Color.YELLOW);
 		taskExecutionState2Color.put(JobState.Finished, Color.GREEN);
 		taskExecutionState2Color.put(JobState.Failed, Color.RED);
+		taskExecutionState2Color.put(JobState.Queued, Color.AZURE);
 		taskExecutionState2Color.put(JobState.Unknown, Color.GRAY);
 	}
 
