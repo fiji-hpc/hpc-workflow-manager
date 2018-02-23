@@ -1,7 +1,7 @@
 package cz.it4i.fiji.haas.ui;
 
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -29,7 +29,7 @@ public class ObservableValueRegistry<T> {
 		
 	}
 
-	private Map<T,UpdatableObservableValue<T>> map = new HashMap<>(); 
+	private Map<T,UpdatableObservableValue<T>> map = new LinkedHashMap<>(); 
 	
 	public  ObservableValue<T> addIfAbsent(T value) {
 		UpdatableObservableValue<T> uov = map.computeIfAbsent(value, v-> new UpdatableObservableValue<T>(v, updateFunction, stateProvider));

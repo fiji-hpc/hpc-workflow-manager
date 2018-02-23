@@ -3,9 +3,10 @@ package cz.it4i.fiji.haas_spim_benchmark.ui;
 import java.awt.Desktop;
 import java.awt.Window;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -177,8 +178,8 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 					: new DummyProgress();
 
 			try {
-				Collection<BenchmarkJob> jobs = manager.getJobs();
-				//jobs.forEach(bj->bj.getStateAsync(executorServiceJobState));
+				List<BenchmarkJob> jobs = new LinkedList<>(manager.getJobs());
+				jobs.sort((bj1, bj2) -> (int) (bj1.getId() - bj2.getId()));
 				Set<ObservableValue<BenchmarkJob>> actual = new HashSet<>(this.jobs.getItems());
 				for (BenchmarkJob bj : jobs) {
 					registry.addIfAbsent(bj);
@@ -200,13 +201,13 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 	}
 
 	private void initTable() {
-		registry = new ObservableBenchmarkJobRegistry(bj -> remove(bj),executorServiceJobState);
+		registry = new ObservableBenchmarkJobRegistry(bj -> remove(bj), executorServiceJobState);
 		setCellValueFactory(0, j -> j.getId() + "");
-		setCellValueFactoryCompletable(1,
-				j -> j.getStateAsync(executorServiceJobState).thenApply(state -> "" + state));
+		setCellValueFactoryCompletable(1, j -> j.getStateAsync(executorServiceJobState).thenApply(state -> "" + state));
 		setCellValueFactory(2, j -> j.getCreationTime().toString());
 		setCellValueFactory(3, j -> j.getStartTime().toString());
 		setCellValueFactory(4, j -> j.getEndTime().toString());
+		// jobs.getSortOrder().add(jobs.getColumns().get(0));
 	}
 
 	private void remove(BenchmarkJob bj) {
