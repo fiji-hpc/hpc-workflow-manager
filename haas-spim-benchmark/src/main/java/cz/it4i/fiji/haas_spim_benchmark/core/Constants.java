@@ -4,6 +4,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public interface Constants {
+	String PHONE = "123456789";
 	int HAAS_UPDATE_TIMEOUT = 30000;
 	short UI_TO_HAAS_FREQUENCY_UPDATE_RATIO = 10;
 	String HAAS_JOB_NAME = "HaaSSPIMBenchmark";
@@ -50,4 +51,5 @@ public interface Constants {
 	
 	String STATISTICS_SUMMARY_FILENAME = "summary.csv";
 	String SUMMARY_FILE_HEADER = "Task;AvgMemoryUsage;AvgWallTime;MaxWallTime;TotalTime;JobCount";
+	
 }

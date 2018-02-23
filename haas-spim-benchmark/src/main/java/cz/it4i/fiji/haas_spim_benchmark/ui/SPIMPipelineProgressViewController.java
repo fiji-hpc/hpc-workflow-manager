@@ -32,18 +32,13 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 	private static final String EMPTY_VALUE = "\u2007\u2007\u2007";
 
 	private static final int PREFERRED_WIDTH = 900;
-
-	protected static final String RUNNING_STATE_COMPUTATION = Color.YELLOW.toString();
-
-	protected static final String FINISHED_STATE_COMPUTATION = null;
-
-	protected static final String UNKNOWN_STATE_COMPUTATION = Color.GRAY.toString();
-
+	
 	private static final Map<JobState, Color> taskExecutionState2Color = new HashMap<>();
 	static {
 		taskExecutionState2Color.put(JobState.Running, Color.YELLOW);
 		taskExecutionState2Color.put(JobState.Finished, Color.GREEN);
 		taskExecutionState2Color.put(JobState.Failed, Color.RED);
+		taskExecutionState2Color.put(JobState.Queued, Color.AZURE);
 		taskExecutionState2Color.put(JobState.Unknown, Color.GRAY);
 	}
 

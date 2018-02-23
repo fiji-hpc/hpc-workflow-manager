@@ -1,6 +1,5 @@
 package cz.it4i.fiji.haas_spim_benchmark.commands;
 
-import java.awt.Frame;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -12,14 +11,13 @@ import org.scijava.Context;
 import org.scijava.command.Command;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
-import org.scijava.ui.ApplicationFrame;
 import org.scijava.ui.UIService;
 import org.scijava.widget.FileWidget;
 import org.scijava.widget.TextWidget;
-import org.scijava.widget.UIComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import cz.it4i.fiji.haas_spim_benchmark.core.Constants;
 import cz.it4i.fiji.haas_spim_benchmark.ui.BenchmarkSPIMWindow;
 import net.imagej.ImageJ;
 
@@ -40,27 +38,25 @@ public class ManageSPIMBenchmark implements Command {
 	@Parameter
 	private Context context;
 	
-	@Parameter(style = TextWidget.FIELD_STYLE)
+	@Parameter(style = TextWidget.FIELD_STYLE, label = "User name")
 	private String userName;
 	
 	@Parameter(style = TextWidget.PASSWORD_STYLE)
 	private String password;
 	
-	@Parameter(style = TextWidget.FIELD_STYLE)
-	private String phone;
 	
 	@Parameter(style = TextWidget.FIELD_STYLE)
 	private String email;
 
-	@Parameter(label = "Work directory", persist = true, style = FileWidget.DIRECTORY_STYLE)
-	private File workDirectory;
+	@Parameter(label = "Working directory", persist = true, style = FileWidget.DIRECTORY_STYLE)
+	private File workingDirectory;
 	
 	@Override
 	public void run() {
 		try {
 			JDialog dialog = 
-					new BenchmarkSPIMWindow(null, new BenchmarkSPIMParametersImpl(userName, password, phone,
-							email, Paths.get(workDirectory.getPath())));
+					new BenchmarkSPIMWindow(null, new BenchmarkSPIMParametersImpl(userName, password, Constants.PHONE,
+							email, Paths.get(workingDirectory.getPath())));
 			dialog.setTitle("SPIM workflow computation manager");
 			dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 			dialog.setVisible(true);
@@ -69,19 +65,6 @@ public class ManageSPIMBenchmark implements Command {
 			log.error(e.getMessage(), e);
 		}
 
-	}
-
-	private Frame getFrame() {
-		ApplicationFrame af = uiService.getDefaultUI().getApplicationFrame();
-		if (af instanceof Frame) {
-			return (Frame) af;
-		} else if (af instanceof UIComponent) {
-			Object component = ((UIComponent<?>) af).getComponent();
-			if (component instanceof Frame) {
-				return (Frame) component;
-			}
-		}
-		return null;
 	}
 
 	public static void main(final String... args) {

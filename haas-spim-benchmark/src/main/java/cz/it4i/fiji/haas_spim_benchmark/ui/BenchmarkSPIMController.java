@@ -3,9 +3,10 @@ package cz.it4i.fiji.haas_spim_benchmark.ui;
 import java.awt.Desktop;
 import java.awt.Window;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -30,7 +31,6 @@ import cz.it4i.fiji.haas.ui.ModalDialogs;
 import cz.it4i.fiji.haas.ui.ProgressDialog;
 import cz.it4i.fiji.haas.ui.TableViewContextMenu;
 import cz.it4i.fiji.haas_java_client.JobState;
-import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
 import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager;
 import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.BenchmarkJob;
 import cz.it4i.fiji.haas_spim_benchmark.core.Constants;
@@ -107,7 +107,7 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 			registry.get(job.getValue()).update();
 		}), job -> notNullValue(job, j -> j.getState() == JobState.Running));
 
-		menu.addItem("Show details", job -> {
+		menu.addItem("Execution details", job -> {
 			try {
 				new JobDetailWindow(root, job.getValue()).setVisible(true);
 			} catch (IOException e) {
@@ -129,16 +129,7 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 		menu.addItem("Explore errors", job -> job.getValue().exploreErrors(),
 				job -> notNullValue(job, j -> j.getState().equals(JobState.Failed)));
 
-		menu.addItem("Show output", j -> {
-			new JobOutputView(root, executorServiceUI, j.getValue(), SynchronizableFileType.StandardErrorFile,
-					job -> job.getSnakemakeOutput(), Constants.HAAS_UPDATE_TIMEOUT);
-			new JobOutputView(root, executorServiceUI, j.getValue(), SynchronizableFileType.StandardOutputFile,
-					job -> job.getAnotherOutput(), Constants.HAAS_UPDATE_TIMEOUT);
-		}, job -> notNullValue(job, j -> EnumSet
-				.of(JobState.Failed, JobState.Finished, JobState.Running, JobState.Canceled).contains(j.getState())));
 		menu.addItem("Open working directory", j -> open(j.getValue()), x -> notNullValue(x, j -> true));
-		menu.addItem("Update table", job -> updateJobs(), j -> true);
-
 	}
 
 	private void open(BenchmarkJob j) {
@@ -187,8 +178,8 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 					: new DummyProgress();
 
 			try {
-				Collection<BenchmarkJob> jobs = manager.getJobs();
-				//jobs.forEach(bj->bj.getStateAsync(executorServiceJobState));
+				List<BenchmarkJob> jobs = new LinkedList<>(manager.getJobs());
+				jobs.sort((bj1, bj2) -> (int) (bj1.getId() - bj2.getId()));
 				Set<ObservableValue<BenchmarkJob>> actual = new HashSet<>(this.jobs.getItems());
 				for (BenchmarkJob bj : jobs) {
 					registry.addIfAbsent(bj);
@@ -210,13 +201,13 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 	}
 
 	private void initTable() {
-		registry = new ObservableBenchmarkJobRegistry(bj -> remove(bj),executorServiceJobState);
+		registry = new ObservableBenchmarkJobRegistry(bj -> remove(bj), executorServiceJobState);
 		setCellValueFactory(0, j -> j.getId() + "");
-		setCellValueFactoryCompletable(1,
-				j -> j.getStateAsync(executorServiceJobState).thenApply(state -> "" + state));
+		setCellValueFactoryCompletable(1, j -> j.getStateAsync(executorServiceJobState).thenApply(state -> "" + state));
 		setCellValueFactory(2, j -> j.getCreationTime().toString());
 		setCellValueFactory(3, j -> j.getStartTime().toString());
 		setCellValueFactory(4, j -> j.getEndTime().toString());
+		// jobs.getSortOrder().add(jobs.getColumns().get(0));
 	}
 
 	private void remove(BenchmarkJob bj) {

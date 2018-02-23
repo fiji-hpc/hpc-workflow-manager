@@ -1,22 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
-<?import javafx.geometry.Insets?>
 
-<fx:root type="BorderPane" xmlns="http://javafx.com/javafx/8.0.65"
-	xmlns:fx="http://javafx.com/fxml/1"
-	fx:controller="cz.it4i.fiji.haas_spim_benchmark.ui.SPIMPipelineProgressViewController">
+<fx:root type="BorderPane" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="cz.it4i.fiji.haas_spim_benchmark.ui.SPIMPipelineProgressViewController">
 	<center>
 
 		<HBox>
 			<children>
 
-				<TableView fx:id="tasks"  HBox.hgrow="ALWAYS">
+				<TableView fx:id="tasks" HBox.hgrow="ALWAYS">
 					<columns>
-						<TableColumn prefWidth="101.0" text="Task name" />
+						<TableColumn prefWidth="179.0" text="Task name" />
 					</columns>
 				</TableView>
 
