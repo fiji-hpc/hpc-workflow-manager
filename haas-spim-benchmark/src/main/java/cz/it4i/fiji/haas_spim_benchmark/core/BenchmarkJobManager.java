@@ -96,6 +96,7 @@ public class BenchmarkJobManager {
 		}
 
 		private synchronized CompletableFuture<JobState> doGetStateAsync(Executor executor) {
+			job.updateInfo();
 			JobState state = job.getState();
 			if (state != JobState.Finished) {
 				return CompletableFuture.completedFuture(state);

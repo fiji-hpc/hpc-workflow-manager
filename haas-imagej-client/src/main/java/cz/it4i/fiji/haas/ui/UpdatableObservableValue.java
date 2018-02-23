@@ -2,10 +2,16 @@ package cz.it4i.fiji.haas.ui;
 
 import java.util.function.Function;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javafx.beans.value.ObservableValueBase;
 
 public class UpdatableObservableValue<T> extends ObservableValueBase<T> {
 
+	@SuppressWarnings("unused")
+	private static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas.ui.UpdatableObservableValue.class);
+	
 	public enum UpdateStatus {
 		Deleted, Updated, NotUpdated
 	}
