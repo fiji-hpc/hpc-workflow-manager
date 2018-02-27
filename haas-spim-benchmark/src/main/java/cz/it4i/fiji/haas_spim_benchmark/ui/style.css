@@ -1,0 +1,7 @@
+.table-row-cell {
+	-fx-table-cell-border-color: #909090;
+}
+
+.bordered-class {
+	-fx-background-insets:1 1 1 1;
+}

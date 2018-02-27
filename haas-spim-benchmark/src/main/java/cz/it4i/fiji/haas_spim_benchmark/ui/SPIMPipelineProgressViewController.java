@@ -32,13 +32,13 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 	private static final String EMPTY_VALUE = "\u2007\u2007\u2007";
 
 	private static final int PREFERRED_WIDTH = 900;
-	
+
 	private static final Map<JobState, Color> taskExecutionState2Color = new HashMap<>();
 	static {
-		taskExecutionState2Color.put(JobState.Running, Color.YELLOW);
-		taskExecutionState2Color.put(JobState.Finished, Color.GREEN);
-		taskExecutionState2Color.put(JobState.Failed, Color.RED);
-		taskExecutionState2Color.put(JobState.Queued, Color.AZURE);
+		taskExecutionState2Color.put(JobState.Running, Color.rgb(0xF2, 0xD5, 0x39));
+		taskExecutionState2Color.put(JobState.Finished, Color.rgb(0x41, 0xB2, 0x80));
+		taskExecutionState2Color.put(JobState.Failed, Color.rgb(0xFF, 0x51, 0x3D));
+		taskExecutionState2Color.put(JobState.Queued, Color.rgb(0x30, 0xA2, 0xCC));
 		taskExecutionState2Color.put(JobState.Unknown, Color.GRAY);
 	}
 
@@ -157,6 +157,7 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 						cell.setStyle("");
 					} else {
 						cell.setText(EMPTY_VALUE);
+						cell.getStyleClass().add("bordered-class");
 						cell.setStyle("-fx-background-color: " + getColorTaskExecState(val.getState()));
 					}
 				}));

@@ -12,7 +12,7 @@
 		<HBox>
 			<children>
 
-				<TableView fx:id="tasks" HBox.hgrow="ALWAYS">
+				<TableView fx:id="tasks" stylesheets="@style.css" HBox.hgrow="ALWAYS">
 					<columns>
 						<TableColumn prefWidth="179.0" text="Task name" />
 					</columns>
