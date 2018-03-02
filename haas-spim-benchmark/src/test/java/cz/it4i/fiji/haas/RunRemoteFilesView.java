@@ -16,6 +16,7 @@ public class RunRemoteFilesView {
 		List<ObservableValue<RemoteFileInfo>> files = new LinkedList<>();
 		add(files, "Some file.txt", 100025456);
 		
+		@SuppressWarnings("serial")
 		class Window extends cz.it4i.fiji.haas.ui.FXFrame<RemoteFilesInfoControl>{
 			public Window() {
 				super(()-> new RemoteFilesInfoControl(files));
@@ -29,7 +30,7 @@ public class RunRemoteFilesView {
 		RemoteFileInfo file = new RemoteFileInfo() {
 			
 			@Override
-			public long getSize() {
+			public Long getSize() {
 				return size;
 			}
 			

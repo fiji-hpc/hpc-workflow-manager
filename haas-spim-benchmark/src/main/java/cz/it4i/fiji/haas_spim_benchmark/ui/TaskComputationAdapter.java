@@ -11,7 +11,9 @@ import cz.it4i.fiji.haas_spim_benchmark.core.Constants;
 import cz.it4i.fiji.haas_spim_benchmark.core.TaskComputation;
 import javafx.beans.value.ObservableValue;
 import javafx.beans.value.ObservableValueBase;
-
+//TASK: Dodělat naplnění logs, aktualizace a getXXX
+//      Pokračovat zapojením do UI - akce v SPIMPipelineProgressViewWindow 
+//      pro zobrazení TaskComputation
 public class TaskComputationAdapter implements Closeable {
 
 	private final TaskComputation computation;
