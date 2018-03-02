@@ -6,7 +6,7 @@ public interface RemoteFileInfo {
 	 * 
 	 * @return size of file or -1 in case of absence
 	 */
-	long getSize();
+	Long getSize();
 	
 	String getName();
 }

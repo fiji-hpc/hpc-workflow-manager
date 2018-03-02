@@ -251,6 +251,13 @@ public class Job {
 		haasClientSupplier.get().cancelJob(jobId);
 	}
 
+	public List<Long> getFileSizes(List<String> names) {
+		
+		try (HaaSFileTransfer transfer = haasClientSupplier.get().startFileTransfer(getId(), new DummyProgressNotifier())) {
+			return transfer.obtainSize(names);
+		}
+	}
+
 	
 
 	

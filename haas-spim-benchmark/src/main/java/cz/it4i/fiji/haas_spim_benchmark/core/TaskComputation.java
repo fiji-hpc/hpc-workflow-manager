@@ -4,7 +4,13 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
+import java.util.stream.Collectors;
+
+import org.apache.commons.math3.util.Pair;
+
+import com.google.common.collect.Streams;
 
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
@@ -15,38 +21,39 @@ public class TaskComputation {
 	public static class Log {
 		final private String name;
 		final private String content;
+
 		public Log(String name, String content) {
 			this.name = name;
 			this.content = content;
 		}
-		
+
 		public String getName() {
 			return name;
 		}
-		
+
 		public String getContent() {
 			return content;
 		}
 	}
-	
+
 	public static class File {
 		final private String name;
 		final private long size;
-		
+
 		public File(String name, long size) {
 			this.name = name;
 			this.size = size;
 		}
-		
+
 		public String getName() {
 			return name;
 		}
-		
+
 		public long getSize() {
 			return size;
 		}
 	}
-	
+
 	private final SPIMComputationAccessor computationAccessor;
 	private final String taskDescription;
 	private final int timepoint;
@@ -61,7 +68,7 @@ public class TaskComputation {
 	private Long id;
 
 	private final List<BenchmarkError> errors;
-	
+
 	/**
 	 * Creates a TaskComputation object. At the time of creation, the job parameters
 	 * are not populated
@@ -97,18 +104,17 @@ public class TaskComputation {
 		return id;
 	}
 
-	// TODO: Method stub
 	public void update() {
 
 	}
-	
+
 	/**
 	 * @return computations errors
 	 */
 	public Collection<BenchmarkError> getErrors() {
 		return errors;
 	}
-	
+
 	public Collection<Log> getLogs() {
 		throw new NotImplementedError();
 	}
@@ -137,6 +143,17 @@ public class TaskComputation {
 		updateState();
 
 		return true;
+	}
+
+	public Collection<String> getOutputs() {
+		return outputs;
+	}
+
+	public Map<String, Long> getOutFileSizes() {
+		List<String> names = new LinkedList<>(outputs);
+		List<Long> sizes = computationAccessor.getFileSizes(names);
+		return Streams.zip(names.stream(), sizes.stream(), (name, size) -> new Pair<>(name, size))
+				.collect(Collectors.toMap(p -> p.getFirst(), p -> p.getSecond()));
 	}
 
 	private void updateState() {
@@ -205,10 +222,6 @@ public class TaskComputation {
 
 	private String getSnakemakeOutput() {
 		return computationAccessor.getActualOutput(Arrays.asList(SynchronizableFileType.StandardErrorFile)).get(0);
-	}
-
-	public Collection<String> getOutputs() {
-		return outputs;
 	}
 
 }

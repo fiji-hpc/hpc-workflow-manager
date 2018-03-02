@@ -369,6 +369,11 @@ public class BenchmarkJobManager {
 
 				public java.util.Collection<String> getChangedFiles() {
 					return job.getChangedFiles();
+				}
+
+				@Override
+				public List<Long> getFileSizes(List<String> names) {
+					return job.getFileSizes(names);
 				};
 			};
 
