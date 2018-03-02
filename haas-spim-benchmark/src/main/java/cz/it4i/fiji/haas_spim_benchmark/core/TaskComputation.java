@@ -207,4 +207,8 @@ public class TaskComputation {
 		return computationAccessor.getActualOutput(Arrays.asList(SynchronizableFileType.StandardErrorFile)).get(0);
 	}
 
+	public Collection<String> getOutputs() {
+		return outputs;
+	}
+
 }

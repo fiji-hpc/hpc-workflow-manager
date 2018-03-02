@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+
+<fx:root type="BorderPane" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="cz.it4i.fiji.haas_spim_benchmark.ui.RemoteFilesInfoControl">
+	<center>
+
+		<HBox>
+			<children>
+
+				<TableView fx:id="files" HBox.hgrow="ALWAYS">
+					<columns>
+						<TableColumn prefWidth="450.0" text="File name" />
+						<TableColumn minWidth="150.0" prefWidth="0.0" text="Size of file" />
+					</columns>
+				</TableView>
+			</children>
+			<padding>
+				<Insets bottom="1.0" left="1.0" right="1.0" top="1.0" />
+			</padding>
+		</HBox>
+	</center>
+
+</fx:root>
