@@ -16,7 +16,6 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Function;
-import java.util.function.Predicate;
 
 import javax.swing.WindowConstants;
 
@@ -44,15 +43,7 @@ import net.imagej.updater.util.Progress;
 
 public class BenchmarkSPIMController extends BorderPane implements CloseableControl, InitiableControl {
 
-	private static boolean notNullValue(ObservableValue<BenchmarkJob> j, Predicate<BenchmarkJob> pred) {
-		if (j == null || j.getValue() == null) {
-			return false;
-		} else {
-			return pred.test(j.getValue());
-		}
-	}
-
-	@FXML
+		@FXML
 	private TableView<ObservableValue<BenchmarkJob>> jobs;
 
 	private BenchmarkJobManager manager;
@@ -99,37 +90,36 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 		menu.addItem("Start job", job -> executeWSCallAsync("Starting job", p -> {
 			job.getValue().startJob(p);
 			registry.get(job.getValue()).update();
-		}), job -> notNullValue(job, j -> j.getState() == JobState.Configuring || j.getState() == JobState.Finished
+		}), job -> JavaFXRoutines.notNullValue(job, j -> j.getState() == JobState.Configuring || j.getState() == JobState.Finished
 				|| j.getState() == JobState.Failed));
 
 		menu.addItem("Cancel job", job -> executeWSCallAsync("Canceling job", p -> {
 			job.getValue().cancelJob();
 			registry.get(job.getValue()).update();
-		}), job -> notNullValue(job, j -> j.getState() == JobState.Running));
+		}), job -> JavaFXRoutines.notNullValue(job, j -> j.getState() == JobState.Running));
 
 		menu.addItem("Execution details", job -> {
 			try {
 				new JobDetailWindow(root, job.getValue()).setVisible(true);
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				log.error(e.getMessage(), e);
 			}
-		}, job -> notNullValue(job, j -> j.getState() == JobState.Running || j.getState() == JobState.Finished
+		}, job -> JavaFXRoutines.notNullValue(job, j -> j.getState() == JobState.Running || j.getState() == JobState.Finished
 				|| j.getState() == JobState.Failed || j.getState() == JobState.Canceled));
 
 		menu.addItem("Download result",
 				job -> executeWSCallAsync("Downloading data", p -> job.getValue().downloadData(p)),
-				job -> notNullValue(job,
+				job -> JavaFXRoutines.notNullValue(job,
 						j -> EnumSet.of(JobState.Failed, JobState.Finished, JobState.Canceled).contains(j.getState())
 								&& !j.downloaded()));
 		menu.addItem("Download statistics",
 				job -> executeWSCallAsync("Downloading data", p -> job.getValue().downloadStatistics(p)),
-				job -> notNullValue(job, j -> j.getState() == JobState.Finished));
+				job -> JavaFXRoutines.notNullValue(job, j -> j.getState() == JobState.Finished));
 
 		menu.addItem("Explore errors", job -> job.getValue().exploreErrors(),
-				job -> notNullValue(job, j -> j.getState().equals(JobState.Failed)));
+				job -> JavaFXRoutines.notNullValue(job, j -> j.getState().equals(JobState.Failed)));
 
-		menu.addItem("Open working directory", j -> open(j.getValue()), x -> notNullValue(x, j -> true));
+		menu.addItem("Open working directory", j -> open(j.getValue()), x -> JavaFXRoutines.notNullValue(x, j -> true));
 	}
 
 	private void open(BenchmarkJob j) {

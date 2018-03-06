@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.function.Function;
 
 import org.apache.commons.io.FileUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import cz.it4i.fiji.haas.ui.CloseableControl;
 import cz.it4i.fiji.haas.ui.InitiableControl;
@@ -17,6 +19,10 @@ import javafx.scene.layout.BorderPane;
 public class RemoteFilesInfoControl extends BorderPane implements CloseableControl, InitiableControl {
 
 	@SuppressWarnings("unused")
+	private static Logger log = LoggerFactory
+			.getLogger(cz.it4i.fiji.haas_spim_benchmark.ui.RemoteFilesInfoControl.class);
+	
+	@SuppressWarnings("unused")
 	private Window root;
 
 	@FXML
@@ -25,7 +31,6 @@ public class RemoteFilesInfoControl extends BorderPane implements CloseableContr
 	public RemoteFilesInfoControl(List<ObservableValue< RemoteFileInfo>> files) {
 		JavaFXRoutines.initRootAndController("RemoteFilesInfo.fxml", this);
 		files.forEach(file->this.files.getItems().add(file));
-		
 	}
 	
 	@Override
@@ -36,7 +41,6 @@ public class RemoteFilesInfoControl extends BorderPane implements CloseableContr
 
 	@Override
 	public void close() {
-		// TODO Auto-generated method stub
 
 	}
 

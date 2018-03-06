@@ -11,6 +11,7 @@ import cz.it4i.fiji.haas_spim_benchmark.core.Constants;
 import cz.it4i.fiji.haas_spim_benchmark.core.TaskComputation;
 import javafx.beans.value.ObservableValue;
 import javafx.beans.value.ObservableValueBase;
+
 //TASK: Dodělat naplnění logs, aktualizace a getXXX
 //      Pokračovat zapojením do UI - akce v SPIMPipelineProgressViewWindow 
 //      pro zobrazení TaskComputation
@@ -18,8 +19,9 @@ public class TaskComputationAdapter implements Closeable {
 
 	private final TaskComputation computation;
 
-	private final List<ObservableOutputFile> outputs = new LinkedList<>();
+	private final List<ObservableValue<RemoteFileInfo>> outputs = new LinkedList<>();
 
+	@SuppressWarnings("unused")
 	private final List<ObservableValue<String>> logs = new LinkedList<>();
 
 	private final Timer timer;
@@ -32,13 +34,17 @@ public class TaskComputationAdapter implements Closeable {
 		timer.scheduleAtFixedRate(new P_TimerTask(), Constants.HAAS_TIMEOUT, Constants.HAAS_TIMEOUT);
 	}
 
-	private void addOutputFile(String outputFile, Long size) {
-		outputs.add(new ObservableOutputFile(outputFile, size));
-	}
-
 	@Override
 	public void close() {
 		timer.cancel();
+	}
+
+	public List<ObservableValue<RemoteFileInfo>> getOutputs() {
+		return outputs;
+	}
+
+	private void addOutputFile(String outputFile, Long size) {
+		outputs.add(new ObservableOutputFile(outputFile, size));
 	}
 
 	public static class Log {
@@ -51,7 +57,7 @@ public class TaskComputationAdapter implements Closeable {
 		}
 	}
 
-	private class ObservableOutputFile extends ObservableValueBase<RemoteFileInfo> {
+	public class ObservableOutputFile extends ObservableValueBase<RemoteFileInfo> {
 
 		private final String name;
 
@@ -94,7 +100,7 @@ public class TaskComputationAdapter implements Closeable {
 		@Override
 		public void run() {
 			Map<String, Long> sizes = computation.getOutFileSizes();
-			outputs.forEach(value -> value.setSize(sizes.get(value.getValue().getName())));
+			outputs.forEach(value -> ((ObservableOutputFile) value).setSize(sizes.get(value.getValue().getName())));
 		}
 
 	}

@@ -1,5 +1,8 @@
 package cz.it4i.fiji.haas_spim_benchmark.ui;
 
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,6 +17,7 @@ import java.util.stream.Collectors;
 
 import cz.it4i.fiji.haas.ui.CloseableControl;
 import cz.it4i.fiji.haas.ui.JavaFXRoutines;
+import cz.it4i.fiji.haas.ui.TableViewContextMenu;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.BenchmarkJob;
 import cz.it4i.fiji.haas_spim_benchmark.core.Constants;
@@ -21,6 +25,7 @@ import cz.it4i.fiji.haas_spim_benchmark.core.FXFrameExecutorService;
 import cz.it4i.fiji.haas_spim_benchmark.core.Task;
 import cz.it4i.fiji.haas_spim_benchmark.core.TaskComputation;
 import javafx.beans.value.ObservableValue;
+import javafx.beans.value.ObservableValueBase;
 import javafx.fxml.FXML;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -98,7 +103,56 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 		tasks.setPrefWidth(PREFERRED_WIDTH);
 		timer = new Timer();
 		registry = new ObservableTaskRegistry(task -> tasks.getItems().remove(registry.get(task)));
+		TableViewContextMenu<ObservableValue<Task>> menu = new TableViewContextMenu<ObservableValue<Task>>(this.tasks);
+		menu.addItem("Open view", task->proof(task), x->x!=null);
+	}
 
+	private void proof(ObservableValue<Task> task) {
+		executorServiceWS.execute(()-> {
+			TaskComputationAdapter adapter = new TaskComputationAdapter(task.getValue().getComputations().get(0));
+			
+		
+		class Window extends cz.it4i.fiji.haas.ui.FXFrame<RemoteFilesInfoControl>{
+			private static final long serialVersionUID = 1L;
+
+			public Window() {
+				super(()-> new RemoteFilesInfoControl(adapter.getOutputs()));
+			}
+		}
+		
+		Window w = new Window();
+		w.addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosed(WindowEvent e) {
+				adapter.close();
+			}
+		});
+		w.setVisible(true);});
+	}
+	
+	static void add(Collection<ObservableValue<RemoteFileInfo>> files, String name, long size) {
+		RemoteFileInfo file = new RemoteFileInfo() {
+			
+			@Override
+			public Long getSize() {
+				return size;
+			}
+			
+			@Override
+			public String getName() {
+				return name;
+			}
+			
+		};
+		ObservableValue<RemoteFileInfo> value = new ObservableValueBase<RemoteFileInfo>() {
+
+			@Override
+			public RemoteFileInfo getValue() {
+				return file;
+			}
+		};
+		
+		files.add(value);
 	}
 
 	private void fillTable() {

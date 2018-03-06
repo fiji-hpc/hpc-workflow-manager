@@ -6,6 +6,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -134,6 +135,14 @@ public interface JavaFXRoutines {
 				log.error(e.getMessage(), e);
 			}
 		});
+	}
+	
+	public static <T> boolean notNullValue(ObservableValue<T> j, Predicate<T> pred) {
+		if (j == null || j.getValue() == null) {
+			return false;
+		} else {
+			return pred.test(j.getValue());
+		}
 	}
 
 }
