@@ -21,18 +21,21 @@ public class RemoteFilesInfoControl extends BorderPane implements CloseableContr
 	@SuppressWarnings("unused")
 	private static Logger log = LoggerFactory
 			.getLogger(cz.it4i.fiji.haas_spim_benchmark.ui.RemoteFilesInfoControl.class);
-	
+
 	@SuppressWarnings("unused")
 	private Window root;
 
 	@FXML
 	private TableView<ObservableValue<RemoteFileInfo>> files;
 
-	public RemoteFilesInfoControl(List<ObservableValue< RemoteFileInfo>> files) {
+	public RemoteFilesInfoControl() {
 		JavaFXRoutines.initRootAndController("RemoteFilesInfo.fxml", this);
-		files.forEach(file->this.files.getItems().add(file));
 	}
-	
+
+	public void setFiles(List<ObservableValue<RemoteFileInfo>> files) {
+		files.forEach(file -> this.files.getItems().add(file));
+	}
+
 	@Override
 	public void init(Window parameter) {
 		this.root = parameter;
@@ -47,8 +50,9 @@ public class RemoteFilesInfoControl extends BorderPane implements CloseableContr
 	private void initTable() {
 		JavaFXRoutines.setCellValueFactory(files, 0, file -> file.getName());
 		JavaFXRoutines.setCellValueFactory(files, 1,
-				(Function<RemoteFileInfo, String>) file -> file.getSize() >= 0 ? formatSize(file.getSize()) : "Not exists");
-		
+				(Function<RemoteFileInfo, String>) file -> file.getSize() >= 0 ? formatSize(file.getSize())
+						: "Not exists");
+
 	}
 
 	private String formatSize(long size) {

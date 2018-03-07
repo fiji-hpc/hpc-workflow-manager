@@ -110,7 +110,7 @@ public class ProgressDialog extends JDialog implements Progress {
 		if (title != null)
 			setTitle(title);
 		pack();
-
+		//TASK: vyresit centrovani na predka
 		if (owner != null) {
 			final Dimension o = owner.getSize();
 			final Dimension size = getSize();

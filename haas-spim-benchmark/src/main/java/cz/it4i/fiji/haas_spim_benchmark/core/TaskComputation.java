@@ -2,6 +2,7 @@ package cz.it4i.fiji.haas_spim_benchmark.core;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -83,8 +84,8 @@ public class TaskComputation {
 	private int positionInOutput;
 
 	private Collection<String> inputs;
-	private Collection<String> outputs;
-	private Collection<String> logs;
+	private Collection<String> outputs = Collections.emptyList();
+	private Collection<String> logs = Collections.emptyList();
 	private Long id;
 
 	private final List<BenchmarkError> errors;

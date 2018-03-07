@@ -23,6 +23,7 @@ import com.jcraft.jsch.SftpException;
 import com.jcraft.jsch.UserInfo;
 
 public class ScpClient implements Closeable {
+	
 	private String hostName;
 	private String username;
 	private JSch jsch = new JSch();
@@ -314,6 +315,15 @@ public class ScpClient implements Closeable {
 		return null;
 	}
 
+	@Override
+	public void close() {
+		if (session != null && session.isConnected()) {
+			//log.info("disconnect");
+			session.disconnect();
+			session = null;
+		}
+	}
+
 	private int getBufferSize() {
 		return 1024 * 1024;
 	}
@@ -327,6 +337,7 @@ public class ScpClient implements Closeable {
 			session.setUserInfo(ui);
 		}
 		if (!session.isConnected()) {
+			//log.info("connect");
 			session.connect();
 		}
 		return session;
@@ -391,13 +402,5 @@ public class ScpClient implements Closeable {
 			}
 		}
 		return b;
-	}
-
-	@Override
-	public void close() {
-		if (session != null && session.isConnected()) {
-			session.disconnect();
-			session = null;
-		}
 	}
 }

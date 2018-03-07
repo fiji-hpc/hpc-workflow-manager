@@ -1,5 +1,6 @@
 package cz.it4i.fiji.haas_spim_benchmark.ui;
 
+import java.awt.Window;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -13,8 +14,12 @@ import java.util.concurrent.Executors;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import javax.swing.WindowConstants;
+
 import cz.it4i.fiji.haas.ui.CloseableControl;
+import cz.it4i.fiji.haas.ui.InitiableControl;
 import cz.it4i.fiji.haas.ui.JavaFXRoutines;
+import cz.it4i.fiji.haas.ui.ModalDialogs;
 import cz.it4i.fiji.haas.ui.TableViewContextMenu;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.BenchmarkJob;
@@ -30,7 +35,7 @@ import javafx.scene.control.TableView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.paint.Color;
 
-public class SPIMPipelineProgressViewController extends BorderPane implements CloseableControl {
+public class SPIMPipelineProgressViewController extends BorderPane implements CloseableControl,InitiableControl {
 
 	private static final String EMPTY_VALUE = "\u2007\u2007\u2007";
 
@@ -68,6 +73,7 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 	private ObservableTaskRegistry registry;
 	private ExecutorService executorServiceWS;
 	private Executor executorFx = new FXFrameExecutorService();
+	private Window root;
 
 	public SPIMPipelineProgressViewController() {
 		executorServiceWS = Executors.newSingleThreadExecutor();
@@ -96,6 +102,11 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 		executorServiceWS.shutdown();
 	}
 
+	@Override
+	public void init(Window parameter) {
+		this.root = parameter;
+	}
+	
 	private void init() {
 		JavaFXRoutines.initRootAndController("SPIMPipelineProgressView.fxml", this);
 		tasks.setPrefWidth(PREFERRED_WIDTH);
@@ -106,9 +117,7 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 	}
 
 	private void proof(ObservableValue<Task> task) {
-		//executorServiceWS.execute(()-> {
-			new TaskComputationWindow(null, task.getValue().getComputations().get(0)).setVisible(true);
-			//});
+		ModalDialogs.doModal(new TaskComputationWindow(root, task.getValue().getComputations().get(0)),WindowConstants.DISPOSE_ON_CLOSE);
 	}
 	
 	static void add(Collection<ObservableValue<RemoteFileInfo>> files, String name, long size) {

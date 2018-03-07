@@ -19,7 +19,7 @@ public class RunRemoteFilesView {
 		@SuppressWarnings("serial")
 		class Window extends cz.it4i.fiji.haas.ui.FXFrame<RemoteFilesInfoControl>{
 			public Window() {
-				super(()-> new RemoteFilesInfoControl(files));
+				super(()-> new RemoteFilesInfoControl());
 			}
 		}
 		
