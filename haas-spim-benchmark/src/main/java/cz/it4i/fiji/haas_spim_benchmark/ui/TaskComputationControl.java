@@ -15,7 +15,11 @@ import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
-
+//TASK: context menu udělat pro TaskComputation (buňku) nikoliv řádek
+//TASK: TaskComputationWindow - vyřešit vlákna na kterých se to spouští
+//TASK: dodělat progress dialog + modalita
+//TASK: vyřešit problém při konkurentním scp
+//TASK: TaskComputationWindow - iniciální velikost okna
 public class TaskComputationControl extends TabPane implements CloseableControl, InitiableControl {
 	@SuppressWarnings("unused")
 	private static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas_spim_benchmark.ui.TaskComputationControl.class);

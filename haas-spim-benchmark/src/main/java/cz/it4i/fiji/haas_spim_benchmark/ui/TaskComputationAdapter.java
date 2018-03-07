@@ -17,9 +17,6 @@ import cz.it4i.fiji.haas_spim_benchmark.core.TaskComputation.Log;
 import javafx.beans.value.ObservableValue;
 import javafx.beans.value.ObservableValueBase;
 
-//TASK: Pokračovat zapojením do UI - upravit pro TaskComputation
-//TASK: dodělat progress dialog + modalita
-//            
 public class TaskComputationAdapter implements Closeable {
 
 	@SuppressWarnings("unused")
@@ -60,6 +57,57 @@ public class TaskComputationAdapter implements Closeable {
 		outputs.add(new ObservableOutputFile(outputFile, size));
 	}
 
+	public static class ObservableLog  {
+	
+		private final String name;
+		
+		private  final P_ObservableString value;
+	
+		public ObservableLog(Log content) {
+			this.value = new P_ObservableString(content.getContent());
+			this.name = content.getName();
+		}
+	
+		public String getName() {
+			return name;
+		}
+		
+		public ObservableValue<String> getContent() {
+			return value;
+		}
+	
+		public void setContentValue(Log log) {
+			if (!getName().equals(log.getName())) {
+				throw new IllegalArgumentException(
+						"this.name=" + getName() + ", log.name=" + log.getName());
+			}
+			value.setValue(log.getContent());
+		}
+	
+		private class P_ObservableString extends ObservableValueBase<String> {
+	
+			private String value;
+	
+			public P_ObservableString(String value) {
+				this.value = value;
+			}
+	
+			@Override
+			public String getValue() {
+				return value;
+			}
+			
+			public void setValue(String value) {
+				if(this.value != null && !this.value.equals(value) ||
+					value != null && !value.equals(this.value)) {
+					this.value = value;
+					fireValueChangedEvent();
+				}
+			}
+		}
+		
+	}
+
 	private class ObservableOutputFile extends ObservableValueBase<RemoteFileInfo> {
 
 		private final String name;
@@ -96,57 +144,6 @@ public class TaskComputationAdapter implements Closeable {
 				fireValueChangedEvent();
 			}
 		}
-	}
-
-	public static class ObservableLog  {
-
-		private final String name;
-		
-		private  final P_ObservableString value;
-
-		public ObservableLog(Log content) {
-			this.value = new P_ObservableString(content.getContent());
-			this.name = log.getName();
-		}
-
-		public String getName() {
-			return name;
-		}
-		
-		public ObservableValue<String> getContent() {
-			return value;
-		}
-
-		public void setContentValue(Log log) {
-			if (!log.getName().equals(log.getName())) {
-				throw new IllegalArgumentException(
-						"this.name=" + getName() + ", log.name=" + log.getName());
-			}
-			value.setValue(log.getContent());
-		}
-
-		private class P_ObservableString extends ObservableValueBase<String> {
-
-			private String value;
-
-			public P_ObservableString(String value) {
-				this.value = value;
-			}
-
-			@Override
-			public String getValue() {
-				return value;
-			}
-			
-			public void setValue(String value) {
-				if(this.value != null && !this.value.equals(value) ||
-					value != null && !value.equals(this.value)) {
-					this.value = value;
-					fireValueChangedEvent();
-				}
-			}
-		}
-		
 	}
 
 	private class P_TimerTask extends TimerTask {

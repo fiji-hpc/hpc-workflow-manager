@@ -1,7 +1,5 @@
 package cz.it4i.fiji.haas_spim_benchmark.ui;
 
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -108,26 +106,9 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 	}
 
 	private void proof(ObservableValue<Task> task) {
-		executorServiceWS.execute(()-> {
-			TaskComputationAdapter adapter = new TaskComputationAdapter(task.getValue().getComputations().get(0));
-			
-		
-		class Window extends cz.it4i.fiji.haas.ui.FXFrame<RemoteFilesInfoControl>{
-			private static final long serialVersionUID = 1L;
-
-			public Window() {
-				super(()-> new RemoteFilesInfoControl(adapter.getOutputs()));
-			}
-		}
-		
-		Window w = new Window();
-		w.addWindowListener(new WindowAdapter() {
-			@Override
-			public void windowClosing(WindowEvent e) {
-				adapter.close();
-			}
-		});
-		w.setVisible(true);});
+		//executorServiceWS.execute(()-> {
+			new TaskComputationWindow(null, task.getValue().getComputations().get(0)).setVisible(true);
+			//});
 	}
 	
 	static void add(Collection<ObservableValue<RemoteFileInfo>> files, String name, long size) {

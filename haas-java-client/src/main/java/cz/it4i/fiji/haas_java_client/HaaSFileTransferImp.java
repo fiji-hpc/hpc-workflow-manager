@@ -111,14 +111,15 @@ class HaaSFileTransferImp implements HaaSFileTransfer {
 	public List<Long> obtainSize(List<String> files) {
 		try {
 			return HaaSClient.getSizes(files.stream()
-					.map(filename -> "'" + ft.getSharedBasepath() + "/" + filename + "'").collect(Collectors.toList()), scpClient, notifier);
+					.map(filename -> "'" + ft.getSharedBasepath() + "/" + filename + "'").collect(Collectors.toList()),
+					scpClient, notifier);
 		} catch (JSchException | IOException e) {
 			throw new HaaSClientException(e);
 		}
 
 	}
 
-	//TASK merge with download - stream provider for file, consumer for stream
+	// TASK merge with download - stream provider for file, consumer for stream
 	@Override
 	public List<String> getContent(List<String> files) {
 		List<String> result = new LinkedList<>();
@@ -132,8 +133,8 @@ class HaaSFileTransferImp implements HaaSFileTransfer {
 			TransferFileProgressForHaaSClient progress = new TransferFileProgressForHaaSClient(totalFileSize, notifier);
 			int idx = 0;
 			for (String fileName : files) {
-				fileName = fileName.replaceFirst("/", "");
-				try(ByteArrayOutputStream os = new ByteArrayOutputStream()) {
+				fileName = replaceIfFirstFirst(fileName, "/", "");
+				try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
 					String fileToDownload = "'" + ft.getSharedBasepath() + "/" + fileName + "'";
 					String item;
 					progress.addItem(item = fileName);
@@ -149,6 +150,13 @@ class HaaSFileTransferImp implements HaaSFileTransfer {
 			throw new HaaSClientException(e);
 		}
 		return result;
+	}
+
+	private String replaceIfFirstFirst(String fileName, String string, String string2) {
+		if (fileName.length() < 0 && fileName.charAt(0) == '/') {
+			fileName = fileName.substring(1);
+		}
+		return fileName;
 	}
 
 }
