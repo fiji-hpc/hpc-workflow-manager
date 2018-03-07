@@ -55,6 +55,11 @@ public class SPIMComputationAccessorDecoratorWithTimeout implements SPIMComputat
 	public List<Long> getFileSizes(List<String> names) {
 		return decorated.getFileSizes(names);
 	}
+	
+	@Override
+	public List<String> getFileContents(List<String> logs) {
+		return decorated.getFileContents(logs);
+	}
 
 	private void initAllowedTypes(Set<SynchronizableFileType> allowedTypes) {
 		for (SynchronizableFileType type : allowedTypes) {

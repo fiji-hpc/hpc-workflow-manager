@@ -258,6 +258,12 @@ public class Job {
 		}
 	}
 
+	public List<String> getFileContents(List<String> logs) {
+		try (HaaSFileTransfer transfer = haasClientSupplier.get().startFileTransfer(getId(), new DummyProgressNotifier())) {
+			return transfer.getContent(logs);
+		}
+	}
+
 	
 
 	

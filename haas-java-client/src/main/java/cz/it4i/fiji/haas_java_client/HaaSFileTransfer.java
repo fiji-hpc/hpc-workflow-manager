@@ -18,4 +18,5 @@ public interface HaaSFileTransfer extends Closeable {
 
 	List<Long> obtainSize(List<String> files);
 
+	List<String> getContent(List<String> logs);
 }

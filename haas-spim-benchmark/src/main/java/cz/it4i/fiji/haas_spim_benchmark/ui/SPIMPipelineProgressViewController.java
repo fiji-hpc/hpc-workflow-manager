@@ -123,7 +123,7 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 		Window w = new Window();
 		w.addWindowListener(new WindowAdapter() {
 			@Override
-			public void windowClosed(WindowEvent e) {
+			public void windowClosing(WindowEvent e) {
 				adapter.close();
 			}
 		});

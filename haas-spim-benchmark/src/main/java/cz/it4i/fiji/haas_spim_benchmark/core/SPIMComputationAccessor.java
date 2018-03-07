@@ -15,4 +15,6 @@ public interface SPIMComputationAccessor extends HaaSOutputHolder {
 	Collection<String> getChangedFiles();
 
 	List<Long> getFileSizes(List<String> names);
+	
+	List<String> getFileContents(List<String> logs);
 }

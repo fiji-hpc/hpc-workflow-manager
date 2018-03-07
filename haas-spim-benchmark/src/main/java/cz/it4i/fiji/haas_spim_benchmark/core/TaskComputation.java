@@ -14,7 +14,6 @@ import com.google.common.collect.Streams;
 
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
-import io.scif.jj2000.j2k.NotImplementedError;
 
 public class TaskComputation {
 
@@ -33,6 +32,28 @@ public class TaskComputation {
 
 		public String getContent() {
 			return content;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			Log other = (Log) obj;
+			if (content == null) {
+				if (other.content != null)
+					return false;
+			} else if (!content.equals(other.content))
+				return false;
+			if (name == null) {
+				if (other.name != null)
+					return false;
+			} else if (!name.equals(other.name))
+				return false;
+			return true;
 		}
 	}
 
@@ -62,7 +83,6 @@ public class TaskComputation {
 	private int positionInOutput;
 
 	private Collection<String> inputs;
-	@SuppressWarnings("unused")
 	private Collection<String> outputs;
 	private Collection<String> logs;
 	private Long id;
@@ -116,7 +136,10 @@ public class TaskComputation {
 	}
 
 	public Collection<Log> getLogs() {
-		throw new NotImplementedError();
+		List<String> logNames = new LinkedList<>(logs);
+		List<String> contents = computationAccessor.getFileContents(logNames);
+		return Streams.<String, String, Log>zip(logNames.stream(), contents.stream(),
+				(name, content) -> new Log(name, content)).collect(Collectors.toList());
 	}
 
 	/**
