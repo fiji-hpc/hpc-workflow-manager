@@ -40,7 +40,7 @@ import javafx.scene.paint.Color;
 
 public class SPIMPipelineProgressViewController extends BorderPane implements CloseableControl, InitiableControl {
 
-	private static Logger log = LoggerFactory
+	public final static Logger log = LoggerFactory
 			.getLogger(cz.it4i.fiji.haas_spim_benchmark.ui.SPIMPipelineProgressViewController.class);
 	
 	private static final String EMPTY_VALUE = "\u2007\u2007\u2007";
@@ -120,7 +120,12 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 		registry = new ObservableTaskRegistry(task -> tasks.getItems().remove(registry.get(task)));
 		TableViewContextMenu<ObservableValue<Task>> menu = new TableViewContextMenu<ObservableValue<Task>>(this.tasks);
 		menu.addItem("Open view", (task, columnIndex) -> proof(task, columnIndex),
-				(x, columnIndex) -> x != null && 0 < columnIndex &&columnIndex - 1 < x.getValue().getComputations().size());
+				(x, columnIndex) -> check(x, columnIndex));
+	}
+
+	private boolean check(ObservableValue<Task> x, Integer columnIndex) {
+		boolean result = x != null && 0 < columnIndex &&columnIndex - 1 < x.getValue().getComputations().size();
+		return result;
 	}
 
 	private void proof(ObservableValue<Task> task, int columnIndex) {

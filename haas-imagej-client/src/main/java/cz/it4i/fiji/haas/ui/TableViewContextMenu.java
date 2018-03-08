@@ -13,16 +13,20 @@ import org.slf4j.LoggerFactory;
 import javafx.event.EventHandler;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.input.ContextMenuEvent;
 
 public class TableViewContextMenu<T> {
-	@SuppressWarnings("unused")
-	private static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas.ui.TableViewContextMenu.class);
+
+	public final static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas.ui.TableViewContextMenu.class);
+
 	private Collection<P_MenuItem> items = new LinkedList<>();
 	private Collection<P_MenuItemWithColumnIndex> itemsWithColumnIndex = new LinkedList<>();
-	
+
 	private TableView<T> tableView;
+
+	private int indexOfColumn = -1;
 
 	public TableViewContextMenu(TableView<T> tableView) {
 		this.tableView = tableView;
@@ -32,22 +36,20 @@ public class TableViewContextMenu<T> {
 		items.add(new P_MenuItem(text, eventHandler, enableHandler));
 	}
 
-	public void addItem(String text, BiConsumer<T, Integer> eventHandler,
-			BiPredicate<T, Integer> enableHandler) {
-		 itemsWithColumnIndex.add(new P_MenuItemWithColumnIndex(text, eventHandler, enableHandler));
+	public void addItem(String text, BiConsumer<T, Integer> eventHandler, BiPredicate<T, Integer> enableHandler) {
+		itemsWithColumnIndex.add(new P_MenuItemWithColumnIndex(text, eventHandler, enableHandler));
 	}
 
 	private T getRequstedItem() {
 		return tableView.getFocusModel().getFocusedItem();
 	}
-	
+
 	private int getRequstedColumn() {
-		return tableView.getFocusModel().getFocusedCell().getColumn();
+		return indexOfColumn;
 	}
 
 	private ContextMenu getCreateContextMenu() {
 		ContextMenu cm = tableView.getContextMenu();
-
 		if (cm == null) {
 			cm = new ContextMenu();
 			tableView.setContextMenu(cm);
@@ -55,11 +57,26 @@ public class TableViewContextMenu<T> {
 				@Override
 				public void handle(ContextMenuEvent event) {
 					T requestedItem = getRequstedItem();
+					updateColumnIndex(event.getSceneX());
 					int column = getRequstedColumn();
 					for (P_MenuItem item : items) {
 						item.updateEnable(requestedItem);
 					}
-					itemsWithColumnIndex.forEach(item->item.updateEnable(requestedItem, column));
+					itemsWithColumnIndex.forEach(item -> item.updateEnable(requestedItem, column));
+				}
+
+				private void updateColumnIndex(double sceneX) {
+					double last = 0;
+					indexOfColumn = tableView.getColumns().size();
+					int index = 0;
+					for (TableColumn<?, ?> column : tableView.getColumns()) {
+						last += column.getWidth();
+						if (last > sceneX) {
+							indexOfColumn = index;
+							break;
+						}
+						index++;
+					}
 				}
 			});
 
@@ -88,17 +105,17 @@ public class TableViewContextMenu<T> {
 	private class P_MenuItemWithColumnIndex {
 
 		private MenuItem item;
-		private BiPredicate<T,Integer> enableHandler;
+		private BiPredicate<T, Integer> enableHandler;
 
 		public P_MenuItemWithColumnIndex(String text, BiConsumer<T, Integer> eventHandler,
 				BiPredicate<T, Integer> enableHandler) {
 			this.enableHandler = enableHandler;
 			item = new MenuItem(text);
-			item.setOnAction(e -> eventHandler.accept(getRequstedItem(),getRequstedColumn()));
+			item.setOnAction(e -> eventHandler.accept(getRequstedItem(), getRequstedColumn()));
 			getCreateContextMenu().getItems().add(item);
 		}
 
-		public void updateEnable(T selected,int column) {
+		public void updateEnable(T selected, int column) {
 			item.setDisable(!enableHandler.test(selected, column));
 		}
 
