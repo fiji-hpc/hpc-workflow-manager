@@ -246,6 +246,8 @@ public class HaaSClient {
 
 	public HaaSFileTransfer startFileTransfer(long jobId, ProgressNotifier notifier) {
 		try {
+			//TODO it may be usefull reuse fileTransfer for concurrent transfers 
+			//- count using is needed
 			FileTransferMethodExt ft = getFileTransfer().getFileTransferMethod(jobId, getSessionID());
 			return new HaaSFileTransferImp(ft, getSessionID(), jobId, getFileTransfer(), getScpClient(ft), notifier);
 		} catch (RemoteException | ServiceException | UnsupportedEncodingException | JSchException e) {

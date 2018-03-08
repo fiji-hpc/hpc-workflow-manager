@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 
 import cz.it4i.fiji.haas.JobManager.JobManager4Job;
 import cz.it4i.fiji.haas.JobManager.JobSynchronizableFile;
+import cz.it4i.fiji.haas_java_client.DummyProgressNotifier;
 import cz.it4i.fiji.haas_java_client.HaaSClient;
 import cz.it4i.fiji.haas_java_client.HaaSClient.UploadingFile;
 import cz.it4i.fiji.haas_java_client.HaaSFileTransfer;

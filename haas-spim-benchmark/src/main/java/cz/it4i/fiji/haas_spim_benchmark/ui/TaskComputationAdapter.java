@@ -19,6 +19,7 @@ import cz.it4i.fiji.haas_spim_benchmark.core.TaskComputation;
 import cz.it4i.fiji.haas_spim_benchmark.core.TaskComputation.Log;
 import javafx.beans.value.ObservableValue;
 import javafx.beans.value.ObservableValueBase;
+//TASK: fix occasional auth fails with ssh
 //TASK: improve performance
 public class TaskComputationAdapter implements Closeable {
 

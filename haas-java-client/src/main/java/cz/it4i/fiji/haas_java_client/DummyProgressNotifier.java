@@ -1,6 +1,4 @@
-package cz.it4i.fiji.haas;
-
-import cz.it4i.fiji.haas_java_client.ProgressNotifier;
+package cz.it4i.fiji.haas_java_client;
 
 public class DummyProgressNotifier implements ProgressNotifier {
 
