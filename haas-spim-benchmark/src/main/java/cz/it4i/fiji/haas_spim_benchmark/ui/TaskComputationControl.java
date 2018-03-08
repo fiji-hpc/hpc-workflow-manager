@@ -26,11 +26,8 @@ import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
-//TASK: context menu udělat pro TaskComputation (buňku) nikoliv řádek - dodělat
-//TASK: vyřešit problém při konkurentním scp
 public class TaskComputationControl extends TabPane implements CloseableControl, InitiableControl {
-	@SuppressWarnings("unused")
-	private static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas_spim_benchmark.ui.TaskComputationControl.class);
+	public final static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas_spim_benchmark.ui.TaskComputationControl.class);
 
 	private TaskComputationAdapter adapter;
 	
@@ -42,9 +39,12 @@ public class TaskComputationControl extends TabPane implements CloseableControl,
 
 	private TaskComputation computation;
 	
-	public TaskComputationControl(TaskComputation computation) {
+	private ExecutorService scpExecutor;
+	
+	public TaskComputationControl(TaskComputation computation, ExecutorService scpExecutor) {
 		JavaFXRoutines.initRootAndController("TaskComputationView.fxml", this);
 		this.computation = computation;
+		this.scpExecutor = scpExecutor;
 	}
 	
 	@Override
@@ -53,7 +53,8 @@ public class TaskComputationControl extends TabPane implements CloseableControl,
 			ProgressDialog dialog = ModalDialogs.doModal(new ProgressDialog(parameter, "Updating infos..."),
 					WindowConstants.DO_NOTHING_ON_CLOSE);
 			try {
-				adapter = new TaskComputationAdapter(computation);
+				adapter = new TaskComputationAdapter(computation, scpExecutor);
+				adapter.init();
 			} finally {
 				dialog.done();
 			}
@@ -80,9 +81,7 @@ public class TaskComputationControl extends TabPane implements CloseableControl,
 	}
 	@Override
 	public void close() {
-		if(adapter != null) {
-			adapter.close();
-		}
+		adapter.close();
 		wsExecutorService.shutdown();
 	}
 

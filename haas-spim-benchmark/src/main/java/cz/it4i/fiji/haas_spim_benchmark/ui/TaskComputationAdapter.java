@@ -6,6 +6,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -29,20 +32,39 @@ public class TaskComputationAdapter implements Closeable {
 
 	private final List<ObservableLog> logs = new LinkedList<>();
 
-	private final Timer timer;
+	private Timer timer;
 
-	public TaskComputationAdapter(TaskComputation computation) {
+	private ExecutorService scpExecutor;
+
+	public TaskComputationAdapter(TaskComputation computation, ExecutorService scpExecutor) {
 		this.computation = computation;
+		this.scpExecutor = scpExecutor;
 		timer = new Timer();
-		Map<String, Long> sizes = computation.getOutFileSizes();
-		computation.getOutputs().forEach(outputFile -> addOutputFile(outputFile, sizes.get(outputFile)));
-		computation.getLogs().forEach(log->logs.add(new ObservableLog(log)));
-		timer.scheduleAtFixedRate(new P_TimerTask(), Constants.HAAS_TIMEOUT, Constants.HAAS_TIMEOUT);
+	}
+
+	public void init() {
+		Future<?> future = scpExecutor.submit(() -> {
+			Map<String, Long> sizes = computation.getOutFileSizes();
+			computation.getOutputs().forEach(outputFile -> addOutputFile(outputFile, sizes.get(outputFile)));
+			computation.getLogs().forEach(log -> logs.add(new ObservableLog(log)));
+		});
+		try {
+			future.get();
+		} catch (InterruptedException | ExecutionException e) {
+			log.error(e.getMessage(), e);
+		}
+		synchronized (this) {
+			if(timer != null) {
+				timer.schedule(new P_TimerTask(), Constants.HAAS_TIMEOUT, Constants.HAAS_TIMEOUT);
+			}
+		}
+		
 	}
 
 	@Override
-	public void close() {
+	public synchronized void close() {
 		timer.cancel();
+		timer = null;
 	}
 
 	public List<ObservableValue<RemoteFileInfo>> getOutputs() {
@@ -150,11 +172,18 @@ public class TaskComputationAdapter implements Closeable {
 
 		@Override
 		public void run() {
-			Map<String, Long> sizes = computation.getOutFileSizes();
-			Map<String, Log> logs = computation.getLogs().stream()
-					.collect(Collectors.<Log, String, Log>toMap((Log log) -> log.getName(), (Log log) -> log));
-			TaskComputationAdapter.this.logs.forEach(log->((ObservableLog) log).setContentValue(logs.get(log.getName())));
-			outputs.forEach(value -> ((ObservableOutputFile) value).setSize(sizes.get(value.getValue().getName())));
+			try {
+				scpExecutor.submit(() -> {
+					Map<String, Long> sizes = computation.getOutFileSizes();
+					Map<String, Log> logs = computation.getLogs().stream()
+							.collect(Collectors.<Log, String, Log>toMap((Log log) -> log.getName(), (Log log) -> log));
+					TaskComputationAdapter.this.logs
+							.forEach(log -> ((ObservableLog) log).setContentValue(logs.get(log.getName())));
+					outputs.forEach(value -> ((ObservableOutputFile) value).setSize(sizes.get(value.getValue().getName())));
+				}).get();
+			} catch (InterruptedException | ExecutionException e) {
+				log.error(e.getMessage(), e);
+			}
 		}
 
 	}
