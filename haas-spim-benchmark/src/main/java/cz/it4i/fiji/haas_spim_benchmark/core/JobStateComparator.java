@@ -14,7 +14,7 @@ public class JobStateComparator implements Comparator<JobState>{
 		priorities.put(state, priorities.size());
 	}
 	
-	{
+	static {
 		Arrays.asList(JobState.Finished,JobState.Queued, JobState.Running, JobState.Canceled, JobState.Failed).forEach(state->add(state));
 	}
 	@Override

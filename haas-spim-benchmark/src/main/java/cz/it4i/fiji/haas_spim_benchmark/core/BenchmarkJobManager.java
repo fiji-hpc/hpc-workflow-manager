@@ -109,11 +109,10 @@ public class BenchmarkJobManager {
 			verifiedStateProcessed = true;
 			return CompletableFuture.supplyAsync(() -> {
 				try {
-					verifiedState = Stream
-							.concat(Arrays.asList(state).stream(), getTasks().stream()
+					verifiedState = 
+							Stream.concat(Arrays.asList(state).stream(), getTasks().stream().filter(task->!task.getDescription().equals(Constants.DONE_TASK))
 									.flatMap(task -> task.getComputations().stream()).map(tc -> tc.getState()))
-							.max(new JobStateComparator()).get();
-
+									.max(new JobStateComparator()).get();
 					if (verifiedState != JobState.Finished && verifiedState != JobState.Canceled) {
 						verifiedState = JobState.Failed;
 					}

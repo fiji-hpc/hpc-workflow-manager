@@ -41,6 +41,7 @@ import javafx.scene.control.TableView;
 import javafx.scene.layout.BorderPane;
 import net.imagej.updater.util.Progress;
 
+//TASK: fix Exception during context menu request on task with N/A state
 public class BenchmarkSPIMController extends BorderPane implements CloseableControl, InitiableControl {
 
 	@FXML

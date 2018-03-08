@@ -38,7 +38,7 @@ public interface Constants {
 			put("define_output", "Define output");
 			put("hdf5_xml_output", "Define hdf5 output");
 			put("resave_hdf5_output", "Resave output to hdf5");
-			put("done", "Done");
+			put(DONE_TASK, "Done");
 		}};
 	
 	String STATISTICS_TASK_NAME = "Task name";
@@ -51,5 +51,6 @@ public interface Constants {
 	
 	String STATISTICS_SUMMARY_FILENAME = "summary.csv";
 	String SUMMARY_FILE_HEADER = "Task;AvgMemoryUsage;AvgWallTime;MaxWallTime;TotalTime;JobCount";
+	String DONE_TASK = "done";
 	
 }
