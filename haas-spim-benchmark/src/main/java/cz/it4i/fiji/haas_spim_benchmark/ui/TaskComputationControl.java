@@ -26,7 +26,7 @@ import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
-//TASK: context menu udělat pro TaskComputation (buňku) nikoliv řádek
+//TASK: context menu udělat pro TaskComputation (buňku) nikoliv řádek - dodělat
 //TASK: vyřešit problém při konkurentním scp
 public class TaskComputationControl extends TabPane implements CloseableControl, InitiableControl {
 	@SuppressWarnings("unused")
@@ -57,7 +57,6 @@ public class TaskComputationControl extends TabPane implements CloseableControl,
 			} finally {
 				dialog.done();
 			}
-
 			remoteFilesInfo.setFiles(adapter.getOutputs());
 			remoteFilesInfo.init(parameter);
 			Collection<Runnable> runs = new LinkedList<>();
@@ -81,7 +80,9 @@ public class TaskComputationControl extends TabPane implements CloseableControl,
 	}
 	@Override
 	public void close() {
-		adapter.close();
+		if(adapter != null) {
+			adapter.close();
+		}
 		wsExecutorService.shutdown();
 	}
 

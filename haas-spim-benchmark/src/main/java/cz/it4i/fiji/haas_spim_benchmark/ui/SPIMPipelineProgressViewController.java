@@ -16,6 +16,9 @@ import java.util.stream.Collectors;
 
 import javax.swing.WindowConstants;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import cz.it4i.fiji.haas.ui.CloseableControl;
 import cz.it4i.fiji.haas.ui.InitiableControl;
 import cz.it4i.fiji.haas.ui.JavaFXRoutines;
@@ -35,8 +38,11 @@ import javafx.scene.control.TableView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.paint.Color;
 
-public class SPIMPipelineProgressViewController extends BorderPane implements CloseableControl,InitiableControl {
+public class SPIMPipelineProgressViewController extends BorderPane implements CloseableControl, InitiableControl {
 
+	private static Logger log = LoggerFactory
+			.getLogger(cz.it4i.fiji.haas_spim_benchmark.ui.SPIMPipelineProgressViewController.class);
+	
 	private static final String EMPTY_VALUE = "\u2007\u2007\u2007";
 
 	private static final int PREFERRED_WIDTH = 900;
@@ -106,33 +112,35 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 	public void init(Window parameter) {
 		this.root = parameter;
 	}
-	
+
 	private void init() {
 		JavaFXRoutines.initRootAndController("SPIMPipelineProgressView.fxml", this);
 		tasks.setPrefWidth(PREFERRED_WIDTH);
 		timer = new Timer();
 		registry = new ObservableTaskRegistry(task -> tasks.getItems().remove(registry.get(task)));
 		TableViewContextMenu<ObservableValue<Task>> menu = new TableViewContextMenu<ObservableValue<Task>>(this.tasks);
-		menu.addItem("Open view", task->proof(task), x->x!=null);
+		menu.addItem("Open view", (task, columnIndex) -> proof(task, columnIndex),
+				(x, columnIndex) -> x != null && 0 < columnIndex &&columnIndex - 1 < x.getValue().getComputations().size());
 	}
 
-	private void proof(ObservableValue<Task> task) {
-		ModalDialogs.doModal(new TaskComputationWindow(root, task.getValue().getComputations().get(0)),WindowConstants.DISPOSE_ON_CLOSE);
+	private void proof(ObservableValue<Task> task, int columnIndex) {
+		ModalDialogs.doModal(new TaskComputationWindow(root, task.getValue().getComputations().get(columnIndex - 1)),
+				WindowConstants.DISPOSE_ON_CLOSE);
 	}
-	
+
 	static void add(Collection<ObservableValue<RemoteFileInfo>> files, String name, long size) {
 		RemoteFileInfo file = new RemoteFileInfo() {
-			
+
 			@Override
 			public Long getSize() {
 				return size;
 			}
-			
+
 			@Override
 			public String getName() {
 				return name;
 			}
-			
+
 		};
 		ObservableValue<RemoteFileInfo> value = new ObservableValueBase<RemoteFileInfo>() {
 
@@ -141,7 +149,7 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 				return file;
 			}
 		};
-		
+
 		files.add(value);
 	}
 
