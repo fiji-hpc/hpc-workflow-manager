@@ -27,14 +27,13 @@ import net.imagej.updater.util.Progress;
 import net.imagej.updater.util.UpdateCanceledException;
 
 /**
- * TODO
  * 
  * @author Johannes Schindelin
  */
 @SuppressWarnings("serial")
 public class ProgressDialog extends JDialog implements Progress {
 	@SuppressWarnings("unused")
-	private static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas.ui.ProgressDialog.class);
+	public final static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas.ui.ProgressDialog.class);
 
 	JProgressBar progress;
 	JButton detailsToggle;
@@ -110,7 +109,6 @@ public class ProgressDialog extends JDialog implements Progress {
 		if (title != null)
 			setTitle(title);
 		pack();
-		//TASK: vyresit centrovani na predka
 		if (owner != null) {
 			final Dimension o = owner.getSize();
 			final Dimension size = getSize();
@@ -119,6 +117,8 @@ public class ProgressDialog extends JDialog implements Progress {
 				setSize(size);
 			}
 			setLocation(owner.getX() + (o.width - size.width) / 2, owner.getY() + (o.height - size.height) / 2);
+		} else { 
+			setLocationRelativeTo(owner);
 		}
 
 		final KeyAdapter keyAdapter = new KeyAdapter() {
@@ -133,7 +133,6 @@ public class ProgressDialog extends JDialog implements Progress {
 		detailsToggle.addKeyListener(keyAdapter);
 		cancel.addKeyListener(keyAdapter);
 
-		setLocationRelativeTo(null);
 		if (title != null)
 			setVisible(true);
 	}
@@ -293,7 +292,7 @@ public class ProgressDialog extends JDialog implements Progress {
 		return false;
 	}
 
-	public static void main(final String[] args) {
+	private static void main(final String[] args) {
 		final ProgressDialog dialog = new ProgressDialog(null, "Hello");
 		dialog.addItem("Bello");
 		dialog.setVisible(true);

@@ -43,7 +43,7 @@ import net.imagej.updater.util.Progress;
 
 public class BenchmarkSPIMController extends BorderPane implements CloseableControl, InitiableControl {
 
-		@FXML
+	@FXML
 	private TableView<ObservableValue<BenchmarkJob>> jobs;
 
 	private BenchmarkJobManager manager;
@@ -80,8 +80,7 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 		}, Constants.HAAS_UPDATE_TIMEOUT, Constants.HAAS_UPDATE_TIMEOUT);
 		initTable();
 		initMenu();
-		updateJobs();
-
+		executorServiceFX.execute(this::updateJobs);
 	}
 
 	private void initMenu() {
@@ -90,8 +89,8 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 		menu.addItem("Start job", job -> executeWSCallAsync("Starting job", p -> {
 			job.getValue().startJob(p);
 			registry.get(job.getValue()).update();
-		}), job -> JavaFXRoutines.notNullValue(job, j -> j.getState() == JobState.Configuring || j.getState() == JobState.Finished
-				|| j.getState() == JobState.Failed));
+		}), job -> JavaFXRoutines.notNullValue(job, j -> j.getState() == JobState.Configuring
+				|| j.getState() == JobState.Finished || j.getState() == JobState.Failed));
 
 		menu.addItem("Cancel job", job -> executeWSCallAsync("Canceling job", p -> {
 			job.getValue().cancelJob();
@@ -104,8 +103,9 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 			} catch (IOException e) {
 				log.error(e.getMessage(), e);
 			}
-		}, job -> JavaFXRoutines.notNullValue(job, j -> j.getState() == JobState.Running || j.getState() == JobState.Finished
-				|| j.getState() == JobState.Failed || j.getState() == JobState.Canceled));
+		}, job -> JavaFXRoutines.notNullValue(job,
+				j -> j.getState() == JobState.Running || j.getState() == JobState.Finished
+						|| j.getState() == JobState.Failed || j.getState() == JobState.Canceled));
 
 		menu.addItem("Download result",
 				job -> executeWSCallAsync("Downloading data", p -> job.getValue().downloadData(p)),
@@ -161,11 +161,11 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 		if (manager == null) {
 			return;
 		}
+		Progress progress = showProgress
+				? ModalDialogs.doModal(new ProgressDialog(root, "Updating jobs"), WindowConstants.DO_NOTHING_ON_CLOSE)
+				: new DummyProgress();
+
 		executorServiceWS.execute(() -> {
-			Progress progress = showProgress
-					? ModalDialogs.doModal(new ProgressDialog(root, "Updating jobs"),
-							WindowConstants.DO_NOTHING_ON_CLOSE)
-					: new DummyProgress();
 
 			try {
 				List<BenchmarkJob> jobs = new LinkedList<>(manager.getJobs());
