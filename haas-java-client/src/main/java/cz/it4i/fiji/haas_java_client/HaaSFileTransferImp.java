@@ -104,7 +104,7 @@ class HaaSFileTransferImp implements HaaSFileTransfer {
 
 	}
 
-	// TASK merge with download - stream provider for file, consumer for stream
+	// FIXME: merge with download - stream provider for file, consumer for stream
 	@Override
 	public List<String> getContent(List<String> files) {
 		List<String> result = new LinkedList<>();

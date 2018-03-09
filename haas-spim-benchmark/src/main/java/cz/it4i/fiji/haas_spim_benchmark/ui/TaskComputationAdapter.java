@@ -16,7 +16,7 @@ import cz.it4i.fiji.haas_spim_benchmark.core.TaskComputation;
 import cz.it4i.fiji.haas_spim_benchmark.core.TaskComputation.Log;
 import javafx.beans.value.ObservableValue;
 import javafx.beans.value.ObservableValueBase;
-//TASK: improve performance
+
 public class TaskComputationAdapter implements Closeable {
 
 	public final static Logger log = LoggerFactory
