@@ -56,7 +56,7 @@ public class Job {
 
 	public Job(JobManager4Job jobManager, String name, Path basePath, Supplier<HaaSClient> haasClientSupplier) throws IOException {
 		this(jobManager,haasClientSupplier);
-		HaaSClient client = this.haasClientSupplier.get();
+		HaaSClient client = getHaaSClient();
 		long id = client.createJob(name, Collections.emptyList());
 		jobDir = basePath.resolve("" + id);
 		propertyHolder = new PropertyHolder(jobDir.resolve(JOB_INFO_FILE));
@@ -76,7 +76,7 @@ public class Job {
 	}
 
 	public void uploadFiles(Iterable<UploadingFile> files, Progress notifier) {
-		HaaSClient client = this.haasClientSupplier.get();
+		HaaSClient client = getHaaSClient();
 		try(HaaSFileTransfer transfer = client.startFileTransfer(getId(), new P_ProgressNotifierAdapter(notifier))){
 			transfer.upload(files);
 		}
@@ -89,7 +89,7 @@ public class Job {
 	}
 
 	public void submit() {
-		HaaSClient client = this.haasClientSupplier.get();
+		HaaSClient client = getHaaSClient();
 		client.submitJob(jobId);
 	}
 
@@ -120,8 +120,8 @@ public class Job {
 	}
 
 	synchronized public void download(Predicate<String> predicate, Progress notifier) {
-		try (HaaSFileTransfer fileTransfer = haasClientSupplier.get().startFileTransfer(jobId, new P_ProgressNotifierAdapter(notifier))) {
-			fileTransfer.download(haasClientSupplier.get().getChangedFiles(jobId).stream().filter(predicate).collect(Collectors.toList()), jobDir);
+		try (HaaSFileTransfer fileTransfer = getHaaSClient().startFileTransfer(jobId, new P_ProgressNotifierAdapter(notifier))) {
+			fileTransfer.download(getHaaSClient().getChangedFiles(jobId).stream().filter(predicate).collect(Collectors.toList()), jobDir);
 		}
 	}
 
@@ -145,7 +145,7 @@ public class Job {
 		HaaSClient.SynchronizableFiles taskFileOffset = new HaaSClient.SynchronizableFiles();
 		long taskId = (Long) getJobInfo().getTasks().toArray()[0];
 		output.forEach(file -> taskFileOffset.addFile(taskId, file.getType(), file.getOffset()));
-		return haasClientSupplier.get().downloadPartsOfJobFiles(jobId, taskFileOffset).stream().map(f -> f.getContent())
+		return getHaaSClient().downloadPartsOfJobFiles(jobId, taskFileOffset).stream().map(f -> f.getContent())
 				.collect(Collectors.toList());
 	}
 
@@ -186,6 +186,10 @@ public class Job {
 		return result;
 	}
 	
+	private HaaSClient getHaaSClient() {
+		return this.haasClientSupplier.get();
+	}
+
 	private JobInfo getJobInfo() {
 		if (jobInfo == null) {
 			updateJobInfo();
@@ -194,7 +198,7 @@ public class Job {
 	}
 
 	private void updateJobInfo() {
-		jobInfo = haasClientSupplier.get().obtainJobInfo(getId());
+		jobInfo = getHaaSClient().obtainJobInfo(getId());
 	}
 
 	private static boolean isValidPath(Path path) {
@@ -245,22 +249,22 @@ public class Job {
 	}
 
 	public Collection<String> getChangedFiles() {
-		return haasClientSupplier.get().getChangedFiles(getId());
+		return getHaaSClient().getChangedFiles(getId());
 	}
 
 	public void cancelJob() {
-		haasClientSupplier.get().cancelJob(jobId);
+		getHaaSClient().cancelJob(jobId);
 	}
 
 	public List<Long> getFileSizes(List<String> names) {
 		
-		try (HaaSFileTransfer transfer = haasClientSupplier.get().startFileTransfer(getId(), new DummyProgressNotifier())) {
+		try (HaaSFileTransfer transfer = getHaaSClient().startFileTransfer(getId(), new DummyProgressNotifier())) {
 			return transfer.obtainSize(names);
 		}
 	}
 
 	public List<String> getFileContents(List<String> logs) {
-		try (HaaSFileTransfer transfer = haasClientSupplier.get().startFileTransfer(getId(), new DummyProgressNotifier())) {
+		try (HaaSFileTransfer transfer = getHaaSClient().startFileTransfer(getId(), new DummyProgressNotifier())) {
 			return transfer.getContent(logs);
 		}
 	}
