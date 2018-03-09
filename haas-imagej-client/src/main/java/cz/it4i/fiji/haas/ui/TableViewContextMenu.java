@@ -21,12 +21,12 @@ public class TableViewContextMenu<T> {
 
 	public final static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas.ui.TableViewContextMenu.class);
 
-	private Collection<P_MenuItem> items = new LinkedList<>();
-	private Collection<P_MenuItemWithColumnIndex> itemsWithColumnIndex = new LinkedList<>();
+	private final Collection<P_MenuItem> items = new LinkedList<>();
+	private final Collection<P_MenuItemWithColumnIndex> itemsWithColumnIndex = new LinkedList<>();
 
 	private TableView<T> tableView;
 
-	private int indexOfColumn = -1;
+	private int columnIndex = -1;
 
 	public TableViewContextMenu(TableView<T> tableView) {
 		this.tableView = tableView;
@@ -40,15 +40,15 @@ public class TableViewContextMenu<T> {
 		itemsWithColumnIndex.add(new P_MenuItemWithColumnIndex(text, eventHandler, enableHandler));
 	}
 
-	private T getRequstedItem() {
+	private T getRequestedItem() {
 		return tableView.getFocusModel().getFocusedItem();
 	}
 
-	private int getRequstedColumn() {
-		return indexOfColumn;
+	private int getRequestedColumn() {
+		return columnIndex;
 	}
 
-	private ContextMenu getCreateContextMenu() {
+	private ContextMenu getOrCreateContextMenu() {
 		ContextMenu cm = tableView.getContextMenu();
 		if (cm == null) {
 			cm = new ContextMenu();
@@ -56,9 +56,9 @@ public class TableViewContextMenu<T> {
 			tableView.setOnContextMenuRequested(new EventHandler<ContextMenuEvent>() {
 				@Override
 				public void handle(ContextMenuEvent event) {
-					T requestedItem = getRequstedItem();
+					T requestedItem = getRequestedItem();
 					updateColumnIndex(event.getSceneX());
-					int column = getRequstedColumn();
+					int column = getRequestedColumn();
 					for (P_MenuItem item : items) {
 						item.updateEnable(requestedItem);
 					}
@@ -67,12 +67,12 @@ public class TableViewContextMenu<T> {
 
 				private void updateColumnIndex(double sceneX) {
 					double last = 0;
-					indexOfColumn = tableView.getColumns().size();
+					columnIndex = tableView.getColumns().size();
 					int index = 0;
 					for (TableColumn<?, ?> column : tableView.getColumns()) {
 						last += column.getWidth();
 						if (last > sceneX) {
-							indexOfColumn = index;
+							columnIndex = index;
 							break;
 						}
 						index++;
@@ -92,8 +92,8 @@ public class TableViewContextMenu<T> {
 		public P_MenuItem(String text, Consumer<T> eventHandler, Predicate<T> enableHandler) {
 			this.enableHandler = enableHandler;
 			item = new MenuItem(text);
-			item.setOnAction(e -> eventHandler.accept(getRequstedItem()));
-			getCreateContextMenu().getItems().add(item);
+			item.setOnAction(e -> eventHandler.accept(getRequestedItem()));
+			getOrCreateContextMenu().getItems().add(item);
 		}
 
 		public void updateEnable(T selected) {
@@ -111,8 +111,8 @@ public class TableViewContextMenu<T> {
 				BiPredicate<T, Integer> enableHandler) {
 			this.enableHandler = enableHandler;
 			item = new MenuItem(text);
-			item.setOnAction(e -> eventHandler.accept(getRequstedItem(), getRequstedColumn()));
-			getCreateContextMenu().getItems().add(item);
+			item.setOnAction(e -> eventHandler.accept(getRequestedItem(), getRequestedColumn()));
+			getOrCreateContextMenu().getItems().add(item);
 		}
 
 		public void updateEnable(T selected, int column) {
