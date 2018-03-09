@@ -39,12 +39,10 @@ public class TaskComputationControl extends TabPane implements CloseableControl,
 
 	private TaskComputation computation;
 	
-	private ExecutorService scpExecutor;
 	
-	public TaskComputationControl(TaskComputation computation, ExecutorService scpExecutor) {
+	public TaskComputationControl(TaskComputation computation) {
 		JavaFXRoutines.initRootAndController("TaskComputationView.fxml", this);
 		this.computation = computation;
-		this.scpExecutor = scpExecutor;
 	}
 	
 	@Override
@@ -53,7 +51,7 @@ public class TaskComputationControl extends TabPane implements CloseableControl,
 			ProgressDialog dialog = ModalDialogs.doModal(new ProgressDialog(parameter, "Updating infos..."),
 					WindowConstants.DO_NOTHING_ON_CLOSE);
 			try {
-				adapter = new TaskComputationAdapter(computation, scpExecutor);
+				adapter = new TaskComputationAdapter(computation);
 				adapter.init();
 			} finally {
 				dialog.done();

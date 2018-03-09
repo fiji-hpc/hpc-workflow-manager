@@ -78,15 +78,12 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 	private Timer timer;
 	private ObservableTaskRegistry registry;
 	private ExecutorService executorServiceWS;
-	private ExecutorService executorServiceScp;
 	private Executor executorFx = new FXFrameExecutorService();
 	private Window root;
 
 	public SPIMPipelineProgressViewController() {
 		executorServiceWS = Executors.newSingleThreadExecutor();
-		executorServiceScp = Executors.newSingleThreadExecutor();
 		init();
-
 	}
 
 	public SPIMPipelineProgressViewController(BenchmarkJob job) {
@@ -108,7 +105,6 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 	public void close() {
 		timer.cancel();
 		executorServiceWS.shutdown();
-		executorServiceScp.shutdown();
 	}
 
 	@Override
@@ -132,7 +128,7 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 	}
 
 	private void proof(ObservableValue<Task> task, int columnIndex) {
-		ModalDialogs.doModal(new TaskComputationWindow(root, task.getValue().getComputations().get(columnIndex - 1), executorServiceScp),
+		ModalDialogs.doModal(new TaskComputationWindow(root, task.getValue().getComputations().get(columnIndex - 1)),
 				WindowConstants.DISPOSE_ON_CLOSE);
 	}
 

@@ -4,7 +4,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
-import java.rmi.RemoteException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -18,7 +17,6 @@ import com.jcraft.jsch.JSchException;
 import cz.it4i.fiji.haas_java_client.HaaSClient.P_ProgressNotifierDecorator4Size;
 import cz.it4i.fiji.haas_java_client.HaaSClient.UploadingFile;
 import cz.it4i.fiji.haas_java_client.proxy.FileTransferMethodExt;
-import cz.it4i.fiji.haas_java_client.proxy.FileTransferWsSoap;
 import cz.it4i.fiji.scpclient.ScpClient;
 
 class HaaSFileTransferImp implements HaaSFileTransfer {
@@ -28,30 +26,17 @@ class HaaSFileTransferImp implements HaaSFileTransfer {
 
 	private FileTransferMethodExt ft;
 	private ScpClient scpClient;
-	private FileTransferWsSoap fileTransfer;
-	private String sessionId;
-	private long jobId;
 	private ProgressNotifier notifier;
 
-	public HaaSFileTransferImp(FileTransferMethodExt ft, String sessionId, long jobId, FileTransferWsSoap fileTransfer,
-			ScpClient scpClient, ProgressNotifier notifier) {
+	public HaaSFileTransferImp(FileTransferMethodExt ft, ScpClient scpClient, ProgressNotifier notifier) {
 		this.ft = ft;
 		this.scpClient = scpClient;
-		this.fileTransfer = fileTransfer;
-		this.sessionId = sessionId;
-		this.jobId = jobId;
 		this.notifier = notifier;
 	}
 
 	@Override
 	public void close() {
 		scpClient.close();
-		try {
-			fileTransfer.endFileTransfer(jobId, ft, sessionId);
-		} catch (RemoteException e) {
-			throw new HaaSClientException(e);
-		}
-
 	}
 
 	@Override

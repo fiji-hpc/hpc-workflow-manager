@@ -6,9 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -19,7 +16,6 @@ import cz.it4i.fiji.haas_spim_benchmark.core.TaskComputation;
 import cz.it4i.fiji.haas_spim_benchmark.core.TaskComputation.Log;
 import javafx.beans.value.ObservableValue;
 import javafx.beans.value.ObservableValueBase;
-//TASK: fix occasional auth fails with ssh
 //TASK: improve performance
 public class TaskComputationAdapter implements Closeable {
 
@@ -34,25 +30,15 @@ public class TaskComputationAdapter implements Closeable {
 
 	private Timer timer;
 
-	private ExecutorService scpExecutor;
-
-	public TaskComputationAdapter(TaskComputation computation, ExecutorService scpExecutor) {
+	public TaskComputationAdapter(TaskComputation computation) {
 		this.computation = computation;
-		this.scpExecutor = scpExecutor;
 		timer = new Timer();
 	}
 
 	public void init() {
-		Future<?> future = scpExecutor.submit(() -> {
-			Map<String, Long> sizes = computation.getOutFileSizes();
-			computation.getOutputs().forEach(outputFile -> addOutputFile(outputFile, sizes.get(outputFile)));
-			computation.getLogs().forEach(log -> logs.add(new ObservableLog(log)));
-		});
-		try {
-			future.get();
-		} catch (InterruptedException | ExecutionException e) {
-			log.error(e.getMessage(), e);
-		}
+		Map<String, Long> sizes = computation.getOutFileSizes();
+		computation.getOutputs().forEach(outputFile -> addOutputFile(outputFile, sizes.get(outputFile)));
+		computation.getLogs().forEach(log -> logs.add(new ObservableLog(log)));
 		synchronized (this) {
 			if(timer != null) {
 				timer.schedule(new P_TimerTask(), Constants.HAAS_TIMEOUT, Constants.HAAS_TIMEOUT);
@@ -172,18 +158,12 @@ public class TaskComputationAdapter implements Closeable {
 
 		@Override
 		public void run() {
-			try {
-				scpExecutor.submit(() -> {
-					Map<String, Long> sizes = computation.getOutFileSizes();
-					Map<String, Log> logs = computation.getLogs().stream()
-							.collect(Collectors.<Log, String, Log>toMap((Log log) -> log.getName(), (Log log) -> log));
-					TaskComputationAdapter.this.logs
-							.forEach(log -> ((ObservableLog) log).setContentValue(logs.get(log.getName())));
-					outputs.forEach(value -> ((ObservableOutputFile) value).setSize(sizes.get(value.getValue().getName())));
-				}).get();
-			} catch (InterruptedException | ExecutionException e) {
-				log.error(e.getMessage(), e);
-			}
+			Map<String, Long> sizes = computation.getOutFileSizes();
+			Map<String, Log> logs = computation.getLogs().stream()
+					.collect(Collectors.<Log, String, Log>toMap((Log log) -> log.getName(), (Log log) -> log));
+			TaskComputationAdapter.this.logs
+					.forEach(log -> ((ObservableLog) log).setContentValue(logs.get(log.getName())));
+			outputs.forEach(value -> ((ObservableOutputFile) value).setSize(sizes.get(value.getValue().getName())));
 		}
 
 	}
