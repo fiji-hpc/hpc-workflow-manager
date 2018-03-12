@@ -18,10 +18,12 @@ public class SPIMComputationAccessorDecoratorWithTimeout implements SPIMComputat
 	private final P_ResultCacheHolder<Set<String>> changedFilesCache;
 	private final Map<SynchronizableFileType, Integer> allowedTypesIndices = new HashMap<>();
 	private final List<SynchronizableFileType> allowedTypes = new LinkedList<>();
+	private SPIMComputationAccessor decorated;
 
 	public SPIMComputationAccessorDecoratorWithTimeout(SPIMComputationAccessor decorated,
 			Set<SynchronizableFileType> allowedTypes, long intervalForQueryInMs) {
 		this.intervalForQueryInMs = intervalForQueryInMs;
+		this.decorated = decorated;
 		initAllowedTypes(allowedTypes);
 		outputCache = new P_ResultCacheHolder<List<String>>(x -> decorated.getActualOutput(this.allowedTypes));
 		changedFilesCache = new P_ResultCacheHolder<>(set -> {
@@ -47,6 +49,16 @@ public class SPIMComputationAccessorDecoratorWithTimeout implements SPIMComputat
 	@Override
 	public synchronized Collection<String> getChangedFiles() {
 		return changedFilesCache.getResult();
+	}
+
+	@Override
+	public List<Long> getFileSizes(List<String> names) {
+		return decorated.getFileSizes(names);
+	}
+	
+	@Override
+	public List<String> getFileContents(List<String> logs) {
+		return decorated.getFileContents(logs);
 	}
 
 	private void initAllowedTypes(Set<SynchronizableFileType> allowedTypes) {

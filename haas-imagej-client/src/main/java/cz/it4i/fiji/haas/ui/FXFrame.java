@@ -30,18 +30,17 @@ public abstract class FXFrame<T extends Parent&CloseableControl> extends JDialog
 	public FXFrame(Window parent, Supplier<T> fxSupplier) {
 		super(parent, ModalityType.MODELESS);
 		fxPanel = new JFXPanel<>(fxSupplier);
+		init();
 		if (fxPanel.getControl() instanceof InitiableControl) {
 			InitiableControl control = (InitiableControl) fxPanel.getControl();
 			control.init(this);
 		}
-		init();
 	}
 
 	private void init() {
 		addWindowListener(new WindowAdapter() {
 			@Override
-			public void windowClosed(WindowEvent e) {
-				super.windowClosed(e);
+			public void windowClosing(WindowEvent e) {
 				getFxPanel().getControl().close();
 			}
 		});

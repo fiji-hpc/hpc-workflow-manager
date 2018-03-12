@@ -7,8 +7,6 @@ import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -29,7 +27,8 @@ public class Extractor {
 
 	private Map<String, String> valueWithTypes;
 
-	public Extractor(Path inputFile, Set<String> valuesToExport, Map<String, String> valuesWithTypes, OutputStream out) {
+	public Extractor(Path inputFile, Set<String> valuesToExport, Map<String, String> valuesWithTypes,
+			OutputStream out) {
 		this.inputFile = inputFile;
 		this.valuesToExport = valuesToExport;
 		this.valueWithTypes = valuesWithTypes;
@@ -61,7 +60,7 @@ public class Extractor {
 					}
 				}
 			}
-			if(valueCollector != null) {
+			if (valueCollector != null) {
 				write(pw, collector, valueCollector);
 			}
 		} catch (IOException e) {
@@ -102,12 +101,12 @@ public class Extractor {
 			out.printf("jobs #;%d\n", ids.size());
 			out.printf("job ids;%s\n", String.join(";", ids));
 			for (String key : valuesToExport) {
-				out.printf("%s;%s\n", key, String.join(";", convert(key,values4Job.get(key))));
+				out.printf("%s;%s\n", key, String.join(";", convert(key, values4Job.get(key))));
 			}
 		}
 
 		private List<String> convert(String key, List<String> list) {
-			if(!valueWithTypes.containsKey(key)) {
+			if (!valueWithTypes.containsKey(key)) {
 				return list;
 			}
 			Function<String, String> conversion = getConversion(valueWithTypes.get(key));
@@ -122,7 +121,13 @@ public class Extractor {
 				//return str->nf.format(Double.parseDouble(str.replace("kb", ""))/1024.);
 				return str -> "" + Double.parseDouble(str.replace("kb", ""))/1024.;
 			case "tm":
-				return str-> Duration.between(LocalTime.of(0, 0, 0), LocalTime.parse(str, DateTimeFormatter.ofPattern("H:m:s"))).getSeconds() + "";
+				
+				return str->  {
+					String []tokens = str.split(":");
+					return Duration.ofHours(Integer.parseInt(tokens[0]))
+							       .plusMinutes(Integer.parseInt(tokens[1]))
+							       .plusSeconds(Integer.parseInt(tokens[2])).getSeconds() + "";
+				};
 			}
 			
 			return str->str;

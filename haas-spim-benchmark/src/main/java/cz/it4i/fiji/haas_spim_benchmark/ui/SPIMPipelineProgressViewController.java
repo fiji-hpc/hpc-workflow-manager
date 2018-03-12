@@ -1,5 +1,7 @@
 package cz.it4i.fiji.haas_spim_benchmark.ui;
 
+import java.awt.Window;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -12,8 +14,16 @@ import java.util.concurrent.Executors;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import javax.swing.WindowConstants;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import cz.it4i.fiji.haas.ui.CloseableControl;
+import cz.it4i.fiji.haas.ui.InitiableControl;
 import cz.it4i.fiji.haas.ui.JavaFXRoutines;
+import cz.it4i.fiji.haas.ui.ModalDialogs;
+import cz.it4i.fiji.haas.ui.TableViewContextMenu;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.BenchmarkJob;
 import cz.it4i.fiji.haas_spim_benchmark.core.Constants;
@@ -21,29 +31,28 @@ import cz.it4i.fiji.haas_spim_benchmark.core.FXFrameExecutorService;
 import cz.it4i.fiji.haas_spim_benchmark.core.Task;
 import cz.it4i.fiji.haas_spim_benchmark.core.TaskComputation;
 import javafx.beans.value.ObservableValue;
+import javafx.beans.value.ObservableValueBase;
 import javafx.fxml.FXML;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.paint.Color;
 
-public class SPIMPipelineProgressViewController extends BorderPane implements CloseableControl {
+public class SPIMPipelineProgressViewController extends BorderPane implements CloseableControl, InitiableControl {
 
+	public final static Logger log = LoggerFactory
+			.getLogger(cz.it4i.fiji.haas_spim_benchmark.ui.SPIMPipelineProgressViewController.class);
+	
 	private static final String EMPTY_VALUE = "\u2007\u2007\u2007";
 
 	private static final int PREFERRED_WIDTH = 900;
 
-	protected static final String RUNNING_STATE_COMPUTATION = Color.YELLOW.toString();
-
-	protected static final String FINISHED_STATE_COMPUTATION = null;
-
-	protected static final String UNKNOWN_STATE_COMPUTATION = Color.GRAY.toString();
-
 	private static final Map<JobState, Color> taskExecutionState2Color = new HashMap<>();
 	static {
-		taskExecutionState2Color.put(JobState.Running, Color.YELLOW);
-		taskExecutionState2Color.put(JobState.Finished, Color.GREEN);
-		taskExecutionState2Color.put(JobState.Failed, Color.RED);
+		taskExecutionState2Color.put(JobState.Running, Color.rgb(0xF2, 0xD5, 0x39));
+		taskExecutionState2Color.put(JobState.Finished, Color.rgb(0x41, 0xB2, 0x80));
+		taskExecutionState2Color.put(JobState.Failed, Color.rgb(0xFF, 0x51, 0x3D));
+		taskExecutionState2Color.put(JobState.Queued, Color.rgb(0x30, 0xA2, 0xCC));
 		taskExecutionState2Color.put(JobState.Unknown, Color.GRAY);
 	}
 
@@ -70,11 +79,11 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 	private ObservableTaskRegistry registry;
 	private ExecutorService executorServiceWS;
 	private Executor executorFx = new FXFrameExecutorService();
+	private Window root;
 
 	public SPIMPipelineProgressViewController() {
 		executorServiceWS = Executors.newSingleThreadExecutor();
 		init();
-
 	}
 
 	public SPIMPipelineProgressViewController(BenchmarkJob job) {
@@ -98,12 +107,54 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 		executorServiceWS.shutdown();
 	}
 
+	@Override
+	public void init(Window parameter) {
+		this.root = parameter;
+	}
+
 	private void init() {
 		JavaFXRoutines.initRootAndController("SPIMPipelineProgressView.fxml", this);
 		tasks.setPrefWidth(PREFERRED_WIDTH);
 		timer = new Timer();
 		registry = new ObservableTaskRegistry(task -> tasks.getItems().remove(registry.get(task)));
+		TableViewContextMenu<ObservableValue<Task>> menu = new TableViewContextMenu<ObservableValue<Task>>(this.tasks);
+		menu.addItem("Open view", (task, columnIndex) -> proof(task, columnIndex),
+				(x, columnIndex) -> check(x, columnIndex));
+	}
 
+	private boolean check(ObservableValue<Task> x, Integer columnIndex) {
+		boolean result = x != null && 0 < columnIndex &&columnIndex - 1 < x.getValue().getComputations().size();
+		return result;
+	}
+
+	private void proof(ObservableValue<Task> task, int columnIndex) {
+		ModalDialogs.doModal(new TaskComputationWindow(root, task.getValue().getComputations().get(columnIndex - 1)),
+				WindowConstants.DISPOSE_ON_CLOSE);
+	}
+
+	static void add(Collection<ObservableValue<RemoteFileInfo>> files, String name, long size) {
+		RemoteFileInfo file = new RemoteFileInfo() {
+
+			@Override
+			public Long getSize() {
+				return size;
+			}
+
+			@Override
+			public String getName() {
+				return name;
+			}
+
+		};
+		ObservableValue<RemoteFileInfo> value = new ObservableValueBase<RemoteFileInfo>() {
+
+			@Override
+			public RemoteFileInfo getValue() {
+				return file;
+			}
+		};
+
+		files.add(value);
 	}
 
 	private void fillTable() {
@@ -162,6 +213,7 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 						cell.setStyle("");
 					} else {
 						cell.setText(EMPTY_VALUE);
+						cell.getStyleClass().add("bordered-class");
 						cell.setStyle("-fx-background-color: " + getColorTaskExecState(val.getState()));
 					}
 				}));

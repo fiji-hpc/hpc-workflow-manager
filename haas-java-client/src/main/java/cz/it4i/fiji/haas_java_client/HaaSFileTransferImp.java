@@ -1,9 +1,10 @@
 package cz.it4i.fiji.haas_java_client;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
-import java.rmi.RemoteException;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -16,39 +17,26 @@ import com.jcraft.jsch.JSchException;
 import cz.it4i.fiji.haas_java_client.HaaSClient.P_ProgressNotifierDecorator4Size;
 import cz.it4i.fiji.haas_java_client.HaaSClient.UploadingFile;
 import cz.it4i.fiji.haas_java_client.proxy.FileTransferMethodExt;
-import cz.it4i.fiji.haas_java_client.proxy.FileTransferWsSoap;
 import cz.it4i.fiji.scpclient.ScpClient;
 
 class HaaSFileTransferImp implements HaaSFileTransfer {
 
+	@SuppressWarnings("unused")
 	private static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas_java_client.HaaSFileTransferImp.class);
 
 	private FileTransferMethodExt ft;
 	private ScpClient scpClient;
-	private FileTransferWsSoap fileTransfer;
-	private String sessionId;
-	private long jobId;
 	private ProgressNotifier notifier;
 
-	public HaaSFileTransferImp(FileTransferMethodExt ft, String sessionId, long jobId, FileTransferWsSoap fileTransfer,
-			ScpClient scpClient, ProgressNotifier notifier) {
+	public HaaSFileTransferImp(FileTransferMethodExt ft, ScpClient scpClient, ProgressNotifier notifier) {
 		this.ft = ft;
 		this.scpClient = scpClient;
-		this.fileTransfer = fileTransfer;
-		this.sessionId = sessionId;
-		this.jobId = jobId;
 		this.notifier = notifier;
 	}
 
 	@Override
 	public void close() {
 		scpClient.close();
-		try {
-			fileTransfer.endFileTransfer(jobId, ft, sessionId);
-		} catch (RemoteException e) {
-			throw new HaaSClientException(e);
-		}
-
 	}
 
 	@Override
@@ -108,11 +96,52 @@ class HaaSFileTransferImp implements HaaSFileTransfer {
 	public List<Long> obtainSize(List<String> files) {
 		try {
 			return HaaSClient.getSizes(files.stream()
-					.map(filename -> "'" + ft.getSharedBasepath() + "/" + filename + "'").collect(Collectors.toList()), scpClient, notifier);
+					.map(filename -> "'" + ft.getSharedBasepath() + "/" + filename + "'").collect(Collectors.toList()),
+					scpClient, notifier);
 		} catch (JSchException | IOException e) {
 			throw new HaaSClientException(e);
 		}
 
+	}
+
+	// FIXME: merge with download - stream provider for file, consumer for stream
+	@Override
+	public List<String> getContent(List<String> files) {
+		List<String> result = new LinkedList<>();
+		List<Long> fileSizes;
+		try {
+			fileSizes = HaaSClient.getSizes(StreamSupport.stream(files.spliterator(), false)
+					.map(filename -> "'" + ft.getSharedBasepath() + "/" + filename + "'").collect(Collectors.toList()),
+					scpClient, new P_ProgressNotifierDecorator4Size(notifier));
+
+			final long totalFileSize = fileSizes.stream().mapToLong(i -> i.longValue()).sum();
+			TransferFileProgressForHaaSClient progress = new TransferFileProgressForHaaSClient(totalFileSize, notifier);
+			int idx = 0;
+			for (String fileName : files) {
+				fileName = replaceIfFirstFirst(fileName, "/", "");
+				try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
+					String fileToDownload = "'" + ft.getSharedBasepath() + "/" + fileName + "'";
+					String item;
+					progress.addItem(item = fileName);
+					progress.startNewFile(fileSizes.get(idx));
+					scpClient.download(fileToDownload, os, progress);
+					os.flush();
+					progress.itemDone(item);
+					idx++;
+					result.add(os.toString());
+				}
+			}
+		} catch (JSchException | IOException e) {
+			throw new HaaSClientException(e);
+		}
+		return result;
+	}
+
+	private String replaceIfFirstFirst(String fileName, String string, String string2) {
+		if (fileName.length() < 0 && fileName.charAt(0) == '/') {
+			fileName = fileName.substring(1);
+		}
+		return fileName;
 	}
 
 }

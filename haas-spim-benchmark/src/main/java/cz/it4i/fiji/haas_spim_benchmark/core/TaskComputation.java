@@ -2,14 +2,80 @@ package cz.it4i.fiji.haas_spim_benchmark.core;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
+import java.util.stream.Collectors;
+
+import org.apache.commons.math3.util.Pair;
+
+import com.google.common.collect.Streams;
 
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
 
+//FIXME: TaskComputation 'done' should be Finished not Queued
 public class TaskComputation {
+
+	public static class Log {
+		final private String name;
+		final private String content;
+
+		public Log(String name, String content) {
+			this.name = name;
+			this.content = content;
+		}
+
+		public String getName() {
+			return name;
+		}
+
+		public String getContent() {
+			return content;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			Log other = (Log) obj;
+			if (content == null) {
+				if (other.content != null)
+					return false;
+			} else if (!content.equals(other.content))
+				return false;
+			if (name == null) {
+				if (other.name != null)
+					return false;
+			} else if (!name.equals(other.name))
+				return false;
+			return true;
+		}
+	}
+
+	public static class File {
+		final private String name;
+		final private long size;
+
+		public File(String name, long size) {
+			this.name = name;
+			this.size = size;
+		}
+
+		public String getName() {
+			return name;
+		}
+
+		public long getSize() {
+			return size;
+		}
+	}
 
 	private final SPIMComputationAccessor computationAccessor;
 	private final String taskDescription;
@@ -19,13 +85,12 @@ public class TaskComputation {
 	private int positionInOutput;
 
 	private Collection<String> inputs;
-	@SuppressWarnings("unused")
-	private Collection<String> outputs;
-	private Collection<String> logs;
+	private Collection<String> outputs = Collections.emptyList();
+	private Collection<String> logs = Collections.emptyList();
 	private Long id;
 
 	private final List<BenchmarkError> errors;
-	
+
 	/**
 	 * Creates a TaskComputation object. At the time of creation, the job parameters
 	 * are not populated
@@ -61,16 +126,22 @@ public class TaskComputation {
 		return id;
 	}
 
-	// TODO: Method stub
 	public void update() {
 
 	}
-	
+
 	/**
 	 * @return computations errors
 	 */
 	public Collection<BenchmarkError> getErrors() {
 		return errors;
+	}
+
+	public Collection<Log> getLogs() {
+		List<String> logNames = new LinkedList<>(logs);
+		List<String> contents = computationAccessor.getFileContents(logNames);
+		return Streams.<String, String, Log>zip(logNames.stream(), contents.stream(),
+				(name, content) -> new Log(name, content)).collect(Collectors.toList());
 	}
 
 	/**
@@ -97,6 +168,17 @@ public class TaskComputation {
 		updateState();
 
 		return true;
+	}
+
+	public Collection<String> getOutputs() {
+		return outputs;
+	}
+
+	public Map<String, Long> getOutFileSizes() {
+		List<String> names = new LinkedList<>(outputs);
+		List<Long> sizes = computationAccessor.getFileSizes(names);
+		return Streams.zip(names.stream(), sizes.stream(), (name, size) -> new Pair<>(name, size))
+				.collect(Collectors.toMap(p -> p.getFirst(), p -> p.getSecond()));
 	}
 
 	private void updateState() {

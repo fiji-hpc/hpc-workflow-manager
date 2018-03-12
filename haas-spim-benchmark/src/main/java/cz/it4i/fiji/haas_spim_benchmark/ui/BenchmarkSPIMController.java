@@ -3,9 +3,10 @@ package cz.it4i.fiji.haas_spim_benchmark.ui;
 import java.awt.Desktop;
 import java.awt.Window;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -15,7 +16,6 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Function;
-import java.util.function.Predicate;
 
 import javax.swing.WindowConstants;
 
@@ -30,7 +30,6 @@ import cz.it4i.fiji.haas.ui.ModalDialogs;
 import cz.it4i.fiji.haas.ui.ProgressDialog;
 import cz.it4i.fiji.haas.ui.TableViewContextMenu;
 import cz.it4i.fiji.haas_java_client.JobState;
-import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
 import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager;
 import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.BenchmarkJob;
 import cz.it4i.fiji.haas_spim_benchmark.core.Constants;
@@ -42,15 +41,8 @@ import javafx.scene.control.TableView;
 import javafx.scene.layout.BorderPane;
 import net.imagej.updater.util.Progress;
 
+//FIXME: fix Exception during context menu request on task with N/A state
 public class BenchmarkSPIMController extends BorderPane implements CloseableControl, InitiableControl {
-
-	private static boolean notNullValue(ObservableValue<BenchmarkJob> j, Predicate<BenchmarkJob> pred) {
-		if (j == null || j.getValue() == null) {
-			return false;
-		} else {
-			return pred.test(j.getValue());
-		}
-	}
 
 	@FXML
 	private TableView<ObservableValue<BenchmarkJob>> jobs;
@@ -89,8 +81,7 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 		}, Constants.HAAS_UPDATE_TIMEOUT, Constants.HAAS_UPDATE_TIMEOUT);
 		initTable();
 		initMenu();
-		updateJobs();
-
+		executorServiceFX.execute(this::updateJobs);
 	}
 
 	private void initMenu() {
@@ -99,46 +90,37 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 		menu.addItem("Start job", job -> executeWSCallAsync("Starting job", p -> {
 			job.getValue().startJob(p);
 			registry.get(job.getValue()).update();
-		}), job -> notNullValue(job, j -> j.getState() == JobState.Configuring || j.getState() == JobState.Finished
-				|| j.getState() == JobState.Failed));
+		}), job -> JavaFXRoutines.notNullValue(job, j -> j.getState() == JobState.Configuring
+				|| j.getState() == JobState.Finished || j.getState() == JobState.Failed));
 
 		menu.addItem("Cancel job", job -> executeWSCallAsync("Canceling job", p -> {
 			job.getValue().cancelJob();
 			registry.get(job.getValue()).update();
-		}), job -> notNullValue(job, j -> j.getState() == JobState.Running));
+		}), job -> JavaFXRoutines.notNullValue(job, j -> j.getState() == JobState.Running));
 
-		menu.addItem("Show details", job -> {
+		menu.addItem("Execution details", job -> {
 			try {
 				new JobDetailWindow(root, job.getValue()).setVisible(true);
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				log.error(e.getMessage(), e);
 			}
-		}, job -> notNullValue(job, j -> j.getState() == JobState.Running || j.getState() == JobState.Finished
-				|| j.getState() == JobState.Failed || j.getState() == JobState.Canceled));
+		}, job -> JavaFXRoutines.notNullValue(job,
+				j -> j.getState() == JobState.Running || j.getState() == JobState.Finished
+						|| j.getState() == JobState.Failed || j.getState() == JobState.Canceled));
 
 		menu.addItem("Download result",
 				job -> executeWSCallAsync("Downloading data", p -> job.getValue().downloadData(p)),
-				job -> notNullValue(job,
+				job -> JavaFXRoutines.notNullValue(job,
 						j -> EnumSet.of(JobState.Failed, JobState.Finished, JobState.Canceled).contains(j.getState())
 								&& !j.downloaded()));
 		menu.addItem("Download statistics",
 				job -> executeWSCallAsync("Downloading data", p -> job.getValue().downloadStatistics(p)),
-				job -> notNullValue(job, j -> j.getState() == JobState.Finished));
+				job -> JavaFXRoutines.notNullValue(job, j -> j.getState() == JobState.Finished));
 
 		menu.addItem("Explore errors", job -> job.getValue().exploreErrors(),
-				job -> notNullValue(job, j -> j.getState().equals(JobState.Failed)));
+				job -> JavaFXRoutines.notNullValue(job, j -> j.getState().equals(JobState.Failed)));
 
-		menu.addItem("Show output", j -> {
-			new JobOutputView(root, executorServiceUI, j.getValue(), SynchronizableFileType.StandardErrorFile,
-					job -> job.getSnakemakeOutput(), Constants.HAAS_UPDATE_TIMEOUT);
-			new JobOutputView(root, executorServiceUI, j.getValue(), SynchronizableFileType.StandardOutputFile,
-					job -> job.getAnotherOutput(), Constants.HAAS_UPDATE_TIMEOUT);
-		}, job -> notNullValue(job, j -> EnumSet
-				.of(JobState.Failed, JobState.Finished, JobState.Running, JobState.Canceled).contains(j.getState())));
-		menu.addItem("Open working directory", j -> open(j.getValue()), x -> notNullValue(x, j -> true));
-		menu.addItem("Update table", job -> updateJobs(), j -> true);
-
+		menu.addItem("Open working directory", j -> open(j.getValue()), x -> JavaFXRoutines.notNullValue(x, j -> true));
 	}
 
 	private void open(BenchmarkJob j) {
@@ -180,15 +162,15 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 		if (manager == null) {
 			return;
 		}
+		Progress progress = showProgress
+				? ModalDialogs.doModal(new ProgressDialog(root, "Updating jobs"), WindowConstants.DO_NOTHING_ON_CLOSE)
+				: new DummyProgress();
+
 		executorServiceWS.execute(() -> {
-			Progress progress = showProgress
-					? ModalDialogs.doModal(new ProgressDialog(root, "Updating jobs"),
-							WindowConstants.DO_NOTHING_ON_CLOSE)
-					: new DummyProgress();
 
 			try {
-				Collection<BenchmarkJob> jobs = manager.getJobs();
-				//jobs.forEach(bj->bj.getStateAsync(executorServiceJobState));
+				List<BenchmarkJob> jobs = new LinkedList<>(manager.getJobs());
+				jobs.sort((bj1, bj2) -> (int) (bj1.getId() - bj2.getId()));
 				Set<ObservableValue<BenchmarkJob>> actual = new HashSet<>(this.jobs.getItems());
 				for (BenchmarkJob bj : jobs) {
 					registry.addIfAbsent(bj);
@@ -210,13 +192,13 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 	}
 
 	private void initTable() {
-		registry = new ObservableBenchmarkJobRegistry(bj -> remove(bj),executorServiceJobState);
+		registry = new ObservableBenchmarkJobRegistry(bj -> remove(bj), executorServiceJobState);
 		setCellValueFactory(0, j -> j.getId() + "");
-		setCellValueFactoryCompletable(1,
-				j -> j.getStateAsync(executorServiceJobState).thenApply(state -> "" + state));
+		setCellValueFactoryCompletable(1, j -> j.getStateAsync(executorServiceJobState).thenApply(state -> "" + state));
 		setCellValueFactory(2, j -> j.getCreationTime().toString());
 		setCellValueFactory(3, j -> j.getStartTime().toString());
 		setCellValueFactory(4, j -> j.getEndTime().toString());
+		// jobs.getSortOrder().add(jobs.getColumns().get(0));
 	}
 
 	private void remove(BenchmarkJob bj) {

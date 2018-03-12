@@ -41,7 +41,9 @@ public class ResultFileTask {
 				.appendOptional(DateTimeFormatter.ofPattern("EEE MMM dd kk:mm:ss z yyyy"))
 				.appendOptional(DateTimeFormatter.ofPattern("EEE MMM dd kk:mm:ss yyyy")).toFormatter();
 		Collection<Double> startTimeValues = retrieveValues(Constants.STATISTICS_RESOURCES_START_TIME)
-				.map(s -> (double) LocalDateTime.parse(s, formatter).toEpochSecond(ZoneOffset.UTC))
+				.map(s -> s != null && !s.equals("null")
+						? (double) LocalDateTime.parse(s, formatter).toEpochSecond(ZoneOffset.UTC)
+						: Double.NaN)
 				.collect(Collectors.toList());
 		Collection<Double> wallTimeValues = retrieveValues(Constants.STATISTICS_RESOURCES_WALL_TIME)
 				.map(s -> Double.parseDouble(s)).collect(Collectors.toList());

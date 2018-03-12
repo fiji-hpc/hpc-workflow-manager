@@ -163,6 +163,8 @@ public class HaaSClient {
 
 	private String projectId;
 
+	private Map<Long, P_FileTransferPool> filetransferPoolMap = new HashMap<>();
+
 	public static ProgressNotifier DUMMY_NOTIFIER = new ProgressNotifier() {
 
 		@Override
@@ -246,8 +248,7 @@ public class HaaSClient {
 
 	public HaaSFileTransfer startFileTransfer(long jobId, ProgressNotifier notifier) {
 		try {
-			FileTransferMethodExt ft = getFileTransfer().getFileTransferMethod(jobId, getSessionID());
-			return new HaaSFileTransferImp(ft, getSessionID(), jobId, getFileTransfer(), getScpClient(ft), notifier);
+			return getFileTransferMethod(jobId, notifier);
 		} catch (RemoteException | ServiceException | UnsupportedEncodingException | JSchException e) {
 			throw new HaaSClientException(e);
 		}
@@ -304,7 +305,7 @@ public class HaaSClient {
 			throw new HaaSClientException(e);
 		}
 	}
-	
+
 	public Collection<String> getChangedFiles(long jobId) {
 		try {
 			return Arrays.asList(getFileTransfer().listChangedFilesForJob(jobId, getSessionID()));
@@ -312,13 +313,33 @@ public class HaaSClient {
 			throw new HaaSClientException(e);
 		}
 	}
-	
-	
+
 	public void cancelJob(Long jobId) {
 		try {
 			getJobManagement().cancelJob(jobId, getSessionID());
 		} catch (RemoteException | ServiceException e) {
 			throw new HaaSClientException(e);
+		}
+	}
+
+	private HaaSFileTransferImp getFileTransferMethod(long jobId, ProgressNotifier notifier)
+			throws RemoteException, UnsupportedEncodingException, ServiceException, JSchException {
+		P_FileTransferPool pool = filetransferPoolMap.computeIfAbsent(jobId, id -> new P_FileTransferPool(id));
+		FileTransferMethodExt ft = pool.obtain();
+		try {
+			return new HaaSFileTransferImp(ft, getScpClient(ft), notifier) {
+				public void close() {
+					super.close();
+					try {
+						pool.release();
+					} catch (RemoteException | ServiceException e) {
+						throw new HaaSClientException(e);
+					}
+				};
+			};
+		} catch (UnsupportedEncodingException | JSchException e) {
+			pool.release();
+			throw e;
 		}
 	}
 
@@ -467,6 +488,45 @@ public class HaaSClient {
 		public void done() {
 			notifier.done();
 		}
+	}
+
+	private interface P_Supplier<T> {
+
+		T get() throws RemoteException, ServiceException;
+	}
+
+	private interface P_Consumer<T> {
+
+		void accept(T val) throws RemoteException, ServiceException;
+	}
+
+	private class P_FileTransferPool {
+		private FileTransferMethodExt holded;
+		private int counter;
+		private final P_Supplier<FileTransferMethodExt> factory;
+		private final P_Consumer<FileTransferMethodExt> destroyer;
+
+		public P_FileTransferPool(long jobId) {
+			this.factory = () -> getFileTransfer().getFileTransferMethod(jobId, getSessionID());
+			this.destroyer = val -> getFileTransfer().endFileTransfer(jobId, val, sessionID);
+			;
+		}
+
+		public synchronized FileTransferMethodExt obtain() throws RemoteException, ServiceException {
+			if (holded == null) {
+				holded = factory.get();
+			}
+			counter++;
+			return holded;
+		}
+
+		public synchronized void release() throws RemoteException, ServiceException {
+			if (--counter == 0) {
+				destroyer.accept(holded);
+				holded = null;
+			}
+		}
+
 	}
 
 }
