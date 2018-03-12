@@ -59,9 +59,7 @@ public class TableViewContextMenu<T> {
 					T requestedItem = getRequestedItem();
 					updateColumnIndex(event.getSceneX());
 					int column = getRequestedColumn();
-					for (P_MenuItem item : items) {
-						item.updateEnable(requestedItem);
-					}
+					items.forEach(item -> item.updateEnable(requestedItem));
 					itemsWithColumnIndex.forEach(item -> item.updateEnable(requestedItem, column));
 				}
 
