@@ -5,7 +5,6 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -22,10 +21,6 @@ public class Synchronization {
 	public static final Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas.data_transfer.Synchronization.class);
 	
 	private Supplier<HaaSFileTransfer> fileTransferSupplier;
-	
-	private Supplier<Iterable<String>> changedFilesSupplier;
-	
-	private Map<String,String> propertiesHolder;
 	
 	private Path workingDirectory;
 	
@@ -78,7 +73,7 @@ public class Synchronization {
 	}
 
 	private UploadingFile createUploadingFile(Path p) {
-		// TODO Auto-generated method stub
+		
 		return null;
 	}
 }

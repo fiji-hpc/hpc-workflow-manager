@@ -103,11 +103,11 @@ public class HaaSClient {
 	}
 
 	public interface UploadingFile {
-		InputStream getInputStream();
+		InputStream getInputStream() throws IOException;
 
 		String getName();
 
-		long getLength();
+		long getLength() throws IOException;
 
 		long getLastTime();
 	}

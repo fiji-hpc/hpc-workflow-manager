@@ -41,8 +41,13 @@ class HaaSFileTransferImp implements HaaSFileTransfer {
 
 	@Override
 	public void upload(Iterable<UploadingFile> files) {
-		List<Long> totalSizes = StreamSupport.stream(files.spliterator(), false).map(f -> f.getLength())
-				.collect(Collectors.toList());
+		List<Long> totalSizes = StreamSupport.stream(files.spliterator(), false).map(f -> {
+			try {
+				return f.getLength();
+			} catch (IOException e1) {
+				throw new RuntimeException(e1);
+			}
+		}).collect(Collectors.toList());
 		long totalSize = totalSizes.stream().mapToLong(l -> l.longValue()).sum();
 		TransferFileProgressForHaaSClient progress = new TransferFileProgressForHaaSClient(totalSize, notifier);
 		int index = 0;
