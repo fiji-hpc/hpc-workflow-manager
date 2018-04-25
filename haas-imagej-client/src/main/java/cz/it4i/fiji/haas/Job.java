@@ -4,21 +4,23 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.Executors;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import cz.it4i.fiji.haas.JobManager.JobManager4Job;
 import cz.it4i.fiji.haas.JobManager.JobSynchronizableFile;
+import cz.it4i.fiji.haas.data_transfer.Synchronization;
 import cz.it4i.fiji.haas_java_client.DummyProgressNotifier;
 import cz.it4i.fiji.haas_java_client.HaaSClient;
 import cz.it4i.fiji.haas_java_client.HaaSClient.UploadingFile;
@@ -31,6 +33,8 @@ import net.imagej.updater.util.Progress;
 public class Job {
 
 	private static final String JOB_NAME = "job.name";
+	
+	private static final String JOB_NEEDS_UPLOAD = "job.needs_upload";
 
 	public static boolean isJobPath(Path p) {
 		return isValidPath(p);
@@ -45,45 +49,67 @@ public class Job {
 	private Supplier<HaaSClient> haasClientSupplier;
 
 	// private JobState state;
-	//private Boolean needsDownload;
+	// private Boolean needsDownload;
 	private JobInfo jobInfo;
 	private Long jobId;
-
-	
 	private PropertyHolder propertyHolder;
-
 	private JobManager4Job jobManager;
+	private Synchronization synchronization;
 
-	public Job(JobManager4Job jobManager, String name, Path basePath, Supplier<HaaSClient> haasClientSupplier) throws IOException {
-		this(jobManager,haasClientSupplier);
+	public Job(JobManager4Job jobManager, String name, Path basePath, Supplier<HaaSClient> haasClientSupplier)
+			throws IOException {
+		this(jobManager, haasClientSupplier);
 		HaaSClient client = getHaaSClient();
 		long id = client.createJob(name, Collections.emptyList());
 		jobDir = basePath.resolve("" + id);
 		propertyHolder = new PropertyHolder(jobDir.resolve(JOB_INFO_FILE));
 		Files.createDirectory(jobDir);
 		setName(name);
-		
+
 	}
 
-	public void setName(String name) {
-		setProperty(JOB_NAME, name);
-	}
-
-	public Job(JobManager4Job jobManager,Path p, Supplier<HaaSClient> haasClientSupplier) {
+	public Job(JobManager4Job jobManager, Path jobDirectory, Supplier<HaaSClient> haasClientSupplier) {
 		this(jobManager, haasClientSupplier);
-		jobDir = p;
+		jobDir = jobDirectory;
 		propertyHolder = new PropertyHolder(jobDir.resolve(JOB_INFO_FILE));
+		resumeSynchronization();
 	}
 
-	public void uploadFiles(Iterable<UploadingFile> files, Progress notifier) {
-		HaaSClient client = getHaaSClient();
-		try(HaaSFileTransfer transfer = client.startFileTransfer(getId(), new P_ProgressNotifierAdapter(notifier))){
-			transfer.upload(files);
+	private Job(JobManager4Job jobManager, Supplier<HaaSClient> haasClientSupplier) {
+		this.haasClientSupplier = haasClientSupplier;
+		this.jobManager = jobManager;
+		try {
+			this.synchronization = new Synchronization(()->haasClientSupplier.get().startFileTransfer(getId(), new DummyProgressNotifier()), jobDir, Executors.newFixedThreadPool(2), ()->  {
+				setProperty(JOB_NEEDS_UPLOAD, false);
+			});
+		} catch (IOException e) {
+			log.error(e.getMessage(), e);
+			throw new RuntimeException(e);
 		}
 	}
 
-	public void uploadFilesByName(Iterable<String> files, Progress notifier) {
-		Iterable<UploadingFile> uploadingFiles = StreamSupport.stream(files.spliterator(), false)
+	public void startUploadData()  {
+		setProperty(JOB_INFO_FILE, true);
+		try {
+			this.synchronization.startUpload();
+		} catch (IOException e) {
+			log.error(e.getMessage(), e);
+			throw new RuntimeException(e);
+		}
+	}
+	
+	public void stopUploadData()  {
+		setProperty(JOB_INFO_FILE, false);
+		try {
+			this.synchronization.stopUpload();
+		} catch (IOException e) {
+			log.error(e.getMessage(), e);
+			throw new RuntimeException(e);
+		}
+	}
+	
+	public void uploadFile(String file, Progress notifier) {
+		Iterable<UploadingFile> uploadingFiles = Arrays.asList(file).stream()
 				.map((String name) -> HaaSClient.getUploadingFile(jobDir.resolve(name))).collect(Collectors.toList());
 		uploadFiles(uploadingFiles, notifier);
 	}
@@ -92,13 +118,6 @@ public class Job {
 		HaaSClient client = getHaaSClient();
 		client.submitJob(jobId);
 	}
-
-	private Job(JobManager4Job jobManager, Supplier<HaaSClient> haasClientSupplier) {
-		this.haasClientSupplier = haasClientSupplier;
-		this.jobManager = jobManager;
-	}
-
-	
 
 	synchronized public long getId() {
 		if (jobId == null) {
@@ -120,8 +139,11 @@ public class Job {
 	}
 
 	synchronized public void download(Predicate<String> predicate, Progress notifier) {
-		try (HaaSFileTransfer fileTransfer = getHaaSClient().startFileTransfer(jobId, new P_ProgressNotifierAdapter(notifier))) {
-			fileTransfer.download(getHaaSClient().getChangedFiles(jobId).stream().filter(predicate).collect(Collectors.toList()), jobDir);
+		try (HaaSFileTransfer fileTransfer = getHaaSClient().startFileTransfer(jobId,
+				new P_ProgressNotifierAdapter(notifier))) {
+			fileTransfer.download(
+					getHaaSClient().getChangedFiles(jobId).stream().filter(predicate).collect(Collectors.toList()),
+					jobDir);
 		}
 	}
 
@@ -153,8 +175,12 @@ public class Job {
 		return Files.newInputStream(jobDir.resolve(name));
 	}
 
-	public void setProperty(String name, String value) {
+	public synchronized void setProperty(String name, String value) {
 		propertyHolder.setValue(name, value);
+	}
+
+	public void setProperty(String jobNeedsUpload, boolean b) {
+		propertyHolder.setValue(jobNeedsUpload, "" + b);
 	}
 
 	public String getProperty(String name) {
@@ -168,24 +194,41 @@ public class Job {
 	public Path getDirectory() {
 		return jobDir;
 	}
-	
+
 	public boolean remove() {
 		boolean result;
-		if((result = jobManager.remove(this)) && Files.isDirectory(jobDir) ) {
+		if ((result = jobManager.remove(this)) && Files.isDirectory(jobDir)) {
 			List<Path> pathsToDelete;
 			try {
 				pathsToDelete = Files.walk(jobDir).sorted(Comparator.reverseOrder()).collect(Collectors.toList());
-				for(Path path : pathsToDelete) {
-				    Files.deleteIfExists(path);
+				for (Path path : pathsToDelete) {
+					Files.deleteIfExists(path);
 				}
 			} catch (IOException e) {
 				log.error(e.getMessage(), e);
 			}
-			
+
 		}
 		return result;
 	}
-	
+
+	private synchronized void resumeSynchronization() {
+		if(Boolean.parseBoolean(getProperty(JOB_NEEDS_UPLOAD))) {
+			synchronization.resumeUpload();
+		}
+	}
+
+	private void uploadFiles(Iterable<UploadingFile> files, Progress notifier) {
+		HaaSClient client = getHaaSClient();
+		try (HaaSFileTransfer transfer = client.startFileTransfer(getId(), new P_ProgressNotifierAdapter(notifier))) {
+			transfer.upload(files);
+		}
+	}
+
+	private void setName(String name) {
+		setProperty(JOB_NAME, name);
+	}
+
 	private HaaSClient getHaaSClient() {
 		return this.haasClientSupplier.get();
 	}
@@ -257,7 +300,7 @@ public class Job {
 	}
 
 	public List<Long> getFileSizes(List<String> names) {
-		
+
 		try (HaaSFileTransfer transfer = getHaaSClient().startFileTransfer(getId(), new DummyProgressNotifier())) {
 			return transfer.obtainSize(names);
 		}
@@ -268,9 +311,5 @@ public class Job {
 			return transfer.getContent(logs);
 		}
 	}
-
-	
-
-	
 
 }

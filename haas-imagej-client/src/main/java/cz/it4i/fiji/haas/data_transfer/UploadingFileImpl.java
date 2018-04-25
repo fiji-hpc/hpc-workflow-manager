@@ -5,12 +5,17 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import cz.it4i.fiji.haas_java_client.HaaSClient.UploadingFile;
 
-public class UploadingFileImpl implements UploadingFile{
+public class UploadingFileImpl implements UploadingFile {
+
+	public static final Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas.data_transfer.UploadingFileImpl.class);
 
 	private final Path path;
-	
+
 	public UploadingFileImpl(Path path) {
 		this.path = path;
 	}
@@ -32,8 +37,12 @@ public class UploadingFileImpl implements UploadingFile{
 
 	@Override
 	public long getLastTime() {
-		// TODO Auto-generated method stub
-		return 0;
+		try {
+			return Files.getLastModifiedTime(path).toMillis();
+		} catch (IOException e) {
+			log.error(e.getMessage(), e);
+			return 0;
+		}
 	}
 
 }

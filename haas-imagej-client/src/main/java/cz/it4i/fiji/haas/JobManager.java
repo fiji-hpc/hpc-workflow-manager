@@ -12,7 +12,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import cz.it4i.fiji.haas_java_client.HaaSClient;
-import cz.it4i.fiji.haas_java_client.HaaSClient.UploadingFile;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.Settings;
 import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
@@ -57,12 +56,6 @@ public class JobManager {
 		return job;
 	}
 
-	public Job startJob(Iterable<UploadingFile> files, Progress notifier) throws IOException {
-		Job result = createJob();
-		result.uploadFiles(files, notifier);
-		result.submit();
-		return result;
-	}
 
 	public Collection<Job> getJobs() {
 		if (jobs == null) {
