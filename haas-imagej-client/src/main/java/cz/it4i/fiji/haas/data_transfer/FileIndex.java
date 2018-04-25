@@ -10,8 +10,13 @@ import java.util.LinkedHashSet;
 import java.util.Queue;
 import java.util.Set;
 
-public class FileIndex {
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+public class FileIndex {
+	
+	public static final Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas.data_transfer.FileIndex.class);
+	
 	private Path workingFile;
 
 	private Set<Path> files = new LinkedHashSet<>();
@@ -29,25 +34,26 @@ public class FileIndex {
 		}
 	}
 
-	public synchronized boolean needsDownload(Path file) {
+	public synchronized boolean insert(Path file) {
 		return files.add(file);
 	}
 
 	public synchronized void uploaded(Path p) {
 		files.remove(p);
-
 	}
 
-	public synchronized void fileUploadQueue(Queue<Path> toUpload) {
+	public synchronized void fillQueue(Queue<Path> toUpload) {
 		toUpload.addAll(files);
 	}
 
 	private void loadFromFile() throws IOException {
 		files.clear();
-		try (BufferedReader br = Files.newBufferedReader(workingFile)) {
-			String line;
-			while (null != (line = br.readLine())) {
-				processLine(line);
+		if(Files.exists(workingFile)) {
+			try (BufferedReader br = Files.newBufferedReader(workingFile)) {
+				String line;
+				while (null != (line = br.readLine())) {
+					processLine(line);
+				}
 			}
 		}
 	}

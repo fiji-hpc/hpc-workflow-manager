@@ -21,6 +21,8 @@ public class Synchronization {
 
 	public static final Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas.data_transfer.Synchronization.class);
 	
+	private static final String FILE_INDEX_FILENAME = ".toUploadFiles";
+	
 	private Supplier<HaaSFileTransfer> fileTransferSupplier;
 	
 	private Path workingDirectory;
@@ -39,7 +41,7 @@ public class Synchronization {
 			ExecutorService service, Runnable uploadFinishedNotifier ) throws IOException {
 		this.fileTransferSupplier = fileTransferSupplier;
 		this.workingDirectory = workingDirectory;
-		this.fileRepository = new FileIndex(workingDirectory);
+		this.fileRepository = new FileIndex(workingDirectory.resolve(FILE_INDEX_FILENAME));
 		this.runnerForUpload = new SimpleThreadRunner(service);
 		this.uploadFinishedNotifier = uploadFinishedNotifier;
 	}
@@ -49,7 +51,7 @@ public class Synchronization {
 		fileRepository.clear();
 		try(DirectoryStream<Path> ds = Files.newDirectoryStream(workingDirectory,this::isNotHidden)) {
 			for (Path file : ds) {
-				fileRepository.needsDownload(file);
+				fileRepository.insert(file);
 				toUpload.add(file);
 				runnerForUpload.runIfNotRunning(this::doUpload);
 			}
@@ -58,19 +60,22 @@ public class Synchronization {
 			fileRepository.storeToFile();
 			
 		}
-	
 	}
-
+	
 	public void stopUpload() throws IOException {
 		toUpload.clear();
 		fileRepository.clear();
 	}
 
 	public void resumeUpload() {
-		fileRepository.fileUploadQueue(toUpload);
+		fileRepository.fillQueue(toUpload);
 		if(!toUpload.isEmpty()) {
 			runnerForUpload.runIfNotRunning(this::doUpload);
 		}
+	}
+	
+	public void startDownload() {
+		
 	}
 
 	private boolean isNotHidden(Path file) {
@@ -83,26 +88,28 @@ public class Synchronization {
 			while (!toUpload.isEmpty()) {
 				Path p = toUpload.poll();
 				UploadingFile uf = createUploadingFile(p);
+				log.info("upload: " + p);
 				tr.upload(Arrays.asList(uf));
 				fileUploaded(p);
+				log.info("uploaded: " + p);
 				reRun.set(false);
 			}
 		} finally {
-			try {
-				fileRepository.storeToFile();
-				synchronized(this) {
-					if(startUploadFinished) {
-						uploadFinishedNotifier.run();
-					}
+			synchronized (this) {
+				if (startUploadFinished) {
+					uploadFinishedNotifier.run();
 				}
-			} catch (IOException e) {
-				log.error(e.getMessage(), e);
 			}
 		}
 	}
 
 	private void fileUploaded(Path p) {
-		fileRepository.uploaded(p);
+		try {
+			fileRepository.uploaded(p);
+			fileRepository.storeToFile();
+		} catch (IOException e) {
+			log.error(e.getMessage(), e);
+		}
 	}
 
 	private UploadingFile createUploadingFile(Path p) {

@@ -1,25 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
-<?import javafx.geometry.Insets?>
 
-<fx:root type="BorderPane" xmlns="http://javafx.com/javafx/8.0.65"
-	xmlns:fx="http://javafx.com/fxml/1" fx:controller="cz.it4i.fiji.haas_spim_benchmark.ui.BenchmarkSPIMController">
+<fx:root type="BorderPane" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="cz.it4i.fiji.haas_spim_benchmark.ui.BenchmarkSPIMController">
 	<center>
 
 		<HBox>
 			<children>
 
-				<TableView fx:id="jobs" HBox.hgrow="ALWAYS">
+				<TableView fx:id="jobs" prefHeight="400.0" prefWidth="1065.0" HBox.hgrow="ALWAYS">
 					<columns>
 						<TableColumn prefWidth="75.0" text="Job Id" />
 						<TableColumn prefWidth="149.0" text="Status" />
 						<TableColumn prefWidth="230.0" text="Creation time" />
 						<TableColumn prefWidth="230.0" text="Start time" />
 						<TableColumn prefWidth="230.0" text="End Time" />
+                  <TableColumn prefWidth="150.0" text="Upload" />
 					</columns>
 				</TableView>
 			</children>

@@ -87,6 +87,18 @@ public class BenchmarkJobManager {
 		public JobState getState() {
 			return getStateAsync(r -> r.run()).getNow(JobState.Unknown);
 		}
+		
+		public void startUpload() {
+			job.startUploadData();
+		}
+		
+		public void stopUpload() {
+			job.stopUploadData();
+		}
+		
+		public boolean isUploading() {
+			return job.isUploading();
+		}
 
 		public synchronized CompletableFuture<JobState> getStateAsync(Executor executor) {
 			if (running != null) {
@@ -97,42 +109,6 @@ public class BenchmarkJobManager {
 				running = result;
 			}
 			return result;
-		}
-
-		private synchronized CompletableFuture<JobState> doGetStateAsync(Executor executor) {
-			JobState state = job.getState();
-			if (state != JobState.Finished) {
-				return CompletableFuture.completedFuture(state);
-			} else if (verifiedState != null) {
-				return CompletableFuture.completedFuture(verifiedState);
-			}
-			verifiedStateProcessed = true;
-			return CompletableFuture.supplyAsync(() -> {
-				try {
-					verifiedState = Stream.concat(Arrays.asList(state).stream(),
-							getTasks().stream().filter(task -> !task.getDescription().equals(Constants.DONE_TASK))
-									.flatMap(task -> task.getComputations().stream()).map(tc -> tc.getState()))
-							.max(new JobStateComparator()).get();
-					if (verifiedState != JobState.Finished && verifiedState != JobState.Canceled) {
-						verifiedState = JobState.Failed;
-					}
-					synchronized (BenchmarkJob.this) {
-						// test whether job was restarted - it sets running to null
-						if (!verifiedStateProcessed) {
-							verifiedState = null;
-							return doGetStateAsync(r -> r.run()).getNow(null);
-						}
-						running = null;
-						return verifiedState;
-					}
-				} finally {
-					synchronized (BenchmarkJob.this) {
-						if (running != null) {
-							running = null;
-						}
-					}
-				}
-			}, executor);
 		}
 
 		public void downloadData(Progress progress) throws IOException {
@@ -240,6 +216,42 @@ public class BenchmarkJobManager {
 		@Override
 		public String toString() {
 			return "" + getId();
+		}
+
+		private synchronized CompletableFuture<JobState> doGetStateAsync(Executor executor) {
+			JobState state = job.getState();
+			if (state != JobState.Finished) {
+				return CompletableFuture.completedFuture(state);
+			} else if (verifiedState != null) {
+				return CompletableFuture.completedFuture(verifiedState);
+			}
+			verifiedStateProcessed = true;
+			return CompletableFuture.supplyAsync(() -> {
+				try {
+					verifiedState = Stream.concat(Arrays.asList(state).stream(),
+							getTasks().stream().filter(task -> !task.getDescription().equals(Constants.DONE_TASK))
+									.flatMap(task -> task.getComputations().stream()).map(tc -> tc.getState()))
+							.max(new JobStateComparator()).get();
+					if (verifiedState != JobState.Finished && verifiedState != JobState.Canceled) {
+						verifiedState = JobState.Failed;
+					}
+					synchronized (BenchmarkJob.this) {
+						// test whether job was restarted - it sets running to null
+						if (!verifiedStateProcessed) {
+							verifiedState = null;
+							return doGetStateAsync(r -> r.run()).getNow(null);
+						}
+						running = null;
+						return verifiedState;
+					}
+				} finally {
+					synchronized (BenchmarkJob.this) {
+						if (running != null) {
+							running = null;
+						}
+					}
+				}
+			}, executor);
 		}
 
 		private String getStringFromTimeSafely(Calendar time) {

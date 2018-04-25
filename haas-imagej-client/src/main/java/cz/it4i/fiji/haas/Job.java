@@ -35,13 +35,15 @@ public class Job {
 	private static final String JOB_NAME = "job.name";
 	
 	private static final String JOB_NEEDS_UPLOAD = "job.needs_upload";
+	
+	private static final String JOB_INFO_FILENAME = ".jobinfo";
+
 
 	public static boolean isJobPath(Path p) {
 		return isValidPath(p);
 	}
 
-	private static String JOB_INFO_FILE = ".jobinfo";
-
+	
 	private static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas.Job.class);
 
 	private Path jobDir;
@@ -61,8 +63,8 @@ public class Job {
 		this(jobManager, haasClientSupplier);
 		HaaSClient client = getHaaSClient();
 		long id = client.createJob(name, Collections.emptyList());
-		jobDir = basePath.resolve("" + id);
-		propertyHolder = new PropertyHolder(jobDir.resolve(JOB_INFO_FILE));
+		setJobDirectory(basePath.resolve("" + id));
+		propertyHolder = new PropertyHolder(jobDir.resolve(JOB_INFO_FILENAME));
 		Files.createDirectory(jobDir);
 		setName(name);
 
@@ -70,26 +72,20 @@ public class Job {
 
 	public Job(JobManager4Job jobManager, Path jobDirectory, Supplier<HaaSClient> haasClientSupplier) {
 		this(jobManager, haasClientSupplier);
-		jobDir = jobDirectory;
-		propertyHolder = new PropertyHolder(jobDir.resolve(JOB_INFO_FILE));
-		resumeSynchronization();
+		setJobDirectory(jobDirectory);
+		propertyHolder = new PropertyHolder(jobDir.resolve(JOB_INFO_FILENAME));
+		resumeUpload();
 	}
+
+	
 
 	private Job(JobManager4Job jobManager, Supplier<HaaSClient> haasClientSupplier) {
 		this.haasClientSupplier = haasClientSupplier;
 		this.jobManager = jobManager;
-		try {
-			this.synchronization = new Synchronization(()->haasClientSupplier.get().startFileTransfer(getId(), new DummyProgressNotifier()), jobDir, Executors.newFixedThreadPool(2), ()->  {
-				setProperty(JOB_NEEDS_UPLOAD, false);
-			});
-		} catch (IOException e) {
-			log.error(e.getMessage(), e);
-			throw new RuntimeException(e);
-		}
 	}
 
 	public void startUploadData()  {
-		setProperty(JOB_INFO_FILE, true);
+		setProperty(JOB_NEEDS_UPLOAD, true);
 		try {
 			this.synchronization.startUpload();
 		} catch (IOException e) {
@@ -99,7 +95,7 @@ public class Job {
 	}
 	
 	public void stopUploadData()  {
-		setProperty(JOB_INFO_FILE, false);
+		setProperty(JOB_NEEDS_UPLOAD, false);
 		try {
 			this.synchronization.stopUpload();
 		} catch (IOException e) {
@@ -108,6 +104,10 @@ public class Job {
 		}
 	}
 	
+	public boolean isUploading() {
+		return Boolean.parseBoolean(getProperty(JOB_NEEDS_UPLOAD));
+	}
+
 	public void uploadFile(String file, Progress notifier) {
 		Iterable<UploadingFile> uploadingFiles = Arrays.asList(file).stream()
 				.map((String name) -> HaaSClient.getUploadingFile(jobDir.resolve(name))).collect(Collectors.toList());
@@ -212,7 +212,19 @@ public class Job {
 		return result;
 	}
 
-	private synchronized void resumeSynchronization() {
+	private void setJobDirectory(Path jobDirectory) {
+		this.jobDir = jobDirectory;
+		try {
+			this.synchronization = new Synchronization(()->haasClientSupplier.get().startFileTransfer(getId(), new DummyProgressNotifier()), jobDir, Executors.newFixedThreadPool(2), ()->  {
+				setProperty(JOB_NEEDS_UPLOAD, false);
+			});
+		} catch (IOException e) {
+			log.error(e.getMessage(), e);
+			throw new RuntimeException(e);
+		}
+	}
+	
+	private synchronized void resumeUpload() {
 		if(Boolean.parseBoolean(getProperty(JOB_NEEDS_UPLOAD))) {
 			synchronization.resumeUpload();
 		}
@@ -251,7 +263,7 @@ public class Job {
 		} catch (NumberFormatException e) {
 			return false;
 		}
-		return Files.isRegularFile(path.resolve(JOB_INFO_FILE));
+		return Files.isRegularFile(path.resolve(JOB_INFO_FILENAME));
 	}
 
 	private static long getJobId(Path path) {

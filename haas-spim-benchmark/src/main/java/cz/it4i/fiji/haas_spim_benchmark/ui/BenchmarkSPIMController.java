@@ -108,6 +108,9 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 				j -> j.getState() == JobState.Running || j.getState() == JobState.Finished
 						|| j.getState() == JobState.Failed || j.getState() == JobState.Canceled));
 
+		menu.addItem("Upload data", job -> executeWSCallAsync("Uploading data", p -> job.getValue().startUpload()),
+				job -> JavaFXRoutines.notNullValue(job, j -> !EnumSet.of(JobState.Running).contains(j.getState())));
+		
 		menu.addItem("Download result",
 				job -> executeWSCallAsync("Downloading data", p -> job.getValue().downloadData(p)),
 				job -> JavaFXRoutines.notNullValue(job,
