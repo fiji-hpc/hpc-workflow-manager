@@ -29,7 +29,11 @@ import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.ProgressNotifier;
 import cz.it4i.fiji.haas_java_client.TransferFileProgressForHaaSClient;
 import net.imagej.updater.util.Progress;
-
+/***
+ * TASK - napojit na UI 
+ * @author koz01
+ *
+ */
 public class Job {
 
 	private static final String JOB_NAME = "job.name";
@@ -37,6 +41,10 @@ public class Job {
 	private static final String JOB_NEEDS_UPLOAD = "job.needs_upload";
 
 	private static final String JOB_INFO_FILENAME = ".jobinfo";
+
+	private static final String JOB_NEEDS_DOWNLOAD = "job.needs_download";
+	
+	private static final String JOB_CAN_BE_DOWNLOADED = "job.needs_download";
 
 	public static boolean isJobPath(Path p) {
 		return isValidPath(p);
@@ -73,8 +81,10 @@ public class Job {
 		setJobDirectory(jobDirectory);
 		propertyHolder = new PropertyHolder(jobDir.resolve(JOB_INFO_FILENAME));
 		resumeUpload();
+		resumeDownload();
 	}
 
+	
 	private Job(JobManager4Job jobManager, Supplier<HaaSClient> haasClientSupplier) {
 		this.haasClientSupplier = haasClientSupplier;
 		this.jobManager = jobManager;
@@ -101,15 +111,26 @@ public class Job {
 	}
 
 	public void startDownload(Predicate<String> predicate, Progress notifier) throws IOException {
+		setProperty(JOB_NEEDS_DOWNLOAD, true);
 		Collection<String> files = getHaaSClient().getChangedFiles(jobId).stream().filter(predicate)
 				.collect(Collectors.toList());
 		synchronization.startDownload(files);
 	}
-
-	public boolean isUploading() {
-		return Boolean.parseBoolean(getProperty(JOB_NEEDS_UPLOAD));
+	
+	public void stopDownloadData() {
+		setProperty(JOB_NEEDS_DOWNLOAD, false);
+		try {
+			this.synchronization.stopUpload();
+		} catch (IOException e) {
+			log.error(e.getMessage(), e);
+			throw new RuntimeException(e);
+		}
 	}
-
+	
+	public boolean canBeDownload() {
+		return Boolean.parseBoolean(getProperty(JOB_CAN_BE_DOWNLOADED));
+	}
+	
 	public void uploadFile(String file, ProgressNotifier notifier) {
 		uploadFiles(Arrays.asList(file), notifier);
 	}
@@ -144,7 +165,11 @@ public class Job {
 	public void submit() {
 		HaaSClient client = getHaaSClient();
 		client.submitJob(jobId);
+		stopDownloadData();
+		setCanBeDownloaded(true);
 	}
+
+	
 
 	synchronized public long getId() {
 		if (jobId == null) {
@@ -275,6 +300,9 @@ public class Job {
 					() -> haasClientSupplier.get().startFileTransfer(getId(), HaaSClient.DUMMY_TRANSFER_FILE_PROGRESS),
 					jobDir, Executors.newFixedThreadPool(2), () -> {
 						setProperty(JOB_NEEDS_UPLOAD, false);
+					}, () -> {
+						setProperty(JOB_NEEDS_DOWNLOAD, false);
+						setCanBeDownloaded(false);
 					});
 		} catch (IOException e) {
 			log.error(e.getMessage(), e);
@@ -287,6 +315,13 @@ public class Job {
 			synchronization.resumeUpload();
 		}
 	}
+	
+	private synchronized void resumeDownload() {
+		if (Boolean.parseBoolean(getProperty(JOB_NEEDS_DOWNLOAD))) {
+			synchronization.resumeDownload();
+		}
+	}
+
 
 	private void setName(String name) {
 		setProperty(JOB_NAME, name);
@@ -319,6 +354,10 @@ public class Job {
 
 	private static long getJobId(Path path) {
 		return Long.parseLong(path.getFileName().toString());
+	}
+	
+	private void setCanBeDownloaded(boolean b) {
+		setProperty(JOB_CAN_BE_DOWNLOADED, b);
 	}
 
 }

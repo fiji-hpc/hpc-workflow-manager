@@ -43,13 +43,13 @@ public class Synchronization {
 	
 	
 	public Synchronization(Supplier<HaaSFileTransfer> fileTransferSupplier, Path workingDirectory,
-			ExecutorService service, Runnable uploadFinishedNotifier) throws IOException {
+			ExecutorService service, Runnable uploadFinishedNotifier, Runnable downloadFinishedNotifier) throws IOException {
 
 		this.workingDirectory = workingDirectory;
 		this.filesDownloaded = new PersistentIndex<>(workingDirectory.resolve(FILE_INDEX_DOWNLOADED_FILENAME),
 				pathResolver);
 		this.uploadProcess = createUploadProcess(fileTransferSupplier, service, uploadFinishedNotifier);
-		this.downloadProcess = createDownloadProcess(fileTransferSupplier, service, uploadFinishedNotifier);
+		this.downloadProcess = createDownloadProcess(fileTransferSupplier, service, downloadFinishedNotifier);
 	}
 
 	public synchronized void startUpload() throws IOException {
@@ -130,13 +130,13 @@ public class Synchronization {
 
 		@Override
 		protected void processItem(HaaSFileTransfer tr, String file) {
-			tr.download(file, workingDirectory);
 			filesDownloaded.insert(workingDirectory.resolve(file));
 			try {
 				filesDownloaded.storeToFile();
 			} catch (IOException e) {
 				log.error(e.getMessage(), e);
 			}
+			tr.download(file, workingDirectory);
 		}
 		
 	}

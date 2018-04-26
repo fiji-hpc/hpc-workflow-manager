@@ -49,8 +49,7 @@ import net.imagej.updater.util.Progress;
 
 public class BenchmarkJobManager {
 
-	private static final String JOB_HAS_DATA_TO_DOWNLOAD_PROPERTY = "job.needDownload";
-
+	
 	private static Logger log = LoggerFactory
 			.getLogger(cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.class);
 
@@ -82,7 +81,7 @@ public class BenchmarkJobManager {
 			running = null;
 			job.submit();
 			job.setProperty(SPIM_OUTPUT_FILENAME_PATTERN, outputName);
-			setDownloaded(false);
+		
 		}
 
 		public JobState getState() {
@@ -97,10 +96,7 @@ public class BenchmarkJobManager {
 			job.stopUploadData();
 		}
 
-		public boolean isUploading() {
-			return job.isUploading();
-		}
-
+		
 		public synchronized CompletableFuture<JobState> getStateAsync(Executor executor) {
 			if (running != null) {
 				return running;
@@ -112,15 +108,17 @@ public class BenchmarkJobManager {
 			return result;
 		}
 
-		public void downloadData(Progress progress) throws IOException {
+		public void startDownload(Progress progress) throws IOException {
 			if (job.getState() == JobState.Finished) {
 				String filePattern = job.getProperty(SPIM_OUTPUT_FILENAME_PATTERN);
-				job.download(downloadFinishedData(filePattern), new P_ProgressNotifierAdapter(progress));
+				job.startDownload(downloadFinishedData(filePattern) , progress);
 			} else if (job.getState() == JobState.Failed || job.getState() == JobState.Canceled) {
-				job.download(downloadFailedData(), new P_ProgressNotifierAdapter(progress));
+				job.startDownload(downloadFailedData(), progress);
 			}
-
-			setDownloaded(true);
+		}
+		
+		public boolean canBeDownloaded() {
+			return job.canBeDownload();
 		}
 
 		public void downloadStatistics(Progress progress) throws IOException {
@@ -157,10 +155,6 @@ public class BenchmarkJobManager {
 				return ((BenchmarkJob) obj).getId() == getId();
 			}
 			return false;
-		}
-
-		public boolean downloaded() {
-			return getDownloaded();
 		}
 
 		public void update() {
@@ -407,15 +401,7 @@ public class BenchmarkJobManager {
 			return Stream.concat(nonTaskSpecificErrors.stream(), taskSpecificErrors).collect(Collectors.toList());
 		}
 
-		private void setDownloaded(boolean b) {
-			job.setProperty(JOB_HAS_DATA_TO_DOWNLOAD_PROPERTY, b + "");
-		}
-
-		private boolean getDownloaded() {
-			String downloadedStr = job.getProperty(JOB_HAS_DATA_TO_DOWNLOAD_PROPERTY);
-			return downloadedStr != null && Boolean.parseBoolean(downloadedStr);
-		}
-
+		
 	}
 
 	public BenchmarkJobManager(BenchmarkSPIMParameters params) throws IOException {
