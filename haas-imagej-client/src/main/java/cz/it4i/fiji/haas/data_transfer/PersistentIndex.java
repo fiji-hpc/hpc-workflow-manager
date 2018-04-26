@@ -5,45 +5,57 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.LinkedHashSet;
 import java.util.Queue;
 import java.util.Set;
+import java.util.function.Function;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class FileIndex {
+public class PersistentIndex<T> {
 	
-	public static final Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas.data_transfer.FileIndex.class);
+	public static final Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas.data_transfer.PersistentIndex.class);
 	
 	private Path workingFile;
 
-	private Set<Path> files = new LinkedHashSet<>();
+	private Set<T> files = new LinkedHashSet<>();
 
-	public FileIndex(Path workingFile) throws IOException {
+	private Function<String, T> fromString;
+
+	public PersistentIndex(Path workingFile,Function<String, T> fromString) throws IOException {
 		this.workingFile = workingFile;
+		this.fromString = fromString;
 		loadFromFile();
 	}
 
 	public synchronized void storeToFile() throws IOException {
 		try (BufferedWriter bw = Files.newBufferedWriter(workingFile)) {
-			for (Path file : files) {
+			for (T file : files) {
 				bw.write(file.toString() + "\n");
 			}
 		}
 	}
 
-	public synchronized boolean insert(Path file) {
+	public synchronized boolean insert(T file) {
 		return files.add(file);
 	}
 
-	public synchronized void uploaded(Path p) {
+	public synchronized void remove(T p) {
 		files.remove(p);
 	}
 
-	public synchronized void fillQueue(Queue<Path> toUpload) {
+	public synchronized void fillQueue(Queue<T> toUpload) {
 		toUpload.addAll(files);
+	}
+	
+	public synchronized void clear() throws IOException {
+		files.clear();
+		storeToFile();
+	}
+
+	public synchronized boolean contains(Path file) {
+		return files.contains(file);
 	}
 
 	private void loadFromFile() throws IOException {
@@ -59,11 +71,8 @@ public class FileIndex {
 	}
 
 	private void processLine(String line) {
-		files.add(Paths.get(line));
+		files.add(fromString.apply(line));
 	}
 
-	public void clear() throws IOException {
-		files.clear();
-		storeToFile();
-	}
+	
 }

@@ -4,13 +4,14 @@ import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Queue;
+import java.util.Collections;
+import java.util.LinkedList;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,104 +30,114 @@ public class Synchronization {
 	
 	private static final String FILE_INDEX_DOWNLOADED_FILENAME = ".downloaded";
 	
-	
-	private Supplier<HaaSFileTransfer> fileTransferSupplier;
-	
 	private Path workingDirectory;
 	
-	private Queue<Path> toUpload = new LinkedBlockingQueue<>();
+	private Function<String,Path> pathResolver = name -> workingDirectory.resolve(name);
 	
-	private FileIndex filesToUpload;
-	
-	private FileIndex filesToDownload;
-	
-	private FileIndex filesDownloaded;
-	
-	private SimpleThreadRunner runnerForUpload;
-	
-	private boolean startUploadFinished;
+	private PersistentIndex<Path> filesDownloaded;
 
-	private Runnable uploadFinishedNotifier;
+	private PersitentSynchronizationProcess<Path> uploadProcess;
+
+	private P_PersistentDownloadProcess downloadProcess;
+	
+	
 	
 	public Synchronization(Supplier<HaaSFileTransfer> fileTransferSupplier, Path workingDirectory,
-			ExecutorService service, Runnable uploadFinishedNotifier ) throws IOException {
-		this.fileTransferSupplier = fileTransferSupplier;
+			ExecutorService service, Runnable uploadFinishedNotifier) throws IOException {
+
 		this.workingDirectory = workingDirectory;
-		this.filesToUpload = new FileIndex(workingDirectory.resolve(FILE_INDEX_TO_UPLOAD_FILENAME));
-		this.filesToDownload = new FileIndex(workingDirectory.resolve(FILE_INDEX_TO_DOWNLOAD_FILENAME));
-		this.filesDownloaded = new FileIndex(workingDirectory.resolve(FILE_INDEX_DOWNLOADED_FILENAME));
-		this.runnerForUpload = new SimpleThreadRunner(service);
-		this.uploadFinishedNotifier = uploadFinishedNotifier;
+		this.filesDownloaded = new PersistentIndex<>(workingDirectory.resolve(FILE_INDEX_DOWNLOADED_FILENAME),
+				pathResolver);
+		this.uploadProcess = createUploadProcess(fileTransferSupplier, service, uploadFinishedNotifier);
+		this.downloadProcess = createDownloadProcess(fileTransferSupplier, service, uploadFinishedNotifier);
 	}
 
 	public synchronized void startUpload() throws IOException {
-		startUploadFinished = false;
-		filesToUpload.clear();
-		try(DirectoryStream<Path> ds = Files.newDirectoryStream(workingDirectory,this::isNotHidden)) {
-			for (Path file : ds) {
-				filesToUpload.insert(file);
-				toUpload.add(file);
-				runnerForUpload.runIfNotRunning(this::doUpload);
-			}
-		} finally {
-			startUploadFinished = true;
-			filesToUpload.storeToFile();
-			
-		}
+		uploadProcess.start();
 	}
 	
 	public void stopUpload() throws IOException {
-		toUpload.clear();
-		filesToUpload.clear();
+		uploadProcess.stop();
 	}
 
 	public void resumeUpload() {
-		filesToUpload.fillQueue(toUpload);
-		if(!toUpload.isEmpty()) {
-			runnerForUpload.runIfNotRunning(this::doUpload);
-		}
+		uploadProcess.resume();
 	}
 	
 	public synchronized void startDownload(Collection<String> files) throws IOException {
-		filesToDownload.clear();
-		
-	}
-
-	private boolean isNotHidden(Path file) {
-		
-		return !file.getFileName().toString().matches("[.][^.]+");
+		this.downloadProcess.setItems(files);
+		this.downloadProcess.start();
 	}
 	
-	private void doUpload(AtomicBoolean reRun) {
-		try(HaaSFileTransfer tr = fileTransferSupplier.get()) {
-			while (!toUpload.isEmpty()) {
-				Path p = toUpload.poll();
-				UploadingFile uf = createUploadingFile(p);
-				log.info("upload: " + p);
-				tr.upload(uf);
-				fileUploaded(p);
-				log.info("uploaded: " + p);
-				reRun.set(false);
-			}
-		} finally {
-			synchronized (this) {
-				if (startUploadFinished) {
-					uploadFinishedNotifier.run();
+	public synchronized void stopDownload() throws IOException {
+		this.downloadProcess.stop();
+	}
+	
+	public synchronized void resumeDownload() {
+		this.downloadProcess.resume();
+	}
+
+	private boolean canUpload(Path file) {
+		
+		return !file.getFileName().toString().matches("[.][^.]+") && !filesDownloaded.contains(file);
+	}
+
+	private PersitentSynchronizationProcess<Path> createUploadProcess(Supplier<HaaSFileTransfer> fileTransferSupplier,
+			ExecutorService service, Runnable uploadFinishedNotifier) throws IOException {
+		return new PersitentSynchronizationProcess<Path>("upload", service, fileTransferSupplier, uploadFinishedNotifier,
+				workingDirectory.resolve(FILE_INDEX_TO_UPLOAD_FILENAME), pathResolver) {
+
+			@Override
+			protected Iterable<Path> getItems() throws IOException {
+				try(DirectoryStream<Path> ds = Files.newDirectoryStream(workingDirectory,Synchronization.this::canUpload)) {
+					return StreamSupport.stream(ds.spliterator(), false).collect(Collectors.toList()); 
 				}
 			}
-		}
+	
+			@Override
+			protected void processItem(HaaSFileTransfer tr, Path p) {
+				UploadingFile uf = new UploadingFileImpl(p);
+				tr.upload(uf);
+			}
+		};
 	}
 
-	private void fileUploaded(Path p) {
-		try {
-			filesToUpload.uploaded(p);
-			filesToUpload.storeToFile();
-		} catch (IOException e) {
-			log.error(e.getMessage(), e);
-		}
+	private P_PersistentDownloadProcess createDownloadProcess(
+			Supplier<HaaSFileTransfer> fileTransferSupplier,  ExecutorService service,
+			Runnable uploadFinishedNotifier) throws IOException {
+		
+		return new P_PersistentDownloadProcess(service, fileTransferSupplier, uploadFinishedNotifier);
 	}
+	
+	private class P_PersistentDownloadProcess extends PersitentSynchronizationProcess<String>{
 
-	private UploadingFile createUploadingFile(Path p) {
-		return new UploadingFileImpl(p);
+		private Collection<String> items = Collections.emptyList();
+		
+		public P_PersistentDownloadProcess(ExecutorService service, Supplier<HaaSFileTransfer> fileTransferSupplier,
+				Runnable processFinishedNotifier) throws IOException {
+			super("download",service, fileTransferSupplier, processFinishedNotifier,
+					workingDirectory.resolve(FILE_INDEX_TO_DOWNLOAD_FILENAME), name -> name);
+		}
+
+		private synchronized void setItems(Collection<String> items) {
+			this.items = new LinkedList<>(items);
+		}
+		
+		@Override
+		protected synchronized Iterable<String> getItems() throws IOException {
+			return items;
+		}
+
+		@Override
+		protected void processItem(HaaSFileTransfer tr, String file) {
+			tr.download(file, workingDirectory);
+			filesDownloaded.insert(workingDirectory.resolve(file));
+			try {
+				filesDownloaded.storeToFile();
+			} catch (IOException e) {
+				log.error(e.getMessage(), e);
+			}
+		}
+		
 	}
 }
