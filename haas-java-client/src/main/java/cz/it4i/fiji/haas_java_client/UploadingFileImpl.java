@@ -1,4 +1,4 @@
-package cz.it4i.fiji.haas.data_transfer;
+package cz.it4i.fiji.haas_java_client;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,7 +12,7 @@ import cz.it4i.fiji.haas_java_client.HaaSClient.UploadingFile;
 
 public class UploadingFileImpl implements UploadingFile {
 
-	public static final Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas.data_transfer.UploadingFileImpl.class);
+	public static final Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas_java_client.UploadingFileImpl.class);
 
 	private final Path path;
 

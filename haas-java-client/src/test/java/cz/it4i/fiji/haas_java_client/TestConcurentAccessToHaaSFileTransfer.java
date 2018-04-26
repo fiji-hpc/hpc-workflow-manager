@@ -14,8 +14,8 @@ public class TestConcurentAccessToHaaSFileTransfer {
 
 	public static void main(String[] args) throws ServiceException, IOException {
 		HaaSClient client = new HaaSClient(TestingConstants.getSettings(1l, 600, 7l, "OPEN-12-20"));
-		HaaSFileTransfer tr1 = client.startFileTransfer(250, new DummyProgressNotifier());
-		HaaSFileTransfer tr2 = client.startFileTransfer(249, new DummyProgressNotifier());
+		HaaSFileTransfer tr1 = client.startFileTransfer(250, HaaSClient.DUMMY_TRANSFER_FILE_PROGRESS);
+		HaaSFileTransfer tr2 = client.startFileTransfer(249, HaaSClient.DUMMY_TRANSFER_FILE_PROGRESS);
 		log.info("config.yaml - size:" + tr1.obtainSize(Arrays.asList("config.yaml")));
 		tr1.close();
 		log.info("config.yaml - size:" + tr2.obtainSize(Arrays.asList("config.yaml")));

@@ -5,6 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
+import java.util.stream.StreamSupport;
 
 import javax.xml.rpc.ServiceException;
 
@@ -22,8 +23,15 @@ public class TestHaaSJavaClientWithSPIM {
 		HaaSClient client = new HaaSClient(TestingConstants.getSettings(2, 9600, 6l, "DD-17-31"));
 		Path baseDir = Paths.get("/home/koz01/Work/vyzkumnik/fiji/work/aaa");
 
-		long jobId = client.start(getAllFiles(baseDir.resolve("spim-data")), "TestOutRedirect",
+		long jobId = client.createJob( "TestOutRedirect",
 				Collections.emptyList());
+		
+		try(HaaSFileTransfer tr = client.startFileTransfer(jobId, HaaSClient.DUMMY_TRANSFER_FILE_PROGRESS)) {
+			StreamSupport.stream(getAllFiles(baseDir.resolve("spim-data")).spliterator(), false)
+					.map(UploadingFileImpl::new).forEach(f -> tr.upload(f));
+		}
+		client.submitJob(jobId);
+		
 		Path workDir = baseDir.resolve("" + jobId);
 		if (!Files.isDirectory(workDir)) {
 			Files.createDirectories(workDir);
@@ -45,8 +53,8 @@ public class TestHaaSJavaClientWithSPIM {
 			}
 			client.downloadPartsOfJobFiles(jobId, taskFileOffset).forEach(jfc -> showJFC(jfc));
 			if (info.getState() == JobState.Finished) {
-				try (HaaSFileTransfer fileTransfer = client.startFileTransfer(jobId, HaaSClient.DUMMY_NOTIFIER)) {
-					fileTransfer.download(client.getChangedFiles(jobId), workDir);
+				try (HaaSFileTransfer fileTransfer = client.startFileTransfer(jobId, HaaSClient.DUMMY_TRANSFER_FILE_PROGRESS)) {
+					client.getChangedFiles(jobId).forEach(file -> fileTransfer.download(file, workDir));
 				}
 
 			}

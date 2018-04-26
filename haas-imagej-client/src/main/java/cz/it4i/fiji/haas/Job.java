@@ -21,29 +21,27 @@ import org.slf4j.LoggerFactory;
 import cz.it4i.fiji.haas.JobManager.JobManager4Job;
 import cz.it4i.fiji.haas.JobManager.JobSynchronizableFile;
 import cz.it4i.fiji.haas.data_transfer.Synchronization;
-import cz.it4i.fiji.haas_java_client.DummyProgressNotifier;
 import cz.it4i.fiji.haas_java_client.HaaSClient;
 import cz.it4i.fiji.haas_java_client.HaaSClient.UploadingFile;
 import cz.it4i.fiji.haas_java_client.HaaSFileTransfer;
 import cz.it4i.fiji.haas_java_client.JobInfo;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.ProgressNotifier;
+import cz.it4i.fiji.haas_java_client.TransferFileProgressForHaaSClient;
 import net.imagej.updater.util.Progress;
 
 public class Job {
 
 	private static final String JOB_NAME = "job.name";
-	
-	private static final String JOB_NEEDS_UPLOAD = "job.needs_upload";
-	
-	private static final String JOB_INFO_FILENAME = ".jobinfo";
 
+	private static final String JOB_NEEDS_UPLOAD = "job.needs_upload";
+
+	private static final String JOB_INFO_FILENAME = ".jobinfo";
 
 	public static boolean isJobPath(Path p) {
 		return isValidPath(p);
 	}
 
-	
 	private static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas.Job.class);
 
 	private Path jobDir;
@@ -77,14 +75,12 @@ public class Job {
 		resumeUpload();
 	}
 
-	
-
 	private Job(JobManager4Job jobManager, Supplier<HaaSClient> haasClientSupplier) {
 		this.haasClientSupplier = haasClientSupplier;
 		this.jobManager = jobManager;
 	}
 
-	public void startUploadData()  {
+	public void startUploadData() {
 		setProperty(JOB_NEEDS_UPLOAD, true);
 		try {
 			this.synchronization.startUpload();
@@ -93,8 +89,8 @@ public class Job {
 			throw new RuntimeException(e);
 		}
 	}
-	
-	public void stopUploadData()  {
+
+	public void stopUploadData() {
 		setProperty(JOB_NEEDS_UPLOAD, false);
 		try {
 			this.synchronization.stopUpload();
@@ -103,15 +99,46 @@ public class Job {
 			throw new RuntimeException(e);
 		}
 	}
-	
+
+	public void startDownload(Predicate<String> predicate, Progress notifier) throws IOException {
+		Collection<String> files = getHaaSClient().getChangedFiles(jobId).stream().filter(predicate)
+				.collect(Collectors.toList());
+		synchronization.startDownload(files);
+	}
+
 	public boolean isUploading() {
 		return Boolean.parseBoolean(getProperty(JOB_NEEDS_UPLOAD));
 	}
 
-	public void uploadFile(String file, Progress notifier) {
-		Iterable<UploadingFile> uploadingFiles = Arrays.asList(file).stream()
-				.map((String name) -> HaaSClient.getUploadingFile(jobDir.resolve(name))).collect(Collectors.toList());
-		uploadFiles(uploadingFiles, notifier);
+	public void uploadFile(String file, ProgressNotifier notifier) {
+		uploadFiles(Arrays.asList(file), notifier);
+	}
+
+	public void uploadFiles(Collection<String> filesNames, ProgressNotifier notifier) {
+		Collection<UploadingFile> files = filesNames.stream()
+				.map(file -> HaaSClient.getUploadingFile(jobDir.resolve(file))).collect(Collectors.toList());
+		List<Long> totalSizes = files.stream().map(f -> {
+			try {
+				return f.getLength();
+			} catch (IOException e1) {
+				throw new RuntimeException(e1);
+			}
+		}).collect(Collectors.toList());
+		long totalSize = totalSizes.stream().mapToLong(l -> l.longValue()).sum();
+		TransferFileProgressForHaaSClient progress = new TransferFileProgressForHaaSClient(totalSize, notifier);
+
+		HaaSClient client = getHaaSClient();
+		try (HaaSFileTransfer transfer = client.startFileTransfer(getId(), progress)) {
+			int index = 0;
+			for (UploadingFile file : files) {
+				String item;
+				progress.startNewFile(totalSizes.get(index));
+				notifier.addItem(item = "Uploading file: " + file.getName());
+				transfer.upload(file);
+				notifier.itemDone(item);
+				index++;
+			}
+		}
 	}
 
 	public void submit() {
@@ -126,10 +153,6 @@ public class Job {
 		return jobId;
 	}
 
-	public void download(Progress notifier) {
-		download(x -> true, notifier);
-	}
-
 	public Path storeDataInWorkdirectory(UploadingFile uploadingFile) throws IOException {
 		Path result;
 		try (InputStream is = uploadingFile.getInputStream()) {
@@ -138,12 +161,22 @@ public class Job {
 		return result;
 	}
 
-	synchronized public void download(Predicate<String> predicate, Progress notifier) {
-		try (HaaSFileTransfer fileTransfer = getHaaSClient().startFileTransfer(jobId,
-				new P_ProgressNotifierAdapter(notifier))) {
-			fileTransfer.download(
-					getHaaSClient().getChangedFiles(jobId).stream().filter(predicate).collect(Collectors.toList()),
-					jobDir);
+	synchronized public void download(Predicate<String> predicate, ProgressNotifier notifier) {
+		List<String> files = getHaaSClient().getChangedFiles(jobId).stream().filter(predicate).collect(Collectors.toList());
+		try (HaaSFileTransfer transfer =  haasClientSupplier.get().startFileTransfer(getId(), HaaSClient.DUMMY_TRANSFER_FILE_PROGRESS)) {
+			List<Long> fileSizes = transfer.obtainSize(files);
+			final long totalFileSize = fileSizes.stream().mapToLong(i -> i.longValue()).sum();
+			TransferFileProgressForHaaSClient progress = new TransferFileProgressForHaaSClient(totalFileSize, notifier);
+			transfer.setProgress(progress);
+			int idx = 0;
+			for (String fileName : files) {
+				String item;
+				progress.addItem(item = fileName);
+				progress.startNewFile(fileSizes.get(idx));
+				transfer.download(fileName, jobDir);
+				progress.itemDone(item);
+				idx++;
+			}
 		}
 	}
 
@@ -212,28 +245,46 @@ public class Job {
 		return result;
 	}
 
+	public Collection<String> getChangedFiles() {
+		return getHaaSClient().getChangedFiles(getId());
+	}
+
+	public void cancelJob() {
+		getHaaSClient().cancelJob(jobId);
+	}
+
+	public List<Long> getFileSizes(List<String> names) {
+
+		try (HaaSFileTransfer transfer = getHaaSClient().startFileTransfer(getId(),
+				HaaSClient.DUMMY_TRANSFER_FILE_PROGRESS)) {
+			return transfer.obtainSize(names);
+		}
+	}
+
+	public List<String> getFileContents(List<String> logs) {
+		try (HaaSFileTransfer transfer = getHaaSClient().startFileTransfer(getId(),
+				HaaSClient.DUMMY_TRANSFER_FILE_PROGRESS)) {
+			return transfer.getContent(logs);
+		}
+	}
+
 	private void setJobDirectory(Path jobDirectory) {
 		this.jobDir = jobDirectory;
 		try {
-			this.synchronization = new Synchronization(()->haasClientSupplier.get().startFileTransfer(getId(), new DummyProgressNotifier()), jobDir, Executors.newFixedThreadPool(2), ()->  {
-				setProperty(JOB_NEEDS_UPLOAD, false);
-			});
+			this.synchronization = new Synchronization(
+					() -> haasClientSupplier.get().startFileTransfer(getId(), HaaSClient.DUMMY_TRANSFER_FILE_PROGRESS),
+					jobDir, Executors.newFixedThreadPool(2), () -> {
+						setProperty(JOB_NEEDS_UPLOAD, false);
+					});
 		} catch (IOException e) {
 			log.error(e.getMessage(), e);
 			throw new RuntimeException(e);
 		}
 	}
-	
-	private synchronized void resumeUpload() {
-		if(Boolean.parseBoolean(getProperty(JOB_NEEDS_UPLOAD))) {
-			synchronization.resumeUpload();
-		}
-	}
 
-	private void uploadFiles(Iterable<UploadingFile> files, Progress notifier) {
-		HaaSClient client = getHaaSClient();
-		try (HaaSFileTransfer transfer = client.startFileTransfer(getId(), new P_ProgressNotifierAdapter(notifier))) {
-			transfer.upload(files);
+	private synchronized void resumeUpload() {
+		if (Boolean.parseBoolean(getProperty(JOB_NEEDS_UPLOAD))) {
+			synchronization.resumeUpload();
 		}
 	}
 
@@ -268,60 +319,6 @@ public class Job {
 
 	private static long getJobId(Path path) {
 		return Long.parseLong(path.getFileName().toString());
-	}
-
-	private class P_ProgressNotifierAdapter implements ProgressNotifier {
-		private Progress progress;
-
-		public P_ProgressNotifierAdapter(Progress progress) {
-			this.progress = progress;
-		}
-
-		public void setTitle(String title) {
-			progress.setTitle(title);
-		}
-
-		public void setCount(int count, int total) {
-			progress.setCount(count, total);
-		}
-
-		public void addItem(Object item) {
-			progress.addItem(item);
-		}
-
-		public void setItemCount(int count, int total) {
-			progress.setItemCount(count, total);
-		}
-
-		public void itemDone(Object item) {
-			progress.itemDone(item);
-		}
-
-		public void done() {
-			progress.done();
-		}
-
-	}
-
-	public Collection<String> getChangedFiles() {
-		return getHaaSClient().getChangedFiles(getId());
-	}
-
-	public void cancelJob() {
-		getHaaSClient().cancelJob(jobId);
-	}
-
-	public List<Long> getFileSizes(List<String> names) {
-
-		try (HaaSFileTransfer transfer = getHaaSClient().startFileTransfer(getId(), new DummyProgressNotifier())) {
-			return transfer.obtainSize(names);
-		}
-	}
-
-	public List<String> getFileContents(List<String> logs) {
-		try (HaaSFileTransfer transfer = getHaaSClient().startFileTransfer(getId(), new DummyProgressNotifier())) {
-			return transfer.getContent(logs);
-		}
 	}
 
 }

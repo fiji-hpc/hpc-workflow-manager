@@ -42,6 +42,7 @@ import cz.it4i.fiji.haas.JobManager;
 import cz.it4i.fiji.haas.UploadingFileFromResource;
 import cz.it4i.fiji.haas_java_client.HaaSClient;
 import cz.it4i.fiji.haas_java_client.JobState;
+import cz.it4i.fiji.haas_java_client.ProgressNotifier;
 import cz.it4i.fiji.haas_java_client.Settings;
 import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
 import net.imagej.updater.util.Progress;
@@ -74,7 +75,7 @@ public class BenchmarkJobManager {
 		}
 
 		public synchronized void startJob(Progress progress) throws IOException {
-			job.uploadFile(Constants.CONFIG_YAML, progress);
+			job.uploadFile(Constants.CONFIG_YAML,  new P_ProgressNotifierAdapter(progress));
 			String outputName = getOutputName(job.openLocalFile(Constants.CONFIG_YAML));
 			verifiedState = null;
 			verifiedStateProcessed = false;
@@ -87,15 +88,15 @@ public class BenchmarkJobManager {
 		public JobState getState() {
 			return getStateAsync(r -> r.run()).getNow(JobState.Unknown);
 		}
-		
+
 		public void startUpload() {
 			job.startUploadData();
 		}
-		
+
 		public void stopUpload() {
 			job.stopUploadData();
 		}
-		
+
 		public boolean isUploading() {
 			return job.isUploading();
 		}
@@ -114,16 +115,16 @@ public class BenchmarkJobManager {
 		public void downloadData(Progress progress) throws IOException {
 			if (job.getState() == JobState.Finished) {
 				String filePattern = job.getProperty(SPIM_OUTPUT_FILENAME_PATTERN);
-				job.download(downloadFinishedData(filePattern), progress);
+				job.download(downloadFinishedData(filePattern), new P_ProgressNotifierAdapter(progress));
 			} else if (job.getState() == JobState.Failed || job.getState() == JobState.Canceled) {
-				job.download(downloadFailedData(), progress);
+				job.download(downloadFailedData(), new P_ProgressNotifierAdapter(progress));
 			}
 
 			setDownloaded(true);
 		}
 
 		public void downloadStatistics(Progress progress) throws IOException {
-			job.download(BenchmarkJobManager.downloadStatistics(), progress);
+			job.download(BenchmarkJobManager.downloadStatistics(), new P_ProgressNotifierAdapter(progress));
 			Path resultFile = job.getDirectory().resolve(BENCHMARK_RESULT_FILE);
 			if (resultFile != null)
 				BenchmarkJobManager.formatResultFile(resultFile);
@@ -431,77 +432,6 @@ public class BenchmarkJobManager {
 		return jobManager.getJobs().stream().map(this::convertJob).collect(Collectors.toList());
 	}
 
-	private HaaSClient.UploadingFile getUploadingFile() {
-		return new UploadingFileFromResource("", Constants.CONFIG_YAML);
-	}
-
-	private BenchmarkJob convertJob(Job job) {
-		return new BenchmarkJob(job);
-	}
-
-	private String getOutputName(InputStream openLocalFile) throws IOException {
-		try (InputStream is = openLocalFile) {
-			Yaml yaml = new Yaml();
-
-			Map<String, Map<String, String>> map = yaml.load(is);
-			String result = map.get("common").get("hdf5_xml_filename");
-			if (result == null) {
-				throw new IllegalArgumentException("hdf5_xml_filename not found");
-			}
-			if (result.charAt(0) == '"' || result.charAt(0) == '\'') {
-				if (result.charAt(result.length() - 1) != result.charAt(0)) {
-					throw new IllegalArgumentException(result);
-				}
-				result = result.substring(1, result.length() - 1);
-			}
-
-			return result;
-		}
-
-	}
-
-	private static Predicate<String> downloadFinishedData(String filePattern) {
-		return name -> {
-			Path path = getPathSafely(name);
-			if (path == null)
-				return false;
-
-			String fileName = path.getFileName().toString();
-			return fileName.startsWith(filePattern) && fileName.endsWith("h5") || fileName.equals(filePattern + ".xml")
-					|| fileName.equals(Constants.BENCHMARK_RESULT_FILE);
-		};
-	}
-
-	private static Predicate<String> downloadStatistics() {
-		return name -> {
-			Path path = getPathSafely(name);
-			if (path == null)
-				return false;
-
-			String fileName = path.getFileName().toString();
-			return fileName.equals(Constants.BENCHMARK_RESULT_FILE);
-		};
-	}
-
-	private static Predicate<String> downloadFailedData() {
-		return name -> {
-			Path path = getPathSafely(name);
-			if (path == null)
-				return false;
-			return path.getFileName().toString().startsWith("snakejob.")
-					|| path.getParent() != null && path.getParent().getFileName() != null
-							&& path.getParent().getFileName().toString().equals("logs");
-		};
-	}
-
-	private static Path getPathSafely(String name) {
-		try {
-			return Paths.get(name);
-		} catch (InvalidPathException ex) {
-			return null;
-		}
-	}
-
 	public static void formatResultFile(Path filename) throws FileNotFoundException {
 
 		List<ResultFileTask> identifiedTasks = new LinkedList<ResultFileTask>();
@@ -603,6 +533,77 @@ public class BenchmarkJobManager {
 		}
 	}
 
+	private HaaSClient.UploadingFile getUploadingFile() {
+		return new UploadingFileFromResource("", Constants.CONFIG_YAML);
+	}
+
+	private BenchmarkJob convertJob(Job job) {
+		return new BenchmarkJob(job);
+	}
+
+	private String getOutputName(InputStream openLocalFile) throws IOException {
+		try (InputStream is = openLocalFile) {
+			Yaml yaml = new Yaml();
+
+			Map<String, Map<String, String>> map = yaml.load(is);
+			String result = map.get("common").get("hdf5_xml_filename");
+			if (result == null) {
+				throw new IllegalArgumentException("hdf5_xml_filename not found");
+			}
+			if (result.charAt(0) == '"' || result.charAt(0) == '\'') {
+				if (result.charAt(result.length() - 1) != result.charAt(0)) {
+					throw new IllegalArgumentException(result);
+				}
+				result = result.substring(1, result.length() - 1);
+			}
+
+			return result;
+		}
+
+	}
+
+	private static Predicate<String> downloadFinishedData(String filePattern) {
+		return name -> {
+			Path path = getPathSafely(name);
+			if (path == null)
+				return false;
+
+			String fileName = path.getFileName().toString();
+			return fileName.startsWith(filePattern) && fileName.endsWith("h5") || fileName.equals(filePattern + ".xml")
+					|| fileName.equals(Constants.BENCHMARK_RESULT_FILE);
+		};
+	}
+
+	private static Predicate<String> downloadStatistics() {
+		return name -> {
+			Path path = getPathSafely(name);
+			if (path == null)
+				return false;
+
+			String fileName = path.getFileName().toString();
+			return fileName.equals(Constants.BENCHMARK_RESULT_FILE);
+		};
+	}
+
+	private static Predicate<String> downloadFailedData() {
+		return name -> {
+			Path path = getPathSafely(name);
+			if (path == null)
+				return false;
+			return path.getFileName().toString().startsWith("snakejob.")
+					|| path.getParent() != null && path.getParent().getFileName() != null
+							&& path.getParent().getFileName().toString().equals("logs");
+		};
+	}
+
+	private static Path getPathSafely(String name) {
+		try {
+			return Paths.get(name);
+		} catch (InvalidPathException ex) {
+			return null;
+		}
+	}
+
 	private static Settings constructSettingsFromParams(BenchmarkSPIMParameters params) {
 		return new Settings() {
 
@@ -651,6 +652,39 @@ public class BenchmarkJobManager {
 				return Constants.HAAS_CLUSTER_NODE_TYPE;
 			}
 		};
+	}
+
+	private class P_ProgressNotifierAdapter implements ProgressNotifier {
+		private Progress progress;
+
+		public P_ProgressNotifierAdapter(Progress progress) {
+			this.progress = progress;
+		}
+
+		public void setTitle(String title) {
+			progress.setTitle(title);
+		}
+
+		public void setCount(int count, int total) {
+			progress.setCount(count, total);
+		}
+
+		public void addItem(Object item) {
+			progress.addItem(item);
+		}
+
+		public void setItemCount(int count, int total) {
+			progress.setItemCount(count, total);
+		}
+
+		public void itemDone(Object item) {
+			progress.itemDone(item);
+		}
+
+		public void done() {
+			progress.done();
+		}
+
 	}
 
 }

@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -25,8 +24,11 @@ public class TestHaaSJavaClient {
 		params.put("inputParam", "someStringParam");
 		Path baseDir = Paths.get("/home/koz01/aaa");
 		HaaSClient client = new HaaSClient(TestingConstants.getSettings(1l, 600, 7l, "DD-17-31"));
-		long jobId = client.start(Arrays.asList(Paths.get("/home/koz01/aaa/vecmath.jar")), "TestOutRedirect",
-				params.entrySet());
+		long jobId = client.createJob("TestOutRedirect", params.entrySet());
+		try (HaaSFileTransfer tr = client.startFileTransfer(jobId, HaaSClient.DUMMY_TRANSFER_FILE_PROGRESS)) {
+			tr.upload(new UploadingFileImpl(Paths.get("/home/koz01/aaa/vecmath.jar")));
+		}
+		client.submitJob(jobId);
 		Path workDir = baseDir.resolve("" + jobId);
 		if (!Files.isDirectory(workDir)) {
 			Files.createDirectories(workDir);
@@ -45,8 +47,9 @@ public class TestHaaSJavaClient {
 			}
 			client.downloadPartsOfJobFiles(jobId, taskFileOffset).forEach(jfc -> showJFC(jfc));
 			if (info.getState() == JobState.Finished) {
-				try (HaaSFileTransfer fileTransfer = client.startFileTransfer(jobId, HaaSClient.DUMMY_NOTIFIER)) {
-					fileTransfer.download(client.getChangedFiles(jobId), workDir);
+				try (HaaSFileTransfer fileTransfer = client.startFileTransfer(jobId,
+						HaaSClient.DUMMY_TRANSFER_FILE_PROGRESS)) {
+					client.getChangedFiles(jobId).forEach(file -> fileTransfer.download(file, workDir));
 				}
 			}
 			log.info("JobId :" + jobId + ", state" + info.getState());

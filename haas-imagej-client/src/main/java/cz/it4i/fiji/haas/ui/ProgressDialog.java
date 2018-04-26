@@ -291,10 +291,4 @@ public class ProgressDialog extends JDialog implements Progress {
 		itemLatestUpdate = System.currentTimeMillis();
 		return false;
 	}
-
-	private static void main(final String[] args) {
-		final ProgressDialog dialog = new ProgressDialog(null, "Hello");
-		dialog.addItem("Bello");
-		dialog.setVisible(true);
-	}
 }

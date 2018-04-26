@@ -2,7 +2,7 @@ package cz.it4i.fiji.haas_java_client;
 
 import cz.it4i.fiji.scpclient.TransferFileProgress;
 
-class TransferFileProgressForHaaSClient implements TransferFileProgress {
+public class TransferFileProgressForHaaSClient implements TransferFileProgress {
 
 	private long totalSize;
 	private long totalTransfered;
@@ -35,6 +35,14 @@ class TransferFileProgressForHaaSClient implements TransferFileProgress {
 	}
 
 	
+	public void addItem(String item) {
+		notifier.addItem(item);
+	}
+
+	public void itemDone(String item) {
+		notifier.itemDone(item);
+	}
+
 	private static int[] normalizaSizes(long part, long total) {
 		int[] result = new int[2];
 		if(total > Integer.MAX_VALUE) {
@@ -48,13 +56,5 @@ class TransferFileProgressForHaaSClient implements TransferFileProgress {
 			result[0] = result[1] = 1;
 		}
 		return result;
-	}
-
-	public void addItem(String item) {
-		notifier.addItem(item);
-	}
-
-	public void itemDone(String item) {
-		notifier.itemDone(item);
 	}
 }

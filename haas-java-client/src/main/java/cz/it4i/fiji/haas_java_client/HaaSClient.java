@@ -12,11 +12,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 import javax.xml.rpc.ServiceException;
 
@@ -44,22 +42,45 @@ import cz.it4i.fiji.haas_java_client.proxy.TaskSpecificationExt;
 import cz.it4i.fiji.haas_java_client.proxy.UserAndLimitationManagementWsLocator;
 import cz.it4i.fiji.haas_java_client.proxy.UserAndLimitationManagementWsSoap;
 import cz.it4i.fiji.scpclient.ScpClient;
+import cz.it4i.fiji.scpclient.TransferFileProgress;
 
 public class HaaSClient {
 
-	public static List<Long> getSizes(List<String> asList, ScpClient scpClient, ProgressNotifier notifier)
-			throws JSchException, IOException {
-		List<Long> result = new LinkedList<>();
-
-		String item;
-		notifier.addItem(item = "Checking sizes");
-		for (String lfile : asList) {
-			result.add(scpClient.size(lfile));
-			notifier.setItemCount(result.size(), asList.size());
+	public static final TransferFileProgress DUMMY_TRANSFER_FILE_PROGRESS = new TransferFileProgress() {
+		
+		@Override
+		public void dataTransfered(long bytesTransfered) {
+			// TODO Auto-generated method stub
+			
 		}
-		notifier.itemDone(item);
-		return result;
-	}
+	};
+
+	public static ProgressNotifier DUMMY_PROGRESS_NOTIFIER = new ProgressNotifier() {
+	
+		@Override
+		public void setTitle(String title) {
+		}
+	
+		@Override
+		public void setItemCount(int count, int total) {
+		}
+	
+		@Override
+		public void setCount(int count, int total) {
+		}
+	
+		@Override
+		public void itemDone(Object item) {
+		}
+	
+		@Override
+		public void done() {
+		}
+	
+		@Override
+		public void addItem(Object item) {
+		}
+	};
 
 	public static UploadingFile getUploadingFile(Path file) {
 		return new UploadingFile() {
@@ -147,6 +168,20 @@ public class HaaSClient {
 
 	private static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas_java_client.HaaSClient.class);
 
+	final static private Map<JobStateExt, JobState> WS_STATE2STATE;
+
+	static {
+		Map<JobStateExt, JobState> map = new HashMap<JobStateExt, JobState>();
+		map.put(JobStateExt.Canceled, JobState.Canceled);
+		map.put(JobStateExt.Configuring, JobState.Configuring);
+		map.put(JobStateExt.Failed, JobState.Failed);
+		map.put(JobStateExt.Finished, JobState.Finished);
+		map.put(JobStateExt.Queued, JobState.Queued);
+		map.put(JobStateExt.Running, JobState.Running);
+		map.put(JobStateExt.Submitted, JobState.Submitted);
+		WS_STATE2STATE = Collections.unmodifiableMap(map);
+	}
+	
 	private String sessionID;
 
 	private UserAndLimitationManagementWsSoap userAndLimitationManagement;
@@ -165,48 +200,8 @@ public class HaaSClient {
 
 	private Map<Long, P_FileTransferPool> filetransferPoolMap = new HashMap<>();
 
-	public static ProgressNotifier DUMMY_NOTIFIER = new ProgressNotifier() {
-
-		@Override
-		public void setTitle(String title) {
-		}
-
-		@Override
-		public void setItemCount(int count, int total) {
-		}
-
-		@Override
-		public void setCount(int count, int total) {
-		}
-
-		@Override
-		public void itemDone(Object item) {
-		}
-
-		@Override
-		public void done() {
-		}
-
-		@Override
-		public void addItem(Object item) {
-		}
-	};
-
+	
 	private Settings settings;
-
-	final static private Map<JobStateExt, JobState> WS_STATE2STATE;
-
-	static {
-		Map<JobStateExt, JobState> map = new HashMap<JobStateExt, JobState>();
-		map.put(JobStateExt.Canceled, JobState.Canceled);
-		map.put(JobStateExt.Configuring, JobState.Configuring);
-		map.put(JobStateExt.Failed, JobState.Failed);
-		map.put(JobStateExt.Finished, JobState.Finished);
-		map.put(JobStateExt.Queued, JobState.Queued);
-		map.put(JobStateExt.Running, JobState.Running);
-		map.put(JobStateExt.Submitted, JobState.Submitted);
-		WS_STATE2STATE = Collections.unmodifiableMap(map);
-	}
 
 	public HaaSClient(Settings settings) {
 		this.settings = settings;
@@ -214,28 +209,6 @@ public class HaaSClient {
 		this.timeOut = settings.getTimeout();
 		this.clusterNodeType = settings.getClusterNodeType();
 		this.projectId = settings.getProjectId();
-	}
-
-	public long start(Iterable<Path> files, String name, Collection<Entry<String, String>> templateParameters) {
-		Iterable<UploadingFile> uploadingFiles = StreamSupport.stream(files.spliterator(), false)
-				.map(HaaSClient::getUploadingFile).collect(Collectors.toList());
-		return start(uploadingFiles, name, templateParameters, DUMMY_NOTIFIER);
-	}
-
-	public long start(Iterable<UploadingFile> files, String name, Collection<Entry<String, String>> templateParameters,
-			ProgressNotifier notifier) {
-		notifier.setTitle("Starting job");
-		try {
-			long jobId = doCreateJob(name, templateParameters);
-			try (HaaSFileTransfer transfer = startFileTransfer(jobId, notifier)) {
-				transfer.upload(files);
-			}
-			doSubmitJob(jobId);
-			return jobId;
-		} catch (ServiceException | IOException e) {
-			throw new HaaSClientException(e);
-		}
-
 	}
 
 	public long createJob(String name, Collection<Entry<String, String>> templateParameters) {
@@ -246,13 +219,12 @@ public class HaaSClient {
 		}
 	}
 
-	public HaaSFileTransfer startFileTransfer(long jobId, ProgressNotifier notifier) {
+	public HaaSFileTransfer startFileTransfer(long jobId, TransferFileProgress notifier) {
 		try {
 			return getFileTransferMethod(jobId, notifier);
 		} catch (RemoteException | ServiceException | UnsupportedEncodingException | JSchException e) {
 			throw new HaaSClientException(e);
 		}
-
 	}
 
 	public void submitJob(long jobId) {
@@ -322,12 +294,12 @@ public class HaaSClient {
 		}
 	}
 
-	private HaaSFileTransferImp getFileTransferMethod(long jobId, ProgressNotifier notifier)
+	private HaaSFileTransferImp getFileTransferMethod(long jobId, TransferFileProgress progress)
 			throws RemoteException, UnsupportedEncodingException, ServiceException, JSchException {
 		P_FileTransferPool pool = filetransferPoolMap.computeIfAbsent(jobId, id -> new P_FileTransferPool(id));
 		FileTransferMethodExt ft = pool.obtain();
 		try {
-			return new HaaSFileTransferImp(ft, getScpClient(ft), notifier) {
+			return new HaaSFileTransferImp(ft, getScpClient(ft), progress) {
 				public void close() {
 					super.close();
 					try {
