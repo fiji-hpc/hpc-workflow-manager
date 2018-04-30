@@ -73,6 +73,14 @@ public class BenchmarkJobManager {
 			computationAccessor = getComputationAccessor();
 		}
 
+		public void setDownloadNotifier(Progress progress) {
+			job.setDownloadNotifier(convertTo(progress));
+		}
+
+		public void setUploadNotifier(Progress progress) {
+			job.setUploadNotifier(convertTo(progress));
+		}
+
 		public synchronized void startJob(Progress progress) throws IOException {
 			job.uploadFile(Constants.CONFIG_YAML,  new P_ProgressNotifierAdapter(progress));
 			String outputName = getOutputName(job.openLocalFile(Constants.CONFIG_YAML));
@@ -208,9 +216,18 @@ public class BenchmarkJobManager {
 			return computationAccessor.getActualOutput(content);
 		}
 
+		public void resumeTransfer() {
+			job.resumeDownload();
+			job.resumeUpload();
+		}
+
 		@Override
 		public String toString() {
 			return "" + getId();
+		}
+
+		private ProgressNotifier convertTo(Progress progress) {
+			return progress == null ? null : new P_ProgressNotifierAdapter(progress);
 		}
 
 		private synchronized CompletableFuture<JobState> doGetStateAsync(Executor executor) {
@@ -399,23 +416,6 @@ public class BenchmarkJobManager {
 			getTasks();
 			Stream<BenchmarkError> taskSpecificErrors = tasks.stream().flatMap(s -> s.getErrors().stream());
 			return Stream.concat(nonTaskSpecificErrors.stream(), taskSpecificErrors).collect(Collectors.toList());
-		}
-
-		public void setDownloadNotifier(Progress progress) {
-			if(progress == null) {
-				job.setDownloadNotifier(null);
-			} else {
-				job.setDownloadNotifier(new P_ProgressNotifierAdapter(progress));
-			}
-		}
-
-
-		public void setUploadNotifier(Progress downloadProgress) {
-			if(downloadProgress == null) {
-				job.setUploadNotifier(null);
-			} else {
-				job.setUploadNotifier(new P_ProgressNotifierAdapter(downloadProgress));
-			}
 		}
 	}
 

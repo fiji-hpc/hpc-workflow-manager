@@ -81,8 +81,6 @@ public class Job {
 		this(jobManager, haasClientSupplier);
 		setJobDirectory(jobDirectory);
 		propertyHolder = new PropertyHolder(jobDir.resolve(JOB_INFO_FILENAME));
-		resumeUpload();
-		resumeDownload();
 	}
 
 	
@@ -128,6 +126,19 @@ public class Job {
 			throw new RuntimeException(e);
 		}
 	}
+	
+	public synchronized void resumeUpload() {
+		if (Boolean.parseBoolean(getProperty(JOB_NEEDS_UPLOAD))) {
+			synchronization.resumeUpload();
+		}
+	}
+	
+	public synchronized void resumeDownload() {
+		if (Boolean.parseBoolean(getProperty(JOB_NEEDS_DOWNLOAD))) {
+			synchronization.resumeDownload();
+		}
+	}
+
 	
 	public boolean canBeDownload() {
 		return Boolean.parseBoolean(getProperty(JOB_CAN_BE_DOWNLOADED));
@@ -295,6 +306,14 @@ public class Job {
 		}
 	}
 
+	public void setDownloadNotifier(ProgressNotifier notifier) {
+		synchronization.setDownloadNotifier(notifier);
+	}
+
+	public void setUploadNotifier(ProgressNotifier notifier) {
+		synchronization.setUploadNotifier(notifier);
+	}
+
 	private void setJobDirectory(Path jobDirectory) {
 		this.jobDir = jobDirectory;
 		try {
@@ -316,18 +335,7 @@ public class Job {
 		return haasClientSupplier.get().startFileTransfer(getId(), progress);
 	}
 
-	private synchronized void resumeUpload() {
-		if (Boolean.parseBoolean(getProperty(JOB_NEEDS_UPLOAD))) {
-			synchronization.resumeUpload();
-		}
-	}
 	
-	private synchronized void resumeDownload() {
-		if (Boolean.parseBoolean(getProperty(JOB_NEEDS_DOWNLOAD))) {
-			synchronization.resumeDownload();
-		}
-	}
-
 
 	private void setName(String name) {
 		setProperty(JOB_NAME, name);
@@ -364,14 +372,6 @@ public class Job {
 	
 	private void setCanBeDownloaded(boolean b) {
 		setProperty(JOB_CAN_BE_DOWNLOADED, b);
-	}
-
-	public void setDownloadNotifier(ProgressNotifier notifier) {
-		synchronization.setDownloadNotifier(notifier);
-	}
-	
-	public void setUploadNotifier(ProgressNotifier notifier) {
-		synchronization.setUploadNotifier(notifier);
 	}
 
 }

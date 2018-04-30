@@ -58,7 +58,7 @@ public class Synchronization {
 	}
 	
 	public void setDownloadNotifier(ProgressNotifier notifier) {
-		// TODO Auto-generated method stub
+		downloadProcess.setNotifier(notifier);
 		
 	}
 
@@ -94,7 +94,7 @@ public class Synchronization {
 
 	private PersitentSynchronizationProcess<Path> createUploadProcess(Supplier<HaaSFileTransfer> fileTransferSupplier,
 			ExecutorService service, Runnable uploadFinishedNotifier) throws IOException {
-		return new PersitentSynchronizationProcess<Path>("upload", service, fileTransferSupplier, uploadFinishedNotifier,
+		return new PersitentSynchronizationProcess<Path>(service, fileTransferSupplier, uploadFinishedNotifier,
 				workingDirectory.resolve(FILE_INDEX_TO_UPLOAD_FILENAME), pathResolver) {
 
 			@Override
@@ -138,7 +138,7 @@ public class Synchronization {
 		
 		public P_PersistentDownloadProcess(ExecutorService service, Supplier<HaaSFileTransfer> fileTransferSupplier,
 				Runnable processFinishedNotifier) throws IOException {
-			super("download",service, fileTransferSupplier, processFinishedNotifier,
+			super(service, fileTransferSupplier, processFinishedNotifier,
 					workingDirectory.resolve(FILE_INDEX_TO_DOWNLOAD_FILENAME), name -> name);
 		}
 

@@ -57,4 +57,8 @@ public class TransferFileProgressForHaaSClient implements TransferFileProgress {
 		}
 		return result;
 	}
+
+	public void done() {
+		notifier.done();
+	}
 }
