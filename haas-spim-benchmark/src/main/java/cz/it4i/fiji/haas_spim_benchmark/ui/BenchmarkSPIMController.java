@@ -34,6 +34,7 @@ import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager;
 import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.BenchmarkJob;
 import cz.it4i.fiji.haas_spim_benchmark.core.Constants;
 import cz.it4i.fiji.haas_spim_benchmark.core.FXFrameExecutorService;
+import cz.it4i.fiji.haas_spim_benchmark.core.UpdatableBenchmarkJob.TransferProgress;
 import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
 import javafx.scene.control.TableColumn;
@@ -195,17 +196,29 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 	}
 
 	private void initTable() {
-		registry = new ObservableBenchmarkJobRegistry(bj -> remove(bj), executorServiceJobState);
+		registry = new ObservableBenchmarkJobRegistry(bj -> remove(bj), executorServiceJobState, executorServiceFX);
 		setCellValueFactory(0, j -> j.getId() + "");
 		setCellValueFactoryCompletable(1, j -> j.getStateAsync(executorServiceJobState).thenApply(state -> "" + state));
 		setCellValueFactory(2, j -> j.getCreationTime().toString());
 		setCellValueFactory(3, j -> j.getStartTime().toString());
 		setCellValueFactory(4, j -> j.getEndTime().toString());
-		// jobs.getSortOrder().add(jobs.getColumns().get(0));
+		setCellValueFactory(5, j -> decorateTransfer("Upload",registry.get(j).getUploadProgress()));
+		setCellValueFactory(6, j -> decorateTransfer("Download",registry.get(j).getDownloadProgress()));
+	}
+
+	private String decorateTransfer(String string, TransferProgress progress) {
+		if (!progress.isWorking() && !progress.isDone()) {
+			return "";
+		} else if (progress.isWorking()) {
+			Long secs = progress.getRemainingSeconds();
+			return string + "ing - time remains " + (secs != null ? secs : "N/A");
+		} else if (progress.isDone()) {
+			return string + "ed";
+		}
+		return "N/A";
 	}
 
 	private void remove(BenchmarkJob bj) {
-
 		jobs.getItems().remove(registry.get(bj));
 		bj.remove();
 	}

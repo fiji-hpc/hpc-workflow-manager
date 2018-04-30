@@ -1,5 +1,6 @@
 package cz.it4i.fiji.haas_spim_benchmark.core;
 
+import java.util.concurrent.Executor;
 import java.util.function.Function;
 
 import org.slf4j.Logger;
@@ -14,50 +15,60 @@ public class UpdatableBenchmarkJob extends UpdatableObservableValue<BenchmarkJob
 	public static final Logger log = LoggerFactory
 			.getLogger(cz.it4i.fiji.haas_spim_benchmark.core.UpdatableBenchmarkJob.class);
 	
-	private P_DownloadProgress downloadProgress = new P_DownloadProgress();
-	
+	private P_TransferProgress downloadProgress = new P_TransferProgress();
+	private P_TransferProgress uploadProgress = new P_TransferProgress();
+	private Executor executor;
 	public interface TransferProgress {
 		
 		public Long getRemainingSeconds();
 		
-		public boolean isDownloaded();
+		public boolean isDone();
 		
-		public boolean isDonwloadind();
+		public boolean isWorking();
 		
 		public Float getRemainingPercents();
 	}
 	
 	public UpdatableBenchmarkJob(BenchmarkJob wrapped, Function<BenchmarkJob, UpdateStatus> updateFunction,
-			Function<BenchmarkJob, Object> stateProvider) {
+			Function<BenchmarkJob, Object> stateProvider, Executor executorUI) {
 		super(wrapped, updateFunction, stateProvider);
 		
 		wrapped.setDownloadNotifier(downloadProgress);
+		wrapped.setUploadNotifier(uploadProgress);
 		wrapped.resumeTransfer();
+		this.executor = executorUI;
+	}
+	
+	public TransferProgress getDownloadProgress() {
+		return downloadProgress;
+	}
+	
+	public TransferProgress getUploadProgress() {
+		return uploadProgress;
 	}
 	
 	public void removed() {
 		getValue().setDownloadNotifier(null);
 	}
 	
+	@Override
+	protected void fireValueChangedEvent() {
+		executor.execute(() -> super.fireValueChangedEvent());
+	}
 	
 	
-	private class P_DownloadProgress implements Progress, TransferProgress {
+	private class P_TransferProgress implements Progress, TransferProgress {
 
-		private boolean downloading;
-		private boolean downloaded;
+		private boolean working;
+		private boolean done;
 		private long start;
 		private Long remainingSeconds;
 		private Float remainingPercents;
 		
 		@Override
-		public void setTitle(String title) {
-		}
-
-		@Override
 		public synchronized void setCount(int count, int total) {
-			
 			if(total < -1) {
-				downloading = false;
+				working = false;
 				remainingSeconds = null;
 				remainingPercents = null;
 			} else {
@@ -69,43 +80,43 @@ public class UpdatableBenchmarkJob extends UpdatableObservableValue<BenchmarkJob
 		}
 
 		@Override
-		public void addItem(Object item) {
-			if (!downloading) {
-				downloaded = false;
-				downloading = true;
+		public synchronized void addItem(Object item) {
+			if (!working) {
+				done = false;
+				working = true;
 				start = System.currentTimeMillis();
 			}
 			fireValueChangedEvent();
 		}
 		
 		@Override
-		public void done() {
-			if (downloading) {
-				downloaded = true;
+		public synchronized void done() {
+			if (working) {
+				done = true;
 			}
-			downloading = false;
+			working = false;
 			remainingSeconds = 0l;
 			remainingPercents = 0.f;
 			fireValueChangedEvent();
 		}
 
 		@Override
-		public boolean isDownloaded() {
-			return downloaded;
+		public synchronized boolean isDone() {
+			return done;
 		}
 
 		@Override
-		public boolean isDonwloadind() {
-			return downloading;
+		public synchronized boolean isWorking() {
+			return working;
 		}
 
 		@Override
-		public Long getRemainingSeconds() {
+		public synchronized Long getRemainingSeconds() {
 			return remainingSeconds;
 		}
 
 		@Override
-		public Float getRemainingPercents() {
+		public synchronized Float getRemainingPercents() {
 			return remainingPercents;
 		}
 		
@@ -116,7 +127,12 @@ public class UpdatableBenchmarkJob extends UpdatableObservableValue<BenchmarkJob
 		@Override
 		public void itemDone(Object item) {
 		}
+		
+		@Override
+		public void setTitle(String title) {
+		}
 
+		
 	}
 
 }

@@ -22,10 +22,12 @@ public class ObservableBenchmarkJobRegistry extends ObservableValueRegistry<Benc
 	private static Logger log = LoggerFactory
 			.getLogger(cz.it4i.fiji.haas_spim_benchmark.ui.ObservableBenchmarkJobRegistry.class);
 
-	public ObservableBenchmarkJobRegistry(Consumer<BenchmarkJob> removeConsumer, Executor exec) {
+	private Executor executorUI;
+	public ObservableBenchmarkJobRegistry(Consumer<BenchmarkJob> removeConsumer, Executor exec, Executor executorServiceFX) {
 		super(t -> update(t,exec), t -> {
 			return t.getStateAsync(exec).getNow(null);
 		}, removeConsumer);
+		executorUI = executorServiceFX;
 	}
 	
 	@Override
@@ -48,7 +50,7 @@ public class ObservableBenchmarkJobRegistry extends ObservableValueRegistry<Benc
 	@Override
 	protected UpdatableObservableValue<BenchmarkJob> constructObservableValue(BenchmarkJob v,
 			Function<BenchmarkJob, UpdateStatus> updateFunction, Function<BenchmarkJob, Object> stateProvider) {
-		return new UpdatableBenchmarkJob(v, updateFunction, stateProvider);
+		return new UpdatableBenchmarkJob(v, updateFunction, stateProvider, executorUI);
 	}
 	
 	
