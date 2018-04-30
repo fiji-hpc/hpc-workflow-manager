@@ -13,6 +13,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import cz.it4i.fiji.haas_java_client.HaaSFileTransfer;
+import cz.it4i.fiji.haas_java_client.ProgressNotifier;
+import cz.it4i.fiji.haas_java_client.TransferFileProgressForHaaSClient;
+import cz.it4i.fiji.scpclient.TransferFileProgress;
 
 public abstract class PersitentSynchronizationProcess<T> {
 
@@ -20,6 +23,12 @@ public abstract class PersitentSynchronizationProcess<T> {
 	
 	public static final Logger log = LoggerFactory
 			.getLogger(cz.it4i.fiji.haas.data_transfer.PersitentSynchronizationProcess.class);
+
+	private static final TransferFileProgress DUMMY_FILE_PROGRESS =  new TransferFileProgress() {
+		@Override
+		public void dataTransfered(long bytesTransfered) {
+		}
+	};
 	
 	private PersistentIndex<T> index;
 	
@@ -32,6 +41,8 @@ public abstract class PersitentSynchronizationProcess<T> {
 	private Runnable processFinishedNotifier;
 
 	private String name;
+
+	private ProgressNotifier notifier;
 	
 	public PersitentSynchronizationProcess(String name,ExecutorService service, Supplier<HaaSFileTransfer> fileTransferSupplier, Runnable processFinishedNotifier, Path indexFile,Function<String,T> convertor) throws IOException {
 		runner = new SimpleThreadRunner(service);
@@ -74,6 +85,7 @@ public abstract class PersitentSynchronizationProcess<T> {
 	
 	private void doProcess(AtomicBoolean reRun) {
 		try(HaaSFileTransfer tr = fileTransferSupplier.get()) {
+			tr.setProgress(getTransferFileProgress(tr));
 			while (!toProcessQueue.isEmpty()) {
 				T p = toProcessQueue.poll();
 				
@@ -91,7 +103,9 @@ public abstract class PersitentSynchronizationProcess<T> {
 			}
 		}
 	}
-	
+
+	abstract protected long getTotalSize(Iterable<T> items, HaaSFileTransfer tr);
+
 	private void fileUploaded(T p) {
 		try {
 			index.remove(p);
@@ -99,6 +113,17 @@ public abstract class PersitentSynchronizationProcess<T> {
 		} catch (IOException e) {
 			log.error(e.getMessage(), e);
 		}
+	}
+
+	public void setNotifier(ProgressNotifier notifier) {
+		this.notifier = notifier;
+	}
+
+	private TransferFileProgress getTransferFileProgress(HaaSFileTransfer tr) {
+		if(notifier == null) {
+			return DUMMY_FILE_PROGRESS;
+		}
+		return new TransferFileProgressForHaaSClient(getTotalSize(toProcessQueue, tr), notifier);
 	}
 
 	

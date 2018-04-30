@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 
 import cz.it4i.fiji.haas_java_client.HaaSClient.UploadingFile;
 import cz.it4i.fiji.haas_java_client.HaaSFileTransfer;
+import cz.it4i.fiji.haas_java_client.ProgressNotifier;
 import cz.it4i.fiji.haas_java_client.UploadingFileImpl;
 
 public class Synchronization {
@@ -50,6 +51,15 @@ public class Synchronization {
 				pathResolver);
 		this.uploadProcess = createUploadProcess(fileTransferSupplier, service, uploadFinishedNotifier);
 		this.downloadProcess = createDownloadProcess(fileTransferSupplier, service, downloadFinishedNotifier);
+	}
+
+	public synchronized void setUploadNotifier(ProgressNotifier notifier) {
+		uploadProcess.setNotifier(notifier);
+	}
+	
+	public void setDownloadNotifier(ProgressNotifier notifier) {
+		// TODO Auto-generated method stub
+		
 	}
 
 	public synchronized void startUpload() throws IOException {
@@ -92,12 +102,25 @@ public class Synchronization {
 				try(DirectoryStream<Path> ds = Files.newDirectoryStream(workingDirectory,Synchronization.this::canUpload)) {
 					return StreamSupport.stream(ds.spliterator(), false).collect(Collectors.toList()); 
 				}
+				
 			}
 	
 			@Override
 			protected void processItem(HaaSFileTransfer tr, Path p) {
 				UploadingFile uf = new UploadingFileImpl(p);
 				tr.upload(uf);
+			}
+
+			@Override
+			protected long getTotalSize(Iterable<Path> items, HaaSFileTransfer tr) {
+				return StreamSupport.stream(items.spliterator(), false).map(p->{
+					try {
+						return Files.size(p);
+					} catch (IOException e) {
+						log.error(e.getMessage(), e);
+						return 0; 
+					}
+				}).collect(Collectors.summingLong(val->val.longValue()));
 			}
 		};
 	}
@@ -137,6 +160,12 @@ public class Synchronization {
 				log.error(e.getMessage(), e);
 			}
 			tr.download(file, workingDirectory);
+		}
+
+		@Override
+		protected long getTotalSize(Iterable<String> items, HaaSFileTransfer tr) {
+			
+			return tr.obtainSize( StreamSupport.stream(items.spliterator(), false).collect(Collectors.toList())).stream().collect(Collectors.summingLong(val->val));
 		}
 		
 	}

@@ -32,8 +32,12 @@ public class ObservableValueRegistry<T> {
 	private Map<T,UpdatableObservableValue<T>> map = new LinkedHashMap<>(); 
 	
 	public  ObservableValue<T> addIfAbsent(T value) {
-		UpdatableObservableValue<T> uov = map.computeIfAbsent(value, v-> new UpdatableObservableValue<T>(v, updateFunction, stateProvider));
+		UpdatableObservableValue<T> uov = map.computeIfAbsent(value, v-> constructObservableValue(v, updateFunction, stateProvider));
 		return uov;
+	}
+
+	protected UpdatableObservableValue<T> constructObservableValue(T v, Function<T, UpdateStatus> updateFunction, Function<T, Object> stateProvider) {
+		return new UpdatableObservableValue<T>(v, updateFunction, stateProvider);
 	}
 	
 	public UpdatableObservableValue<T> get(T value) {

@@ -34,7 +34,7 @@ public class RunBenchmark {
 				if (state == JobState.Configuring) {
 					job.startJob(new DummyProgress());
 				} else if (state != JobState.Running && state != JobState.Queued) {
-					job.startDownload(new DummyProgress());
+					job.startDownload();
 				} else if (state == JobState.Running) {
 					log.info(job.getSnakemakeOutput());
 				}

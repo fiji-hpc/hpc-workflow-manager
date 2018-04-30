@@ -28,7 +28,7 @@ import cz.it4i.fiji.haas_java_client.JobInfo;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.ProgressNotifier;
 import cz.it4i.fiji.haas_java_client.TransferFileProgressForHaaSClient;
-import net.imagej.updater.util.Progress;
+import cz.it4i.fiji.scpclient.TransferFileProgress;
 /***
  * TASK - napojit na UI 
  * @author koz01
@@ -63,7 +63,8 @@ public class Job {
 	private PropertyHolder propertyHolder;
 	private JobManager4Job jobManager;
 	private Synchronization synchronization;
-
+	
+	
 	public Job(JobManager4Job jobManager, String name, Path basePath, Supplier<HaaSClient> haasClientSupplier)
 			throws IOException {
 		this(jobManager, haasClientSupplier);
@@ -73,7 +74,7 @@ public class Job {
 		propertyHolder = new PropertyHolder(jobDir.resolve(JOB_INFO_FILENAME));
 		Files.createDirectory(jobDir);
 		setName(name);
-
+		
 	}
 
 	public Job(JobManager4Job jobManager, Path jobDirectory, Supplier<HaaSClient> haasClientSupplier) {
@@ -89,6 +90,7 @@ public class Job {
 		this.haasClientSupplier = haasClientSupplier;
 		this.jobManager = jobManager;
 	}
+
 
 	public void startUploadData() {
 		setProperty(JOB_NEEDS_UPLOAD, true);
@@ -110,7 +112,7 @@ public class Job {
 		}
 	}
 
-	public void startDownload(Predicate<String> predicate, Progress notifier) throws IOException {
+	public void startDownload(Predicate<String> predicate) throws IOException {
 		setProperty(JOB_NEEDS_DOWNLOAD, true);
 		Collection<String> files = getHaaSClient().getChangedFiles(jobId).stream().filter(predicate)
 				.collect(Collectors.toList());
@@ -297,7 +299,7 @@ public class Job {
 		this.jobDir = jobDirectory;
 		try {
 			this.synchronization = new Synchronization(
-					() -> haasClientSupplier.get().startFileTransfer(getId(), HaaSClient.DUMMY_TRANSFER_FILE_PROGRESS),
+					()->startFileTransfer(HaaSClient.DUMMY_TRANSFER_FILE_PROGRESS),
 					jobDir, Executors.newFixedThreadPool(2), () -> {
 						setProperty(JOB_NEEDS_UPLOAD, false);
 					}, () -> {
@@ -308,6 +310,10 @@ public class Job {
 			log.error(e.getMessage(), e);
 			throw new RuntimeException(e);
 		}
+	}
+
+	private HaaSFileTransfer startFileTransfer( TransferFileProgress progress) {
+		return haasClientSupplier.get().startFileTransfer(getId(), progress);
 	}
 
 	private synchronized void resumeUpload() {
@@ -358,6 +364,14 @@ public class Job {
 	
 	private void setCanBeDownloaded(boolean b) {
 		setProperty(JOB_CAN_BE_DOWNLOADED, b);
+	}
+
+	public void setDownloadNotifier(ProgressNotifier notifier) {
+		synchronization.setDownloadNotifier(notifier);
+	}
+	
+	public void setUploadNotifier(ProgressNotifier notifier) {
+		synchronization.setUploadNotifier(notifier);
 	}
 
 }

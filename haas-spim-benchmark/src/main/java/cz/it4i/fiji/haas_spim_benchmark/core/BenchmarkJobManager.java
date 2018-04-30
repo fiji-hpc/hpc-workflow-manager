@@ -108,12 +108,12 @@ public class BenchmarkJobManager {
 			return result;
 		}
 
-		public void startDownload(Progress progress) throws IOException {
+		public void startDownload() throws IOException {
 			if (job.getState() == JobState.Finished) {
 				String filePattern = job.getProperty(SPIM_OUTPUT_FILENAME_PATTERN);
-				job.startDownload(downloadFinishedData(filePattern) , progress);
+				job.startDownload(downloadFinishedData(filePattern) );
 			} else if (job.getState() == JobState.Failed || job.getState() == JobState.Canceled) {
-				job.startDownload(downloadFailedData(), progress);
+				job.startDownload(downloadFailedData());
 			}
 		}
 		
@@ -401,7 +401,22 @@ public class BenchmarkJobManager {
 			return Stream.concat(nonTaskSpecificErrors.stream(), taskSpecificErrors).collect(Collectors.toList());
 		}
 
-		
+		public void setDownloadNotifier(Progress progress) {
+			if(progress == null) {
+				job.setDownloadNotifier(null);
+			} else {
+				job.setDownloadNotifier(new P_ProgressNotifierAdapter(progress));
+			}
+		}
+
+
+		public void setUploadNotifier(Progress downloadProgress) {
+			if(downloadProgress == null) {
+				job.setUploadNotifier(null);
+			} else {
+				job.setUploadNotifier(new P_ProgressNotifierAdapter(downloadProgress));
+			}
+		}
 	}
 
 	public BenchmarkJobManager(BenchmarkSPIMParameters params) throws IOException {
