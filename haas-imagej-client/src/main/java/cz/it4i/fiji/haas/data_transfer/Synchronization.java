@@ -1,6 +1,7 @@
 package cz.it4i.fiji.haas.data_transfer;
 
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -37,7 +38,7 @@ public class Synchronization {
 	
 	private PersistentIndex<Path> filesDownloaded;
 
-	private PersitentSynchronizationProcess<Path> uploadProcess;
+	private PersistentSynchronizationProcess<Path> uploadProcess;
 
 	private P_PersistentDownloadProcess downloadProcess;
 	
@@ -92,9 +93,9 @@ public class Synchronization {
 		return !file.getFileName().toString().matches("[.][^.]+") && !filesDownloaded.contains(file);
 	}
 
-	private PersitentSynchronizationProcess<Path> createUploadProcess(Supplier<HaaSFileTransfer> fileTransferSupplier,
+	private PersistentSynchronizationProcess<Path> createUploadProcess(Supplier<HaaSFileTransfer> fileTransferSupplier,
 			ExecutorService service, Runnable uploadFinishedNotifier) throws IOException {
-		return new PersitentSynchronizationProcess<Path>(service, fileTransferSupplier, uploadFinishedNotifier,
+		return new PersistentSynchronizationProcess<Path>(service, fileTransferSupplier, uploadFinishedNotifier,
 				workingDirectory.resolve(FILE_INDEX_TO_UPLOAD_FILENAME), pathResolver) {
 
 			@Override
@@ -106,7 +107,7 @@ public class Synchronization {
 			}
 	
 			@Override
-			protected void processItem(HaaSFileTransfer tr, Path p) {
+			protected void processItem(HaaSFileTransfer tr, Path p) throws InterruptedIOException {
 				UploadingFile uf = new UploadingFileImpl(p);
 				tr.upload(uf);
 			}
@@ -132,7 +133,7 @@ public class Synchronization {
 		return new P_PersistentDownloadProcess(service, fileTransferSupplier, uploadFinishedNotifier);
 	}
 	
-	private class P_PersistentDownloadProcess extends PersitentSynchronizationProcess<String>{
+	private class P_PersistentDownloadProcess extends PersistentSynchronizationProcess<String>{
 
 		private Collection<String> items = Collections.emptyList();
 		
@@ -152,7 +153,7 @@ public class Synchronization {
 		}
 
 		@Override
-		protected void processItem(HaaSFileTransfer tr, String file) {
+		protected void processItem(HaaSFileTransfer tr, String file) throws InterruptedIOException {
 			filesDownloaded.insert(workingDirectory.resolve(file));
 			try {
 				filesDownloaded.storeToFile();

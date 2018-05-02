@@ -2,6 +2,7 @@ package cz.it4i.fiji.haas;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InterruptedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -124,7 +125,7 @@ public class Job {
 	public void stopDownloadData() {
 		setProperty(JOB_NEEDS_DOWNLOAD, false);
 		try {
-			this.synchronization.stopUpload();
+			this.synchronization.stopDownload();
 		} catch (IOException e) {
 			log.error(e.getMessage(), e);
 			throw new RuntimeException(e);
@@ -132,13 +133,15 @@ public class Job {
 	}
 	
 	public synchronized void resumeUpload() {
-		if (Boolean.parseBoolean(getProperty(JOB_NEEDS_UPLOAD))) {
+		if (needsUpload()) {
 			synchronization.resumeUpload();
 		}
 	}
 	
+	
+
 	public synchronized void resumeDownload() {
-		if (Boolean.parseBoolean(getProperty(JOB_NEEDS_DOWNLOAD))) {
+		if (needsDownload()) {
 			synchronization.resumeDownload();
 		}
 	}
@@ -162,6 +165,14 @@ public class Job {
 
 	public boolean isDownloaded() {
 		return getSafeBoolean(getProperty(JOB_IS_DOWNLOADED));
+	}
+	
+	public boolean needsDownload() {
+		return Boolean.parseBoolean(getProperty(JOB_NEEDS_DOWNLOAD));
+	}
+	
+	public boolean needsUpload() {
+		return Boolean.parseBoolean(getProperty(JOB_NEEDS_UPLOAD));
 	}
 	
 	public void uploadFile(String file, ProgressNotifier notifier) {
@@ -188,7 +199,12 @@ public class Job {
 				String item;
 				progress.startNewFile(totalSizes.get(index));
 				notifier.addItem(item = "Uploading file: " + file.getName());
-				transfer.upload(file);
+				try {
+					transfer.upload(file);
+				} catch (InterruptedIOException e) {
+					notifier.itemDone(item);
+					return;
+				}
 				notifier.itemDone(item);
 				index++;
 			}
@@ -231,7 +247,12 @@ public class Job {
 				String item;
 				progress.addItem(item = fileName);
 				progress.startNewFile(fileSizes.get(idx));
-				transfer.download(fileName, jobDir);
+				try {
+					transfer.download(fileName, jobDir);
+				} catch (InterruptedIOException e) {
+					progress.itemDone(item);
+					return;
+				}
 				progress.itemDone(item);
 				idx++;
 			}

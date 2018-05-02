@@ -1,5 +1,7 @@
 package cz.it4i.fiji.haas_java_client;
 
+import static cz.it4i.fiji.haas_java_client.LambdaExceptionHandlerWrapper.wrap;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -49,7 +51,7 @@ public class TestHaaSJavaClient {
 			if (info.getState() == JobState.Finished) {
 				try (HaaSFileTransfer fileTransfer = client.startFileTransfer(jobId,
 						HaaSClient.DUMMY_TRANSFER_FILE_PROGRESS)) {
-					client.getChangedFiles(jobId).forEach(file -> fileTransfer.download(file, workDir));
+					client.getChangedFiles(jobId).forEach(file -> wrap(() -> fileTransfer.download(file, workDir)));
 				}
 			}
 			log.info("JobId :" + jobId + ", state" + info.getState());

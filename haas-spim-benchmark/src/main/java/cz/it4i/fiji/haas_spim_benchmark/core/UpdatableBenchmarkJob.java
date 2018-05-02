@@ -18,9 +18,9 @@ public class UpdatableBenchmarkJob extends UpdatableObservableValue<BenchmarkJob
 			.getLogger(cz.it4i.fiji.haas_spim_benchmark.core.UpdatableBenchmarkJob.class);
 
 	private P_TransferProgress downloadProgress = new P_TransferProgress(val -> getValue().setDownloaded(val),
-			() -> getValue().isDownloaded());
+			() -> getValue().isDownloaded(), () -> getValue().needsDownload());
 	private P_TransferProgress uploadProgress = new P_TransferProgress(val -> getValue().setUploaded(val),
-			() -> getValue().isUploaded());
+			() -> getValue().isUploaded(), () -> getValue().needsUpload());
 	private Executor executor;
 
 	public interface TransferProgress {
@@ -58,30 +58,30 @@ public class UpdatableBenchmarkJob extends UpdatableObservableValue<BenchmarkJob
 
 	@Override
 	protected void fireValueChangedEvent() {
-		executor.execute(() -> super.fireValueChangedEvent());
+		executor.execute(() ->  {
+			super.fireValueChangedEvent();
+		});
 	}
 
 	private class P_TransferProgress implements Progress, TransferProgress {
 
-		private boolean working;
-		// private boolean done;
 		private long start;
 		private Long remainingMiliseconds;
 		private Float remainingPercents;
 		private Supplier<Boolean> doneStatusSupplier;
 		private Consumer<Boolean> doneStatusConsumer;
+		private Supplier<Boolean> workingSupplier;
 
-		public P_TransferProgress(Consumer<Boolean> doneStatusConsumer, Supplier<Boolean> doneStatusSupplier) {
+		public P_TransferProgress(Consumer<Boolean> doneStatusConsumer, Supplier<Boolean> doneStatusSupplier, Supplier<Boolean> workingSupplier) {
 			this.doneStatusConsumer = doneStatusConsumer;
 			this.doneStatusSupplier = doneStatusSupplier;
+			this.workingSupplier = workingSupplier;
 		}
 
 		@Override
 		public synchronized void setCount(int count, int total) {
 			if (total < -1) {
-				working = false;
-				remainingMiliseconds = null;
-				remainingPercents = null;
+				clearProgress();
 			} else {
 				long delta = System.currentTimeMillis() - start;
 				remainingMiliseconds = (long) ((double) delta / count * (total - count));
@@ -92,20 +92,14 @@ public class UpdatableBenchmarkJob extends UpdatableObservableValue<BenchmarkJob
 
 		@Override
 		public synchronized void addItem(Object item) {
-			if (!working) {
-				setDone(false);
-				working = true;
-				start = System.currentTimeMillis();
-			}
+			setDone(false);
+			clearProgress();
+			start = System.currentTimeMillis();
 			fireValueChangedEvent();
 		}
 
 		@Override
 		public synchronized void done() {
-			if (working) {
-				setDone(true);
-			}
-			working = false;
 			remainingMiliseconds = 0l;
 			remainingPercents = 0.f;
 			fireValueChangedEvent();
@@ -113,7 +107,7 @@ public class UpdatableBenchmarkJob extends UpdatableObservableValue<BenchmarkJob
 
 		@Override
 		public synchronized boolean isWorking() {
-			return working;
+			return workingSupplier.get();
 		}
 
 		@Override
@@ -141,6 +135,11 @@ public class UpdatableBenchmarkJob extends UpdatableObservableValue<BenchmarkJob
 		@Override
 		public boolean isDone() {
 			return doneStatusSupplier.get();
+		}
+
+		private void clearProgress() {
+			remainingMiliseconds = null;
+			remainingPercents = null;
 		}
 
 		private void setDone(boolean val) {

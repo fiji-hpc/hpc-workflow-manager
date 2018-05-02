@@ -3,6 +3,7 @@ package cz.it4i.fiji.haas_java_client;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InterruptedIOException;
 import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.List;
@@ -39,25 +40,30 @@ class HaaSFileTransferImp implements HaaSFileTransfer {
 	}
 
 	@Override
-	public void upload(UploadingFile file) {
+	public void upload(UploadingFile file) throws InterruptedIOException{
 		String destFile = "'" + ft.getSharedBasepath() + "/" + file.getName() + "'";
 		try (InputStream is = file.getInputStream()) {
 			boolean result = scpClient.upload(is, destFile, file.getLength(), file.getLastTime(), progress);
 			if (!result) {
 				throw new HaaSClientException("Uploading of " + file + " to " + destFile + " failed");
 			}
+		} catch(InterruptedIOException e) {
+			throw e;
 		} catch (JSchException | IOException e) {
-			throw new HaaSClientException();
+			throw new HaaSClientException(e);
 		}
 	}
 
 	@Override
-	public void download(String fileName, Path workDirectory) {
+	public void download(String fileName, Path workDirectory) throws InterruptedIOException{
 		try {
 			fileName = fileName.replaceFirst("/", "");
 			Path rFile = workDirectory.resolve(fileName);
 			String fileToDownload = "'" + ft.getSharedBasepath() + "/" + fileName + "'";
 			scpClient.download(fileToDownload, rFile, progress);
+		} catch(InterruptedIOException e) {
+			log.info("upload interrupted flag: " + Thread.currentThread().isInterrupted());
+			throw e;
 		} catch (JSchException | IOException e) {
 			throw new HaaSClientException(e);
 		}
@@ -68,36 +74,6 @@ class HaaSFileTransferImp implements HaaSFileTransfer {
 		this.progress = progress;
 	}
 	
-	/*
-	@Override
-	public void download(Iterable<String> files, Path workDirectory) {
-		List<Long> fileSizes;
-		try {
-			fileSizes = HaaSClient.getSizes(StreamSupport.stream(files.spliterator(), false)
-					.map(filename -> "'" + ft.getSharedBasepath() + "/" + filename + "'").collect(Collectors.toList()),
-					scpClient);
-
-			final long totalFileSize = fileSizes.stream().mapToLong(i -> i.longValue()).sum();
-			TransferFileProgressForHaaSClient progress = new TransferFileProgressForHaaSClient(totalFileSize,
-					HaaSClient.DUMMY_PROGRESS_NOTIFIER);
-			int idx = 0;
-			for (String fileName : files) {
-				fileName = fileName.replaceFirst("/", "");
-				Path rFile = workDirectory.resolve(fileName);
-				String fileToDownload = "'" + ft.getSharedBasepath() + "/" + fileName + "'";
-				String item;
-				progress.addItem(item = fileName);
-				progress.startNewFile(fileSizes.get(idx));
-				scpClient.download(fileToDownload, rFile, progress);
-				progress.itemDone(item);
-				idx++;
-			}
-		} catch (JSchException | IOException e) {
-			throw new HaaSClientException(e);
-		}
-	}
-	*/
-
 	@Override
 	public List<Long> obtainSize(List<String> files) {
 		try {
@@ -128,7 +104,7 @@ class HaaSFileTransferImp implements HaaSFileTransfer {
 		}
 		return result;
 	}
-
+	
 	private String replaceIfFirstFirst(String fileName, String string, String string2) {
 		if (fileName.length() < 0 && fileName.charAt(0) == '/') {
 			fileName = fileName.substring(1);

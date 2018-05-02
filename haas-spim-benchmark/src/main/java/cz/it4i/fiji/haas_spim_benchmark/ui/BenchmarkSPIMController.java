@@ -110,13 +110,19 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 						|| j.getState() == JobState.Failed || j.getState() == JobState.Canceled));
 
 		menu.addItem("Upload data", job -> executeWSCallAsync("Uploading data", p -> job.getValue().startUpload()),
-				job -> JavaFXRoutines.notNullValue(job, j -> !EnumSet.of(JobState.Running).contains(j.getState())));
+				job -> executeWSCallAsync("Stop uploading data", p -> job.getValue().stopUpload()),
+				job -> JavaFXRoutines.notNullValue(job, j -> !EnumSet.of(JobState.Running).contains(j.getState())),
+				job -> registry.get(job.getValue()).getUploadProgress().isWorking());
+		
 		
 		menu.addItem("Download result",
 				job -> executeWSCallAsync("Downloading data", p -> job.getValue().startDownload()),
+				job -> executeWSCallAsync("Stop downloading data", p -> job.getValue().stopDownload()),
 				job -> JavaFXRoutines.notNullValue(job,
 						j -> EnumSet.of(JobState.Failed, JobState.Finished, JobState.Canceled).contains(j.getState())
-								&& !j.canBeDownloaded()));
+								&& j.canBeDownloaded()),
+				job -> registry.get(job.getValue()).getDownloadProgress().isWorking());
+
 		menu.addItem("Download statistics",
 				job -> executeWSCallAsync("Downloading data", p -> job.getValue().downloadStatistics(p)),
 				job -> JavaFXRoutines.notNullValue(job, j -> j.getState() == JobState.Finished));

@@ -5,12 +5,14 @@ import java.util.LinkedList;
 import java.util.function.BiConsumer;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javafx.event.EventHandler;
+import javafx.scene.control.CheckMenuItem;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TableColumn;
@@ -21,7 +23,7 @@ public class TableViewContextMenu<T> {
 
 	public final static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas.ui.TableViewContextMenu.class);
 
-	private final Collection<P_MenuItem> items = new LinkedList<>();
+	private final Collection<P_Updetable<?>> items = new LinkedList<>();
 	private final Collection<P_MenuItemWithColumnIndex> itemsWithColumnIndex = new LinkedList<>();
 
 	private TableView<T> tableView;
@@ -38,6 +40,11 @@ public class TableViewContextMenu<T> {
 
 	public void addItem(String text, BiConsumer<T, Integer> eventHandler, BiPredicate<T, Integer> enableHandler) {
 		itemsWithColumnIndex.add(new P_MenuItemWithColumnIndex(text, eventHandler, enableHandler));
+	}
+	
+	public void addItem(String text, Consumer<T> eventHandlerOn, Consumer<T> eventHandlerOff,
+			Predicate<T> enableHandler, Function<T, Boolean> property) {
+		items.add(new P_CheckMenuItem(text, eventHandlerOff, eventHandlerOn, enableHandler, property));
 	}
 
 	private T getRequestedItem() {
@@ -82,20 +89,34 @@ public class TableViewContextMenu<T> {
 		return cm;
 	}
 
-	private class P_MenuItem {
-
-		private MenuItem item;
-		private Predicate<T> enableHandler;
-
-		public P_MenuItem(String text, Consumer<T> eventHandler, Predicate<T> enableHandler) {
+	private class P_Updetable<I extends MenuItem> {
+		
+		private I item;
+				private Predicate<T> enableHandler;
+		
+		
+		public P_Updetable(I item, Predicate<T> enableHandler) {
+			this.item = item;
 			this.enableHandler = enableHandler;
-			item = new MenuItem(text);
-			item.setOnAction(e -> eventHandler.accept(getRequestedItem()));
-			getOrCreateContextMenu().getItems().add(item);
+			getOrCreateContextMenu().getItems().add(getItem());
 		}
 
 		public void updateEnable(T selected) {
 			item.setDisable(!enableHandler.test(selected));
+		}
+		
+		protected I getItem() {
+			return item;
+		}
+
+	}
+	
+	private class P_MenuItem extends P_Updetable<MenuItem>{
+		public P_MenuItem(String text, Consumer<T> eventHandler, Predicate<T> enableHandler) {
+			super(new MenuItem(text), enableHandler);
+			
+			getItem().setOnAction(e -> eventHandler.accept(getRequestedItem()));
+			
 		}
 
 	}
@@ -117,6 +138,32 @@ public class TableViewContextMenu<T> {
 			item.setDisable(!enableHandler.test(selected, column));
 		}
 
+	}
+
+	private class P_CheckMenuItem extends P_Updetable<CheckMenuItem>{
+		
+		private Function<T, Boolean> property;
+
+		public P_CheckMenuItem(String text, Consumer<T> eventHandlerOff, Consumer<T> eventHandlerOn,
+				Predicate<T> enableHandler, Function<T,Boolean> property) {
+			super(new CheckMenuItem(text), enableHandler);
+			this.property = property;
+			getItem().setOnAction(e -> {
+				boolean selected = getItem().isSelected();
+				if(selected) {
+					eventHandlerOn.accept(getRequestedItem());
+				} else {
+					eventHandlerOff.accept(getRequestedItem());
+				}
+			});
+		}
+
+		@Override
+		public void updateEnable(T selected) {
+			super.updateEnable(selected);
+			getItem().setSelected(property.apply(selected));
+		}
+		
 	}
 
 }
