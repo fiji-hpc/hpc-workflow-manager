@@ -210,8 +210,8 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 		if (!progress.isWorking() && !progress.isDone()) {
 			return "";
 		} else if (progress.isWorking()) {
-			Long secs = progress.getRemainingSeconds();
-			return string + "ing - time remains " + (secs != null ? secs : "N/A");
+			Long msecs = progress.getRemainingMiliseconds();
+			return string + "ing - time remains " + (msecs != null ? RemainingTimeFormater.format(msecs) : "N/A");
 		} else if (progress.isDone()) {
 			return string + "ed";
 		}

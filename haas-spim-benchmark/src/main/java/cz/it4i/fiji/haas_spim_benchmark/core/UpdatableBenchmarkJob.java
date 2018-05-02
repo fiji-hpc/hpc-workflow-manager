@@ -25,7 +25,7 @@ public class UpdatableBenchmarkJob extends UpdatableObservableValue<BenchmarkJob
 
 	public interface TransferProgress {
 
-		public Long getRemainingSeconds();
+		public Long getRemainingMiliseconds();
 
 		public boolean isDone();
 
@@ -66,7 +66,7 @@ public class UpdatableBenchmarkJob extends UpdatableObservableValue<BenchmarkJob
 		private boolean working;
 		// private boolean done;
 		private long start;
-		private Long remainingSeconds;
+		private Long remainingMiliseconds;
 		private Float remainingPercents;
 		private Supplier<Boolean> doneStatusSupplier;
 		private Consumer<Boolean> doneStatusConsumer;
@@ -80,11 +80,11 @@ public class UpdatableBenchmarkJob extends UpdatableObservableValue<BenchmarkJob
 		public synchronized void setCount(int count, int total) {
 			if (total < -1) {
 				working = false;
-				remainingSeconds = null;
+				remainingMiliseconds = null;
 				remainingPercents = null;
 			} else {
 				long delta = System.currentTimeMillis() - start;
-				remainingSeconds = (long) ((double) delta / count * (total - count)) / 1000;
+				remainingMiliseconds = (long) ((double) delta / count * (total - count));
 				remainingPercents = (((float) total - count) / total * 100);
 			}
 			fireValueChangedEvent();
@@ -106,7 +106,7 @@ public class UpdatableBenchmarkJob extends UpdatableObservableValue<BenchmarkJob
 				setDone(true);
 			}
 			working = false;
-			remainingSeconds = 0l;
+			remainingMiliseconds = 0l;
 			remainingPercents = 0.f;
 			fireValueChangedEvent();
 		}
@@ -117,8 +117,8 @@ public class UpdatableBenchmarkJob extends UpdatableObservableValue<BenchmarkJob
 		}
 
 		@Override
-		public synchronized Long getRemainingSeconds() {
-			return remainingSeconds;
+		public synchronized Long getRemainingMiliseconds() {
+			return remainingMiliseconds;
 		}
 
 		@Override
