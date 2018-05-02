@@ -164,8 +164,7 @@ public class Synchronization {
 		}
 
 		@Override
-		protected long getTotalSize(Iterable<String> items, HaaSFileTransfer tr) {
-			
+		protected long getTotalSize(Iterable<String> items, HaaSFileTransfer tr) throws InterruptedIOException {
 			return tr.obtainSize( StreamSupport.stream(items.spliterator(), false).collect(Collectors.toList())).stream().collect(Collectors.summingLong(val->val));
 		}
 		

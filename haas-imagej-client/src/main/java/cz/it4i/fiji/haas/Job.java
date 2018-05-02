@@ -238,7 +238,12 @@ public class Job {
 	synchronized public void download(Predicate<String> predicate, ProgressNotifier notifier) {
 		List<String> files = getHaaSClient().getChangedFiles(jobId).stream().filter(predicate).collect(Collectors.toList());
 		try (HaaSFileTransfer transfer =  haasClientSupplier.get().startFileTransfer(getId(), HaaSClient.DUMMY_TRANSFER_FILE_PROGRESS)) {
-			List<Long> fileSizes = transfer.obtainSize(files);
+			List<Long> fileSizes;
+			try {
+				fileSizes = transfer.obtainSize(files);
+			} catch (InterruptedIOException e1) {
+				return;
+			}
 			final long totalFileSize = fileSizes.stream().mapToLong(i -> i.longValue()).sum();
 			TransferFileProgressForHaaSClient progress = new TransferFileProgressForHaaSClient(totalFileSize, notifier);
 			transfer.setProgress(progress);
@@ -336,7 +341,11 @@ public class Job {
 
 		try (HaaSFileTransfer transfer = getHaaSClient().startFileTransfer(getId(),
 				HaaSClient.DUMMY_TRANSFER_FILE_PROGRESS)) {
-			return transfer.obtainSize(names);
+			try {
+				return transfer.obtainSize(names);
+			} catch (InterruptedIOException e) {
+				return Collections.emptyList();
+			}
 		}
 	}
 

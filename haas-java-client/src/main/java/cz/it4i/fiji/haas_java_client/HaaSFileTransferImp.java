@@ -75,10 +75,12 @@ class HaaSFileTransferImp implements HaaSFileTransfer {
 	}
 	
 	@Override
-	public List<Long> obtainSize(List<String> files) {
+	public List<Long> obtainSize(List<String> files) throws InterruptedIOException {
 		try {
 			return getSizes(files.stream()
 					.map(filename -> "'" + ft.getSharedBasepath() + "/" + filename + "'").collect(Collectors.toList()));
+		} catch (InterruptedIOException e) {
+			throw e;
 		} catch (JSchException | IOException e) {
 			throw new HaaSClientException(e);
 		}

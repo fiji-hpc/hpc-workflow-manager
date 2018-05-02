@@ -18,7 +18,7 @@ public interface HaaSFileTransfer extends Closeable {
 
 	void download(String files, Path workDirectory) throws InterruptedIOException;
 
-	List<Long> obtainSize(List<String> files);
+	List<Long> obtainSize(List<String> files) throws InterruptedIOException;
 
 	List<String> getContent(List<String> logs);
 	

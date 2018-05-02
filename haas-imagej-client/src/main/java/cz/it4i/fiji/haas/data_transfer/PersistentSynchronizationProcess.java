@@ -91,18 +91,23 @@ public abstract class PersistentSynchronizationProcess<T> {
 
 	abstract protected void processItem(HaaSFileTransfer tr, T p) throws InterruptedIOException;
 
-	abstract protected long getTotalSize(Iterable<T> items, HaaSFileTransfer tr);
+	abstract protected long getTotalSize(Iterable<T> items, HaaSFileTransfer tr) throws InterruptedIOException;
 
 	private void doProcess(AtomicBoolean reRun) {
 		boolean interrupted = false;
 		
 		notifier.addItem(INIT_TRANSFER_ITEM);
+		runningTransferThreads.add(Thread.currentThread());
 		try (HaaSFileTransfer tr = fileTransferSupplier.get()) {
-			TransferFileProgressForHaaSClient notifier;
-			tr.setProgress(notifier = getTransferFileProgress(tr));
-			runningTransferThreads.add(Thread.currentThread());
-			notifier.itemDone(INIT_TRANSFER_ITEM);
-			while (!toProcessQueue.isEmpty()) {
+			TransferFileProgressForHaaSClient notifier = DUMMY_FILE_PROGRESS;
+			try {
+				tr.setProgress(notifier = getTransferFileProgress(tr));
+			} catch (InterruptedIOException e1) {
+				interrupted = true;
+			}
+			
+			this.notifier.itemDone(INIT_TRANSFER_ITEM);
+			while (!interrupted && !toProcessQueue.isEmpty()) {
 				T p = toProcessQueue.poll();
 				String item = p.toString(); 
 				notifier.addItem(item);
@@ -116,9 +121,9 @@ public abstract class PersistentSynchronizationProcess<T> {
 				notifier.itemDone(item);
 				reRun.set(false);
 			}
-			runningTransferThreads.remove(Thread.currentThread());
 			notifier.done();
 		} finally {
+			runningTransferThreads.remove(Thread.currentThread());
 			synchronized (this) {
 				if (startFinished) {
 					if(!interrupted && !Thread.interrupted()) {
@@ -130,6 +135,7 @@ public abstract class PersistentSynchronizationProcess<T> {
 				}
 			}
 		}
+		log.info("doProcess - done - " + Thread.currentThread().isInterrupted());
 	}
 
 	private void fileUploaded(T p) {
@@ -141,7 +147,7 @@ public abstract class PersistentSynchronizationProcess<T> {
 		}
 	}
 
-	private TransferFileProgressForHaaSClient getTransferFileProgress(HaaSFileTransfer tr) {
+	private TransferFileProgressForHaaSClient getTransferFileProgress(HaaSFileTransfer tr) throws InterruptedIOException {
 		if (notifier == null) {
 			return DUMMY_FILE_PROGRESS;
 		}
