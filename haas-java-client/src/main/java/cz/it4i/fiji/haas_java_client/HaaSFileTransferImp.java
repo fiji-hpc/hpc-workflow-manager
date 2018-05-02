@@ -62,7 +62,6 @@ class HaaSFileTransferImp implements HaaSFileTransfer {
 			String fileToDownload = "'" + ft.getSharedBasepath() + "/" + fileName + "'";
 			scpClient.download(fileToDownload, rFile, progress);
 		} catch(InterruptedIOException e) {
-			log.info("upload interrupted flag: " + Thread.currentThread().isInterrupted());
 			throw e;
 		} catch (JSchException | IOException e) {
 			throw new HaaSClientException(e);

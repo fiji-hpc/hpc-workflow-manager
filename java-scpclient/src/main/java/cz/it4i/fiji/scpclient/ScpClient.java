@@ -174,6 +174,8 @@ public class ScpClient implements Closeable {
 				}
 			}
 
+		} catch (ClosedByInterruptException e) {
+			throw new InterruptedIOException();
 		} finally {
 			channel.disconnect();
 		}

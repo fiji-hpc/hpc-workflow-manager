@@ -96,17 +96,17 @@ public abstract class PersistentSynchronizationProcess<T> {
 	private void doProcess(AtomicBoolean reRun) {
 		boolean interrupted = false;
 		
-		notifier.addItem(INIT_TRANSFER_ITEM);
+		this.notifier.addItem(INIT_TRANSFER_ITEM);
 		runningTransferThreads.add(Thread.currentThread());
+		TransferFileProgressForHaaSClient notifier = DUMMY_FILE_PROGRESS;
 		try (HaaSFileTransfer tr = fileTransferSupplier.get()) {
-			TransferFileProgressForHaaSClient notifier = DUMMY_FILE_PROGRESS;
 			try {
 				tr.setProgress(notifier = getTransferFileProgress(tr));
 			} catch (InterruptedIOException e1) {
 				interrupted = true;
 			}
-			
 			this.notifier.itemDone(INIT_TRANSFER_ITEM);
+			this.notifier.done();
 			while (!interrupted && !toProcessQueue.isEmpty()) {
 				T p = toProcessQueue.poll();
 				String item = p.toString(); 
@@ -121,13 +121,13 @@ public abstract class PersistentSynchronizationProcess<T> {
 				notifier.itemDone(item);
 				reRun.set(false);
 			}
-			notifier.done();
 		} finally {
 			runningTransferThreads.remove(Thread.currentThread());
 			synchronized (this) {
 				if (startFinished) {
 					if(!interrupted && !Thread.interrupted()) {
 						processFinishedNotifier.run();
+						notifier.done();
 					} else {
 						notifyStop();
 						reRun.set(false);
@@ -135,7 +135,6 @@ public abstract class PersistentSynchronizationProcess<T> {
 				}
 			}
 		}
-		log.info("doProcess - done - " + Thread.currentThread().isInterrupted());
 	}
 
 	private void fileUploaded(T p) {

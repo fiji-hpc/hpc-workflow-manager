@@ -65,7 +65,7 @@ public class UpdatableBenchmarkJob extends UpdatableObservableValue<BenchmarkJob
 
 	private class P_TransferProgress implements Progress, TransferProgress {
 
-		private long start;
+		private Long start;
 		private Long remainingMiliseconds;
 		private Float remainingPercents;
 		private Supplier<Boolean> doneStatusSupplier;
@@ -92,16 +92,19 @@ public class UpdatableBenchmarkJob extends UpdatableObservableValue<BenchmarkJob
 
 		@Override
 		public synchronized void addItem(Object item) {
-			setDone(false);
-			clearProgress();
-			start = System.currentTimeMillis();
-			fireValueChangedEvent();
+			if (start == null) {
+				setDone(false);
+				clearProgress();
+				start = System.currentTimeMillis();
+				fireValueChangedEvent();
+			}
 		}
 
 		@Override
 		public synchronized void done() {
 			remainingMiliseconds = 0l;
 			remainingPercents = 0.f;
+			start = null;
 			fireValueChangedEvent();
 		}
 
