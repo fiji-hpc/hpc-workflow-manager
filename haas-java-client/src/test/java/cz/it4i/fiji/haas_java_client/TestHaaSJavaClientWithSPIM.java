@@ -14,24 +14,24 @@ import org.slf4j.LoggerFactory;
 
 import cz.it4i.fiji.haas_java_client.HaaSClient.SynchronizableFiles;
 import cz.it4i.fiji.haas_java_client.proxy.JobFileContentExt;
+import static cz.it4i.fiji.haas_java_client.LambdaExceptionHandlerWrapper.wrap;
 
 public class TestHaaSJavaClientWithSPIM {
 
 	private static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas_java_client.TestHaaSJavaClientWithSPIM.class);
-	
+
 	public static void main(String[] args) throws ServiceException, IOException {
 		HaaSClient client = new HaaSClient(TestingConstants.getSettings(2, 9600, 6l, "DD-17-31"));
 		Path baseDir = Paths.get("/home/koz01/Work/vyzkumnik/fiji/work/aaa");
 
-		long jobId = client.createJob( "TestOutRedirect",
-				Collections.emptyList());
-		
-		try(HaaSFileTransfer tr = client.startFileTransfer(jobId, HaaSClient.DUMMY_TRANSFER_FILE_PROGRESS)) {
+		long jobId = client.createJob("TestOutRedirect", Collections.emptyList());
+
+		try (HaaSFileTransfer tr = client.startFileTransfer(jobId, HaaSClient.DUMMY_TRANSFER_FILE_PROGRESS)) {
 			StreamSupport.stream(getAllFiles(baseDir.resolve("spim-data")).spliterator(), false)
-					.map(UploadingFileImpl::new).forEach(f -> tr.upload(f));
+					.map(UploadingFileImpl::new).forEach(f -> wrap(() -> tr.upload(f)));
 		}
 		client.submitJob(jobId);
-		
+
 		Path workDir = baseDir.resolve("" + jobId);
 		if (!Files.isDirectory(workDir)) {
 			Files.createDirectories(workDir);
@@ -53,8 +53,9 @@ public class TestHaaSJavaClientWithSPIM {
 			}
 			client.downloadPartsOfJobFiles(jobId, taskFileOffset).forEach(jfc -> showJFC(jfc));
 			if (info.getState() == JobState.Finished) {
-				try (HaaSFileTransfer fileTransfer = client.startFileTransfer(jobId, HaaSClient.DUMMY_TRANSFER_FILE_PROGRESS)) {
-					client.getChangedFiles(jobId).forEach(file -> fileTransfer.download(file, workDir));
+				try (HaaSFileTransfer fileTransfer = client.startFileTransfer(jobId,
+						HaaSClient.DUMMY_TRANSFER_FILE_PROGRESS)) {
+					client.getChangedFiles(jobId).forEach(file -> wrap(() -> fileTransfer.download(file, workDir)));
 				}
 
 			}

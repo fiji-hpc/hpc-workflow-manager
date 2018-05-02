@@ -434,6 +434,18 @@ public class BenchmarkJobManager {
 		public boolean isUploaded() {
 			return job.isUploaded();
 		}
+
+		public void stopDownload() {
+			job.stopDownloadData();
+		}
+
+		public boolean needsDownload() {
+			return job.needsDownload();
+		}
+
+		public boolean needsUpload() {
+			return job.needsUpload();
+		}
 	}
 
 	public BenchmarkJobManager(BenchmarkSPIMParameters params) throws IOException {

@@ -3,13 +3,18 @@ package cz.it4i.fiji.scpclient;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.nio.channels.ClosedByInterruptException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.ChannelExec;
@@ -23,6 +28,9 @@ import com.jcraft.jsch.SftpException;
 import com.jcraft.jsch.UserInfo;
 
 public class ScpClient implements Closeable {
+	
+	public static final Logger log = LoggerFactory.getLogger(cz.it4i.fiji.scpclient.ScpClient.class);
+	
 	
 	private String hostName;
 	private String username;
@@ -237,6 +245,9 @@ public class ScpClient implements Closeable {
 			}
 			out.close();
 
+		} catch (ClosedByInterruptException e) {
+			Thread.interrupted();
+			throw new InterruptedIOException();
 		} finally {
 			channel.disconnect();
 		}
