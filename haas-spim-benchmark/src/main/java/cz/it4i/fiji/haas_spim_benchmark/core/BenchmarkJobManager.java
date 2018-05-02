@@ -58,6 +58,7 @@ public class BenchmarkJobManager {
 	public final class BenchmarkJob implements HaaSOutputHolder {
 
 		private final Job job;
+		
 		private final List<Task> tasks;
 		private final List<BenchmarkError> nonTaskSpecificErrors;
 		private final SPIMComputationAccessor computationAccessor;
@@ -416,6 +417,22 @@ public class BenchmarkJobManager {
 			getTasks();
 			Stream<BenchmarkError> taskSpecificErrors = tasks.stream().flatMap(s -> s.getErrors().stream());
 			return Stream.concat(nonTaskSpecificErrors.stream(), taskSpecificErrors).collect(Collectors.toList());
+		}
+
+		public void setDownloaded(Boolean val) {
+			job.setDownloaded(val);
+		}
+		
+		public void setUploaded(boolean b) {
+			job.setUploaded(b);
+		}
+
+		public boolean isDownloaded() {
+			return job.isDownloaded();
+		}
+
+		public boolean isUploaded() {
+			return job.isUploaded();
 		}
 	}
 

@@ -45,6 +45,10 @@ public class Job {
 	private static final String JOB_NEEDS_DOWNLOAD = "job.needs_download";
 	
 	private static final String JOB_CAN_BE_DOWNLOADED = "job.needs_download";
+	
+	private static final String JOB_IS_DOWNLOADED = "job.downloaded";
+	
+	private static final String JOB_IS_UPLOADED = "job.uploaded";
 
 	public static boolean isJobPath(Path p) {
 		return isValidPath(p);
@@ -142,6 +146,22 @@ public class Job {
 	
 	public boolean canBeDownload() {
 		return Boolean.parseBoolean(getProperty(JOB_CAN_BE_DOWNLOADED));
+	}
+	
+	public void setUploaded(boolean b) {
+		setProperty(JOB_IS_UPLOADED, b);
+	}
+
+	public void setDownloaded(boolean b) {
+		setProperty(JOB_IS_DOWNLOADED, b);
+	}
+	
+	public boolean isUploaded() {
+		return  getSafeBoolean(getProperty(JOB_IS_UPLOADED));
+	}
+
+	public boolean isDownloaded() {
+		return getSafeBoolean(getProperty(JOB_IS_DOWNLOADED));
 	}
 	
 	public void uploadFile(String file, ProgressNotifier notifier) {
@@ -314,6 +334,10 @@ public class Job {
 		synchronization.setUploadNotifier(notifier);
 	}
 
+	private boolean getSafeBoolean(String value) {
+		return value != null ? Boolean.parseBoolean(value) : false;
+	}
+
 	private void setJobDirectory(Path jobDirectory) {
 		this.jobDir = jobDirectory;
 		try {
@@ -321,7 +345,9 @@ public class Job {
 					()->startFileTransfer(HaaSClient.DUMMY_TRANSFER_FILE_PROGRESS),
 					jobDir, Executors.newFixedThreadPool(2), () -> {
 						setProperty(JOB_NEEDS_UPLOAD, false);
+						setUploaded(true);
 					}, () -> {
+						setDownloaded(true);
 						setProperty(JOB_NEEDS_DOWNLOAD, false);
 						setCanBeDownloaded(false);
 					});
@@ -330,6 +356,8 @@ public class Job {
 			throw new RuntimeException(e);
 		}
 	}
+
+
 
 	private HaaSFileTransfer startFileTransfer( TransferFileProgress progress) {
 		return haasClientSupplier.get().startFileTransfer(getId(), progress);
