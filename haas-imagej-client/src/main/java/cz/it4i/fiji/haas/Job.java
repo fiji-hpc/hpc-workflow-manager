@@ -44,7 +44,7 @@ public class Job {
 
 	private static final String JOB_NEEDS_DOWNLOAD = "job.needs_download";
 	
-	private static final String JOB_CAN_BE_DOWNLOADED = "job.needs_download";
+	private static final String JOB_CAN_BE_DOWNLOADED = "job.can_be_downloaded";
 	
 	private static final String JOB_IS_DOWNLOADED = "job.downloaded";
 	
