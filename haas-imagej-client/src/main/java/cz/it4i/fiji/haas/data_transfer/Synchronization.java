@@ -1,5 +1,6 @@
 package cz.it4i.fiji.haas.data_transfer;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.nio.file.DirectoryStream;
@@ -9,6 +10,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -22,7 +24,7 @@ import cz.it4i.fiji.haas_java_client.HaaSFileTransfer;
 import cz.it4i.fiji.haas_java_client.ProgressNotifier;
 import cz.it4i.fiji.haas_java_client.UploadingFileImpl;
 
-public class Synchronization {
+public class Synchronization implements Closeable{
 
 	public static final Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas.data_transfer.Synchronization.class);
 	
@@ -41,12 +43,12 @@ public class Synchronization {
 	private PersistentSynchronizationProcess<Path> uploadProcess;
 
 	private P_PersistentDownloadProcess downloadProcess;
-	
-	
+
+	private ExecutorService service;
 	
 	public Synchronization(Supplier<HaaSFileTransfer> fileTransferSupplier, Path workingDirectory,
-			ExecutorService service, Runnable uploadFinishedNotifier, Runnable downloadFinishedNotifier) throws IOException {
-
+			 Runnable uploadFinishedNotifier, Runnable downloadFinishedNotifier) throws IOException {
+		this.service = Executors.newFixedThreadPool(2);
 		this.workingDirectory = workingDirectory;
 		this.filesDownloaded = new PersistentIndex<>(workingDirectory.resolve(FILE_INDEX_DOWNLOADED_FILENAME),
 				pathResolver);
@@ -86,6 +88,12 @@ public class Synchronization {
 	
 	public synchronized void resumeDownload() {
 		this.downloadProcess.resume();
+	}
+
+	public void close() {
+		service.shutdown();
+		uploadProcess.shutdown();
+		downloadProcess.shutdown();
 	}
 
 	private boolean canUpload(Path file) {

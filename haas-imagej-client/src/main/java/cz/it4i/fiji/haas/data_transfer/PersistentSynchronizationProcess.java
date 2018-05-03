@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -24,7 +25,7 @@ import cz.it4i.fiji.haas_java_client.TransferFileProgressForHaaSClient;
 public abstract class PersistentSynchronizationProcess<T> {
 
 	private boolean startFinished = true;
-	
+
 	public static final Logger log = LoggerFactory
 			.getLogger(cz.it4i.fiji.haas.data_transfer.PersistentSynchronizationProcess.class);
 
@@ -32,11 +33,11 @@ public abstract class PersistentSynchronizationProcess<T> {
 			0, HaaSClient.DUMMY_PROGRESS_NOTIFIER);
 
 	private final static String INIT_TRANSFER_ITEM = "init transfer";
-	
+
 	private PersistentIndex<T> index;
 
 	private Queue<T> toProcessQueue = new LinkedBlockingQueue<T>();
-	
+
 	private Set<Thread> runningTransferThreads = Collections.synchronizedSet(new HashSet<>());
 
 	private SimpleThreadRunner runner;
@@ -47,9 +48,10 @@ public abstract class PersistentSynchronizationProcess<T> {
 
 	private ProgressNotifier notifier;
 
-	public PersistentSynchronizationProcess(ExecutorService service,
-			Supplier<HaaSFileTransfer> fileTransferSupplier, Runnable processFinishedNotifier, Path indexFile,
-			Function<String, T> convertor) throws IOException {
+	private AtomicInteger runningProcessCounter = new AtomicInteger();
+
+	public PersistentSynchronizationProcess(ExecutorService service, Supplier<HaaSFileTransfer> fileTransferSupplier,
+			Runnable processFinishedNotifier, Path indexFile, Function<String, T> convertor) throws IOException {
 		runner = new SimpleThreadRunner(service);
 		this.fileTransferSupplier = fileTransferSupplier;
 		this.processFinishedNotifier = processFinishedNotifier;
@@ -78,6 +80,12 @@ public abstract class PersistentSynchronizationProcess<T> {
 		runningTransferThreads.forEach(t -> t.interrupt());
 	}
 
+	public void shutdown() {
+		toProcessQueue.clear();
+		runningTransferThreads.forEach(t -> t.interrupt());
+		waitForFinishAllProcesses();
+	}
+
 	public void resume() {
 		index.fillQueue(toProcessQueue);
 		runner.runIfNotRunning(this::doProcess);
@@ -94,8 +102,8 @@ public abstract class PersistentSynchronizationProcess<T> {
 	abstract protected long getTotalSize(Iterable<T> items, HaaSFileTransfer tr) throws InterruptedIOException;
 
 	private void doProcess(AtomicBoolean reRun) {
+		runningProcessCounter.incrementAndGet();
 		boolean interrupted = false;
-		
 		this.notifier.addItem(INIT_TRANSFER_ITEM);
 		runningTransferThreads.add(Thread.currentThread());
 		TransferFileProgressForHaaSClient notifier = DUMMY_FILE_PROGRESS;
@@ -109,7 +117,7 @@ public abstract class PersistentSynchronizationProcess<T> {
 			this.notifier.done();
 			while (!interrupted && !toProcessQueue.isEmpty()) {
 				T p = toProcessQueue.poll();
-				String item = p.toString(); 
+				String item = p.toString();
 				notifier.addItem(item);
 				try {
 					processItem(tr, p);
@@ -125,7 +133,7 @@ public abstract class PersistentSynchronizationProcess<T> {
 			runningTransferThreads.remove(Thread.currentThread());
 			synchronized (this) {
 				if (startFinished) {
-					if(!interrupted && !Thread.interrupted()) {
+					if (!interrupted && !Thread.interrupted()) {
 						processFinishedNotifier.run();
 						notifier.done();
 					} else {
@@ -133,6 +141,10 @@ public abstract class PersistentSynchronizationProcess<T> {
 						reRun.set(false);
 					}
 				}
+			}
+			synchronized (runningProcessCounter) {
+				runningProcessCounter.decrementAndGet();
+				runningProcessCounter.notifyAll();
 			}
 		}
 	}
@@ -146,7 +158,8 @@ public abstract class PersistentSynchronizationProcess<T> {
 		}
 	}
 
-	private TransferFileProgressForHaaSClient getTransferFileProgress(HaaSFileTransfer tr) throws InterruptedIOException {
+	private TransferFileProgressForHaaSClient getTransferFileProgress(HaaSFileTransfer tr)
+			throws InterruptedIOException {
 		if (notifier == null) {
 			return DUMMY_FILE_PROGRESS;
 		}
@@ -155,6 +168,18 @@ public abstract class PersistentSynchronizationProcess<T> {
 
 	private void notifyStop() {
 		notifier.setCount(-1, -1);
+	}
+
+	private void waitForFinishAllProcesses() {
+		synchronized (runningProcessCounter) {
+			while (runningProcessCounter.get() != 0) {
+				try {
+					runningProcessCounter.wait();
+				} catch (InterruptedException e) {
+					log.error(e.getMessage(), e);
+				}
+			}
+		}
 	}
 
 }

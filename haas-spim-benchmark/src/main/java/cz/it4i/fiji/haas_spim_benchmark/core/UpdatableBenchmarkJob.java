@@ -37,11 +37,10 @@ public class UpdatableBenchmarkJob extends UpdatableObservableValue<BenchmarkJob
 	public UpdatableBenchmarkJob(BenchmarkJob wrapped, Function<BenchmarkJob, UpdateStatus> updateFunction,
 			Function<BenchmarkJob, Object> stateProvider, Executor executorUI) {
 		super(wrapped, updateFunction, stateProvider);
-
+		this.executor = executorUI;
 		wrapped.setDownloadNotifier(downloadProgress);
 		wrapped.setUploadNotifier(uploadProgress);
 		wrapped.resumeTransfer();
-		this.executor = executorUI;
 	}
 
 	public TransferProgress getDownloadProgress() {
@@ -58,7 +57,7 @@ public class UpdatableBenchmarkJob extends UpdatableObservableValue<BenchmarkJob
 
 	@Override
 	protected void fireValueChangedEvent() {
-		executor.execute(() ->  {
+		executor.execute(() -> {
 			super.fireValueChangedEvent();
 		});
 	}
@@ -72,7 +71,8 @@ public class UpdatableBenchmarkJob extends UpdatableObservableValue<BenchmarkJob
 		private Consumer<Boolean> doneStatusConsumer;
 		private Supplier<Boolean> workingSupplier;
 
-		public P_TransferProgress(Consumer<Boolean> doneStatusConsumer, Supplier<Boolean> doneStatusSupplier, Supplier<Boolean> workingSupplier) {
+		public P_TransferProgress(Consumer<Boolean> doneStatusConsumer, Supplier<Boolean> doneStatusSupplier,
+				Supplier<Boolean> workingSupplier) {
 			this.doneStatusConsumer = doneStatusConsumer;
 			this.doneStatusSupplier = doneStatusSupplier;
 			this.workingSupplier = workingSupplier;
@@ -82,7 +82,7 @@ public class UpdatableBenchmarkJob extends UpdatableObservableValue<BenchmarkJob
 		public synchronized void setCount(int count, int total) {
 			if (total < -1) {
 				clearProgress();
-			} else {
+			} else if (start != null) {
 				long delta = System.currentTimeMillis() - start;
 				remainingMiliseconds = (long) ((double) delta / count * (total - count));
 				remainingPercents = (((float) total - count) / total * 100);

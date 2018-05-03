@@ -11,7 +11,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.Executors;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -363,6 +362,10 @@ public class Job {
 	public void setUploadNotifier(ProgressNotifier notifier) {
 		synchronization.setUploadNotifier(notifier);
 	}
+	
+	public void close() {
+		synchronization.close();
+	}
 
 	private boolean getSafeBoolean(String value) {
 		return value != null ? Boolean.parseBoolean(value) : false;
@@ -371,9 +374,8 @@ public class Job {
 	private void setJobDirectory(Path jobDirectory) {
 		this.jobDir = jobDirectory;
 		try {
-			this.synchronization = new Synchronization(
-					()->startFileTransfer(HaaSClient.DUMMY_TRANSFER_FILE_PROGRESS),
-					jobDir, Executors.newFixedThreadPool(2), () -> {
+			this.synchronization = new Synchronization(() -> startFileTransfer(HaaSClient.DUMMY_TRANSFER_FILE_PROGRESS),
+					jobDir, () -> {
 						setProperty(JOB_NEEDS_UPLOAD, false);
 						setUploaded(true);
 					}, () -> {

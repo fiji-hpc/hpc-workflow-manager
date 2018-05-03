@@ -54,13 +54,17 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 	private Window root;
 
 	private ExecutorService executorServiceUI;
+	
 	private ExecutorService executorServiceWS;
+	
 	private ExecutorService executorServiceJobState = Executors.newWorkStealingPool();
+	
 	private Executor executorServiceFX = new FXFrameExecutorService();
-
+	
 	private Timer timer;
+	
 	private ObservableBenchmarkJobRegistry registry;
-
+	
 	private static Logger log = LoggerFactory
 			.getLogger(cz.it4i.fiji.haas_spim_benchmark.ui.BenchmarkSPIMController.class);
 
@@ -84,6 +88,14 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 		initTable();
 		initMenu();
 		executorServiceFX.execute(this::updateJobs);
+	}
+
+	public void close() {
+		executorServiceUI.shutdown();
+		executorServiceWS.shutdown();
+		executorServiceJobState.shutdown();
+		timer.cancel();
+		manager.close();
 	}
 
 	private void initMenu() {
@@ -247,12 +259,5 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 
 	private interface P_JobAction {
 		public void doAction(Progress p) throws IOException;
-	}
-
-	public void close() {
-		executorServiceUI.shutdown();
-		executorServiceWS.shutdown();
-		executorServiceJobState.shutdown();
-		timer.cancel();
 	}
 }

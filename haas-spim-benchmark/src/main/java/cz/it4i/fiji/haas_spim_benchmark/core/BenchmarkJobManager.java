@@ -7,6 +7,7 @@ import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.SPIM_OUTPUT_FILENA
 import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.UI_TO_HAAS_FREQUENCY_UPDATE_RATIO;
 
 import java.io.BufferedReader;
+import java.io.Closeable;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -47,7 +48,7 @@ import cz.it4i.fiji.haas_java_client.Settings;
 import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
 import net.imagej.updater.util.Progress;
 
-public class BenchmarkJobManager {
+public class BenchmarkJobManager implements Closeable{
 
 	
 	private static Logger log = LoggerFactory
@@ -561,6 +562,11 @@ public class BenchmarkJobManager {
 				log.error(e.getMessage(), e);
 			}
 		}
+	}
+
+	@Override
+	public void close() {
+		jobManager.close();
 	}
 
 	private HaaSClient.UploadingFile getUploadingFile() {
