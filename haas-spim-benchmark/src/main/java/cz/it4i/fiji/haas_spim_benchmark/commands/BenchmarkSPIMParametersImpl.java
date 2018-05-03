@@ -7,9 +7,13 @@ import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkSPIMParameters;
 class BenchmarkSPIMParametersImpl implements BenchmarkSPIMParameters{
 
 	private String userName;
+	
 	private String password;
+	
 	private String phone;
+	
 	private String email;
+	
 	private Path workingDirectory;
 	
 	public BenchmarkSPIMParametersImpl(String userName, String password, String phone, String email, Path workingDirectory) {

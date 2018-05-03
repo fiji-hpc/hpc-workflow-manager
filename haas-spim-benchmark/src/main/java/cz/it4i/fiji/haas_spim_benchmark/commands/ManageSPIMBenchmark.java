@@ -36,7 +36,7 @@ public class ManageSPIMBenchmark implements Command {
 	private static Logger log = LoggerFactory
 			.getLogger(cz.it4i.fiji.haas_spim_benchmark.commands.ManageSPIMBenchmark.class);
 	
-	private static String LOCK_FILE_NAME = ".lock";
+	private static final String LOCK_FILE_NAME = ".lock";
 	
 	@Parameter
 	private UIService uiService;
@@ -57,15 +57,12 @@ public class ManageSPIMBenchmark implements Command {
 	@Parameter(label = "Working directory", persist = true, style = FileWidget.DIRECTORY_STYLE)
 	private File workingDirectory;
 	
-	
 	@Override
 	public void run() {
 		try {
-			
 			Path workingDirPath = Paths.get(workingDirectory.getPath());
 			
 			FileLock fl = new FileLock(workingDirPath.resolve(LOCK_FILE_NAME));
-			
 			if(!fl.tryLock()) {
 				uiService.showDialog("Working directory is already used by someone else", MessageType.ERROR_MESSAGE);
 				return;
@@ -84,7 +81,6 @@ public class ManageSPIMBenchmark implements Command {
 			});
 			dialog.setVisible(true);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			log.error(e.getMessage(), e);
 		}
 
