@@ -12,10 +12,10 @@ import cz.it4i.fiji.haas.ui.ObservableValueRegistry;
 import cz.it4i.fiji.haas.ui.UpdatableObservableValue.UpdateStatus;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.BenchmarkJob;
-import cz.it4i.fiji.haas_spim_benchmark.core.UpdatableBenchmarkJob;
+import cz.it4i.fiji.haas_spim_benchmark.core.ObservableBenchmarkJob;
 import javafx.beans.value.ObservableValue;
 
-public class ObservableBenchmarkJobRegistry extends ObservableValueRegistry<BenchmarkJob,UpdatableBenchmarkJob> {
+public class ObservableBenchmarkJobRegistry extends ObservableValueRegistry<BenchmarkJob,ObservableBenchmarkJob> {
 
 	@SuppressWarnings("unused")
 	private static Logger log = LoggerFactory
@@ -30,26 +30,26 @@ public class ObservableBenchmarkJobRegistry extends ObservableValueRegistry<Benc
 	}
 	
 	@Override
-	public UpdatableBenchmarkJob addIfAbsent(BenchmarkJob value) {
-		return (UpdatableBenchmarkJob) super.addIfAbsent(value);
+	public ObservableBenchmarkJob addIfAbsent(BenchmarkJob value) {
+		return (ObservableBenchmarkJob) super.addIfAbsent(value);
 	}
 	
 	@Override
-	public UpdatableBenchmarkJob get(BenchmarkJob value) {
-		return (UpdatableBenchmarkJob) super.get(value);
+	public ObservableBenchmarkJob get(BenchmarkJob value) {
+		return (ObservableBenchmarkJob) super.get(value);
 	}
 	
 	@Override
 	protected ObservableValue<BenchmarkJob> remove(BenchmarkJob value) {
-		UpdatableBenchmarkJob result = (UpdatableBenchmarkJob) super.remove(value);
+		ObservableBenchmarkJob result = (ObservableBenchmarkJob) super.remove(value);
 		result.removed();
 		return result;
 	}
 	
 	@Override
-	protected UpdatableBenchmarkJob constructObservableValue(BenchmarkJob v,
+	protected ObservableBenchmarkJob constructObservableValue(BenchmarkJob v,
 			Function<BenchmarkJob, UpdateStatus> updateFunction, Function<BenchmarkJob, Object> stateProvider) {
-		return new UpdatableBenchmarkJob(v, updateFunction, stateProvider, executorUI);
+		return new ObservableBenchmarkJob(v, updateFunction, stateProvider, executorUI);
 	}
 	
 	

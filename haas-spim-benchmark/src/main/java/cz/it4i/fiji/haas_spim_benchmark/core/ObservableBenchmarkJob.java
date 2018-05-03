@@ -12,10 +12,10 @@ import cz.it4i.fiji.haas.ui.UpdatableObservableValue;
 import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.BenchmarkJob;
 import net.imagej.updater.util.Progress;
 
-public class UpdatableBenchmarkJob extends UpdatableObservableValue<BenchmarkJob> {
+public class ObservableBenchmarkJob extends UpdatableObservableValue<BenchmarkJob> {
 
 	public static final Logger log = LoggerFactory
-			.getLogger(cz.it4i.fiji.haas_spim_benchmark.core.UpdatableBenchmarkJob.class);
+			.getLogger(cz.it4i.fiji.haas_spim_benchmark.core.ObservableBenchmarkJob.class);
 
 	private P_TransferProgress downloadProgress = new P_TransferProgress(val -> getValue().setDownloaded(val),
 			() -> getValue().isDownloaded(), () -> getValue().needsDownload());
@@ -34,7 +34,7 @@ public class UpdatableBenchmarkJob extends UpdatableObservableValue<BenchmarkJob
 		public Float getRemainingPercents();
 	}
 
-	public UpdatableBenchmarkJob(BenchmarkJob wrapped, Function<BenchmarkJob, UpdateStatus> updateFunction,
+	public ObservableBenchmarkJob(BenchmarkJob wrapped, Function<BenchmarkJob, UpdateStatus> updateFunction,
 			Function<BenchmarkJob, Object> stateProvider, Executor executorUI) {
 		super(wrapped, updateFunction, stateProvider);
 		this.executor = executorUI;
