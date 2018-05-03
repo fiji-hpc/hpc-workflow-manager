@@ -18,7 +18,7 @@
 						<TableColumn prefWidth="149.0" text="Status" />
 						<TableColumn prefWidth="230.0" text="Creation time" />
 						<TableColumn prefWidth="230.0" text="Start time" />
-						<TableColumn prefWidth="230.0" text="End Time" />
+						<TableColumn prefWidth="230.0" text="End time" />
 						<TableColumn prefWidth="250.0" text="Upload" />
                         <TableColumn prefWidth="250.0" text="Download" />
 					</columns>
