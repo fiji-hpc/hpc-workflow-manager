@@ -1,7 +1,10 @@
 package cz.it4i.fiji.haas_spim_benchmark.commands;
 
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import javax.swing.JDialog;
@@ -11,6 +14,7 @@ import org.scijava.Context;
 import org.scijava.command.Command;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
+import org.scijava.ui.DialogPrompt.MessageType;
 import org.scijava.ui.UIService;
 import org.scijava.widget.FileWidget;
 import org.scijava.widget.TextWidget;
@@ -31,7 +35,9 @@ public class ManageSPIMBenchmark implements Command {
 
 	private static Logger log = LoggerFactory
 			.getLogger(cz.it4i.fiji.haas_spim_benchmark.commands.ManageSPIMBenchmark.class);
-
+	
+	private static String LOCK_FILE_NAME = ".lock";
+	
 	@Parameter
 	private UIService uiService;
 
@@ -51,14 +57,31 @@ public class ManageSPIMBenchmark implements Command {
 	@Parameter(label = "Working directory", persist = true, style = FileWidget.DIRECTORY_STYLE)
 	private File workingDirectory;
 	
+	
 	@Override
 	public void run() {
 		try {
-			JDialog dialog = 
-					new BenchmarkSPIMWindow(null, new BenchmarkSPIMParametersImpl(userName, password, Constants.PHONE,
-							email, Paths.get(workingDirectory.getPath())));
+			
+			Path workingDirPath = Paths.get(workingDirectory.getPath());
+			
+			FileLock fl = new FileLock(workingDirPath.resolve(LOCK_FILE_NAME));
+			
+			if(!fl.tryLock()) {
+				uiService.showDialog("Working directory is already used by someone else", MessageType.ERROR_MESSAGE);
+				return;
+			}
+			
+			JDialog dialog = new BenchmarkSPIMWindow(null,
+					new BenchmarkSPIMParametersImpl(userName, password, Constants.PHONE, email, workingDirPath));
 			dialog.setTitle("SPIM workflow computation manager");
 			dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+			dialog.addWindowListener(new WindowAdapter() {
+				@Override
+				public void windowClosing(WindowEvent e) {
+					super.windowClosing(e);
+					fl.close();
+				}
+			});
 			dialog.setVisible(true);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
