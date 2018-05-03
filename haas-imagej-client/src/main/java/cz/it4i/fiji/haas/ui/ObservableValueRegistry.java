@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 import cz.it4i.fiji.haas.ui.UpdatableObservableValue.UpdateStatus;
 import javafx.beans.value.ObservableValue;
 
-public class ObservableValueRegistry<T> {
+public abstract class ObservableValueRegistry<T,V extends UpdatableObservableValue<T>> {
 
 	private Function<T,UpdateStatus> updateFunction;
 	private Consumer<T> removeConsumer;
@@ -29,23 +29,21 @@ public class ObservableValueRegistry<T> {
 		
 	}
 
-	private Map<T,UpdatableObservableValue<T>> map = new LinkedHashMap<>(); 
+	private Map<T,V> map = new LinkedHashMap<>(); 
 	
-	public  ObservableValue<T> addIfAbsent(T value) {
-		UpdatableObservableValue<T> uov = map.computeIfAbsent(value, v-> constructObservableValue(v, updateFunction, stateProvider));
+	public  V addIfAbsent(T value) {
+		V uov = map.computeIfAbsent(value, v-> constructObservableValue(v, updateFunction, stateProvider));
 		return uov;
 	}
 
-	protected UpdatableObservableValue<T> constructObservableValue(T v, Function<T, UpdateStatus> updateFunction, Function<T, Object> stateProvider) {
-		return new UpdatableObservableValue<T>(v, updateFunction, stateProvider);
-	}
+	abstract protected V constructObservableValue(T v, Function<T, UpdateStatus> updateFunction, Function<T, Object> stateProvider) ;
 	
 	public UpdatableObservableValue<T> get(T value) {
 		return map.get(value);
 	}
 	
-	public Collection<ObservableValue<T>> getAllItems() {
-		return map.values().stream().map(val->(ObservableValue<T>)val).collect(Collectors.toList());
+	public Collection<V> getAllItems() {
+		return map.values().stream().map(val->(V)val).collect(Collectors.toList());
 	}
 	
 	protected ObservableValue<T> remove(T value) {

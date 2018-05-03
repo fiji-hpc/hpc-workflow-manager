@@ -34,6 +34,7 @@ import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager;
 import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.BenchmarkJob;
 import cz.it4i.fiji.haas_spim_benchmark.core.Constants;
 import cz.it4i.fiji.haas_spim_benchmark.core.FXFrameExecutorService;
+import cz.it4i.fiji.haas_spim_benchmark.core.UpdatableBenchmarkJob;
 import cz.it4i.fiji.haas_spim_benchmark.core.UpdatableBenchmarkJob.TransferProgress;
 import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
@@ -46,7 +47,7 @@ import net.imagej.updater.util.Progress;
 public class BenchmarkSPIMController extends BorderPane implements CloseableControl, InitiableControl {
 
 	@FXML
-	private TableView<ObservableValue<BenchmarkJob>> jobs;
+	private TableView<UpdatableBenchmarkJob> jobs;
 
 	private BenchmarkJobManager manager;
 
@@ -86,7 +87,7 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 	}
 
 	private void initMenu() {
-		TableViewContextMenu<ObservableValue<BenchmarkJob>> menu = new TableViewContextMenu<>(jobs);
+		TableViewContextMenu<UpdatableBenchmarkJob> menu = new TableViewContextMenu<>(jobs);
 		menu.addItem("Create job", x -> executeWSCallAsync("Creating job", p -> manager.createJob()), j -> true);
 		menu.addItem("Start job", job -> executeWSCallAsync("Starting job", p -> {
 			job.getValue().startJob(p);
@@ -112,7 +113,7 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 		menu.addItem("Upload data", job -> executeWSCallAsync("Uploading data", p -> job.getValue().startUpload()),
 				job -> executeWSCallAsync("Stop uploading data", p -> job.getValue().stopUpload()),
 				job -> JavaFXRoutines.notNullValue(job, j -> !EnumSet.of(JobState.Running).contains(j.getState())),
-				job -> registry.get(job.getValue()).getUploadProgress().isWorking());
+				job -> job.getUploadProgress().isWorking());
 		
 		
 		menu.addItem("Download result",
@@ -121,7 +122,7 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 				job -> JavaFXRoutines.notNullValue(job,
 						j -> EnumSet.of(JobState.Failed, JobState.Finished, JobState.Canceled).contains(j.getState())
 								&& j.canBeDownloaded()),
-				job -> registry.get(job.getValue()).getDownloadProgress().isWorking());
+				job -> job.getDownloadProgress().isWorking());
 
 		menu.addItem("Download statistics",
 				job -> executeWSCallAsync("Downloading data", p -> job.getValue().downloadStatistics(p)),
@@ -187,7 +188,7 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 				}
 				registry.update();
 				executorServiceFX.execute(() -> {
-					for (ObservableValue<BenchmarkJob> value : registry.getAllItems()) {
+					for (UpdatableBenchmarkJob value : registry.getAllItems()) {
 						if (!actual.contains(value)) {
 							this.jobs.getItems().add(value);
 						}
@@ -236,11 +237,11 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 	@SuppressWarnings("unchecked")
 	private void setCellValueFactoryCompletable(int index, Function<BenchmarkJob, CompletableFuture<String>> mapper) {
 		JavaFXRoutines.setCellValueFactory(jobs, index, mapper);
-		((TableColumn<ObservableValue<BenchmarkJob>, CompletableFuture<String>>) jobs.getColumns().get(index))
+		((TableColumn<UpdatableBenchmarkJob, CompletableFuture<String>>) jobs.getColumns().get(index))
 				.setCellFactory(
-						column -> new JavaFXRoutines.TableCellAdapter<ObservableValue<BenchmarkJob>, CompletableFuture<String>>(
-								new JavaFXRoutines.FutureValueUpdater<ObservableValue<BenchmarkJob>, String, CompletableFuture<String>>(
-										new JavaFXRoutines.StringValueUpdater<ObservableValue<BenchmarkJob>>(),
+						column -> new JavaFXRoutines.TableCellAdapter<UpdatableBenchmarkJob, CompletableFuture<String>>(
+								new JavaFXRoutines.FutureValueUpdater<UpdatableBenchmarkJob, String, CompletableFuture<String>>(
+										new JavaFXRoutines.StringValueUpdater<UpdatableBenchmarkJob>(),
 										executorServiceFX)));
 	}
 

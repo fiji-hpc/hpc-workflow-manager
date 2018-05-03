@@ -9,14 +9,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import cz.it4i.fiji.haas.ui.ObservableValueRegistry;
-import cz.it4i.fiji.haas.ui.UpdatableObservableValue;
 import cz.it4i.fiji.haas.ui.UpdatableObservableValue.UpdateStatus;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.BenchmarkJob;
 import cz.it4i.fiji.haas_spim_benchmark.core.UpdatableBenchmarkJob;
 import javafx.beans.value.ObservableValue;
 
-public class ObservableBenchmarkJobRegistry extends ObservableValueRegistry<BenchmarkJob> {
+public class ObservableBenchmarkJobRegistry extends ObservableValueRegistry<BenchmarkJob,UpdatableBenchmarkJob> {
 
 	@SuppressWarnings("unused")
 	private static Logger log = LoggerFactory
@@ -48,7 +47,7 @@ public class ObservableBenchmarkJobRegistry extends ObservableValueRegistry<Benc
 	}
 	
 	@Override
-	protected UpdatableObservableValue<BenchmarkJob> constructObservableValue(BenchmarkJob v,
+	protected UpdatableBenchmarkJob constructObservableValue(BenchmarkJob v,
 			Function<BenchmarkJob, UpdateStatus> updateFunction, Function<BenchmarkJob, Object> stateProvider) {
 		return new UpdatableBenchmarkJob(v, updateFunction, stateProvider, executorUI);
 	}
