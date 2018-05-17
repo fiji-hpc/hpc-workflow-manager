@@ -1,4 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>cz.it4i.fiji</groupId>
@@ -13,10 +14,10 @@
 	</parent>
 	<properties>
 		<project_url>https://code.it4i.cz/fiji/haas-java-client/</project_url>
-		
+
 		<organization.name>IT4Innovations - National Supercomputing Center</organization.name>
 		<organization.url>http://www.it4i.cz/</organization.url>
-	
+
 		<license.name>cc0</license.name>
 		<license.url>http://creativecommons.org/publicdomain/zero/1.0/</license.url>
 		<license.base.licenseName>CC0 1.0 Universal License</license.base.licenseName>
@@ -27,8 +28,8 @@
 		<scm.developerConnection>scm:git:git@github.com:[MY-ORG]/[MY-REPO]</scm.developerConnection>
 		<scm.tag>HEAD</scm.tag>
 		<scm.url>${project_url}</scm.url>
-		
-		
+
+
 
 		<issueManagement.system>GitLab Issues</issueManagement.system>
 		<issueManagement.url>https://code.it4i.cz/fiji/haas-java-client/issues</issueManagement.url>
@@ -40,4 +41,16 @@
 			<url>http://maven.imagej.net/content/groups/public</url>
 		</repository>
 	</repositories>
+	<distributionManagement>
+		<repository>
+			<id>it4i</id>
+			<name>IT4I repository</name>
+			<url>https://artifactory.cs.vsb.cz/it4i/</url>
+		</repository>
+		<snapshotRepository>
+			<id>t4i</id>
+			<name>II4I repository</name>
+			<url>https://artifactory.cs.vsb.cz/it4i/</url>
+		</snapshotRepository>
+	</distributionManagement>
 </project>
