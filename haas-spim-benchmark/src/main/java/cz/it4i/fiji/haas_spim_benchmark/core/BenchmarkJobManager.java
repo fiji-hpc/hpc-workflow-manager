@@ -41,11 +41,11 @@ import cz.it4i.fiji.haas.HaaSOutputHolderImpl;
 import cz.it4i.fiji.haas.Job;
 import cz.it4i.fiji.haas.JobManager;
 import cz.it4i.fiji.haas.UploadingFileFromResource;
-import cz.it4i.fiji.haas_java_client.HaaSClient;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.ProgressNotifier;
 import cz.it4i.fiji.haas_java_client.Settings;
 import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
+import cz.it4i.fiji.haas_java_client.UploadingFile;
 import net.imagej.updater.util.Progress;
 
 public class BenchmarkJobManager implements Closeable{
@@ -54,7 +54,7 @@ public class BenchmarkJobManager implements Closeable{
 	private static Logger log = LoggerFactory
 			.getLogger(cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.class);
 
-	private JobManager jobManager;
+	private final JobManager jobManager;
 
 	public final class BenchmarkJob implements HaaSOutputHolder {
 
@@ -128,7 +128,7 @@ public class BenchmarkJobManager implements Closeable{
 		}
 		
 		public boolean canBeDownloaded() {
-			return job.canBeDownload();
+			return job.canBeDownloaded();
 		}
 
 		public void downloadStatistics(Progress progress) throws IOException {
@@ -385,13 +385,14 @@ public class BenchmarkJobManager implements Closeable{
 		private SPIMComputationAccessor getComputationAccessor() {
 			SPIMComputationAccessor result = new SPIMComputationAccessor() {
 
-				private HaaSOutputHolder outputOfSnakemake = new HaaSOutputHolderImpl(list -> job.getOutput(list));
+				private final HaaSOutputHolder outputOfSnakemake = new HaaSOutputHolderImpl(list -> job.getOutput(list));
 
 				@Override
 				public List<String> getActualOutput(List<SynchronizableFileType> content) {
 					return outputOfSnakemake.getActualOutput(content);
 				}
 
+				@Override
 				public java.util.Collection<String> getChangedFiles() {
 					return job.getChangedFiles();
 				}
@@ -499,7 +500,7 @@ public class BenchmarkJobManager implements Closeable{
 
 					// Cache all found jobs
 					for (int i = 1; i < columns.length; i++) {
-						jobs.add(new ResultFileJob(columns[i]));
+						jobs.add(new ResultFileJob());
 					}
 
 				} else if (!columns[0].equals(Constants.STATISTICS_JOB_COUNT)) {
@@ -569,7 +570,7 @@ public class BenchmarkJobManager implements Closeable{
 		jobManager.close();
 	}
 
-	private HaaSClient.UploadingFile getUploadingFile() {
+	private UploadingFile getUploadingFile() {
 		return new UploadingFileFromResource("", Constants.CONFIG_YAML);
 	}
 
@@ -691,32 +692,38 @@ public class BenchmarkJobManager implements Closeable{
 	}
 
 	private class P_ProgressNotifierAdapter implements ProgressNotifier {
-		private Progress progress;
+		private final Progress progress;
 
 		public P_ProgressNotifierAdapter(Progress progress) {
 			this.progress = progress;
 		}
 
+		@Override
 		public void setTitle(String title) {
 			progress.setTitle(title);
 		}
 
+		@Override
 		public void setCount(int count, int total) {
 			progress.setCount(count, total);
 		}
 
+		@Override
 		public void addItem(Object item) {
 			progress.addItem(item);
 		}
 
+		@Override
 		public void setItemCount(int count, int total) {
 			progress.setItemCount(count, total);
 		}
 
+		@Override
 		public void itemDone(Object item) {
 			progress.itemDone(item);
 		}
 
+		@Override
 		public void done() {
 			progress.done();
 		}

@@ -4,11 +4,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ResultFileJob {
-	String id;
-	Map<String, String> values = new HashMap<>();
+	
+	private final Map<String, String> values = new HashMap<>();
 
-	public ResultFileJob(String id) {
-		this.id = id;
+	public ResultFileJob() {
 	}
 
 	public String getValue(String key) {

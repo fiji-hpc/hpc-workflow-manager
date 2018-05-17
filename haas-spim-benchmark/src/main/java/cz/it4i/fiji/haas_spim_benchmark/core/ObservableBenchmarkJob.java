@@ -17,11 +17,11 @@ public class ObservableBenchmarkJob extends UpdatableObservableValue<BenchmarkJo
 	public static final Logger log = LoggerFactory
 			.getLogger(cz.it4i.fiji.haas_spim_benchmark.core.ObservableBenchmarkJob.class);
 
-	private P_TransferProgress downloadProgress = new P_TransferProgress(val -> getValue().setDownloaded(val),
+	private final P_TransferProgress downloadProgress = new P_TransferProgress(val -> getValue().setDownloaded(val),
 			() -> getValue().isDownloaded(), () -> getValue().needsDownload());
-	private P_TransferProgress uploadProgress = new P_TransferProgress(val -> getValue().setUploaded(val),
+	private final P_TransferProgress uploadProgress = new P_TransferProgress(val -> getValue().setUploaded(val),
 			() -> getValue().isUploaded(), () -> getValue().needsUpload());
-	private Executor executor;
+	private final Executor executor;
 
 	public interface TransferProgress {
 
@@ -53,6 +53,7 @@ public class ObservableBenchmarkJob extends UpdatableObservableValue<BenchmarkJo
 
 	public void removed() {
 		getValue().setDownloadNotifier(null);
+		getValue().setUploadNotifier(null);
 	}
 
 	@Override
@@ -64,13 +65,13 @@ public class ObservableBenchmarkJob extends UpdatableObservableValue<BenchmarkJo
 
 	private class P_TransferProgress implements Progress, TransferProgress {
 
+		private final Supplier<Boolean> doneStatusSupplier;
+		private final Consumer<Boolean> doneStatusConsumer;
+		private final Supplier<Boolean> workingSupplier;
 		private Long start;
 		private Long remainingMiliseconds;
 		private Float remainingPercents;
-		private Supplier<Boolean> doneStatusSupplier;
-		private Consumer<Boolean> doneStatusConsumer;
-		private Supplier<Boolean> workingSupplier;
-
+		
 		public P_TransferProgress(Consumer<Boolean> doneStatusConsumer, Supplier<Boolean> doneStatusSupplier,
 				Supplier<Boolean> workingSupplier) {
 			this.doneStatusConsumer = doneStatusConsumer;

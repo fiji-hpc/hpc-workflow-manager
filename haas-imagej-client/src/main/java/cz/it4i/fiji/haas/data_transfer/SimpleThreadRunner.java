@@ -5,8 +5,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 public class SimpleThreadRunner {
-	private ExecutorService service;
-	private AtomicBoolean reRun = new AtomicBoolean(false);
+	private final ExecutorService service;
+	private final AtomicBoolean reRun = new AtomicBoolean(false);
 
 	public SimpleThreadRunner(ExecutorService service) {
 		this.service = service;

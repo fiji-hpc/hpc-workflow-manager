@@ -67,19 +67,23 @@ public class ManageSPIMBenchmark implements Command {
 				uiService.showDialog("Working directory is already used by someone else", MessageType.ERROR_MESSAGE);
 				return;
 			}
-			
-			JDialog dialog = new BenchmarkSPIMWindow(null,
-					new BenchmarkSPIMParametersImpl(userName, password, Constants.PHONE, email, workingDirPath));
-			dialog.setTitle("SPIM workflow computation manager");
-			dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-			dialog.addWindowListener(new WindowAdapter() {
-				@Override
-				public void windowClosing(WindowEvent e) {
-					super.windowClosing(e);
-					fl.close();
-				}
-			});
-			dialog.setVisible(true);
+			try {
+				JDialog dialog = new BenchmarkSPIMWindow(null,
+						new BenchmarkSPIMParametersImpl(userName, password, Constants.PHONE, email, workingDirPath));
+				dialog.setTitle("SPIM workflow computation manager");
+				dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+				dialog.addWindowListener(new WindowAdapter() {
+					@Override
+					public void windowClosing(WindowEvent e) {
+						super.windowClosing(e);
+						fl.close();
+					}
+				});
+				dialog.setVisible(true);
+			} catch(IOException e) {
+				fl.close();
+				throw e;
+			}
 		} catch (IOException e) {
 			log.error(e.getMessage(), e);
 		}

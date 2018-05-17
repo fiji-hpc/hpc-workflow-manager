@@ -16,10 +16,13 @@ public class UpdatableObservableValue<T> extends ObservableValueBase<T> {
 		Deleted, Updated, NotUpdated
 	}
 
-	private T wrapped;
-	private Function<T, UpdateStatus> updateFunction;
+	private final T wrapped;
+	
+	private final Function<T, UpdateStatus> updateFunction;
+	
+	private final Function<T, Object> stateProvider;
+	
 	private Object oldState;
-	private Function<T, Object> stateProvider;
 
 	public UpdatableObservableValue(T wrapped, Function<T, UpdateStatus> updateFunction,
 			Function<T, Object> stateProvider) {

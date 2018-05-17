@@ -25,11 +25,14 @@ public class HaaSOutputObservableValueRegistry implements Closeable {
 			.getLogger(cz.it4i.fiji.haas_spim_benchmark.ui.HaaSOutputObservableValueRegistry.class);
 
 	private final Map<SynchronizableFileType, P_HaaSOutputObservableValue> observable = new HashMap<>();	
-	private final List<SynchronizableFileType> types = new LinkedList<>();
-	private final Timer timer;
-	private final HaaSOutputHolder holder;
 
-	private long timeout;
+	private final List<SynchronizableFileType> types = new LinkedList<>();
+	
+	private final Timer timer;
+	
+	private final HaaSOutputHolder holder;
+	
+	private final long timeout;
 
 
 	public HaaSOutputObservableValueRegistry(HaaSOutputHolder holder, long timeout) {

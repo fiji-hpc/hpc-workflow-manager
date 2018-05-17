@@ -31,13 +31,13 @@ public class TaskComputationControl extends TabPane implements CloseableControl,
 
 	private TaskComputationAdapter adapter;
 	
-	private Executor uiExecutor = new FXFrameExecutorService();
+	private final Executor uiExecutor = new FXFrameExecutorService();
 	
-	private ExecutorService wsExecutorService = Executors.newSingleThreadExecutor();
+	private final ExecutorService wsExecutorService = Executors.newSingleThreadExecutor();
 	@FXML
 	private RemoteFilesInfoControl remoteFilesInfo;
 
-	private TaskComputation computation;
+	private final TaskComputation computation;
 	
 	
 	public TaskComputationControl(TaskComputation computation) {

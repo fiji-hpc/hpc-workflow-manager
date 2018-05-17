@@ -16,18 +16,18 @@ public class FileLock implements Closeable {
 
 	public static final Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas_spim_benchmark.commands.FileLock.class);
 
+	private final Path localPath;
+	
 	private FileChannel fileChannel;
 
 	private java.nio.channels.FileLock lock;
-
-	private Path filePath;
-
-	public FileLock(Path file) throws FileNotFoundException {
-		this.filePath = file;
+	
+	public FileLock(Path lockPath) throws FileNotFoundException {
+		this.localPath = lockPath;
 	}
 
 	public boolean tryLock() throws IOException {
-		this.fileChannel = FileChannel.open(filePath, StandardOpenOption.READ, StandardOpenOption.WRITE,
+		this.fileChannel = FileChannel.open(localPath, StandardOpenOption.READ, StandardOpenOption.WRITE,
 				StandardOpenOption.CREATE);
 		try {
 			this.lock = fileChannel.tryLock();
@@ -53,7 +53,7 @@ public class FileLock implements Closeable {
 			log.error(e.getMessage(), e);
 		}
 		try {
-			Files.delete(filePath);
+			Files.delete(localPath);
 		} catch (IOException e) {
 			log.error(e.getMessage(), e);
 		}

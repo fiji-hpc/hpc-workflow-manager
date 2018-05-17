@@ -71,7 +71,7 @@ public class SPIMComputationAccessorDecoratorWithTimeout implements SPIMComputat
 	private class P_ResultCacheHolder<T> {
 		private Long lastQuery;
 		private T value;
-		private Function<T, T> producer;
+		private final Function<T, T> producer;
 
 		public P_ResultCacheHolder(Function<T, T> producer) {
 			this.producer = producer;

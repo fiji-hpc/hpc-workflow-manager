@@ -19,9 +19,9 @@ import java.util.stream.StreamSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import cz.it4i.fiji.haas_java_client.HaaSClient.UploadingFile;
 import cz.it4i.fiji.haas_java_client.HaaSFileTransfer;
 import cz.it4i.fiji.haas_java_client.ProgressNotifier;
+import cz.it4i.fiji.haas_java_client.UploadingFile;
 import cz.it4i.fiji.haas_java_client.UploadingFileImpl;
 
 public class Synchronization implements Closeable{
@@ -34,22 +34,23 @@ public class Synchronization implements Closeable{
 	
 	private static final String FILE_INDEX_DOWNLOADED_FILENAME = ".downloaded";
 	
-	private Path workingDirectory;
+	private final Path workingDirectory;
 	
-	private Function<String,Path> pathResolver = name -> workingDirectory.resolve(name);
+	private final Function<String,Path> pathResolver;
 	
-	private PersistentIndex<Path> filesDownloaded;
+	private final PersistentIndex<Path> filesDownloaded;
 
-	private PersistentSynchronizationProcess<Path> uploadProcess;
+	private final PersistentSynchronizationProcess<Path> uploadProcess;
 
-	private P_PersistentDownloadProcess downloadProcess;
+	private final P_PersistentDownloadProcess downloadProcess;
 
-	private ExecutorService service;
+	private final ExecutorService service;
 	
 	public Synchronization(Supplier<HaaSFileTransfer> fileTransferSupplier, Path workingDirectory,
 			 Runnable uploadFinishedNotifier, Runnable downloadFinishedNotifier) throws IOException {
 		this.service = Executors.newFixedThreadPool(2);
 		this.workingDirectory = workingDirectory;
+		this.pathResolver = name -> workingDirectory.resolve(name);
 		this.filesDownloaded = new PersistentIndex<>(workingDirectory.resolve(FILE_INDEX_DOWNLOADED_FILENAME),
 				pathResolver);
 		this.uploadProcess = createUploadProcess(fileTransferSupplier, service, uploadFinishedNotifier);
@@ -90,6 +91,7 @@ public class Synchronization implements Closeable{
 		this.downloadProcess.resume();
 	}
 
+	@Override
 	public void close() {
 		service.shutdown();
 		uploadProcess.shutdown();
@@ -164,7 +166,7 @@ public class Synchronization implements Closeable{
 		protected void processItem(HaaSFileTransfer tr, String file) throws InterruptedIOException {
 			filesDownloaded.insert(workingDirectory.resolve(file));
 			try {
-				filesDownloaded.storeToFile();
+				filesDownloaded.storeToWorkingFile();
 			} catch (IOException e) {
 				log.error(e.getMessage(), e);
 			}

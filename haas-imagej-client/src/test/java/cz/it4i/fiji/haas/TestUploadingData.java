@@ -5,7 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import cz.it4i.fiji.haas.UploadingFileFromResource;
-import cz.it4i.fiji.haas_java_client.HaaSClient.UploadingFile;
+import cz.it4i.fiji.haas_java_client.UploadingFile;
 
 public class TestUploadingData {
 	private static Logger log = LoggerFactory.getLogger(TestUploadingData.class);

@@ -9,7 +9,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.Properties;
 
 public class PropertyHolder {
-	private Path storage;
+	private final Path storage;
 	private Properties properties;
 
 	public PropertyHolder(Path storage) {

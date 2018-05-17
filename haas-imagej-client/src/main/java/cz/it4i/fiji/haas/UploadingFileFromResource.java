@@ -4,14 +4,17 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.time.Instant;
 
-import cz.it4i.fiji.haas_java_client.HaaSClient.UploadingFile;
+import cz.it4i.fiji.haas_java_client.UploadingFile;
 
 public class UploadingFileFromResource implements UploadingFile {
 
-	private String fileName;
-	private String base;
+	private final String fileName;
+	
+	private final String base;
+	
+	private final long lastTime;
+	
 	private Long length;
-	private long lastTime;
 	
 	public UploadingFileFromResource(String base, String fileName) {
 		this.base = base;

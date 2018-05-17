@@ -123,19 +123,9 @@ public class HaaSClient {
 		};
 	}
 
-	public interface UploadingFile {
-		InputStream getInputStream() throws IOException;
-
-		String getName();
-
-		long getLength() throws IOException;
-
-		long getLastTime();
-	}
-
 	static public class SynchronizableFiles {
 
-		private Collection<TaskFileOffsetExt> files = new LinkedList<>();
+		private final Collection<TaskFileOffsetExt> files = new LinkedList<>();
 
 		public void addFile(long taskId, SynchronizableFileType type, long offset) {
 			TaskFileOffsetExt off = new TaskFileOffsetExt();
@@ -190,18 +180,18 @@ public class HaaSClient {
 
 	private FileTransferWsSoap fileTransfer;
 
-	private Integer timeOut;
+	private final Integer timeOut;
 
-	private Long templateId;
+	private final Long templateId;
 
-	private Long clusterNodeType;
+	private final Long clusterNodeType;
 
-	private String projectId;
+	private final String projectId;
 
-	private Map<Long, P_FileTransferPool> filetransferPoolMap = new HashMap<>();
+	private final Map<Long, P_FileTransferPool> filetransferPoolMap = new HashMap<>();
 
 	
-	private Settings settings;
+	private final Settings settings;
 
 	public HaaSClient(Settings settings) {
 		this.settings = settings;
@@ -251,14 +241,17 @@ public class HaaSClient {
 					return WS_STATE2STATE.get(info.getState());
 				}
 
+				@Override
 				public java.util.Calendar getStartTime() {
 					return info.getStartTime();
 				};
 
+				@Override
 				public java.util.Calendar getEndTime() {
 					return info.getEndTime();
 				};
 
+				@Override
 				public Calendar getCreationTime() {
 					return info.getCreationTime();
 				};
@@ -300,6 +293,7 @@ public class HaaSClient {
 		FileTransferMethodExt ft = pool.obtain();
 		try {
 			return new HaaSFileTransferImp(ft, getScpClient(ft), progress) {
+				@Override
 				public void close() {
 					super.close();
 					try {
@@ -431,32 +425,38 @@ public class HaaSClient {
 	}
 
 	public static class P_ProgressNotifierDecorator implements ProgressNotifier {
-		private ProgressNotifier notifier;
+		private final ProgressNotifier notifier;
 
 		public P_ProgressNotifierDecorator(ProgressNotifier notifier) {
 			this.notifier = notifier;
 		}
 
+		@Override
 		public void setTitle(String title) {
 			notifier.setTitle(title);
 		}
 
+		@Override
 		public void setCount(int count, int total) {
 			notifier.setCount(count, total);
 		}
 
+		@Override
 		public void addItem(Object item) {
 			notifier.addItem(item);
 		}
 
+		@Override
 		public void setItemCount(int count, int total) {
 			notifier.setItemCount(count, total);
 		}
 
+		@Override
 		public void itemDone(Object item) {
 			notifier.itemDone(item);
 		}
 
+		@Override
 		public void done() {
 			notifier.done();
 		}
@@ -481,7 +481,6 @@ public class HaaSClient {
 		public P_FileTransferPool(long jobId) {
 			this.factory = () -> getFileTransfer().getFileTransferMethod(jobId, getSessionID());
 			this.destroyer = val -> getFileTransfer().endFileTransfer(jobId, val, sessionID);
-			;
 		}
 
 		public synchronized FileTransferMethodExt obtain() throws RemoteException, ServiceException {

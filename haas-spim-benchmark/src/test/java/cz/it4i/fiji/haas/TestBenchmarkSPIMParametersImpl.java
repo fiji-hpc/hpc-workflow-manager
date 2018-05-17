@@ -7,7 +7,7 @@ import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkSPIMParameters;
 
 class TestBenchmarkSPIMParametersImpl extends Configuration implements BenchmarkSPIMParameters{
 
-	private Path workingDirectory;
+	private final Path workingDirectory;
 	
 	public TestBenchmarkSPIMParametersImpl(Path workingDirectory) {
 		super("configuration.properties");

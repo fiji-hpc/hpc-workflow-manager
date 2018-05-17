@@ -5,7 +5,6 @@ import java.io.InterruptedIOException;
 import java.nio.file.Path;
 import java.util.List;
 
-import cz.it4i.fiji.haas_java_client.HaaSClient.UploadingFile;
 import cz.it4i.fiji.scpclient.TransferFileProgress;
 
 public interface HaaSFileTransfer extends Closeable {
@@ -14,7 +13,7 @@ public interface HaaSFileTransfer extends Closeable {
 	@Override
 	void close();
 
-	void upload(UploadingFile files) throws InterruptedIOException;
+	void upload(UploadingFile file) throws InterruptedIOException;
 
 	void download(String files, Path workDirectory) throws InterruptedIOException;
 

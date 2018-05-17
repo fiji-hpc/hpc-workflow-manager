@@ -24,7 +24,7 @@ public class JobDetailControl extends TabPane implements CloseableControl {
 	@FXML
 	private LogViewControl standardOutput;
 
-	private HaaSOutputObservableValueRegistry observableValueRegistry;
+	private final HaaSOutputObservableValueRegistry observableValueRegistry;
 
 	public JobDetailControl(BenchmarkJob job) {
 		JavaFXRoutines.initRootAndController("JobDetail.fxml", this);

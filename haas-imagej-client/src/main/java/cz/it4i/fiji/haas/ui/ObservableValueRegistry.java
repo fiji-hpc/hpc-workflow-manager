@@ -9,56 +9,63 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import cz.it4i.fiji.haas.ui.UpdatableObservableValue.UpdateStatus;
-import javafx.beans.value.ObservableValue;
 
-public abstract class ObservableValueRegistry<T,V extends UpdatableObservableValue<T>> {
+public abstract class ObservableValueRegistry<K, V extends UpdatableObservableValue<K>> {
 
-	private Function<T,UpdateStatus> updateFunction;
-	private Consumer<T> removeConsumer;
-	private Function<T, Object> stateProvider;
+	private Function<K, UpdateStatus> updateFunction;
+
+	private final Consumer<K> removeConsumer;
 	
+	private final Function<K, Object> stateProvider;
 	
-	public ObservableValueRegistry(Function<T, UpdateStatus> updateFunction,Function<T,Object> stateProvider,
-			Consumer<T> removeConsumer) {
+	private final Map<K, V> map = new LinkedHashMap<>();
+
+	public ObservableValueRegistry(Function<K, UpdateStatus> updateFunction, Function<K, Object> stateProvider,
+			Consumer<K> removeConsumer) {
 		this.updateFunction = updateFunction;
 		this.stateProvider = stateProvider;
-		this.removeConsumer = t-> {
-			removeConsumer.accept(t);
-			remove(t);
+		this.removeConsumer = k -> {
+			removeConsumer.accept(k);
+			remove(k);
 		};
-		
 	}
-
-	private Map<T,V> map = new LinkedHashMap<>(); 
 	
-	public  V addIfAbsent(T value) {
-		V uov = map.computeIfAbsent(value, v-> constructObservableValue(v, updateFunction, stateProvider));
+	public V addIfAbsent(K key) {
+		V uov = map.computeIfAbsent(key, k -> constructObservableValue(k));
 		return uov;
 	}
+	
+	public V get(K key) {
+		return map.get(key);
+	}
 
-	abstract protected V constructObservableValue(T v, Function<T, UpdateStatus> updateFunction, Function<T, Object> stateProvider) ;
-	
-	public UpdatableObservableValue<T> get(T value) {
-		return map.get(value);
-	}
-	
 	public Collection<V> getAllItems() {
-		return map.values().stream().map(val->(V)val).collect(Collectors.toList());
-	}
-	
-	protected ObservableValue<T> remove(T value) {
-		return map.remove(value);
+		return map.values().stream().map(val -> val).collect(Collectors.toList());
 	}
 	
 	public void update() {
-		for (UpdatableObservableValue<T> value : new LinkedList<>(map.values())) {
-			if(value.update() == UpdateStatus.Deleted) {
+		for (V value : new LinkedList<>(map.values())) {
+			if (value.update() == UpdateStatus.Deleted) {
 				removeConsumer.accept(value.getValue());
 			}
 		}
 	}
 	
-	protected void setUpdateFunction(Function<T, UpdateStatus> updateFunction) {
+	abstract protected V constructObservableValue(K k);
+
+	protected V remove(K key) {
+		return map.remove(key);
+	}
+
+	protected void setUpdateFunction(Function<K, UpdateStatus> updateFunction) {
 		this.updateFunction = updateFunction;
+	}
+	
+	protected Function<K, UpdateStatus> getUpdateFunction() {
+		return updateFunction;
+	}
+	
+	protected Function<K, Object> getStateProvider() {
+		return stateProvider;
 	}
 }

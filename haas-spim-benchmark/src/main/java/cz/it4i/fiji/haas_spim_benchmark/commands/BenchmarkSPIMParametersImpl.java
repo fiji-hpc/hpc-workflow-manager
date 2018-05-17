@@ -6,15 +6,15 @@ import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkSPIMParameters;
 
 class BenchmarkSPIMParametersImpl implements BenchmarkSPIMParameters{
 
-	private String userName;
+	private final String userName;
 	
-	private String password;
+	private final String password;
 	
-	private String phone;
+	private final String phone;
 	
-	private String email;
+	private final String email;
 	
-	private Path workingDirectory;
+	private final Path workingDirectory;
 	
 	public BenchmarkSPIMParametersImpl(String userName, String password, String phone, String email, Path workingDirectory) {
 		this.userName = userName;

@@ -20,7 +20,7 @@ public class JFXPanel<T extends Parent> extends javafx.embed.swing.JFXPanel {
 	@SuppressWarnings("unused")
 	private static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas.ui.JFXPanel.class);
 
-	private T control;
+	private final T control;
 
 	public JFXPanel(Supplier<T> fxSupplier) {
 		Platform.setImplicitExit(false);

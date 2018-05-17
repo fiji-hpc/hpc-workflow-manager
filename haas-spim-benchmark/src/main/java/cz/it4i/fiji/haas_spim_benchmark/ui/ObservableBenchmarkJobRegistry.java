@@ -3,7 +3,6 @@ package cz.it4i.fiji.haas_spim_benchmark.ui;
 import java.nio.file.Files;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,7 +12,6 @@ import cz.it4i.fiji.haas.ui.UpdatableObservableValue.UpdateStatus;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.BenchmarkJob;
 import cz.it4i.fiji.haas_spim_benchmark.core.ObservableBenchmarkJob;
-import javafx.beans.value.ObservableValue;
 
 public class ObservableBenchmarkJobRegistry extends ObservableValueRegistry<BenchmarkJob,ObservableBenchmarkJob> {
 
@@ -30,28 +28,16 @@ public class ObservableBenchmarkJobRegistry extends ObservableValueRegistry<Benc
 	}
 	
 	@Override
-	public ObservableBenchmarkJob addIfAbsent(BenchmarkJob value) {
-		return (ObservableBenchmarkJob) super.addIfAbsent(value);
-	}
-	
-	@Override
-	public ObservableBenchmarkJob get(BenchmarkJob value) {
-		return (ObservableBenchmarkJob) super.get(value);
-	}
-	
-	@Override
-	protected ObservableValue<BenchmarkJob> remove(BenchmarkJob value) {
-		ObservableBenchmarkJob result = (ObservableBenchmarkJob) super.remove(value);
+	protected ObservableBenchmarkJob remove(BenchmarkJob value) {
+		ObservableBenchmarkJob result = super.remove(value);
 		result.removed();
 		return result;
 	}
 	
 	@Override
-	protected ObservableBenchmarkJob constructObservableValue(BenchmarkJob v,
-			Function<BenchmarkJob, UpdateStatus> updateFunction, Function<BenchmarkJob, Object> stateProvider) {
-		return new ObservableBenchmarkJob(v, updateFunction, stateProvider, executorUI);
-	}
-	
+	protected ObservableBenchmarkJob constructObservableValue(BenchmarkJob benchmarkJob) {
+		return new ObservableBenchmarkJob(benchmarkJob, getUpdateFunction(), getStateProvider(), executorUI);
+	}	
 	
 
 	private static UpdateStatus update(BenchmarkJob t, Executor executor) {

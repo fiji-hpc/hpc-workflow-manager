@@ -14,7 +14,6 @@ import org.slf4j.LoggerFactory;
 
 import com.jcraft.jsch.JSchException;
 
-import cz.it4i.fiji.haas_java_client.HaaSClient.UploadingFile;
 import cz.it4i.fiji.haas_java_client.proxy.FileTransferMethodExt;
 import cz.it4i.fiji.scpclient.ScpClient;
 import cz.it4i.fiji.scpclient.TransferFileProgress;
@@ -24,8 +23,8 @@ class HaaSFileTransferImp implements HaaSFileTransfer {
 	@SuppressWarnings("unused")
 	private static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas_java_client.HaaSFileTransferImp.class);
 
-	private FileTransferMethodExt ft;
-	private ScpClient scpClient;
+	private final FileTransferMethodExt ft;
+	private final ScpClient scpClient;
 	private TransferFileProgress progress;
 	
 	public HaaSFileTransferImp(FileTransferMethodExt ft, ScpClient scpClient, TransferFileProgress progress) {

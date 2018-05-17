@@ -4,14 +4,14 @@ import cz.it4i.fiji.scpclient.TransferFileProgress;
 
 public class TransferFileProgressForHaaSClient implements TransferFileProgress {
 
-	private long totalSize;
+	private final long totalSize;
 	private long totalTransfered;
 	private long fileSize;
 	private long fileTransfered;
 	
 	
 	
-	private ProgressNotifier notifier;
+	private final ProgressNotifier notifier;
 	
 	
 	public TransferFileProgressForHaaSClient(long totalSize, ProgressNotifier notifier) {

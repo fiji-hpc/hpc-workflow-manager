@@ -12,7 +12,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import cz.it4i.fiji.haas_java_client.HaaSClient;
-import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.Settings;
 import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
 
@@ -22,18 +21,17 @@ public class JobManager implements Closeable {
 		boolean remove(Job job);
 	}
 
-	@SuppressWarnings("unused")
 	private static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas.JobManager.class);
 
-	private Path workDirectory;
+	private final Path workDirectory;
 
 	private Collection<Job> jobs;
 
 	private HaaSClient haasClient;
 
-	private Settings settings;
+	private final Settings settings;
 
-	private JobManager4Job remover = new JobManager4Job() {
+	private final JobManager4Job remover = new JobManager4Job() {
 
 		@Override
 		public boolean remove(Job job) {
@@ -47,32 +45,18 @@ public class JobManager implements Closeable {
 	}
 
 	public Job createJob() throws IOException {
-		Job job;
-		if (jobs == null) {
-			jobs = new LinkedList<>();
-		}
-		jobs.add(job = new Job(remover, settings.getJobName(), workDirectory, this::getHaasClient));
-		return job;
+		Job result;
+		initJobsIfNecessary();
+		jobs.add(result = new Job(remover, settings.getJobName(), workDirectory, this::getHaasClient));
+		return result;
 	}
 
 	public Collection<Job> getJobs() {
-		if (jobs == null) {
-			jobs = new LinkedList<>();
-			try {
-				Files.list(this.workDirectory).filter(p -> Files.isDirectory(p) && Job.isJobPath(p)).forEach(p -> {
-					jobs.add(new Job(remover, p, this::getHaasClient));
-				});
-			} catch (IOException e) {
-				log.error(e.getMessage(), e);
-			}
-		}
+		initJobsIfNecessary();
 		return Collections.unmodifiableCollection(jobs);
 	}
 
-	public JobState getState(long id) {
-		return getHaasClient().obtainJobInfo(id).getState();
-	}
-
+	@Override
 	public void close() {
 		jobs.forEach(job -> job.close());
 	}
@@ -84,9 +68,22 @@ public class JobManager implements Closeable {
 		return haasClient;
 	}
 
+	private void initJobsIfNecessary() {
+		if (jobs == null) {
+			jobs = new LinkedList<>();
+			try {
+				Files.list(this.workDirectory).filter(p -> Files.isDirectory(p) && Job.isValidJobPath(p)).forEach(p -> {
+					jobs.add(new Job(remover, p, this::getHaasClient));
+				});
+			} catch (IOException e) {
+				log.error(e.getMessage(), e);
+			}
+		}
+	}
+
 	public static class JobSynchronizableFile {
-		private SynchronizableFileType type;
-		private long offset;
+		private final SynchronizableFileType type;
+		private final long offset;
 
 		public JobSynchronizableFile(SynchronizableFileType type, long offset) {
 			this.type = type;

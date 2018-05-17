@@ -22,12 +22,12 @@ import cz.it4i.fiji.haas.JobManager.JobManager4Job;
 import cz.it4i.fiji.haas.JobManager.JobSynchronizableFile;
 import cz.it4i.fiji.haas.data_transfer.Synchronization;
 import cz.it4i.fiji.haas_java_client.HaaSClient;
-import cz.it4i.fiji.haas_java_client.HaaSClient.UploadingFile;
 import cz.it4i.fiji.haas_java_client.HaaSFileTransfer;
 import cz.it4i.fiji.haas_java_client.JobInfo;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.ProgressNotifier;
 import cz.it4i.fiji.haas_java_client.TransferFileProgressForHaaSClient;
+import cz.it4i.fiji.haas_java_client.UploadingFile;
 import cz.it4i.fiji.scpclient.TransferFileProgress;
 /***
  * TASK - napojit na UI 
@@ -50,22 +50,29 @@ public class Job {
 	
 	private static final String JOB_IS_UPLOADED = "job.uploaded";
 
-	public static boolean isJobPath(Path p) {
-		return isValidPath(p);
+	public static boolean isValidJobPath(Path path) {
+		try {
+			getJobId(path);
+		} catch (NumberFormatException e) {
+			return false;
+		}
+		return Files.isRegularFile(path.resolve(JOB_INFO_FILENAME));
 	}
 
 	private static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas.Job.class);
 
 	private Path jobDir;
 
-	private Supplier<HaaSClient> haasClientSupplier;
+	private final Supplier<HaaSClient> haasClientSupplier;
 
-	// private JobState state;
-	// private Boolean needsDownload;
 	private JobInfo jobInfo;
+	
 	private Long jobId;
+	
 	private PropertyHolder propertyHolder;
-	private JobManager4Job jobManager;
+	
+	private final JobManager4Job jobManager;
+	
 	private Synchronization synchronization;
 	
 	
@@ -146,7 +153,7 @@ public class Job {
 	}
 
 	
-	public boolean canBeDownload() {
+	public boolean canBeDownloaded() {
 		return Boolean.parseBoolean(getProperty(JOB_CAN_BE_DOWNLOADED));
 	}
 	
@@ -414,16 +421,6 @@ public class Job {
 
 	private void updateJobInfo() {
 		jobInfo = getHaaSClient().obtainJobInfo(getId());
-	}
-
-	private static boolean isValidPath(Path path) {
-
-		try {
-			getJobId(path);
-		} catch (NumberFormatException e) {
-			return false;
-		}
-		return Files.isRegularFile(path.resolve(JOB_INFO_FILENAME));
 	}
 
 	private static long getJobId(Path path) {

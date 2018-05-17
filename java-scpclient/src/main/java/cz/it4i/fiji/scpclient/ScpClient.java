@@ -85,7 +85,7 @@ public class ScpClient implements Closeable {
 
 	public boolean download(String lfile, OutputStream os, TransferFileProgress progress)
 			throws JSchException, IOException {
-		Session session = connectionSession();
+		Session session = getConnectedSession();
 
 		// exec 'scp -f rfile' remotely
 		String command = "scp -f " + lfile;
@@ -194,7 +194,7 @@ public class ScpClient implements Closeable {
 
 	public boolean upload(InputStream is, String fileName, long length, long lastModified,
 			TransferFileProgress progress) throws JSchException, IOException {
-		Session session = connectionSession();
+		Session session = getConnectedSession();
 		boolean ptimestamp = true;
 		// exec 'scp -t rfile' remotely
 		String command = "scp " + (ptimestamp ? "-p" : "") + " -t " + fileName;
@@ -257,7 +257,7 @@ public class ScpClient implements Closeable {
 	}
 
 	public long size(String lfile) throws JSchException, IOException {
-		Session session = connectionSession();
+		Session session = getConnectedSession();
 
 		// exec 'scp -f rfile' remotely
 		String command = "scp -f " + lfile;
@@ -310,7 +310,7 @@ public class ScpClient implements Closeable {
 
 	@SuppressWarnings("unchecked")
 	public List<Long> sizeByLs(String lfile) throws JSchException, IOException {
-		Session session = connectionSession();
+		Session session = getConnectedSession();
 
 		// exec 'scp -f rfile' remotely
 		Channel channel = session.openChannel("sftp");
@@ -333,15 +333,15 @@ public class ScpClient implements Closeable {
 		if (session != null && session.isConnected()) {
 			//log.info("disconnect");
 			session.disconnect();
-			session = null;
 		}
+		session = null;
 	}
 
 	private int getBufferSize() {
 		return 1024 * 1024;
 	}
 
-	private Session connectionSession() throws JSchException {
+	private Session getConnectedSession() throws JSchException {
 		if (session == null) {
 			session = jsch.getSession(username, hostName);
 

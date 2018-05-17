@@ -5,7 +5,7 @@ import cz.it4i.fiji.haas_java_client.proxy.SynchronizableFilesExt;
 
 class JobFileContentImpl implements JobFileContent{
 
-	private JobFileContentExt contentExt;
+	private final JobFileContentExt contentExt;
 
 	public JobFileContentImpl(JobFileContentExt contentExt) {
 		this.contentExt = contentExt;

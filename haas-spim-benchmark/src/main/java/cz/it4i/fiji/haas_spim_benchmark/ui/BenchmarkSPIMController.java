@@ -49,17 +49,17 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 	@FXML
 	private TableView<ObservableBenchmarkJob> jobs;
 
-	private BenchmarkJobManager manager;
-
+	private final BenchmarkJobManager manager;
+	
+	private final ExecutorService executorServiceJobState = Executors.newWorkStealingPool();
+	
+	private final Executor executorServiceFX = new FXFrameExecutorService();
+	
 	private Window root;
 
 	private ExecutorService executorServiceUI;
 	
 	private ExecutorService executorServiceWS;
-	
-	private ExecutorService executorServiceJobState = Executors.newWorkStealingPool();
-	
-	private Executor executorServiceFX = new FXFrameExecutorService();
 	
 	private Timer timer;
 	
@@ -74,6 +74,7 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 
 	}
 
+	@Override
 	public void init(Window root) {
 		this.root = root;
 		executorServiceWS = Executors.newSingleThreadExecutor();
@@ -90,6 +91,7 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 		executorServiceFX.execute(this::updateJobs);
 	}
 
+	@Override
 	public void close() {
 		executorServiceUI.shutdown();
 		executorServiceWS.shutdown();
@@ -110,7 +112,7 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 		menu.addItem("Cancel job", job -> executeWSCallAsync("Canceling job", p -> {
 			job.getValue().cancelJob();
 			job.getValue().update();
-		}), job -> JavaFXRoutines.notNullValue(job, j -> j.getState() == JobState.Running));
+		}), job -> JavaFXRoutines.notNullValue(job, j -> j.getState() == JobState.Running || j.getState() == JobState.Queued ));
 
 		menu.addItem("Execution details", job -> {
 			try {
@@ -222,11 +224,11 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 		setCellValueFactory(2, j -> j.getCreationTime().toString());
 		setCellValueFactory(3, j -> j.getStartTime().toString());
 		setCellValueFactory(4, j -> j.getEndTime().toString());
-		setCellValueFactory(5, j -> decorateTransfer("Upload",registry.get(j).getUploadProgress()));
-		setCellValueFactory(6, j -> decorateTransfer("Download",registry.get(j).getDownloadProgress()));
+		setCellValueFactory(5, j -> decorateTransfer(registry.get(j).getUploadProgress()));
+		setCellValueFactory(6, j -> decorateTransfer(registry.get(j).getDownloadProgress()));
 	}
 
-	private String decorateTransfer(String string, TransferProgress progress) {
+	private String decorateTransfer(TransferProgress progress) {
 		if (!progress.isWorking() && !progress.isDone()) {
 			return "";
 		} else if (progress.isWorking()) {

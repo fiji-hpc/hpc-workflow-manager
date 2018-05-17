@@ -34,21 +34,21 @@ public abstract class PersistentSynchronizationProcess<T> {
 
 	private final static String INIT_TRANSFER_ITEM = "init transfer";
 
-	private PersistentIndex<T> index;
+	private final PersistentIndex<T> index;
 
-	private Queue<T> toProcessQueue = new LinkedBlockingQueue<T>();
+	private final Queue<T> toProcessQueue = new LinkedBlockingQueue<T>();
 
-	private Set<Thread> runningTransferThreads = Collections.synchronizedSet(new HashSet<>());
+	private final Set<Thread> runningTransferThreads = Collections.synchronizedSet(new HashSet<>());
 
-	private SimpleThreadRunner runner;
+	private final SimpleThreadRunner runner;
 
-	private Supplier<HaaSFileTransfer> fileTransferSupplier;
+	private final Supplier<HaaSFileTransfer> fileTransferSupplier;
 
-	private Runnable processFinishedNotifier;
+	private final Runnable processFinishedNotifier;
 
 	private ProgressNotifier notifier;
 
-	private AtomicInteger runningProcessCounter = new AtomicInteger();
+	private final AtomicInteger runningProcessCounter = new AtomicInteger();
 
 	public PersistentSynchronizationProcess(ExecutorService service, Supplier<HaaSFileTransfer> fileTransferSupplier,
 			Runnable processFinishedNotifier, Path indexFile, Function<String, T> convertor) throws IOException {
@@ -69,7 +69,7 @@ public abstract class PersistentSynchronizationProcess<T> {
 			runner.runIfNotRunning(this::doProcess);
 		} finally {
 			startFinished = true;
-			index.storeToFile();
+			index.storeToWorkingFile();
 		}
 	}
 
@@ -121,7 +121,7 @@ public abstract class PersistentSynchronizationProcess<T> {
 				notifier.addItem(item);
 				try {
 					processItem(tr, p);
-					fileUploaded(p);
+					fileTransfered(p);
 				} catch (InterruptedIOException e) {
 					toProcessQueue.clear();
 					interrupted = true;
@@ -149,10 +149,10 @@ public abstract class PersistentSynchronizationProcess<T> {
 		}
 	}
 
-	private void fileUploaded(T p) {
+	private void fileTransfered(T p) {
 		try {
 			index.remove(p);
-			index.storeToFile();
+			index.storeToWorkingFile();
 		} catch (IOException e) {
 			log.error(e.getMessage(), e);
 		}

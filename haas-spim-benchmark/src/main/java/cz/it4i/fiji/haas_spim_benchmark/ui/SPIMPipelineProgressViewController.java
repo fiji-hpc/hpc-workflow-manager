@@ -77,8 +77,8 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 	private BenchmarkJob job;
 	private Timer timer;
 	private ObservableTaskRegistry registry;
-	private ExecutorService executorServiceWS;
-	private Executor executorFx = new FXFrameExecutorService();
+	private final ExecutorService executorServiceWS;
+	private final Executor executorFx = new FXFrameExecutorService();
 	private Window root;
 
 	public SPIMPipelineProgressViewController() {
@@ -102,6 +102,7 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 		});
 	}
 
+	@Override
 	public void close() {
 		timer.cancel();
 		executorServiceWS.shutdown();

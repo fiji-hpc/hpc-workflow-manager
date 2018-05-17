@@ -11,9 +11,7 @@ import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkSPIMParameters;
 public class BenchmarkSPIMWindow extends FXFrame<BenchmarkSPIMController>{
 
 	private static final long serialVersionUID = 1L;
-	
-
-	
+		
 	public BenchmarkSPIMWindow(Window parentWindow, BenchmarkSPIMParameters params) throws IOException {
 		super(parentWindow,()->{
 			try {

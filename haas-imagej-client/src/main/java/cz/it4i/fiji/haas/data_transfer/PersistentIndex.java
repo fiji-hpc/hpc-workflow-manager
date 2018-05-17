@@ -17,49 +17,49 @@ public class PersistentIndex<T> {
 	
 	public static final Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas.data_transfer.PersistentIndex.class);
 	
-	private Path workingFile;
+	private final Path workingFile;
 
-	private Set<T> files = new LinkedHashSet<>();
+	private final Set<T> indexedFiles = new LinkedHashSet<>();
 
-	private Function<String, T> fromString;
+	private final Function<String, T> fromStringConvertor;
 
-	public PersistentIndex(Path workingFile,Function<String, T> fromString) throws IOException {
+	public PersistentIndex(Path workingFile,Function<String, T> fromStringConvertor) throws IOException {
 		this.workingFile = workingFile;
-		this.fromString = fromString;
-		loadFromFile();
+		this.fromStringConvertor = fromStringConvertor;
+		loadFromWorkingFile();
 	}
 
-	public synchronized void storeToFile() throws IOException {
+	public synchronized void storeToWorkingFile() throws IOException {
 		try (BufferedWriter bw = Files.newBufferedWriter(workingFile)) {
-			for (T file : files) {
+			for (T file : indexedFiles) {
 				bw.write(file.toString() + "\n");
 			}
 		}
 	}
 
 	public synchronized boolean insert(T file) {
-		return files.add(file);
+		return indexedFiles.add(file);
 	}
 
 	public synchronized void remove(T p) {
-		files.remove(p);
+		indexedFiles.remove(p);
 	}
 
 	public synchronized void fillQueue(Queue<T> toUpload) {
-		toUpload.addAll(files);
+		toUpload.addAll(indexedFiles);
 	}
 	
 	public synchronized void clear() throws IOException {
-		files.clear();
-		storeToFile();
+		indexedFiles.clear();
+		storeToWorkingFile();
 	}
 
 	public synchronized boolean contains(Path file) {
-		return files.contains(file);
+		return indexedFiles.contains(file);
 	}
 
-	private void loadFromFile() throws IOException {
-		files.clear();
+	private void loadFromWorkingFile() throws IOException {
+		indexedFiles.clear();
 		if(Files.exists(workingFile)) {
 			try (BufferedReader br = Files.newBufferedReader(workingFile)) {
 				String line;
@@ -71,7 +71,7 @@ public class PersistentIndex<T> {
 	}
 
 	private void processLine(String line) {
-		files.add(fromString.apply(line));
+		indexedFiles.add(fromStringConvertor.apply(line));
 	}
 
 	

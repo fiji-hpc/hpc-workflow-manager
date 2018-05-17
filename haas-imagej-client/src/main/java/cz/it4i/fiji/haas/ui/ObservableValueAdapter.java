@@ -10,11 +10,11 @@ import javafx.beans.value.ObservableValue;
 
 public class ObservableValueAdapter<S, T> implements ObservableValue<T> {
 
-	private ObservableValue<S> adapted;
+	private final ObservableValue<S> adapted;
 
-	private Function<S, T> transformation;
+	private final Function<S, T> transformation;
 
-	private Map<ChangeListener<? super T>, ChangeListener<? super S>> mapOfListeners = new HashMap<>();
+	private final Map<ChangeListener<? super T>, ChangeListener<? super S>> mapOfListeners = new HashMap<>();
 
 	public ObservableValueAdapter(ObservableValue<S> decorated, Function<S, T> map) {
 		this.adapted = decorated;
