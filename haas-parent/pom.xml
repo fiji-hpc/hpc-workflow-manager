@@ -41,16 +41,4 @@
 			<url>http://maven.imagej.net/content/groups/public</url>
 		</repository>
 	</repositories>
-	<distributionManagement>
-		<repository>
-			<id>it4i</id>
-			<name>IT4I repository</name>
-			<url>https://artifactory.cs.vsb.cz/it4i/</url>
-		</repository>
-		<snapshotRepository>
-			<id>t4i</id>
-			<name>II4I repository</name>
-			<url>https://artifactory.cs.vsb.cz/it4i/</url>
-		</snapshotRepository>
-	</distributionManagement>
 </project>

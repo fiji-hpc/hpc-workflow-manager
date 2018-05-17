@@ -98,6 +98,17 @@
 			<version>1.7.25</version>
 			<optional>true</optional>
 		</dependency>
-
 	</dependencies>
+	<distributionManagement>
+		<repository>
+			<id>it4i</id>
+			<name>IT4I repository</name>
+			<url>https://artifactory.cs.vsb.cz/it4i/</url>
+		</repository>
+		<snapshotRepository>
+			<id>it4i</id>
+			<name>II4I repository</name>
+			<url>https://artifactory.cs.vsb.cz/it4i/</url>
+		</snapshotRepository>
+	</distributionManagement>
 </project>
