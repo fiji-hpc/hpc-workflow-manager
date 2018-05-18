@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -60,6 +61,10 @@ public class BenchmarkJobManager implements Closeable{
 
 		private final Job job;
 		
+		public boolean isUseDemoData() {
+			return job.isUseDemoData();
+		}
+
 		private final List<Task> tasks;
 		private final List<BenchmarkError> nonTaskSpecificErrors;
 		private final SPIMComputationAccessor computationAccessor;
@@ -454,8 +459,8 @@ public class BenchmarkJobManager implements Closeable{
 		jobManager = new JobManager(params.workingDirectory(), constructSettingsFromParams(params));
 	}
 
-	public BenchmarkJob createJob() throws IOException {
-		Job job = jobManager.createJob();
+	public BenchmarkJob createJob(Function<Path, Path> inputDirectoryProvider,Function<Path, Path> outputDirectoryProvider) throws IOException {
+		Job job = jobManager.createJob(inputDirectoryProvider, outputDirectoryProvider);
 		job.storeDataInWorkdirectory(getUploadingFile());
 		return convertJob(job);
 	}
@@ -569,7 +574,7 @@ public class BenchmarkJobManager implements Closeable{
 	public void close() {
 		jobManager.close();
 	}
-
+	
 	private UploadingFile getUploadingFile() {
 		return new UploadingFileFromResource("", Constants.CONFIG_YAML);
 	}

@@ -48,11 +48,11 @@ public class Synchronization implements Closeable {
 
 	private final ExecutorService service;
 
-	public Synchronization(Supplier<HaaSFileTransfer> fileTransferSupplier, Path workingDirectory,
-			Runnable uploadFinishedNotifier, Runnable downloadFinishedNotifier) throws IOException {
-		this(fileTransferSupplier, workingDirectory, workingDirectory, workingDirectory, uploadFinishedNotifier,
-				downloadFinishedNotifier);
-	}
+//	public Synchronization(Supplier<HaaSFileTransfer> fileTransferSupplier, Path workingDirectory,
+//			Runnable uploadFinishedNotifier, Runnable downloadFinishedNotifier) throws IOException {
+//		this(fileTransferSupplier, workingDirectory, workingDirectory, workingDirectory, uploadFinishedNotifier,
+//				downloadFinishedNotifier);
+//	}
 	
 	public Synchronization(Supplier<HaaSFileTransfer> fileTransferSupplier, Path workingDirectory, Path inputDirectory,
 			Path outputDirectory, Runnable uploadFinishedNotifier, Runnable downloadFinishedNotifier)

@@ -2,7 +2,6 @@ package cz.it4i.fiji.haas_spim_benchmark.ui;
 
 import java.awt.Desktop;
 import java.awt.Window;
-import java.awt.event.WindowAdapter;
 import java.io.IOException;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -128,7 +127,8 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 
 		menu.addItem("Upload data", job -> executeWSCallAsync("Uploading data", p -> job.getValue().startUpload()),
 				job -> executeWSCallAsync("Stop uploading data", p -> job.getValue().stopUpload()),
-				job -> JavaFXRoutines.notNullValue(job, j -> !EnumSet.of(JobState.Running).contains(j.getState())),
+				job -> JavaFXRoutines.notNullValue(job,
+						j -> !j.isUseDemoData() && !EnumSet.of(JobState.Running).contains(j.getState())),
 				job -> job.getUploadProgress().isWorking());
 
 		menu.addItem("Download result",
@@ -153,7 +153,8 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 	private void createJob() {
 		NewJobWindow newJobWindow = new NewJobWindow(null);
 		ModalDialogs.doModal(newJobWindow, WindowConstants.DISPOSE_ON_CLOSE);
-		newJobWindow.setCreatePressedNotifier((Runnable)	() -> executeWSCallAsync("Creating job", p -> manager.createJob()));
+		newJobWindow.setCreatePressedNotifier(() -> executeWSCallAsync("Creating job", p -> manager
+				.createJob(wd -> newJobWindow.getInputDirectory(wd), wd -> newJobWindow.getOutputDirectory(wd))));
 
 	}
 

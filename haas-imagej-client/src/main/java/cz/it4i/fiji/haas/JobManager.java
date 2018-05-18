@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
+import java.util.function.Function;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,10 +45,12 @@ public class JobManager implements Closeable {
 		this.settings = settings;
 	}
 
-	public Job createJob() throws IOException {
+	public Job createJob(Function<Path, Path> inputDirectoryProvider, Function<Path, Path> outputDirectoryProvider)
+			throws IOException {
 		Job result;
 		initJobsIfNecessary();
-		jobs.add(result = new Job(remover, settings.getJobName(), workDirectory, this::getHaasClient));
+		jobs.add(result = new Job(remover, settings.getJobName(), workDirectory, this::getHaasClient,
+				inputDirectoryProvider, outputDirectoryProvider));
 		return result;
 	}
 
