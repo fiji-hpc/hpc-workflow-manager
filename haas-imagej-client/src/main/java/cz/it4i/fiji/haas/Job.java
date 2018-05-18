@@ -110,7 +110,7 @@ public class Job {
 	public Job(JobManager4Job jobManager, Path jobDirectory, Supplier<HaaSClient> haasClientSupplier) {
 		this(jobManager, haasClientSupplier);
 		propertyHolder = new PropertyHolder(jobDirectory.resolve(JOB_INFO_FILENAME));
-		useDemoData = getSafeBoolean(JOB_USE_DEMO_DATA);
+		useDemoData = getSafeBoolean(propertyHolder.getValue(JOB_USE_DEMO_DATA));
 		setJobDirectory(jobDirectory, jd -> useDemoData ? null : getDataDirectory(JOB_INPUT_DIRECTORY_PATH, jd),
 				jd -> getDataDirectory(JOB_OUTPUT_DIRECTORY_PATH, jd));
 	}
