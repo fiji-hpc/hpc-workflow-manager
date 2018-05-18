@@ -39,8 +39,8 @@
                                  <graphic>
                                     <HBox disable="true">
                                        <children>
-                                          <TextField fx:id="et_inputDirectory" />
-                                          <Button mnemonicParsing="false" text="Select" />
+                                          <TextField fx:id="et_inputDirectory" prefWidth="350.0" />
+                                          <Button fx:id="bt_selectInput" mnemonicParsing="false" text="Select" />
                                        </children>
                                     </HBox>
                                  </graphic>
@@ -75,8 +75,8 @@
                                        <graphic>
                                           <HBox disable="true">
                                              <children>
-                                                <TextField fx:id="et_outputDirectory" />
-                                                <Button mnemonicParsing="false" text="Select" />
+                                                <TextField fx:id="et_outputDirectory" prefWidth="350.0" />
+                                                <Button fx:id="bt_selectOutput" mnemonicParsing="false" text="Select" />
                                              </children>
                                           </HBox>
                                        </graphic>

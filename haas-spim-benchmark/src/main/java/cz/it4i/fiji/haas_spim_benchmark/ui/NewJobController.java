@@ -1,6 +1,7 @@
 package cz.it4i.fiji.haas_spim_benchmark.ui;
 
 import java.awt.Window;
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -9,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import cz.it4i.fiji.haas.ui.CloseableControl;
+import cz.it4i.fiji.haas.ui.FXFrame;
 import cz.it4i.fiji.haas.ui.InitiableControl;
 import cz.it4i.fiji.haas.ui.JavaFXRoutines;
 import javafx.beans.value.ObservableValue;
@@ -22,6 +24,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.BorderPane;
+import javafx.stage.DirectoryChooser;
 
 public class NewJobController extends BorderPane implements CloseableControl, InitiableControl {
 
@@ -29,7 +32,8 @@ public class NewJobController extends BorderPane implements CloseableControl, In
 		DEMONSTRATION_ON_SERVER, WORK_DIRECTORY, CUSTOM_DIRECTORY
 	}
 
-	private static final Runnable EMPTY_NOTIFIER = () -> {};
+	private static final Runnable EMPTY_NOTIFIER = () -> {
+	};
 
 	@SuppressWarnings("unused")
 	private static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas_spim_benchmark.ui.NewJobController.class);
@@ -59,16 +63,24 @@ public class NewJobController extends BorderPane implements CloseableControl, In
 
 	private DataLocation outputDataLocation;
 
-	private Window ownerWindow;
+	private FXFrame<?> ownerWindow;
 
-		private Runnable createPressedNotifier;
+	private Runnable createPressedNotifier;
 
+	@FXML
+	private Button bt_selectInput;
+
+	@FXML
+	private Button bt_selectOutput;
+	
 	public NewJobController() {
 		JavaFXRoutines.initRootAndController("NewJobView.fxml", this);
 		getStylesheets().add(getClass().getResource("NewJobView.css").toExternalForm());
 		bt_create.setOnMouseClicked(X -> createPressed());
 		tg_inputDataLocation.selectedToggleProperty().addListener((v, old, n) -> selected(v, old, n, rb_ownInput));
 		tg_outputDataLocation.selectedToggleProperty().addListener((v, o, n) -> selected(v, o, n, rb_ownOutput));
+		initSelectButton(et_inputDirectory, bt_selectInput);
+		initSelectButton(et_outputDirectory, bt_selectOutput);
 	}
 
 	@Override
@@ -77,23 +89,37 @@ public class NewJobController extends BorderPane implements CloseableControl, In
 
 	@Override
 	public void init(Window parameter) {
-		ownerWindow = parameter;
+		ownerWindow = (FXFrame<?>) parameter;
 	}
 
 	public Path getInputDirectory(Path workingDirectory) {
 		return getDirectory(inputDataLocation, et_inputDirectory.getText(), workingDirectory);
 	}
-	
+
 	public Path getOutputDirectory(Path workingDirectory) {
 		return getDirectory(outputDataLocation, et_outputDirectory.getText(), workingDirectory);
 	}
 
 	public void setCreatePressedNotifier(Runnable createPressedNotifier) {
-		if(createPressedNotifier != null) {
+		if (createPressedNotifier != null) {
 			this.createPressedNotifier = createPressedNotifier;
 		} else {
 			this.createPressedNotifier = EMPTY_NOTIFIER;
 		}
+	}
+
+	private void initSelectButton(TextField textField, Button button) {
+		button.setOnAction(x -> {
+			Path p = Paths.get(textField.getText());
+			DirectoryChooser dch = new DirectoryChooser();
+			if (Files.exists(p)) {
+				dch.setInitialDirectory(p.toAbsolutePath().toFile());
+			}
+			File result = dch.showDialog(ownerWindow.getFxPanel().getScene().getWindow());
+			if (result != null) {
+				textField.setText(result.toString());
+			}
+		});
 	}
 
 	private Path getDirectory(DataLocation dataLocation, String selectedDirectory, Path workingDirectory) {
