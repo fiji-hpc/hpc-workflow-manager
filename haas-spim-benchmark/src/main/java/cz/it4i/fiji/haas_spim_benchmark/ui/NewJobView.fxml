@@ -24,22 +24,22 @@
                            <children>
                               <RadioButton mnemonicParsing="false" selected="true">
                                  <toggleGroup>
-                                    <ToggleGroup fx:id="Group" />
+                                    <ToggleGroup fx:id="tg_inputDataLocation" />
                                  </toggleGroup>
                                  <graphic>
                                     <Label maxHeight="1.7976931348623157E308" text="Demonstration data" />
                                  </graphic>
                               </RadioButton>
-                              <RadioButton maxHeight="1.7976931348623157E308" mnemonicParsing="false" toggleGroup="$Group">
+                              <RadioButton maxHeight="1.7976931348623157E308" mnemonicParsing="false" toggleGroup="$tg_inputDataLocation">
                                  <graphic>
                                     <Label maxHeight="1.7976931348623157E308" text="Working directory" />
                                  </graphic>
                               </RadioButton>
-                              <RadioButton mnemonicParsing="false" toggleGroup="$Group">
+                              <RadioButton fx:id="rb_ownInput" mnemonicParsing="false" toggleGroup="$tg_inputDataLocation">
                                  <graphic>
-                                    <HBox>
+                                    <HBox disable="true">
                                        <children>
-                                          <TextField />
+                                          <TextField fx:id="et_inputDirectory" />
                                           <Button mnemonicParsing="false" text="Select" />
                                        </children>
                                     </HBox>
@@ -61,7 +61,7 @@
                                  <children>
                                     <RadioButton maxHeight="1.7976931348623157E308" mnemonicParsing="false" selected="true">
                                        <toggleGroup>
-                                          <ToggleGroup fx:id="Group1" />
+                                          <ToggleGroup fx:id="tg_outputDataLocation" />
                                        </toggleGroup>
                                        <graphic>
                                           <Label maxHeight="1.7976931348623157E308" text="Working directory" />
@@ -71,11 +71,11 @@
                               </HBox>
                               <HBox>
                                  <children>
-                                    <RadioButton mnemonicParsing="false" toggleGroup="$Group1">
+                                    <RadioButton fx:id="rb_ownOutput" mnemonicParsing="false" toggleGroup="$tg_outputDataLocation">
                                        <graphic>
-                                          <HBox>
+                                          <HBox disable="true">
                                              <children>
-                                                <TextField />
+                                                <TextField fx:id="et_outputDirectory" />
                                                 <Button mnemonicParsing="false" text="Select" />
                                              </children>
                                           </HBox>
@@ -95,7 +95,7 @@
    <bottom>
       <BorderPane BorderPane.alignment="CENTER">
          <right>
-            <Button fx:id="btnCreate" mnemonicParsing="false" prefHeight="22.0" prefWidth="71.0" text="Start" BorderPane.alignment="CENTER">
+            <Button fx:id="bt_create" mnemonicParsing="false" prefHeight="22.0" prefWidth="71.0" text="Create" BorderPane.alignment="CENTER">
                <BorderPane.margin>
                   <Insets right="3.0" />
                </BorderPane.margin></Button>
