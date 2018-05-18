@@ -3,6 +3,7 @@ package cz.it4i.fiji.haas_spim_benchmark.ui;
 import java.awt.Desktop;
 import java.awt.Window;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -102,7 +103,7 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 
 	private void initMenu() {
 		TableViewContextMenu<ObservableBenchmarkJob> menu = new TableViewContextMenu<>(jobs);
-		menu.addItem("Create job", x -> createJob(), j -> true);
+		menu.addItem("Create job", x -> askForCreateJob(), j -> true);
 		menu.addItem("Start job", job -> executeWSCallAsync("Starting job", p -> {
 			job.getValue().startJob(p);
 			job.getValue().update();
@@ -150,12 +151,22 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 		menu.addItem("Open working directory", j -> open(j.getValue()), x -> JavaFXRoutines.notNullValue(x, j -> true));
 	}
 
-	private void createJob() {
+	private void askForCreateJob() {
 		NewJobWindow newJobWindow = new NewJobWindow(null);
 		ModalDialogs.doModal(newJobWindow, WindowConstants.DISPOSE_ON_CLOSE);
-		newJobWindow.setCreatePressedNotifier(() -> executeWSCallAsync("Creating job", p -> manager
-				.createJob(wd -> newJobWindow.getInputDirectory(wd), wd -> newJobWindow.getOutputDirectory(wd))));
+		newJobWindow.setCreatePressedNotifier(() -> executeWSCallAsync("Creating job", false,p -> doCreateJob(wd -> newJobWindow.getInputDirectory(wd), wd -> newJobWindow.getOutputDirectory(wd))));
 
+	}
+
+	private void doCreateJob(Function<Path,Path> inputProvider, Function<Path,Path> outputProvider) throws IOException {
+		BenchmarkJob bj = manager.createJob(inputProvider, outputProvider);
+		ObservableBenchmarkJob obj = registry.addIfAbsent(bj);
+		addJobToItems(obj);
+		jobs.refresh();
+	}
+
+	private synchronized void addJobToItems(ObservableBenchmarkJob obj) {
+		jobs.getItems().add(obj);
 	}
 
 	private void open(BenchmarkJob j) {
@@ -184,8 +195,9 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 			}
 			return null;
 		}, x -> {
-			if (update)
+			if (update) {
 				updateJobs();
+			}
 		});
 	}
 
@@ -215,7 +227,7 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 				executorServiceFX.execute(() -> {
 					for (ObservableBenchmarkJob value : registry.getAllItems()) {
 						if (!actual.contains(value)) {
-							this.jobs.getItems().add(value);
+							addJobToItems(value);
 						}
 					}
 				});

@@ -49,9 +49,8 @@ import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
 import cz.it4i.fiji.haas_java_client.UploadingFile;
 import net.imagej.updater.util.Progress;
 
-public class BenchmarkJobManager implements Closeable{
+public class BenchmarkJobManager implements Closeable {
 
-	
 	private static Logger log = LoggerFactory
 			.getLogger(cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.class);
 
@@ -60,7 +59,7 @@ public class BenchmarkJobManager implements Closeable{
 	public final class BenchmarkJob implements HaaSOutputHolder {
 
 		private final Job job;
-		
+
 		public boolean isUseDemoData() {
 			return job.isUseDemoData();
 		}
@@ -89,14 +88,14 @@ public class BenchmarkJobManager implements Closeable{
 		}
 
 		public synchronized void startJob(Progress progress) throws IOException {
-			job.uploadFile(Constants.CONFIG_YAML,  new P_ProgressNotifierAdapter(progress));
+			job.uploadFile(Constants.CONFIG_YAML, new P_ProgressNotifierAdapter(progress));
 			String outputName = getOutputName(job.openLocalFile(Constants.CONFIG_YAML));
 			verifiedState = null;
 			verifiedStateProcessed = false;
 			running = null;
 			job.submit();
 			job.setProperty(SPIM_OUTPUT_FILENAME_PATTERN, outputName);
-		
+
 		}
 
 		public JobState getState() {
@@ -111,7 +110,6 @@ public class BenchmarkJobManager implements Closeable{
 			job.stopUploadData();
 		}
 
-		
 		public synchronized CompletableFuture<JobState> getStateAsync(Executor executor) {
 			if (running != null) {
 				return running;
@@ -126,12 +124,12 @@ public class BenchmarkJobManager implements Closeable{
 		public void startDownload() throws IOException {
 			if (job.getState() == JobState.Finished) {
 				String filePattern = job.getProperty(SPIM_OUTPUT_FILENAME_PATTERN);
-				job.startDownload(downloadFinishedData(filePattern) );
+				job.startDownload(downloadFinishedData(filePattern));
 			} else if (job.getState() == JobState.Failed || job.getState() == JobState.Canceled) {
 				job.startDownload(downloadFailedData());
 			}
 		}
-		
+
 		public boolean canBeDownloaded() {
 			return job.canBeDownloaded();
 		}
@@ -390,7 +388,8 @@ public class BenchmarkJobManager implements Closeable{
 		private SPIMComputationAccessor getComputationAccessor() {
 			SPIMComputationAccessor result = new SPIMComputationAccessor() {
 
-				private final HaaSOutputHolder outputOfSnakemake = new HaaSOutputHolderImpl(list -> job.getOutput(list));
+				private final HaaSOutputHolder outputOfSnakemake = new HaaSOutputHolderImpl(
+						list -> job.getOutput(list));
 
 				@Override
 				public List<String> getActualOutput(List<SynchronizableFileType> content) {
@@ -429,7 +428,7 @@ public class BenchmarkJobManager implements Closeable{
 		public void setDownloaded(Boolean val) {
 			job.setDownloaded(val);
 		}
-		
+
 		public void setUploaded(boolean b) {
 			job.setUploaded(b);
 		}
@@ -459,9 +458,12 @@ public class BenchmarkJobManager implements Closeable{
 		jobManager = new JobManager(params.workingDirectory(), constructSettingsFromParams(params));
 	}
 
-	public BenchmarkJob createJob(Function<Path, Path> inputDirectoryProvider,Function<Path, Path> outputDirectoryProvider) throws IOException {
+	public BenchmarkJob createJob(Function<Path, Path> inputDirectoryProvider,
+			Function<Path, Path> outputDirectoryProvider) throws IOException {
 		Job job = jobManager.createJob(inputDirectoryProvider, outputDirectoryProvider);
-		job.storeDataInWorkdirectory(getUploadingFile());
+		if (job.isUseDemoData()) {
+			job.storeDataInWorkdirectory(getConfigYamlFile());
+		}
 		return convertJob(job);
 	}
 
@@ -574,8 +576,8 @@ public class BenchmarkJobManager implements Closeable{
 	public void close() {
 		jobManager.close();
 	}
-	
-	private UploadingFile getUploadingFile() {
+
+	private UploadingFile getConfigYamlFile() {
 		return new UploadingFileFromResource("", Constants.CONFIG_YAML);
 	}
 
