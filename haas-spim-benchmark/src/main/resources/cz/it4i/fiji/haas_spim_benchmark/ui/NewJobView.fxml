@@ -27,12 +27,12 @@
                                     <ToggleGroup fx:id="tg_inputDataLocation" />
                                  </toggleGroup>
                                  <graphic>
-                                    <Label maxHeight="1.7976931348623157E308" text="Demonstration data" />
+                                    <Label maxHeight="1.7976931348623157E308" text="Demonstration data on IT4I cluster" />
                                  </graphic>
                               </RadioButton>
                               <RadioButton maxHeight="1.7976931348623157E308" mnemonicParsing="false" toggleGroup="$tg_inputDataLocation">
                                  <graphic>
-                                    <Label maxHeight="1.7976931348623157E308" text="Working directory" />
+                                    <Label maxHeight="1.7976931348623157E308" text="Job subdirectory" />
                                  </graphic>
                               </RadioButton>
                               <RadioButton fx:id="rb_ownInput" mnemonicParsing="false" toggleGroup="$tg_inputDataLocation">
@@ -64,7 +64,7 @@
                                           <ToggleGroup fx:id="tg_outputDataLocation" />
                                        </toggleGroup>
                                        <graphic>
-                                          <Label maxHeight="1.7976931348623157E308" text="Working directory" />
+                                          <Label maxHeight="1.7976931348623157E308" text="Job subdirectory" />
                                        </graphic>
                                     </RadioButton>
                                  </children>
