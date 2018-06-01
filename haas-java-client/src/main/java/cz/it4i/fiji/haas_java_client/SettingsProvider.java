@@ -1,6 +1,6 @@
 package cz.it4i.fiji.haas_java_client;
 
-interface SettingsProvider {
+public interface SettingsProvider {
 	
 	static Settings getSettings(long templateId, int timeOut, long clusterNodeType, String projectId, String configFileName) {
 		Constants constants = new Constants(configFileName);
