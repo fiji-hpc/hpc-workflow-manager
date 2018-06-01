@@ -25,7 +25,7 @@ public class TestHaaSJavaClient {
 		Map<String, String> params = new HashMap<>();
 		params.put("inputParam", "someStringParam");
 		Path baseDir = Paths.get("/home/koz01/aaa");
-		HaaSClient client = new HaaSClient(TestingConstants.getSettings(1l, 600, 7l, "DD-17-31"));
+		HaaSClient client = new HaaSClient(SettingsProvider.getSettings(1l, 600, 7l, "DD-17-31", TestingConstants.CONFIGURATION_FILE_NAME));
 		long jobId = client.createJob("TestOutRedirect", params.entrySet());
 		try (HaaSFileTransfer tr = client.startFileTransfer(jobId, HaaSClient.DUMMY_TRANSFER_FILE_PROGRESS)) {
 			tr.upload(new UploadingFileImpl(Paths.get("/home/koz01/aaa/vecmath.jar")));

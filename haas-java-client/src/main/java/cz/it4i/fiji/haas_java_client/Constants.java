@@ -3,8 +3,8 @@ package cz.it4i.fiji.haas_java_client;
 class Constants extends Configuration{
 
 	
-	public Constants() {
-		super("configuration.properties");
+	public Constants(String configFileName) {
+		super(configFileName);
 	}
 
 	public String getUserName() {

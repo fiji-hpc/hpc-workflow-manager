@@ -1,9 +1,9 @@
 package cz.it4i.fiji.haas_java_client;
 
-interface TestingConstants {
+interface SettingsProvider {
 	
-	static Settings getSettings(long templateId, int timeOut, long clusterNodeType, String projectId) {
-		Constants constants = new Constants();
+	static Settings getSettings(long templateId, int timeOut, long clusterNodeType, String projectId, String configFileName) {
+		Constants constants = new Constants(configFileName);
 		return new Settings() {
 			
 			@Override
