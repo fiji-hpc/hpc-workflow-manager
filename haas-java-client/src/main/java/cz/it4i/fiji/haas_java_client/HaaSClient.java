@@ -220,6 +220,10 @@ public class HaaSClient {
 			throw new HaaSClientException(e);
 		}
 	}
+	
+	public HaaSFileTransfer startFileTransfer(long jobId) {
+		return startFileTransfer(jobId, DUMMY_TRANSFER_FILE_PROGRESS);
+	}
 
 	public void submitJob(long jobId) {
 		try {
