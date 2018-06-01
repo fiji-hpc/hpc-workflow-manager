@@ -3,6 +3,10 @@ package cz.it4i.fiji.haas_java_client;
 public interface SettingsProvider {
 	
 	static Settings getSettings(long templateId, int timeOut, long clusterNodeType, String projectId, String configFileName) {
+		return getSettings(templateId, timeOut, clusterNodeType, projectId, 1, configFileName);
+	}
+	
+	static Settings getSettings(long templateId, int timeOut, long clusterNodeType, String projectId, int numberOfNodes,String configFileName) {
 		Constants constants = new Constants(configFileName);
 		return new Settings() {
 			
@@ -49,6 +53,11 @@ public interface SettingsProvider {
 			@Override
 			public String getJobName() {
 				return "TestOutRedirect";
+			}
+
+			@Override
+			public int getNumberOfNodes() {
+				return numberOfNodes;
 			}
 		};
 	}

@@ -15,6 +15,7 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import javax.xml.rpc.ServiceException;
 
@@ -193,12 +194,15 @@ public class HaaSClient {
 	
 	private final Settings settings;
 
+	private final int numberOfNodes;
+
 	public HaaSClient(Settings settings) {
 		this.settings = settings;
 		this.templateId = settings.getTemplateId();
 		this.timeOut = settings.getTimeout();
 		this.clusterNodeType = settings.getClusterNodeType();
 		this.projectId = settings.getProjectId();
+		this.numberOfNodes = settings.getNumberOfNodes();
 	}
 
 	public long createJob(String name, Collection<Entry<String, String>> templateParameters) {
@@ -315,8 +319,10 @@ public class HaaSClient {
 
 	private long doCreateJob(String name, Collection<Entry<String, String>> templateParameters)
 			throws RemoteException, ServiceException {
-		TaskSpecificationExt taskSpec = createTaskSpecification(name, templateId, templateParameters);
-		JobSpecificationExt jobSpecification = createJobSpecification(name, Arrays.asList(taskSpec));
+		Collection<TaskSpecificationExt> taskSpec = IntStream.range(0, numberOfNodes)
+				.mapToObj(index -> createTaskSpecification(name + ": " + index, templateId, templateParameters))
+				.collect(Collectors.toList());
+		JobSpecificationExt jobSpecification = createJobSpecification(name, taskSpec);
 		SubmittedJobInfoExt job = getJobManagement().createJob(jobSpecification, getSessionID());
 		return job.getId();
 	}
@@ -344,6 +350,7 @@ public class HaaSClient {
 		testJob.setClusterNodeTypeId(clusterNodeType);
 		testJob.setEnvironmentVariables(new EnvironmentVariableExt[0]);
 		testJob.setTasks(tasks.stream().toArray(TaskSpecificationExt[]::new));
+		
 		return testJob;
 	}
 
@@ -370,7 +377,6 @@ public class HaaSClient {
 		testTask.setTemplateParameterValues(templateParameters.stream()
 				.map(pair -> new CommandTemplateParameterValueExt(pair.getKey(), pair.getValue()))
 				.toArray(CommandTemplateParameterValueExt[]::new));
-
 		return testTask;
 	}
 
