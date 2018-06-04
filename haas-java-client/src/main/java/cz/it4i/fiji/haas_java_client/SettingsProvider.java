@@ -6,7 +6,7 @@ public interface SettingsProvider {
 		return getSettings(templateId, timeOut, clusterNodeType, projectId, 1, configFileName);
 	}
 	
-	static Settings getSettings(long templateId, int timeOut, long clusterNodeType, String projectId, int numberOfNodes,String configFileName) {
+	static Settings getSettings(long templateId, int timeOut, long clusterNodeType, String projectId, int numberOfCores,String configFileName) {
 		Constants constants = new Constants(configFileName);
 		return new Settings() {
 			
@@ -56,8 +56,8 @@ public interface SettingsProvider {
 			}
 
 			@Override
-			public int getNumberOfNodes() {
-				return numberOfNodes;
+			public int getNumberOfCoresPerNode() {
+				return numberOfCores;
 			}
 		};
 	}

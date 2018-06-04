@@ -10,5 +10,5 @@ public interface Settings {
 	long getClusterNodeType();
 	String getProjectId();
 	String getJobName();
-	int getNumberOfNodes();
+	int getNumberOfCoresPerNode();
 }

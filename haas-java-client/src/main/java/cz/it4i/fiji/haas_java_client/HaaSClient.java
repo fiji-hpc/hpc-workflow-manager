@@ -15,7 +15,6 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import javax.xml.rpc.ServiceException;
 
@@ -194,7 +193,7 @@ public class HaaSClient {
 	
 	private final Settings settings;
 
-	private final int numberOfNodes;
+	private final int numberOfCoresPerNodes;
 
 	public HaaSClient(Settings settings) {
 		this.settings = settings;
@@ -202,15 +201,19 @@ public class HaaSClient {
 		this.timeOut = settings.getTimeout();
 		this.clusterNodeType = settings.getClusterNodeType();
 		this.projectId = settings.getProjectId();
-		this.numberOfNodes = settings.getNumberOfNodes();
+		this.numberOfCoresPerNodes = settings.getNumberOfCoresPerNode();
 	}
 
-	public long createJob(String name, Collection<Entry<String, String>> templateParameters) {
+	public long createJob(String name,int numberOfNodes, Collection<Entry<String, String>> templateParameters) {
 		try {
-			return doCreateJob(name, templateParameters);
+			return doCreateJob(name, numberOfNodes, templateParameters);
 		} catch (RemoteException | ServiceException e) {
 			throw new RuntimeException(e);
 		}
+	}
+	
+	public long createJob(String name, Collection<Entry<String, String>> templateParameters) {
+		return createJob(name, 1, templateParameters);
 	}
 
 	public HaaSFileTransfer startFileTransfer(long jobId, TransferFileProgress notifier) {
@@ -321,12 +324,11 @@ public class HaaSClient {
 		getJobManagement().submitJob(jobId, getSessionID());
 	}
 
-	private long doCreateJob(String name, Collection<Entry<String, String>> templateParameters)
+	private long doCreateJob(String name, int numberOfNodes, Collection<Entry<String, String>> templateParameters)
 			throws RemoteException, ServiceException {
-		Collection<TaskSpecificationExt> taskSpec = IntStream.range(0, numberOfNodes)
-				.mapToObj(index -> createTaskSpecification(name + ": " + index, templateId, templateParameters))
-				.collect(Collectors.toList());
-		JobSpecificationExt jobSpecification = createJobSpecification(name, taskSpec);
+		Collection<TaskSpecificationExt> taskSpec = Arrays
+				.asList(createTaskSpecification(name + ": ", templateId, numberOfNodes, templateParameters));
+		JobSpecificationExt jobSpecification = createJobSpecification(name, numberOfNodes, taskSpec);
 		SubmittedJobInfoExt job = getJobManagement().createJob(jobSpecification, getSessionID());
 		return job.getId();
 	}
@@ -337,11 +339,11 @@ public class HaaSClient {
 		return new ScpClient(fileTransfer.getServerHostname(), fileTransfer.getCredentials().getUsername(), pvtKey);
 	}
 
-	private JobSpecificationExt createJobSpecification(String name, Collection<TaskSpecificationExt> tasks) {
+	private JobSpecificationExt createJobSpecification(String name, int numberOfNodes, Collection<TaskSpecificationExt> tasks) {
 		JobSpecificationExt testJob = new JobSpecificationExt();
 		testJob.setName(name);
-		testJob.setMinCores(1);
-		testJob.setMaxCores(1);
+		testJob.setMinCores(numberOfCoresPerNodes * numberOfNodes);
+		testJob.setMaxCores(numberOfCoresPerNodes * numberOfNodes);
 		testJob.setPriority(JobPriorityExt.Average);
 		testJob.setProject(projectId);
 		testJob.setWaitingLimit(null);
@@ -359,12 +361,12 @@ public class HaaSClient {
 	}
 
 	private TaskSpecificationExt createTaskSpecification(String name, long templateId,
-			Collection<Entry<String, String>> templateParameters) {
+			int numberOfNodes, Collection<Entry<String, String>> templateParameters) {
 
 		TaskSpecificationExt testTask = new TaskSpecificationExt();
 		testTask.setName(name);
-		testTask.setMinCores(1);
-		testTask.setMaxCores(1);
+		testTask.setMinCores(numberOfCoresPerNodes * numberOfNodes);
+		testTask.setMaxCores(numberOfCoresPerNodes * numberOfNodes);
 		testTask.setWalltimeLimit(timeOut);
 		testTask.setRequiredNodes(null);
 		testTask.setIsExclusive(false);
