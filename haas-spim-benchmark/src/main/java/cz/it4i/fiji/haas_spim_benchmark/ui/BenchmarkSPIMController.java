@@ -107,7 +107,7 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 			job.getValue().startJob(p);
 			job.getValue().update();
 		}), job -> JavaFXRoutines.notNullValue(job, j -> j.getState() == JobState.Configuring
-				|| j.getState() == JobState.Finished || j.getState() == JobState.Failed));
+				|| j.getState() == JobState.Finished || j.getState() == JobState.Failed || j.getState() == JobState.Canceled));
 
 		menu.addItem("Cancel job", job -> executeWSCallAsync("Canceling job", p -> {
 			job.getValue().cancelJob();
