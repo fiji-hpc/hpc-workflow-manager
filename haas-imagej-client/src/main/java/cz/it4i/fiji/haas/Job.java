@@ -36,6 +36,15 @@ import cz.it4i.fiji.scpclient.TransferFileProgress;
  */
 public class Job {
 
+	public static boolean isValidJobPath(Path path) {
+		try {
+			getJobId(path);
+		} catch (NumberFormatException e) {
+			return false;
+		}
+		return Files.isRegularFile(path.resolve(JOB_INFO_FILENAME));
+	}
+
 	private static final String JOB_NAME = "job.name";
 
 	private static final String JOB_NEEDS_UPLOAD = "job.needs_upload";
@@ -49,15 +58,6 @@ public class Job {
 	private static final String JOB_IS_DOWNLOADED = "job.downloaded";
 	
 	private static final String JOB_IS_UPLOADED = "job.uploaded";
-
-	public static boolean isValidJobPath(Path path) {
-		try {
-			getJobId(path);
-		} catch (NumberFormatException e) {
-			return false;
-		}
-		return Files.isRegularFile(path.resolve(JOB_INFO_FILENAME));
-	}
 
 	private static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas.Job.class);
 
@@ -318,9 +318,9 @@ public class Job {
 		return jobDir;
 	}
 
-	public boolean remove() {
+	public boolean delete() {
 		boolean result;
-		if ((result = jobManager.remove(this)) && Files.isDirectory(jobDir)) {
+		if ((result = jobManager.deleteJob(this)) && Files.isDirectory(jobDir)) {
 			List<Path> pathsToDelete;
 			try {
 				pathsToDelete = Files.walk(jobDir).sorted(Comparator.reverseOrder()).collect(Collectors.toList());

@@ -126,9 +126,9 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 
 		menu.addItem("Upload data", job -> executeWSCallAsync("Uploading data", p -> job.getValue().startUpload()),
 				job -> executeWSCallAsync("Stop uploading data", p -> job.getValue().stopUpload()),
-				job -> JavaFXRoutines.notNullValue(job, j -> !EnumSet.of(JobState.Running).contains(j.getState())),
+				job -> JavaFXRoutines.notNullValue(job,
+						j -> !EnumSet.of(JobState.Running, JobState.Disposed).contains(j.getState())),
 				job -> job.getUploadProgress().isWorking());
-		
 		
 		menu.addItem("Download result",
 				job -> executeWSCallAsync("Downloading data", p -> job.getValue().startDownload()),
@@ -146,6 +146,13 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 				job -> JavaFXRoutines.notNullValue(job, j -> j.getState().equals(JobState.Failed)));
 
 		menu.addItem("Open working directory", j -> open(j.getValue()), x -> JavaFXRoutines.notNullValue(x, j -> true));
+		
+		menu.addItem("Delete", j -> deleteJob(j.getValue()), x -> JavaFXRoutines.notNullValue(x, j -> true));
+	}
+
+	private void deleteJob(BenchmarkJob bj) {
+		bj.delete();
+		registry.update();
 	}
 
 	private void open(BenchmarkJob j) {
@@ -242,7 +249,6 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 
 	private void remove(BenchmarkJob bj) {
 		jobs.getItems().remove(registry.get(bj));
-		bj.remove();
 	}
 
 	private void setCellValueFactory(int index, Function<BenchmarkJob, String> mapper) {

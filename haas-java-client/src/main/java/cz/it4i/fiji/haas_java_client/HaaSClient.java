@@ -298,6 +298,14 @@ public class HaaSClient {
 		}
 	}
 
+	public void deleteJob(long id) {
+		try {
+			getJobManagement().deleteJob(id, getSessionID());
+		} catch (RemoteException | ServiceException e) {
+			throw new HaaSClientException(e);
+		}
+	}
+
 	private HaaSFileTransferImp getFileTransferMethod(long jobId, TransferFileProgress progress)
 			throws RemoteException, UnsupportedEncodingException, ServiceException, JSchException {
 		P_FileTransferPool pool = filetransferPoolMap.computeIfAbsent(jobId, id -> new P_FileTransferPool(id));

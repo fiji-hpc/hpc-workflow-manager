@@ -18,7 +18,7 @@ import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
 public class JobManager implements Closeable {
 
 	interface JobManager4Job {
-		boolean remove(Job job);
+		boolean deleteJob(Job job);
 	}
 
 	private static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas.JobManager.class);
@@ -34,7 +34,8 @@ public class JobManager implements Closeable {
 	private final JobManager4Job remover = new JobManager4Job() {
 
 		@Override
-		public boolean remove(Job job) {
+		public boolean deleteJob(Job job) {
+			haasClient.deleteJob(job.getId());
 			return jobs.remove(job);
 		}
 	};

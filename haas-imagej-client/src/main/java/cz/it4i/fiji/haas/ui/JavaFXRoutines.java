@@ -28,7 +28,7 @@ public interface JavaFXRoutines {
 			void accept(TableCell<?, ?> cell, B value, boolean empty);
 		}
 
-		private TableCellUpdater<S, T> updater;
+		private final TableCellUpdater<S, T> updater;
 
 		public TableCellAdapter(TableCellUpdater<S, T> updater) {
 			this.updater = updater;
@@ -36,14 +36,18 @@ public interface JavaFXRoutines {
 
 		@Override
 		protected void updateItem(T item, boolean empty) {
-			updater.accept(this, item, empty);
+			if(empty) {
+				this.setText("");
+			} else {
+				updater.accept(this, item, empty);
+			}
 		}
 	}
 
 	static public class FutureValueUpdater<S, T, U extends CompletableFuture<T>> implements TableCellUpdater<S, U> {
 
-		private TableCellUpdater<S, T> inner;
-		private Executor executor;
+		private final TableCellUpdater<S, T> inner;
+		private final Executor executor;
 
 		public FutureValueUpdater(TableCellUpdater<S, T> inner, Executor exec) {
 			this.inner = inner;

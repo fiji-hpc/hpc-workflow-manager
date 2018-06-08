@@ -205,8 +205,8 @@ public class BenchmarkJobManager implements Closeable{
 			return computationAccessor.getActualOutput(Arrays.asList(SynchronizableFileType.StandardErrorFile)).get(0);
 		}
 
-		public boolean remove() {
-			return job.remove();
+		public boolean delete() {
+			return job.delete();
 		}
 
 		public void cancelJob() {
@@ -221,6 +221,34 @@ public class BenchmarkJobManager implements Closeable{
 		public void resumeTransfer() {
 			job.resumeDownload();
 			job.resumeUpload();
+		}
+
+		public void setDownloaded(Boolean val) {
+			job.setDownloaded(val);
+		}
+
+		public void setUploaded(boolean b) {
+			job.setUploaded(b);
+		}
+
+		public boolean isDownloaded() {
+			return job.isDownloaded();
+		}
+
+		public boolean isUploaded() {
+			return job.isUploaded();
+		}
+
+		public void stopDownload() {
+			job.stopDownloadData();
+		}
+
+		public boolean needsDownload() {
+			return job.needsDownload();
+		}
+
+		public boolean needsUpload() {
+			return job.needsUpload();
 		}
 
 		@Override
@@ -419,34 +447,6 @@ public class BenchmarkJobManager implements Closeable{
 			getTasks();
 			Stream<BenchmarkError> taskSpecificErrors = tasks.stream().flatMap(s -> s.getErrors().stream());
 			return Stream.concat(nonTaskSpecificErrors.stream(), taskSpecificErrors).collect(Collectors.toList());
-		}
-
-		public void setDownloaded(Boolean val) {
-			job.setDownloaded(val);
-		}
-		
-		public void setUploaded(boolean b) {
-			job.setUploaded(b);
-		}
-
-		public boolean isDownloaded() {
-			return job.isDownloaded();
-		}
-
-		public boolean isUploaded() {
-			return job.isUploaded();
-		}
-
-		public void stopDownload() {
-			job.stopDownloadData();
-		}
-
-		public boolean needsDownload() {
-			return job.needsDownload();
-		}
-
-		public boolean needsUpload() {
-			return job.needsUpload();
 		}
 	}
 
