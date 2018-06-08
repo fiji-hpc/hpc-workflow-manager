@@ -3,6 +3,7 @@ package cz.it4i.fiji.haas_spim_benchmark.ui;
 import java.awt.Desktop;
 import java.awt.Window;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -50,21 +51,21 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 	private TableView<ObservableBenchmarkJob> jobs;
 
 	private final BenchmarkJobManager manager;
-	
+
 	private final ExecutorService executorServiceJobState = Executors.newWorkStealingPool();
-	
+
 	private final Executor executorServiceFX = new FXFrameExecutorService();
-	
+
 	private Window root;
 
 	private ExecutorService executorServiceUI;
-	
+
 	private ExecutorService executorServiceWS;
-	
+
 	private Timer timer;
-	
+
 	private ObservableBenchmarkJobRegistry registry;
-	
+
 	private static Logger log = LoggerFactory
 			.getLogger(cz.it4i.fiji.haas_spim_benchmark.ui.BenchmarkSPIMController.class);
 
@@ -102,7 +103,7 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 
 	private void initMenu() {
 		TableViewContextMenu<ObservableBenchmarkJob> menu = new TableViewContextMenu<>(jobs);
-		menu.addItem("Create job", x -> executeWSCallAsync("Creating job", p -> manager.createJob()), j -> true);
+		menu.addItem("Create job", x -> askForCreateJob(), j -> true);
 		menu.addItem("Start job", job -> executeWSCallAsync("Starting job", p -> {
 			job.getValue().startJob(p);
 			job.getValue().update();
@@ -112,7 +113,8 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 		menu.addItem("Cancel job", job -> executeWSCallAsync("Canceling job", p -> {
 			job.getValue().cancelJob();
 			job.getValue().update();
-		}), job -> JavaFXRoutines.notNullValue(job, j -> j.getState() == JobState.Running || j.getState() == JobState.Queued ));
+		}), job -> JavaFXRoutines.notNullValue(job,
+				j -> j.getState() == JobState.Running || j.getState() == JobState.Queued));
 
 		menu.addItem("Execution details", job -> {
 			try {
@@ -127,15 +129,15 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 		menu.addItem("Upload data", job -> executeWSCallAsync("Uploading data", p -> job.getValue().startUpload()),
 				job -> executeWSCallAsync("Stop uploading data", p -> job.getValue().stopUpload()),
 				job -> JavaFXRoutines.notNullValue(job,
-						j -> !EnumSet.of(JobState.Running, JobState.Disposed).contains(j.getState())),
+						j -> !j.isUseDemoData() && !EnumSet.of(JobState.Running, JobState.Disposed).contains(j.getState())),
 				job -> job.getUploadProgress().isWorking());
-		
 		menu.addItem("Download result",
 				job -> executeWSCallAsync("Downloading data", p -> job.getValue().startDownload()),
 				job -> executeWSCallAsync("Stop downloading data", p -> job.getValue().stopDownload()),
-				job -> JavaFXRoutines.notNullValue(job,
-						j -> EnumSet.of(JobState.Failed, JobState.Finished, JobState.Canceled).contains(j.getState())
-								&& j.canBeDownloaded()),
+				job -> JavaFXRoutines
+						.notNullValue(job,
+								j -> EnumSet.of(JobState.Failed, JobState.Finished, JobState.Canceled)
+										.contains(j.getState()) && j.canBeDownloaded()),
 				job -> job.getDownloadProgress().isWorking());
 
 		menu.addItem("Download statistics",
@@ -153,6 +155,24 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 	private void deleteJob(BenchmarkJob bj) {
 		bj.delete();
 		registry.update();
+	}
+
+	private void askForCreateJob() {
+		NewJobWindow newJobWindow = new NewJobWindow(null);
+		ModalDialogs.doModal(newJobWindow, WindowConstants.DISPOSE_ON_CLOSE);
+		newJobWindow.setCreatePressedNotifier(() -> executeWSCallAsync("Creating job", false,p -> doCreateJob(wd -> newJobWindow.getInputDirectory(wd), wd -> newJobWindow.getOutputDirectory(wd))));
+
+	}
+
+	private void doCreateJob(Function<Path,Path> inputProvider, Function<Path,Path> outputProvider) throws IOException {
+		BenchmarkJob bj = manager.createJob(inputProvider, outputProvider);
+		ObservableBenchmarkJob obj = registry.addIfAbsent(bj);
+		addJobToItems(obj);
+		jobs.refresh();
+	}
+
+	private synchronized void addJobToItems(ObservableBenchmarkJob obj) {
+		jobs.getItems().add(obj);
 	}
 
 	private void open(BenchmarkJob j) {
@@ -181,8 +201,9 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 			}
 			return null;
 		}, x -> {
-			if (update)
+			if (update) {
 				updateJobs();
+			}
 		});
 	}
 
@@ -208,11 +229,11 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 				}
 				registry.update();
 				Set<ObservableValue<BenchmarkJob>> actual = new HashSet<>(this.jobs.getItems());
-				
+
 				executorServiceFX.execute(() -> {
 					for (ObservableBenchmarkJob value : registry.getAllItems()) {
 						if (!actual.contains(value)) {
-							this.jobs.getItems().add(value);
+							addJobToItems(value);
 						}
 					}
 				});
@@ -258,12 +279,10 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 	@SuppressWarnings("unchecked")
 	private void setCellValueFactoryCompletable(int index, Function<BenchmarkJob, CompletableFuture<String>> mapper) {
 		JavaFXRoutines.setCellValueFactory(jobs, index, mapper);
-		((TableColumn<ObservableBenchmarkJob, CompletableFuture<String>>) jobs.getColumns().get(index))
-				.setCellFactory(
-						column -> new JavaFXRoutines.TableCellAdapter<ObservableBenchmarkJob, CompletableFuture<String>>(
-								new JavaFXRoutines.FutureValueUpdater<ObservableBenchmarkJob, String, CompletableFuture<String>>(
-										new JavaFXRoutines.StringValueUpdater<ObservableBenchmarkJob>(),
-										executorServiceFX)));
+		((TableColumn<ObservableBenchmarkJob, CompletableFuture<String>>) jobs.getColumns().get(index)).setCellFactory(
+				column -> new JavaFXRoutines.TableCellAdapter<ObservableBenchmarkJob, CompletableFuture<String>>(
+						new JavaFXRoutines.FutureValueUpdater<ObservableBenchmarkJob, String, CompletableFuture<String>>(
+								new JavaFXRoutines.StringValueUpdater<ObservableBenchmarkJob>(), executorServiceFX)));
 	}
 
 	private interface P_JobAction {
