@@ -335,7 +335,7 @@ public class HaaSClient {
 	private long doCreateJob(String name, int numberOfNodes, Collection<Entry<String, String>> templateParameters)
 			throws RemoteException, ServiceException {
 		Collection<TaskSpecificationExt> taskSpec = Arrays
-				.asList(createTaskSpecification(name + ": ", templateId, numberOfNodes, templateParameters));
+				.asList(createTaskSpecification(name + "-task", templateId, numberOfNodes, templateParameters));
 		JobSpecificationExt jobSpecification = createJobSpecification(name, numberOfNodes, taskSpec);
 		SubmittedJobInfoExt job = getJobManagement().createJob(jobSpecification, getSessionID());
 		return job.getId();
