@@ -52,5 +52,6 @@ public interface Constants {
 	String STATISTICS_SUMMARY_FILENAME = "summary.csv";
 	String SUMMARY_FILE_HEADER = "Task;AvgMemoryUsage;AvgWallTime;MaxWallTime;TotalTime;JobCount";
 	String DONE_TASK = "done";
+	int CORES_PER_NODE = 24;
 	
 }

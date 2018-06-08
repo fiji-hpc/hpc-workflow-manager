@@ -688,6 +688,11 @@ public class BenchmarkJobManager implements Closeable{
 			public long getClusterNodeType() {
 				return Constants.HAAS_CLUSTER_NODE_TYPE;
 			}
+
+			@Override
+			public int getNumberOfCoresPerNode() {
+				return Constants.CORES_PER_NODE;
+			}
 		};
 	}
 
