@@ -437,7 +437,7 @@ public class Job {
 						setDownloaded(true);
 						setProperty(JOB_NEEDS_DOWNLOAD, false);
 						setCanBeDownloaded(false);
-					});
+					}, p -> jobManager.canUpload(Job.this, p));
 		} catch (IOException e) {
 			log.error(e.getMessage(), e);
 			throw new RuntimeException(e);

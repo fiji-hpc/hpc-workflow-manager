@@ -25,6 +25,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Scanner;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -252,13 +253,12 @@ public class BenchmarkJobManager implements Closeable {
 		public boolean needsUpload() {
 			return job.needsUpload();
 		}
-		
 
 		@Override
 		public String toString() {
 			return "" + getId();
 		}
-		
+
 		public void storeDataInWorkdirectory(UploadingFile file) throws IOException {
 			job.storeDataInWorkdirectory(file);
 		}
@@ -460,11 +460,12 @@ public class BenchmarkJobManager implements Closeable {
 			Stream<BenchmarkError> taskSpecificErrors = tasks.stream().flatMap(s -> s.getErrors().stream());
 			return Stream.concat(nonTaskSpecificErrors.stream(), taskSpecificErrors).collect(Collectors.toList());
 		}
-		
+
 	}
 
 	public BenchmarkJobManager(BenchmarkSPIMParameters params) throws IOException {
 		jobManager = new JobManager(params.workingDirectory(), constructSettingsFromParams(params));
+		jobManager.setUploadFilter(this::canUpload);
 	}
 
 	public BenchmarkJob createJob(Function<Path, Path> inputDirectoryProvider,
@@ -583,7 +584,10 @@ public class BenchmarkJobManager implements Closeable {
 		jobManager.close();
 	}
 
-	
+	private boolean canUpload(Job job, Path p) {
+		return job.getInputDirectory() == null || !p.equals(job.getInputDirectory().resolve(Constants.CONFIG_YAML));
+	}
+
 	private BenchmarkJob convertJob(Job job) {
 		return new BenchmarkJob(job);
 	}
@@ -591,9 +595,9 @@ public class BenchmarkJobManager implements Closeable {
 	private String getOutputName(InputStream openLocalFile) throws IOException {
 		try (InputStream is = openLocalFile) {
 			Yaml yaml = new Yaml();
-
 			Map<String, Map<String, String>> map = yaml.load(is);
-			String result = map.get("common").get("hdf5_xml_filename");
+			String result = Optional.ofNullable(map).map(m -> m.get("common")).map(m -> m.get("hdf5_xml_filename"))
+					.orElse(null);
 			if (result == null) {
 				throw new IllegalArgumentException("hdf5_xml_filename not found");
 			}

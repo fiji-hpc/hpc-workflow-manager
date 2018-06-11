@@ -12,6 +12,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -48,14 +49,10 @@ public class Synchronization implements Closeable {
 
 	private final ExecutorService service;
 
-//	public Synchronization(Supplier<HaaSFileTransfer> fileTransferSupplier, Path workingDirectory,
-//			Runnable uploadFinishedNotifier, Runnable downloadFinishedNotifier) throws IOException {
-//		this(fileTransferSupplier, workingDirectory, workingDirectory, workingDirectory, uploadFinishedNotifier,
-//				downloadFinishedNotifier);
-//	}
-	
+	private final Predicate<Path> uploadFilter;
+
 	public Synchronization(Supplier<HaaSFileTransfer> fileTransferSupplier, Path workingDirectory, Path inputDirectory,
-			Path outputDirectory, Runnable uploadFinishedNotifier, Runnable downloadFinishedNotifier)
+			Path outputDirectory, Runnable uploadFinishedNotifier, Runnable downloadFinishedNotifier, Predicate<Path> uploadFilter)
 			throws IOException {
 		this.workingDirectory = workingDirectory;
 		this.inputDirectory = inputDirectory;
@@ -65,6 +62,7 @@ public class Synchronization implements Closeable {
 				name -> Paths.get(name));
 		this.uploadProcess = createUploadProcess(fileTransferSupplier, service, uploadFinishedNotifier);
 		this.downloadProcess = createDownloadProcess(fileTransferSupplier, service, downloadFinishedNotifier);
+		this.uploadFilter = uploadFilter;
 	}
 
 	public synchronized void setUploadNotifier(ProgressNotifier notifier) {
@@ -109,8 +107,8 @@ public class Synchronization implements Closeable {
 	}
 
 	private boolean canUpload(Path file) {
-
-		return !file.getFileName().toString().matches("[.][^.]+") && !filesDownloaded.contains(file);
+		return uploadFilter.test(file) && !file.getFileName().toString().matches("[.][^.]+")
+				&& !filesDownloaded.contains(file);
 	}
 
 	private PersistentSynchronizationProcess<Path> createUploadProcess(Supplier<HaaSFileTransfer> fileTransferSupplier,

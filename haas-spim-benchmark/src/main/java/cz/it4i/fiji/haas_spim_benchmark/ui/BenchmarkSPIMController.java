@@ -1,5 +1,7 @@
 package cz.it4i.fiji.haas_spim_benchmark.ui;
 
+import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.CONFIG_YAML;
+
 import java.awt.Desktop;
 import java.awt.Window;
 import java.io.IOException;
@@ -21,7 +23,6 @@ import java.util.function.Function;
 
 import javax.swing.WindowConstants;
 
-import org.apache.commons.lang3.NotImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,9 +44,13 @@ import cz.it4i.fiji.haas_spim_benchmark.core.ObservableBenchmarkJob;
 import cz.it4i.fiji.haas_spim_benchmark.core.ObservableBenchmarkJob.TransferProgress;
 import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.Region;
 import net.imagej.updater.util.Progress;
 
 //FIXME: fix Exception during context menu request on task with N/A state
@@ -171,8 +176,30 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 						BenchmarkJob job = doCreateJob(wd -> newJobWindow.getInputDirectory(wd), wd -> newJobWindow.getOutputDirectory(wd));
 						if (job.isUseDemoData()) {
 							job.storeDataInWorkdirectory(getConfigYamlFile());
-						} else if (Files.exists(job.getInputDirectory().resolve(Constants.CONFIG_YAML))) {
-							throw new NotImplementedException("");
+						} else if (Files.exists(job.getInputDirectory().resolve(CONFIG_YAML))) {
+							executorServiceFX.execute(new Runnable() {
+								
+								@Override
+								public void run() {
+									Alert al = new Alert(AlertType.CONFIRMATION,
+											"Main file \"" + CONFIG_YAML + "\" found in input directory \""
+													+ job.getInputDirectory()
+													+ "\". Would you like to copy it into job subdirectory \""
+													+ job.getDirectory() + "\"?",
+											ButtonType.YES, ButtonType.NO);
+									al.setHeaderText(null);
+									al.setTitle("Copy " + CONFIG_YAML + "?");
+									al.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
+									if (al.showAndWait().get() == ButtonType.YES) {
+										try {
+											Files.copy(job.getInputDirectory().resolve(CONFIG_YAML), job.getDirectory().resolve(CONFIG_YAML));
+										} catch (IOException e) {
+											log.error(e.getMessage(), e);
+										}
+									}
+								}
+							});
+							
 						}
 					}
 				}
