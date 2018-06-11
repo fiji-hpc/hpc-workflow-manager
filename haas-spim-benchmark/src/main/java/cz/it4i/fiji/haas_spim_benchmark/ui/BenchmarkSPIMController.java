@@ -3,6 +3,7 @@ package cz.it4i.fiji.haas_spim_benchmark.ui;
 import java.awt.Desktop;
 import java.awt.Window;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -20,9 +21,11 @@ import java.util.function.Function;
 
 import javax.swing.WindowConstants;
 
+import org.apache.commons.lang3.NotImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import cz.it4i.fiji.haas.UploadingFileFromResource;
 import cz.it4i.fiji.haas.ui.CloseableControl;
 import cz.it4i.fiji.haas.ui.DummyProgress;
 import cz.it4i.fiji.haas.ui.InitiableControl;
@@ -31,6 +34,7 @@ import cz.it4i.fiji.haas.ui.ModalDialogs;
 import cz.it4i.fiji.haas.ui.ProgressDialog;
 import cz.it4i.fiji.haas.ui.TableViewContextMenu;
 import cz.it4i.fiji.haas_java_client.JobState;
+import cz.it4i.fiji.haas_java_client.UploadingFile;
 import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager;
 import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.BenchmarkJob;
 import cz.it4i.fiji.haas_spim_benchmark.core.Constants;
@@ -160,15 +164,33 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 	private void askForCreateJob() {
 		NewJobWindow newJobWindow = new NewJobWindow(null);
 		ModalDialogs.doModal(newJobWindow, WindowConstants.DISPOSE_ON_CLOSE);
-		newJobWindow.setCreatePressedNotifier(() -> executeWSCallAsync("Creating job", false,p -> doCreateJob(wd -> newJobWindow.getInputDirectory(wd), wd -> newJobWindow.getOutputDirectory(wd))));
+		newJobWindow.setCreatePressedNotifier(() -> executeWSCallAsync("Creating job", false,
+				new P_JobAction() {
+					@Override
+					public void doAction(Progress p) throws IOException {
+						BenchmarkJob job = doCreateJob(wd -> newJobWindow.getInputDirectory(wd), wd -> newJobWindow.getOutputDirectory(wd));
+						if (job.isUseDemoData()) {
+							job.storeDataInWorkdirectory(getConfigYamlFile());
+						} else if (Files.exists(job.getInputDirectory().resolve(Constants.CONFIG_YAML))) {
+							throw new NotImplementedException("");
+						}
+					}
+				}
+		));
 
+		
 	}
 
-	private void doCreateJob(Function<Path,Path> inputProvider, Function<Path,Path> outputProvider) throws IOException {
+	private UploadingFile getConfigYamlFile() {
+		return new UploadingFileFromResource("", Constants.CONFIG_YAML);
+	}
+	
+	private BenchmarkJob doCreateJob(Function<Path,Path> inputProvider, Function<Path,Path> outputProvider) throws IOException {
 		BenchmarkJob bj = manager.createJob(inputProvider, outputProvider);
 		ObservableBenchmarkJob obj = registry.addIfAbsent(bj);
 		addJobToItems(obj);
 		jobs.refresh();
+		return bj;
 	}
 
 	private synchronized void addJobToItems(ObservableBenchmarkJob obj) {

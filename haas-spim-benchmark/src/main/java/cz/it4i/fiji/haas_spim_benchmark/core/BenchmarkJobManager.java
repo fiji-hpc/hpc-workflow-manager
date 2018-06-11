@@ -41,7 +41,6 @@ import cz.it4i.fiji.haas.HaaSOutputHolder;
 import cz.it4i.fiji.haas.HaaSOutputHolderImpl;
 import cz.it4i.fiji.haas.Job;
 import cz.it4i.fiji.haas.JobManager;
-import cz.it4i.fiji.haas.UploadingFileFromResource;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.ProgressNotifier;
 import cz.it4i.fiji.haas_java_client.Settings;
@@ -259,6 +258,14 @@ public class BenchmarkJobManager implements Closeable {
 		public String toString() {
 			return "" + getId();
 		}
+		
+		public void storeDataInWorkdirectory(UploadingFile file) throws IOException {
+			job.storeDataInWorkdirectory(file);
+		}
+
+		public Path getInputDirectory() {
+			return job.getInputDirectory();
+		}
 
 		private ProgressNotifier convertTo(Progress progress) {
 			return progress == null ? null : new P_ProgressNotifierAdapter(progress);
@@ -453,6 +460,7 @@ public class BenchmarkJobManager implements Closeable {
 			Stream<BenchmarkError> taskSpecificErrors = tasks.stream().flatMap(s -> s.getErrors().stream());
 			return Stream.concat(nonTaskSpecificErrors.stream(), taskSpecificErrors).collect(Collectors.toList());
 		}
+		
 	}
 
 	public BenchmarkJobManager(BenchmarkSPIMParameters params) throws IOException {
@@ -462,9 +470,6 @@ public class BenchmarkJobManager implements Closeable {
 	public BenchmarkJob createJob(Function<Path, Path> inputDirectoryProvider,
 			Function<Path, Path> outputDirectoryProvider) throws IOException {
 		Job job = jobManager.createJob(inputDirectoryProvider, outputDirectoryProvider);
-		if (job.isUseDemoData()) {
-			job.storeDataInWorkdirectory(getConfigYamlFile());
-		}
 		return convertJob(job);
 	}
 
@@ -578,10 +583,7 @@ public class BenchmarkJobManager implements Closeable {
 		jobManager.close();
 	}
 
-	private UploadingFile getConfigYamlFile() {
-		return new UploadingFileFromResource("", Constants.CONFIG_YAML);
-	}
-
+	
 	private BenchmarkJob convertJob(Job job) {
 		return new BenchmarkJob(job);
 	}

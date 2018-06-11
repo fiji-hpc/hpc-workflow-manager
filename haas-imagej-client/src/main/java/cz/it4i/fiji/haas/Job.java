@@ -394,6 +394,10 @@ public class Job {
 		synchronization.close();
 	}
 
+	public Path getInputDirectory() {
+		return inputDirectory;
+	}
+
 	private void storeInputOutputDirectory() {
 		if (inputDirectory == null) {
 			useDemoData = true;
