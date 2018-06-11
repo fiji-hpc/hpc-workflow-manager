@@ -34,9 +34,9 @@ public class ScpClient implements Closeable {
 	
 	private String hostName;
 	private String username;
-	private JSch jsch = new JSch();
+	private final JSch jsch = new JSch();
 	private Session session;
-	private TransferFileProgress dummyProgress = new TransferFileProgress() {
+	private final TransferFileProgress dummyProgress = new TransferFileProgress() {
 
 		@Override
 		public void dataTransfered(long bytesTransfered) {
@@ -123,7 +123,7 @@ public class ScpClient implements Closeable {
 						}
 						if (buf[0] == ' ')
 							break;
-						filesize = filesize * 10L + (long) (buf[0] - '0');
+						filesize = filesize * 10L + buf[0] - '0';
 					}
 
 					@SuppressWarnings("unused")
@@ -295,7 +295,7 @@ public class ScpClient implements Closeable {
 						}
 						if (buf[0] == ' ')
 							break;
-						filesize = filesize * 10L + (long) (buf[0] - '0');
+						filesize = filesize * 10L + buf[0] - '0';
 					}
 					return filesize;
 
