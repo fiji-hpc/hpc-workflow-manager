@@ -2,7 +2,6 @@ package cz.it4i.fiji.haas_spim_benchmark.ui;
 
 import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.CONFIG_YAML;
 
-import java.awt.Desktop;
 import java.awt.Window;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -33,6 +32,7 @@ import cz.it4i.fiji.haas.ui.InitiableControl;
 import cz.it4i.fiji.haas.ui.JavaFXRoutines;
 import cz.it4i.fiji.haas.ui.ModalDialogs;
 import cz.it4i.fiji.haas.ui.ProgressDialog;
+import cz.it4i.fiji.haas.ui.ShellRoutines;
 import cz.it4i.fiji.haas.ui.TableViewContextMenu;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.UploadingFile;
@@ -54,7 +54,7 @@ import javafx.scene.layout.Region;
 import net.imagej.updater.util.Progress;
 
 //FIXME: fix Exception during context menu request on task with N/A state
-public class BenchmarkSPIMController extends BorderPane implements CloseableControl, InitiableControl {
+public class BenchmarkSPIMControl extends BorderPane implements CloseableControl, InitiableControl {
 
 	@FXML
 	private TableView<ObservableBenchmarkJob> jobs;
@@ -76,9 +76,9 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 	private ObservableBenchmarkJobRegistry registry;
 
 	private static Logger log = LoggerFactory
-			.getLogger(cz.it4i.fiji.haas_spim_benchmark.ui.BenchmarkSPIMController.class);
+			.getLogger(cz.it4i.fiji.haas_spim_benchmark.ui.BenchmarkSPIMControl.class);
 
-	public BenchmarkSPIMController(BenchmarkJobManager manager) {
+	public BenchmarkSPIMControl(BenchmarkJobManager manager) {
 		this.manager = manager;
 		JavaFXRoutines.initRootAndController("BenchmarkSPIM.fxml", this);
 
@@ -132,8 +132,7 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 				log.error(e.getMessage(), e);
 			}
 		}, job -> JavaFXRoutines.notNullValue(job,
-				j -> j.getState() == JobState.Running || j.getState() == JobState.Finished
-						|| j.getState() == JobState.Failed || j.getState() == JobState.Canceled));
+				j -> true));
 
 		menu.addItem("Upload data", job -> executeWSCallAsync("Uploading data", p -> job.getValue().startUpload()),
 				job -> executeWSCallAsync("Stop uploading data", p -> job.getValue().stopUpload()),
@@ -226,12 +225,7 @@ public class BenchmarkSPIMController extends BorderPane implements CloseableCont
 
 	private void open(BenchmarkJob j) {
 		executorServiceUI.execute(() -> {
-			Desktop desktop = Desktop.getDesktop();
-			try {
-				desktop.open(j.getDirectory().toFile());
-			} catch (IOException e) {
-				log.error(e.getMessage(), e);
-			}
+			ShellRoutines.openDirectoryInBrowser(j.getDirectory());
 		});
 	}
 

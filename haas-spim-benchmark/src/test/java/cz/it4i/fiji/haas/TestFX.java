@@ -3,16 +3,15 @@ package cz.it4i.fiji.haas;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
-import cz.it4i.fiji.haas_spim_benchmark.ui.BenchmarkSPIMController;
+import cz.it4i.fiji.haas_spim_benchmark.ui.BenchmarkSPIMControl;
 
 public class TestFX {
 	public static void main(String[] args) {
 		@SuppressWarnings("serial")
-		class Window extends FXFrame<BenchmarkSPIMController>{
+		class Window extends FXFrame<BenchmarkSPIMControl>{
 
 			public Window() {
-				super(()->new BenchmarkSPIMController(null));
-				// TODO Auto-generated constructor stub
+				super(()->new BenchmarkSPIMControl(null));
 			}
 			
 		}
@@ -22,7 +21,6 @@ public class TestFX {
 		window.addWindowListener(new WindowAdapter() {
 			@Override
 			public void windowClosed(WindowEvent e) {
-				// TODO Auto-generated method stub
 				super.windowClosed(e);
 				System.exit(0);
 			}
