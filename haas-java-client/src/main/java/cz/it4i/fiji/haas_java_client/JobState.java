@@ -8,5 +8,6 @@ public enum JobState {
     Running,
     Finished,
     Failed,
-    Canceled;
+    Canceled, 
+    Disposed;
 }

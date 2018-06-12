@@ -25,9 +25,11 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Scanner;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -40,7 +42,6 @@ import cz.it4i.fiji.haas.HaaSOutputHolder;
 import cz.it4i.fiji.haas.HaaSOutputHolderImpl;
 import cz.it4i.fiji.haas.Job;
 import cz.it4i.fiji.haas.JobManager;
-import cz.it4i.fiji.haas.UploadingFileFromResource;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.ProgressNotifier;
 import cz.it4i.fiji.haas_java_client.Settings;
@@ -48,9 +49,8 @@ import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
 import cz.it4i.fiji.haas_java_client.UploadingFile;
 import net.imagej.updater.util.Progress;
 
-public class BenchmarkJobManager implements Closeable{
+public class BenchmarkJobManager implements Closeable {
 
-	
 	private static Logger log = LoggerFactory
 			.getLogger(cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.class);
 
@@ -59,7 +59,11 @@ public class BenchmarkJobManager implements Closeable{
 	public final class BenchmarkJob implements HaaSOutputHolder {
 
 		private final Job job;
-		
+
+		public boolean isUseDemoData() {
+			return job.isUseDemoData();
+		}
+
 		private final List<Task> tasks;
 		private final List<BenchmarkError> nonTaskSpecificErrors;
 		private final SPIMComputationAccessor computationAccessor;
@@ -84,14 +88,14 @@ public class BenchmarkJobManager implements Closeable{
 		}
 
 		public synchronized void startJob(Progress progress) throws IOException {
-			job.uploadFile(Constants.CONFIG_YAML,  new P_ProgressNotifierAdapter(progress));
+			job.uploadFile(Constants.CONFIG_YAML, new P_ProgressNotifierAdapter(progress));
 			String outputName = getOutputName(job.openLocalFile(Constants.CONFIG_YAML));
 			verifiedState = null;
 			verifiedStateProcessed = false;
 			running = null;
 			job.submit();
 			job.setProperty(SPIM_OUTPUT_FILENAME_PATTERN, outputName);
-		
+
 		}
 
 		public JobState getState() {
@@ -106,7 +110,6 @@ public class BenchmarkJobManager implements Closeable{
 			job.stopUploadData();
 		}
 
-		
 		public synchronized CompletableFuture<JobState> getStateAsync(Executor executor) {
 			if (running != null) {
 				return running;
@@ -121,12 +124,12 @@ public class BenchmarkJobManager implements Closeable{
 		public void startDownload() throws IOException {
 			if (job.getState() == JobState.Finished) {
 				String filePattern = job.getProperty(SPIM_OUTPUT_FILENAME_PATTERN);
-				job.startDownload(downloadFinishedData(filePattern) );
+				job.startDownload(downloadFinishedData(filePattern));
 			} else if (job.getState() == JobState.Failed || job.getState() == JobState.Canceled) {
 				job.startDownload(downloadFailedData());
 			}
 		}
-		
+
 		public boolean canBeDownloaded() {
 			return job.canBeDownloaded();
 		}
@@ -205,8 +208,8 @@ public class BenchmarkJobManager implements Closeable{
 			return computationAccessor.getActualOutput(Arrays.asList(SynchronizableFileType.StandardErrorFile)).get(0);
 		}
 
-		public boolean remove() {
-			return job.remove();
+		public boolean delete() {
+			return job.delete();
 		}
 
 		public void cancelJob() {
@@ -223,9 +226,45 @@ public class BenchmarkJobManager implements Closeable{
 			job.resumeUpload();
 		}
 
+		public void setDownloaded(Boolean val) {
+			job.setDownloaded(val);
+		}
+
+		public void setUploaded(boolean b) {
+			job.setUploaded(b);
+		}
+
+		public boolean isDownloaded() {
+			return job.isDownloaded();
+		}
+
+		public boolean isUploaded() {
+			return job.isUploaded();
+		}
+
+		public void stopDownload() {
+			job.stopDownloadData();
+		}
+
+		public boolean needsDownload() {
+			return job.needsDownload();
+		}
+
+		public boolean needsUpload() {
+			return job.needsUpload();
+		}
+
 		@Override
 		public String toString() {
 			return "" + getId();
+		}
+
+		public void storeDataInWorkdirectory(UploadingFile file) throws IOException {
+			job.storeDataInWorkdirectory(file);
+		}
+
+		public Path getInputDirectory() {
+			return job.getInputDirectory();
 		}
 
 		private ProgressNotifier convertTo(Progress progress) {
@@ -385,7 +424,8 @@ public class BenchmarkJobManager implements Closeable{
 		private SPIMComputationAccessor getComputationAccessor() {
 			SPIMComputationAccessor result = new SPIMComputationAccessor() {
 
-				private final HaaSOutputHolder outputOfSnakemake = new HaaSOutputHolderImpl(list -> job.getOutput(list));
+				private final HaaSOutputHolder outputOfSnakemake = new HaaSOutputHolderImpl(
+						list -> job.getOutput(list));
 
 				@Override
 				public List<String> getActualOutput(List<SynchronizableFileType> content) {
@@ -421,42 +461,16 @@ public class BenchmarkJobManager implements Closeable{
 			return Stream.concat(nonTaskSpecificErrors.stream(), taskSpecificErrors).collect(Collectors.toList());
 		}
 
-		public void setDownloaded(Boolean val) {
-			job.setDownloaded(val);
-		}
-		
-		public void setUploaded(boolean b) {
-			job.setUploaded(b);
-		}
-
-		public boolean isDownloaded() {
-			return job.isDownloaded();
-		}
-
-		public boolean isUploaded() {
-			return job.isUploaded();
-		}
-
-		public void stopDownload() {
-			job.stopDownloadData();
-		}
-
-		public boolean needsDownload() {
-			return job.needsDownload();
-		}
-
-		public boolean needsUpload() {
-			return job.needsUpload();
-		}
 	}
 
 	public BenchmarkJobManager(BenchmarkSPIMParameters params) throws IOException {
 		jobManager = new JobManager(params.workingDirectory(), constructSettingsFromParams(params));
+		jobManager.setUploadFilter(this::canUpload);
 	}
 
-	public BenchmarkJob createJob() throws IOException {
-		Job job = jobManager.createJob();
-		job.storeDataInWorkdirectory(getUploadingFile());
+	public BenchmarkJob createJob(Function<Path, Path> inputDirectoryProvider,
+			Function<Path, Path> outputDirectoryProvider) throws IOException {
+		Job job = jobManager.createJob(inputDirectoryProvider, outputDirectoryProvider);
 		return convertJob(job);
 	}
 
@@ -570,8 +584,8 @@ public class BenchmarkJobManager implements Closeable{
 		jobManager.close();
 	}
 
-	private UploadingFile getUploadingFile() {
-		return new UploadingFileFromResource("", Constants.CONFIG_YAML);
+	private boolean canUpload(Job job, Path p) {
+		return job.getInputDirectory() == null || !p.equals(job.getInputDirectory().resolve(Constants.CONFIG_YAML));
 	}
 
 	private BenchmarkJob convertJob(Job job) {
@@ -581,9 +595,9 @@ public class BenchmarkJobManager implements Closeable{
 	private String getOutputName(InputStream openLocalFile) throws IOException {
 		try (InputStream is = openLocalFile) {
 			Yaml yaml = new Yaml();
-
 			Map<String, Map<String, String>> map = yaml.load(is);
-			String result = map.get("common").get("hdf5_xml_filename");
+			String result = Optional.ofNullable(map).map(m -> m.get("common")).map(m -> m.get("hdf5_xml_filename"))
+					.orElse(null);
 			if (result == null) {
 				throw new IllegalArgumentException("hdf5_xml_filename not found");
 			}
@@ -687,6 +701,11 @@ public class BenchmarkJobManager implements Closeable{
 			@Override
 			public long getClusterNodeType() {
 				return Constants.HAAS_CLUSTER_NODE_TYPE;
+			}
+
+			@Override
+			public int getNumberOfCoresPerNode() {
+				return Constants.CORES_PER_NODE;
 			}
 		};
 	}

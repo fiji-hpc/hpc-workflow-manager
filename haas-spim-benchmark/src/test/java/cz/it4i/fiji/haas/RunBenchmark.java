@@ -20,7 +20,7 @@ public class RunBenchmark {
 	public static class CreateJob {
 		public static void main(String[] args) throws IOException {
 			BenchmarkJobManager benchmarkJobManager = new BenchmarkJobManager(getBenchmarkSPIMParameters());
-			BenchmarkJob ji = benchmarkJobManager.createJob();
+			BenchmarkJob ji = benchmarkJobManager.createJob(jd -> jd, jd -> jd);
 			log.info("job: " + ji.getId() + " created.");
 		}
 	}
@@ -41,8 +41,6 @@ public class RunBenchmark {
 			}
 		}
 	}
-
-	
 
 	private static BenchmarkSPIMParameters getBenchmarkSPIMParameters() throws IOException {
 		Path p = Paths.get("/tmp/benchmark");

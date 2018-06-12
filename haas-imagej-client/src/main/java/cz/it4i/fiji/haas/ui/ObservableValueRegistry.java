@@ -30,16 +30,16 @@ public abstract class ObservableValueRegistry<K, V extends UpdatableObservableVa
 		};
 	}
 	
-	public V addIfAbsent(K key) {
+	public synchronized V addIfAbsent(K key) {
 		V uov = map.computeIfAbsent(key, k -> constructObservableValue(k));
 		return uov;
 	}
 	
-	public V get(K key) {
+	public synchronized V get(K key) {
 		return map.get(key);
 	}
 
-	public Collection<V> getAllItems() {
+	public synchronized Collection<V> getAllItems() {
 		return map.values().stream().map(val -> val).collect(Collectors.toList());
 	}
 	

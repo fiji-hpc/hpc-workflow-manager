@@ -7,6 +7,8 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
+import java.util.function.BiPredicate;
+import java.util.function.Function;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,10 +20,14 @@ import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
 public class JobManager implements Closeable {
 
 	interface JobManager4Job {
-		boolean remove(Job job);
+		boolean deleteJob(Job job);
+
+		boolean canUpload(Job j, Path p);
 	}
 
 	private static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas.JobManager.class);
+
+	private static final BiPredicate<Job, Path> DUMMY_UPLOAD_FILTER = (X, Y) -> true;
 
 	private final Path workDirectory;
 
@@ -31,11 +37,19 @@ public class JobManager implements Closeable {
 
 	private final Settings settings;
 
+	private BiPredicate<Job, Path> uploadFilter = DUMMY_UPLOAD_FILTER;
+
 	private final JobManager4Job remover = new JobManager4Job() {
 
 		@Override
-		public boolean remove(Job job) {
+		public boolean deleteJob(Job job) {
+			haasClient.deleteJob(job.getId());
 			return jobs.remove(job);
+		}
+
+		@Override
+		public boolean canUpload(Job j, Path p) {
+			return uploadFilter.test(j, p);
 		}
 	};
 
@@ -44,10 +58,12 @@ public class JobManager implements Closeable {
 		this.settings = settings;
 	}
 
-	public Job createJob() throws IOException {
+	public Job createJob(Function<Path, Path> inputDirectoryProvider, Function<Path, Path> outputDirectoryProvider)
+			throws IOException {
 		Job result;
 		initJobsIfNecessary();
-		jobs.add(result = new Job(remover, settings.getJobName(), workDirectory, this::getHaasClient));
+		jobs.add(result = new Job(remover, settings.getJobName(), workDirectory, this::getHaasClient,
+				inputDirectoryProvider, outputDirectoryProvider));
 		return result;
 	}
 
@@ -59,6 +75,10 @@ public class JobManager implements Closeable {
 	@Override
 	public void close() {
 		jobs.forEach(job -> job.close());
+	}
+
+	public void setUploadFilter(BiPredicate<Job, Path> filter) {
+		uploadFilter = filter != null ? filter : DUMMY_UPLOAD_FILTER;
 	}
 
 	private HaaSClient getHaasClient() {

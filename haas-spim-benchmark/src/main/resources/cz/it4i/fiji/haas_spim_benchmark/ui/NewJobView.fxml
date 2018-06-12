@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.RadioButton?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.TitledPane?>
+<?import javafx.scene.control.ToggleGroup?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<fx:root maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" type="BorderPane" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="cz.it4i.fiji.haas_spim_benchmark.ui.NewJobController">
+   <center>
+      <VBox BorderPane.alignment="CENTER">
+         <children>
+            <TitledPane animated="false" collapsible="false" text="Input">
+               <content>
+                  <AnchorPane>
+                     <children>
+                        <VBox>
+                           <children>
+                              <RadioButton mnemonicParsing="false" selected="true">
+                                 <toggleGroup>
+                                    <ToggleGroup fx:id="tg_inputDataLocation" />
+                                 </toggleGroup>
+                                 <graphic>
+                                    <Label maxHeight="1.7976931348623157E308" text="Demonstration data on IT4I cluster" />
+                                 </graphic>
+                              </RadioButton>
+                              <RadioButton maxHeight="1.7976931348623157E308" mnemonicParsing="false" toggleGroup="$tg_inputDataLocation">
+                                 <graphic>
+                                    <Label maxHeight="1.7976931348623157E308" text="Job subdirectory" />
+                                 </graphic>
+                              </RadioButton>
+                              <RadioButton fx:id="rb_ownInput" mnemonicParsing="false" toggleGroup="$tg_inputDataLocation">
+                                 <graphic>
+                                    <HBox disable="true">
+                                       <children>
+                                          <TextField fx:id="et_inputDirectory" prefWidth="350.0" />
+                                          <Button fx:id="bt_selectInput" mnemonicParsing="false" text="Select" />
+                                       </children>
+                                    </HBox>
+                                 </graphic>
+                              </RadioButton>
+                           </children>
+                        </VBox>
+                     </children>
+                  </AnchorPane>
+               </content>
+            </TitledPane>
+            <TitledPane animated="false" collapsible="false" text="Output">
+               <content>
+                  <AnchorPane minHeight="0.0" minWidth="0.0">
+                     <children>
+                        <VBox>
+                           <children>
+                              <HBox>
+                                 <children>
+                                    <RadioButton maxHeight="1.7976931348623157E308" mnemonicParsing="false" selected="true">
+                                       <toggleGroup>
+                                          <ToggleGroup fx:id="tg_outputDataLocation" />
+                                       </toggleGroup>
+                                       <graphic>
+                                          <Label maxHeight="1.7976931348623157E308" text="Job subdirectory" />
+                                       </graphic>
+                                    </RadioButton>
+                                 </children>
+                              </HBox>
+                              <HBox>
+                                 <children>
+                                    <RadioButton fx:id="rb_ownOutput" mnemonicParsing="false" toggleGroup="$tg_outputDataLocation">
+                                       <graphic>
+                                          <HBox disable="true">
+                                             <children>
+                                                <TextField fx:id="et_outputDirectory" prefWidth="350.0" />
+                                                <Button fx:id="bt_selectOutput" mnemonicParsing="false" text="Select" />
+                                             </children>
+                                          </HBox>
+                                       </graphic>
+                                    </RadioButton>
+                                 </children>
+                              </HBox>
+                           </children>
+                        </VBox>
+                     </children>
+                  </AnchorPane>
+               </content>
+            </TitledPane>
+         </children>
+      </VBox>
+   </center>
+   <bottom>
+      <BorderPane BorderPane.alignment="CENTER">
+         <right>
+            <Button fx:id="bt_create" mnemonicParsing="false" prefHeight="22.0" prefWidth="71.0" text="Create" BorderPane.alignment="CENTER">
+               <BorderPane.margin>
+                  <Insets right="3.0" />
+               </BorderPane.margin></Button>
+         </right>
+      </BorderPane>
+   </bottom>
+</fx:root>

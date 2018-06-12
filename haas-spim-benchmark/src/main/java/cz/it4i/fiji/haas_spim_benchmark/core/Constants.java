@@ -10,7 +10,7 @@ public interface Constants {
 	String HAAS_JOB_NAME = "HaaSSPIMBenchmark";
 	int HAAS_CLUSTER_NODE_TYPE = 6;
 	int HAAS_TEMPLATE_ID = 4;
-	String HAAS_PROJECT_ID = "DD-17-31";
+	String HAAS_PROJECT_ID = "OPEN-12-20";
 	int HAAS_TIMEOUT = 9600; //Walltime in seconds
 	
 	final String NEW_LINE_SEPARATOR = "\n";
@@ -52,5 +52,6 @@ public interface Constants {
 	String STATISTICS_SUMMARY_FILENAME = "summary.csv";
 	String SUMMARY_FILE_HEADER = "Task;AvgMemoryUsage;AvgWallTime;MaxWallTime;TotalTime;JobCount";
 	String DONE_TASK = "done";
+	int CORES_PER_NODE = 24;
 	
 }
