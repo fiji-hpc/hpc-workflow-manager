@@ -8,14 +8,14 @@ import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager;
 import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkSPIMParameters;
 
 
-public class BenchmarkSPIMWindow extends FXFrame<BenchmarkSPIMController>{
+public class BenchmarkSPIMWindow extends FXFrame<BenchmarkSPIMControl>{
 
 	private static final long serialVersionUID = 1L;
 		
 	public BenchmarkSPIMWindow(Window parentWindow, BenchmarkSPIMParameters params) throws IOException {
 		super(parentWindow,()->{
 			try {
-				return new BenchmarkSPIMController(new BenchmarkJobManager(params));
+				return new BenchmarkSPIMControl(new BenchmarkJobManager(params));
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}

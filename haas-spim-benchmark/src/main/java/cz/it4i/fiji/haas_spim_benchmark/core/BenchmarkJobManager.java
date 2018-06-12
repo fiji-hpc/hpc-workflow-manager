@@ -267,6 +267,10 @@ public class BenchmarkJobManager implements Closeable {
 			return job.getInputDirectory();
 		}
 
+		public Path getOutputDirectory() {
+			return job.getOutputDirectory();
+		}
+
 		private ProgressNotifier convertTo(Progress progress) {
 			return progress == null ? null : new P_ProgressNotifierAdapter(progress);
 		}

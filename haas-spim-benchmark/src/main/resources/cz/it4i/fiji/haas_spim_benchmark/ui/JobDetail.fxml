@@ -6,6 +6,7 @@
 <?import javafx.scene.control.TabPane?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.HBox?>
+<?import cz.it4i.fiji.haas_spim_benchmark.ui.JobPropertiesControl?>
 
 
 <fx:root type="TabPane" xmlns:fx="http://javafx.com/fxml/1"
@@ -28,10 +29,18 @@
 				</HBox>
 			</content>
 		</Tab>
-		<Tab closable="false" text="Other output">
+		<Tab closable="false" text="Other output" >
 			<content>
 				<HBox>
 					<LogViewControl fx:id="standardOutput" HBox.hgrow="ALWAYS" />
+				</HBox>
+			</content>
+
+		</Tab>
+		<Tab closable="false" text="Job directories" fx:id="jobPropertiesTab">
+			<content>
+				<HBox>
+					<JobPropertiesControl fx:id="jobProperties" HBox.hgrow="ALWAYS" />
 				</HBox>
 			</content>
 

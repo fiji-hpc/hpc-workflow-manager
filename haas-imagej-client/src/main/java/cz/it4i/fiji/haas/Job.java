@@ -398,6 +398,10 @@ public class Job {
 		return inputDirectory;
 	}
 
+	public Path getOutputDirectory() {
+		return outputDirectory;
+	}
+
 	private void storeInputOutputDirectory() {
 		if (inputDirectory == null) {
 			useDemoData = true;
