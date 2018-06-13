@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>cz.it4i.fiji</groupId>
 	<artifactId>haas-parent</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.0.2-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<parent>
 		<groupId>org.scijava</groupId>
@@ -14,7 +14,6 @@
 	</parent>
 	<properties>
 		<project_url>https://code.it4i.cz/fiji/haas-java-client/</project_url>
-
 		<organization.name>IT4Innovations - National Supercomputing Center</organization.name>
 		<organization.url>http://www.it4i.cz/</organization.url>
 

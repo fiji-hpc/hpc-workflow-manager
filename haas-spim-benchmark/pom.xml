@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>cz.it4i.fiji</groupId>
 		<artifactId>haas-parent</artifactId>
-		<version>0.0.1-SNAPSHOT</version>
+		<version>0.0.2-SNAPSHOT</version>
 		<relativePath> ../haas-parent/pom.xml</relativePath>
 	</parent>
 	<artifactId>haas-spim-benchmark</artifactId>
@@ -78,7 +78,7 @@
 		<dependency>
 			<groupId>cz.it4i.fiji</groupId>
 			<artifactId>haas-imagej-client</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
+			<version>0.0.2-SNAPSHOT</version>
 		</dependency>
 
 		<!-- https://mvnrepository.com/artifact/commons-io/commons-io -->
