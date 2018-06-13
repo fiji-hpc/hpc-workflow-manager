@@ -17,7 +17,7 @@ public class JobDetailWindow extends FXFrame<JobDetailControl>{
 			return new JobDetailControl(job);
 			
 		});
-		setTitle("Detail for job: " + job.getId());
+		setTitle("Job dashboard for #" + job.getId());
 	}
 	
 }

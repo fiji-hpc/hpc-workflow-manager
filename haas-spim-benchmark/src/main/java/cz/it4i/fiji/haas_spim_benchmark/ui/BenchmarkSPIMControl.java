@@ -131,7 +131,7 @@ public class BenchmarkSPIMControl extends BorderPane implements CloseableControl
 		}), job -> JavaFXRoutines.notNullValue(job,
 				j -> j.getState() == JobState.Running || j.getState() == JobState.Queued));
 
-		menu.addItem("Execution details", job -> openJobDetailsWindow(job.getValue()),
+		menu.addItem("Job dashboard", job -> openJobDetailsWindow(job.getValue()),
 				job -> JavaFXRoutines.notNullValue(job, j -> true));
 		
 		menu.addItem("Open working directory", j -> open(j.getValue()), x -> JavaFXRoutines.notNullValue(x, j -> true));

@@ -11,9 +11,9 @@
 		<HBox>
 			<children>
 
-				<TableView fx:id="properties" prefHeight="400.0" prefWidth="550.0" HBox.hgrow="ALWAYS">
+				<TableView fx:id="properties" prefHeight="400.0" prefWidth="500.0" HBox.hgrow="ALWAYS">
 					<columns>
-						<TableColumn prefWidth="150.0" text="Type of directory" />
+						<TableColumn prefWidth="100.0" text="Type" />
 						<TableColumn prefWidth="400.0" text="Location" />
 					</columns>
 				</TableView>
