@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+#this script copies required libraries into Fiji installation directory
+DIR=`readlink -f $1`
+cd haas-spim-benchmark/target/dependency
+cp axis-*.jar mail-*.jar commons-discovery-*.jar java-scpclient-*.jar jaxrpc-api-*.jar wsdl4j-*.jar haas-imagej-client-*.jar haas-java-client-*.jar $DIR/jars
+
+cd ../../../haas-spim-benchmark/target/
+cp haas-spim-benchmark-*[0-9T].jar $DIR/plugins

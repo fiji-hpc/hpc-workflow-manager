@@ -1,4 +1,5 @@
 eclipse.preferences.version=1
+encoding//src/main/java=UTF-8
 encoding//src/main/java/cz/it4i/fiji/haas_java_client/proxy/AsymmetricKeyCredentialsExt.java=UTF-8
 encoding//src/main/java/cz/it4i/fiji/haas_java_client/proxy/AuthenticationCredentialsExt.java=UTF-8
 encoding//src/main/java/cz/it4i/fiji/haas_java_client/proxy/ClusterNodeTypeExt.java=UTF-8
@@ -36,3 +37,7 @@ encoding//src/main/java/cz/it4i/fiji/haas_java_client/proxy/UserAndLimitationMan
 encoding//src/main/java/cz/it4i/fiji/haas_java_client/proxy/UserAndLimitationManagementWsSoap.java=UTF-8
 encoding//src/main/java/cz/it4i/fiji/haas_java_client/proxy/UserAndLimitationManagementWsSoap12Stub.java=UTF-8
 encoding//src/main/java/cz/it4i/fiji/haas_java_client/proxy/UserAndLimitationManagementWsSoapStub.java=UTF-8
+encoding//src/main/resources=UTF-8
+encoding//src/test/java=UTF-8
+encoding//src/test/resources=UTF-8
+encoding/<project>=UTF-8
