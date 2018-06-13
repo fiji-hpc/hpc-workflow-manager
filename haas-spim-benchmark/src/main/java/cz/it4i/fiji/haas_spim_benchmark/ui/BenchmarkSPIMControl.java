@@ -77,6 +77,8 @@ public class BenchmarkSPIMControl extends BorderPane implements CloseableControl
 	private Timer timer;
 
 	private ObservableBenchmarkJobRegistry registry;
+	
+	private final JobStateNameProvider provider = new JobStateNameProvider();
 
 	private static Logger log = LoggerFactory
 			.getLogger(cz.it4i.fiji.haas_spim_benchmark.ui.BenchmarkSPIMControl.class);
@@ -294,7 +296,7 @@ public class BenchmarkSPIMControl extends BorderPane implements CloseableControl
 	private void initTable() {
 		registry = new ObservableBenchmarkJobRegistry(bj -> remove(bj), executorServiceJobState, executorServiceFX);
 		setCellValueFactory(0, j -> j.getId() + "");
-		setCellValueFactoryCompletable(1, j -> j.getStateAsync(executorServiceJobState).thenApply(state -> "" + state));
+		setCellValueFactoryCompletable(1, j -> j.getStateAsync(executorServiceJobState).thenApply(state -> "" + provider.getName(state)));
 		setCellValueFactory(2, j -> j.getCreationTime().toString());
 		setCellValueFactory(3, j -> j.getStartTime().toString());
 		setCellValueFactory(4, j -> j.getEndTime().toString());
@@ -302,6 +304,7 @@ public class BenchmarkSPIMControl extends BorderPane implements CloseableControl
 		setCellValueFactory(6, j -> decorateTransfer(registry.get(j).getDownloadProgress()));
 	}
 
+	
 	private String decorateTransfer(TransferProgress progress) {
 		if (!progress.isWorking() && !progress.isDone()) {
 			return "";
