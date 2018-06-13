@@ -15,7 +15,7 @@
 				<TableView fx:id="files" HBox.hgrow="ALWAYS">
 					<columns>
 						<TableColumn prefWidth="450.0" text="File name" />
-						<TableColumn minWidth="150.0" prefWidth="0.0" text="Size of file" />
+						<TableColumn minWidth="150.0" prefWidth="0.0" text="File size" />
 					</columns>
 				</TableView>
 			</children>
