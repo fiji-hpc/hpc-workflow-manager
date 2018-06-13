@@ -3,6 +3,7 @@ package cz.it4i.fiji.haas.ui;
 import java.io.IOException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -14,6 +15,7 @@ import javafx.application.Platform;
 import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 
 public interface JavaFXRoutines {
@@ -87,6 +89,21 @@ public interface JavaFXRoutines {
 		} else {
 			return pred.test(j.getValue());
 		}
+	}
+
+	static public<T,U extends ObservableValue<T>>void setOnDoubleClickAction(TableView<U> tableView ,ExecutorService executorService,Predicate<T> openAllowed, Consumer<T> r) {
+		tableView.setRowFactory(tv -> {
+			TableRow<U> row = new TableRow<>();
+			row.setOnMouseClicked(event -> {
+				if (event.getClickCount() == 2 && (!row.isEmpty())) {
+					T rowData = row.getItem().getValue();
+					if (openAllowed.test(rowData)) {
+						executorService.execute(() -> r.accept(rowData));
+					}
+				}
+			});
+			return row;
+		});
 	}
 
 }
