@@ -116,7 +116,8 @@ public class BenchmarkSPIMControl extends BorderPane implements CloseableControl
 
 	private void initMenu() {
 		TableViewContextMenu<ObservableBenchmarkJob> menu = new TableViewContextMenu<>(jobs);
-		menu.addItem("Create job", x -> askForCreateJob(), j -> true);
+		menu.addItem("Create a new job", x -> askForCreateJob(), j -> true);
+		menu.addSeparator();
 		menu.addItem("Start job", job -> executeWSCallAsync("Starting job", p -> {
 			job.getValue().startJob(p);
 			job.getValue().update();
@@ -132,6 +133,10 @@ public class BenchmarkSPIMControl extends BorderPane implements CloseableControl
 
 		menu.addItem("Execution details", job -> openJobDetailsWindow(job.getValue()),
 				job -> JavaFXRoutines.notNullValue(job, j -> true));
+		
+		menu.addItem("Open working directory", j -> open(j.getValue()), x -> JavaFXRoutines.notNullValue(x, j -> true));
+		
+		menu.addSeparator();
 
 		menu.addItem("Upload data", job -> executeWSCallAsync("Uploading data", p -> job.getValue().startUpload()),
 				job -> executeWSCallAsync("Stop uploading data", p -> job.getValue().stopUpload()),
@@ -155,9 +160,10 @@ public class BenchmarkSPIMControl extends BorderPane implements CloseableControl
 		menu.addItem("Explore errors", job -> job.getValue().exploreErrors(),
 				job -> JavaFXRoutines.notNullValue(job, j -> j.getState().equals(JobState.Failed)));
 
-		menu.addItem("Open working directory", j -> open(j.getValue()), x -> JavaFXRoutines.notNullValue(x, j -> true));
-
-		menu.addItem("Delete", j -> deleteJob(j.getValue()), x -> JavaFXRoutines.notNullValue(x, j -> true));
+		menu.addSeparator();
+		
+		menu.addItem("Delete job", j -> deleteJob(j.getValue()), x -> JavaFXRoutines.notNullValue(x, j -> j.getState() != JobState.Running));
+		
 	}
 
 	private void deleteJob(BenchmarkJob bj) {

@@ -15,6 +15,7 @@ import javafx.event.EventHandler;
 import javafx.scene.control.CheckMenuItem;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.input.ContextMenuEvent;
@@ -44,6 +45,10 @@ public class TableViewContextMenu<T> {
 	public void addItem(String text, Consumer<T> eventHandlerOn, Consumer<T> eventHandlerOff,
 			Predicate<T> enableHandler, Function<T, Boolean> property) {
 		items.add(new P_CheckMenuItem(text, eventHandlerOff, eventHandlerOn, enableHandler, property));
+	}
+
+	public void addSeparator() {
+		getOrCreateContextMenu().getItems().add(new SeparatorMenuItem());
 	}
 
 	private T getRequestedItem() {
