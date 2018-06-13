@@ -4,6 +4,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -61,7 +62,9 @@ public class ManageSPIMBenchmark implements Command {
 	public void run() {
 		try {
 			Path workingDirPath = Paths.get(workingDirectory.getPath());
-			
+			if (!Files.isDirectory(workingDirPath)) {
+				Files.createDirectories(workingDirPath);
+			}
 			FileLock fl = new FileLock(workingDirPath.resolve(LOCK_FILE_NAME));
 			if(!fl.tryLock()) {
 				uiService.showDialog("Working directory is already used by someone else", MessageType.ERROR_MESSAGE);

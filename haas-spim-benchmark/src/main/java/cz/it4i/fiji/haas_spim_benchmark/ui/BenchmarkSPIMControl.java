@@ -143,7 +143,7 @@ public class BenchmarkSPIMControl extends BorderPane implements CloseableControl
 				job -> JavaFXRoutines.notNullValue(job,
 						j -> !j.isUseDemoData()
 								&& !EnumSet.of(JobState.Running, JobState.Disposed).contains(j.getState())),
-				job -> job.getUploadProgress().isWorking());
+				job -> job != null && job.getUploadProgress().isWorking());
 		menu.addItem("Download result",
 				job -> executeWSCallAsync("Downloading data", p -> job.getValue().startDownload()),
 				job -> executeWSCallAsync("Stop downloading data", p -> job.getValue().stopDownload()),
@@ -151,7 +151,7 @@ public class BenchmarkSPIMControl extends BorderPane implements CloseableControl
 						.notNullValue(job,
 								j -> EnumSet.of(JobState.Failed, JobState.Finished, JobState.Canceled)
 										.contains(j.getState()) && j.canBeDownloaded()),
-				job -> job.getDownloadProgress().isWorking());
+				job -> job != null && job.getDownloadProgress().isWorking());
 
 		menu.addItem("Download statistics",
 				job -> executeWSCallAsync("Downloading data", p -> job.getValue().downloadStatistics(p)),
