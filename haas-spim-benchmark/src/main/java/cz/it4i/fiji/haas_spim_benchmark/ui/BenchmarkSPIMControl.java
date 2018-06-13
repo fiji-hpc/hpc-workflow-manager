@@ -28,11 +28,14 @@ import org.slf4j.LoggerFactory;
 import cz.it4i.fiji.haas.UploadingFileFromResource;
 import cz.it4i.fiji.haas.ui.CloseableControl;
 import cz.it4i.fiji.haas.ui.DummyProgress;
+import cz.it4i.fiji.haas.ui.FutureValueUpdater;
 import cz.it4i.fiji.haas.ui.InitiableControl;
 import cz.it4i.fiji.haas.ui.JavaFXRoutines;
 import cz.it4i.fiji.haas.ui.ModalDialogs;
 import cz.it4i.fiji.haas.ui.ProgressDialog;
 import cz.it4i.fiji.haas.ui.ShellRoutines;
+import cz.it4i.fiji.haas.ui.StringValueUpdater;
+import cz.it4i.fiji.haas.ui.TableCellAdapter;
 import cz.it4i.fiji.haas.ui.TableViewContextMenu;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.UploadingFile;
@@ -323,9 +326,9 @@ public class BenchmarkSPIMControl extends BorderPane implements CloseableControl
 	private void setCellValueFactoryCompletable(int index, Function<BenchmarkJob, CompletableFuture<String>> mapper) {
 		JavaFXRoutines.setCellValueFactory(jobs, index, mapper);
 		((TableColumn<ObservableBenchmarkJob, CompletableFuture<String>>) jobs.getColumns().get(index)).setCellFactory(
-				column -> new JavaFXRoutines.TableCellAdapter<ObservableBenchmarkJob, CompletableFuture<String>>(
-						new JavaFXRoutines.FutureValueUpdater<ObservableBenchmarkJob, String, CompletableFuture<String>>(
-								new JavaFXRoutines.StringValueUpdater<ObservableBenchmarkJob>(), executorServiceFX)));
+				column -> new TableCellAdapter<ObservableBenchmarkJob, CompletableFuture<String>>(
+						new FutureValueUpdater<ObservableBenchmarkJob, String, CompletableFuture<String>>(
+								new StringValueUpdater<ObservableBenchmarkJob>(), executorServiceFX)));
 	}
 
 	private interface P_JobAction {

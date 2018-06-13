@@ -23,6 +23,7 @@ import cz.it4i.fiji.haas.ui.CloseableControl;
 import cz.it4i.fiji.haas.ui.InitiableControl;
 import cz.it4i.fiji.haas.ui.JavaFXRoutines;
 import cz.it4i.fiji.haas.ui.ModalDialogs;
+import cz.it4i.fiji.haas.ui.TableCellAdapter;
 import cz.it4i.fiji.haas.ui.TableViewContextMenu;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.BenchmarkJob;
@@ -208,7 +209,7 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 			}
 		});
 		((TableColumn<ObservableValue<Task>, TaskComputation>) this.tasks.getColumns().get(index))
-				.setCellFactory(column -> new JavaFXRoutines.TableCellAdapter<>((cell, val, empty) -> {
+				.setCellFactory(column -> new TableCellAdapter<>((cell, val, empty) -> {
 					if (val == null || empty) {
 						cell.setText(EMPTY_VALUE);
 						cell.setStyle("");

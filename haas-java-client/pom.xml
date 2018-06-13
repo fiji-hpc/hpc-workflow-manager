@@ -6,6 +6,9 @@
 	<version>0.0.2-SNAPSHOT</version>
 	<name>HaaS library for Java</name>
 	<packaging>jar</packaging>
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
 	<build>
 		<plugins>
 			<plugin>
@@ -19,6 +22,7 @@
 			</plugin>
 			<plugin>
 		      <artifactId>maven-source-plugin</artifactId>
+		      <version>3.0.1</version>
 		      <executions>
 		        <execution>
 		          <id>attach-sources</id>
@@ -42,8 +46,7 @@
 			<artifactId>java-scpclient</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
-		<!-- https://mvnrepository.com/artifact/org.apache.axis2/axis2 -->
-
+		
 		<!-- https://mvnrepository.com/artifact/javax.activation/activation -->
 		<dependency>
 			<groupId>javax.activation</groupId>
@@ -74,8 +77,6 @@
 			<artifactId>jaxrpc</artifactId>
 			<version>1.1</version>
 		</dependency>
-		<!-- https://mvnrepository.com/artifact/javax.xml/saaj-api -->
-		<!-- https://mvnrepository.com/artifact/javax.xml/saaj-api -->
 		<!-- https://mvnrepository.com/artifact/javax.xml.soap/saaj-api -->
 		<dependency>
 			<groupId>javax.xml.soap</groupId>
