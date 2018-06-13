@@ -7,6 +7,7 @@
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.TitledPane?>
 <?import javafx.scene.control.ToggleGroup?>
+<?import javafx.scene.control.Tooltip?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
@@ -16,7 +17,7 @@
    <center>
       <VBox BorderPane.alignment="CENTER">
          <children>
-            <TitledPane animated="false" collapsible="false" text="Input">
+            <TitledPane animated="false" collapsible="false" text="Input data location">
                <content>
                   <AnchorPane>
                      <children>
@@ -27,13 +28,19 @@
                                     <ToggleGroup fx:id="tg_inputDataLocation" />
                                  </toggleGroup>
                                  <graphic>
-                                    <Label maxHeight="1.7976931348623157E308" text="Demonstration data on IT4I cluster" />
+                                    <Label maxHeight="1.7976931348623157E308" text="Demonstration data on the Salomon IT4I cluster" />
                                  </graphic>
+                                 <tooltip>
+                                    <Tooltip text="Demonstration data located on the Salomon IT4I cluster will be used and there will be created config.yaml in the job working directory." />
+                                 </tooltip>
                               </RadioButton>
                               <RadioButton maxHeight="1.7976931348623157E308" mnemonicParsing="false" toggleGroup="$tg_inputDataLocation">
                                  <graphic>
-                                    <Label maxHeight="1.7976931348623157E308" text="Job subdirectory" />
+                                    <Label maxHeight="1.7976931348623157E308" text="Job working directory" />
                                  </graphic>
+                                 <tooltip>
+                                    <Tooltip text="Job working directory will be used as location for input data. Data and config.yaml will be needed to copy into it." />
+                                 </tooltip>
                               </RadioButton>
                               <RadioButton fx:id="rb_ownInput" mnemonicParsing="false" toggleGroup="$tg_inputDataLocation">
                                  <graphic>
@@ -44,6 +51,9 @@
                                        </children>
                                     </HBox>
                                  </graphic>
+                                 <tooltip>
+                                    <Tooltip text="External directory will be used as location for the input data. The file config.yaml could be automaticaly copied from the directory into the job working directory." />
+                                 </tooltip>
                               </RadioButton>
                            </children>
                         </VBox>
@@ -51,7 +61,7 @@
                   </AnchorPane>
                </content>
             </TitledPane>
-            <TitledPane animated="false" collapsible="false" text="Output">
+            <TitledPane animated="false" collapsible="false" text="Output data location">
                <content>
                   <AnchorPane minHeight="0.0" minWidth="0.0">
                      <children>
@@ -64,7 +74,7 @@
                                           <ToggleGroup fx:id="tg_outputDataLocation" />
                                        </toggleGroup>
                                        <graphic>
-                                          <Label maxHeight="1.7976931348623157E308" text="Job subdirectory" />
+                                          <Label maxHeight="1.7976931348623157E308" text="Job working directory" />
                                        </graphic>
                                     </RadioButton>
                                  </children>

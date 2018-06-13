@@ -187,11 +187,12 @@ public class BenchmarkSPIMControl extends BorderPane implements CloseableControl
 						@Override
 						public void run() {
 							Alert al = new Alert(AlertType.CONFIRMATION,
-									"Main file \"" + CONFIG_YAML + "\" found in input directory \""
+									"The file \"" + CONFIG_YAML + "\" found in the defined data input directory \""
 											+ job.getInputDirectory()
-											+ "\". Would you like to copy it into job subdirectory \""
+											+ "\". Would you like to copy it into the job working directory \""
 											+ job.getDirectory() + "\"?",
 									ButtonType.YES, ButtonType.NO);
+					
 							al.setHeaderText(null);
 							al.setTitle("Copy " + CONFIG_YAML + "?");
 							al.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
