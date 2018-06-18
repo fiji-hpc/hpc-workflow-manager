@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions xmlns:s="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/" xmlns:http="http://schemas.xmlsoap.org/wsdl/http/" xmlns:mime="http://schemas.xmlsoap.org/wsdl/mime/" xmlns:tns="http://hpcaas.it4i.cz/" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:tm="http://microsoft.com/wsdl/mime/textMatching/" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" targetNamespace="http://hpcaas.it4i.cz/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+  <wsdl:types>
+    <s:schema elementFormDefault="qualified" targetNamespace="http://hpcaas.it4i.cz/">
+      <s:element name="GetDataTransferMethod">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="ipAddress" type="s:string"/>
+            <s:element minOccurs="1" maxOccurs="1" name="port" type="s:int"/>
+            <s:element minOccurs="1" maxOccurs="1" name="submittedJobInfoId" type="s:long"/>
+            <s:element minOccurs="0" maxOccurs="1" name="sessionCode" type="s:string"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetDataTransferMethodResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="GetDataTransferMethodResult" type="tns:DataTransferMethodExt"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="DataTransferMethodExt">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="submittedJobId" nillable="true" type="s:long"/>
+          <s:element minOccurs="0" maxOccurs="1" name="ipAddress" type="s:string"/>
+          <s:element minOccurs="1" maxOccurs="1" name="port" nillable="true" type="s:int"/>
+        </s:sequence>
+      </s:complexType>
+      <s:element name="EndDataTransfer">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="usedTransferMethod" type="tns:DataTransferMethodExt"/>
+            <s:element minOccurs="0" maxOccurs="1" name="sessionCode" type="s:string"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="EndDataTransferResponse">
+        <s:complexType/>
+      </s:element>
+      <s:element name="SendDataToJobNode">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="data" type="s:base64Binary"/>
+            <s:element minOccurs="1" maxOccurs="1" name="submittedJobInfoId" type="s:long"/>
+            <s:element minOccurs="0" maxOccurs="1" name="ipAddress" type="s:string"/>
+            <s:element minOccurs="0" maxOccurs="1" name="sessionCode" type="s:string"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="SendDataToJobNodeResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="SendDataToJobNodeResult" type="s:int"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="ReadDataFromJobNode">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="submittedJobInfoId" type="s:long"/>
+            <s:element minOccurs="0" maxOccurs="1" name="ipAddress" type="s:string"/>
+            <s:element minOccurs="0" maxOccurs="1" name="sessionCode" type="s:string"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="ReadDataFromJobNodeResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="ReadDataFromJobNodeResult" type="s:base64Binary"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+    </s:schema>
+  </wsdl:types>
+  <wsdl:message name="GetDataTransferMethodSoapIn">
+    <wsdl:part name="parameters" element="tns:GetDataTransferMethod"/>
+  </wsdl:message>
+  <wsdl:message name="GetDataTransferMethodSoapOut">
+    <wsdl:part name="parameters" element="tns:GetDataTransferMethodResponse"/>
+  </wsdl:message>
+  <wsdl:message name="EndDataTransferSoapIn">
+    <wsdl:part name="parameters" element="tns:EndDataTransfer"/>
+  </wsdl:message>
+  <wsdl:message name="EndDataTransferSoapOut">
+    <wsdl:part name="parameters" element="tns:EndDataTransferResponse"/>
+  </wsdl:message>
+  <wsdl:message name="SendDataToJobNodeSoapIn">
+    <wsdl:part name="parameters" element="tns:SendDataToJobNode"/>
+  </wsdl:message>
+  <wsdl:message name="SendDataToJobNodeSoapOut">
+    <wsdl:part name="parameters" element="tns:SendDataToJobNodeResponse"/>
+  </wsdl:message>
+  <wsdl:message name="ReadDataFromJobNodeSoapIn">
+    <wsdl:part name="parameters" element="tns:ReadDataFromJobNode"/>
+  </wsdl:message>
+  <wsdl:message name="ReadDataFromJobNodeSoapOut">
+    <wsdl:part name="parameters" element="tns:ReadDataFromJobNodeResponse"/>
+  </wsdl:message>
+  <wsdl:portType name="DataTransferWsSoap">
+    <wsdl:operation name="GetDataTransferMethod">
+      <wsdl:input message="tns:GetDataTransferMethodSoapIn"/>
+      <wsdl:output message="tns:GetDataTransferMethodSoapOut"/>
+    </wsdl:operation>
+    <wsdl:operation name="EndDataTransfer">
+      <wsdl:input message="tns:EndDataTransferSoapIn"/>
+      <wsdl:output message="tns:EndDataTransferSoapOut"/>
+    </wsdl:operation>
+    <wsdl:operation name="SendDataToJobNode">
+      <wsdl:input message="tns:SendDataToJobNodeSoapIn"/>
+      <wsdl:output message="tns:SendDataToJobNodeSoapOut"/>
+    </wsdl:operation>
+    <wsdl:operation name="ReadDataFromJobNode">
+      <wsdl:input message="tns:ReadDataFromJobNodeSoapIn"/>
+      <wsdl:output message="tns:ReadDataFromJobNodeSoapOut"/>
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="DataTransferWsSoap" type="tns:DataTransferWsSoap">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="GetDataTransferMethod">
+      <soap:operation soapAction="http://hpcaas.it4i.cz/GetDataTransferMethod" style="document"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="EndDataTransfer">
+      <soap:operation soapAction="http://hpcaas.it4i.cz/EndDataTransfer" style="document"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="SendDataToJobNode">
+      <soap:operation soapAction="http://hpcaas.it4i.cz/SendDataToJobNode" style="document"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="ReadDataFromJobNode">
+      <soap:operation soapAction="http://hpcaas.it4i.cz/ReadDataFromJobNode" style="document"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:binding name="DataTransferWsSoap12" type="tns:DataTransferWsSoap">
+    <soap12:binding transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="GetDataTransferMethod">
+      <soap12:operation soapAction="http://hpcaas.it4i.cz/GetDataTransferMethod" style="document"/>
+      <wsdl:input>
+        <soap12:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="EndDataTransfer">
+      <soap12:operation soapAction="http://hpcaas.it4i.cz/EndDataTransfer" style="document"/>
+      <wsdl:input>
+        <soap12:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="SendDataToJobNode">
+      <soap12:operation soapAction="http://hpcaas.it4i.cz/SendDataToJobNode" style="document"/>
+      <wsdl:input>
+        <soap12:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="ReadDataFromJobNode">
+      <soap12:operation soapAction="http://hpcaas.it4i.cz/ReadDataFromJobNode" style="document"/>
+      <wsdl:input>
+        <soap12:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="DataTransferWs">
+    <wsdl:port name="DataTransferWsSoap" binding="tns:DataTransferWsSoap">
+      <soap:address location="http://haas.vsb.cz/HaasWsFiji/DataTransferWs.asmx"/>
+    </wsdl:port>
+    <wsdl:port name="DataTransferWsSoap12" binding="tns:DataTransferWsSoap12">
+      <soap12:address location="http://haas.vsb.cz/HaasWsFiji/DataTransferWs.asmx"/>
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

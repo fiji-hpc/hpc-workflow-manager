@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions xmlns:s="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/" xmlns:http="http://schemas.xmlsoap.org/wsdl/http/" xmlns:mime="http://schemas.xmlsoap.org/wsdl/mime/" xmlns:tns="http://hpcaas.it4i.cz/" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:tm="http://microsoft.com/wsdl/mime/textMatching/" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" targetNamespace="http://hpcaas.it4i.cz/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+  <wsdl:types>
+    <s:schema elementFormDefault="qualified" targetNamespace="http://hpcaas.it4i.cz/">
+      <s:element name="AuthenticateUserPassword">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="credentials" type="tns:PasswordCredentialsExt"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="PasswordCredentialsExt">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:AuthenticationCredentialsExt">
+            <s:sequence>
+              <s:element minOccurs="0" maxOccurs="1" name="password" type="s:string"/>
+            </s:sequence>
+          </s:extension>
+        </s:complexContent>
+      </s:complexType>
+      <s:complexType name="AuthenticationCredentialsExt">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="1" name="username" type="s:string"/>
+        </s:sequence>
+      </s:complexType>
+      <s:element name="AuthenticateUserPasswordResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="AuthenticateUserPasswordResult" type="s:string"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="AuthenticateUserDigitalSignature">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="credentials" type="tns:DigitalSignatureCredentialsExt"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="DigitalSignatureCredentialsExt">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:AuthenticationCredentialsExt">
+            <s:sequence>
+              <s:element minOccurs="0" maxOccurs="1" name="noise" type="s:string"/>
+              <s:element minOccurs="0" maxOccurs="1" name="digitalSignature" type="tns:ArrayOfByte"/>
+            </s:sequence>
+          </s:extension>
+        </s:complexContent>
+      </s:complexType>
+      <s:complexType name="ArrayOfByte">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="byte" type="s:byte"/>
+        </s:sequence>
+      </s:complexType>
+      <s:element name="AuthenticateUserDigitalSignatureResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="AuthenticateUserDigitalSignatureResult" type="s:string"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetCurrentUsageAndLimitationsForCurrentUser">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="sessionCode" type="s:string"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetCurrentUsageAndLimitationsForCurrentUserResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="GetCurrentUsageAndLimitationsForCurrentUserResult" type="tns:ArrayOfResourceUsageExt"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="ArrayOfResourceUsageExt">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="ResourceUsageExt" nillable="true" type="tns:ResourceUsageExt"/>
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ResourceUsageExt">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="1" name="nodeType" type="tns:ClusterNodeTypeExt"/>
+          <s:element minOccurs="1" maxOccurs="1" name="coresUsed" nillable="true" type="s:int"/>
+          <s:element minOccurs="0" maxOccurs="1" name="limitation" type="tns:ResourceLimitationExt"/>
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ClusterNodeTypeExt">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="id" nillable="true" type="s:long"/>
+          <s:element minOccurs="0" maxOccurs="1" name="name" type="s:string"/>
+          <s:element minOccurs="0" maxOccurs="1" name="description" type="s:string"/>
+          <s:element minOccurs="1" maxOccurs="1" name="numberOfNodes" nillable="true" type="s:int"/>
+          <s:element minOccurs="1" maxOccurs="1" name="coresPerNode" nillable="true" type="s:int"/>
+          <s:element minOccurs="1" maxOccurs="1" name="maxWalltime" nillable="true" type="s:int"/>
+          <s:element minOccurs="0" maxOccurs="1" name="possibleCommands" type="tns:ArrayOfCommandTemplateExt"/>
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ArrayOfCommandTemplateExt">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="CommandTemplateExt" nillable="true" type="tns:CommandTemplateExt"/>
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="CommandTemplateExt">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="id" nillable="true" type="s:long"/>
+          <s:element minOccurs="0" maxOccurs="1" name="name" type="s:string"/>
+          <s:element minOccurs="0" maxOccurs="1" name="description" type="s:string"/>
+          <s:element minOccurs="0" maxOccurs="1" name="code" type="s:string"/>
+          <s:element minOccurs="0" maxOccurs="1" name="templateParameters" type="tns:ArrayOfCommandTemplateParameterExt"/>
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ArrayOfCommandTemplateParameterExt">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="CommandTemplateParameterExt" nillable="true" type="tns:CommandTemplateParameterExt"/>
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="CommandTemplateParameterExt">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="1" name="identifier" type="s:string"/>
+          <s:element minOccurs="0" maxOccurs="1" name="description" type="s:string"/>
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ResourceLimitationExt">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="totalMaxCores" nillable="true" type="s:int"/>
+          <s:element minOccurs="1" maxOccurs="1" name="maxCoresPerJob" nillable="true" type="s:int"/>
+        </s:sequence>
+      </s:complexType>
+    </s:schema>
+  </wsdl:types>
+  <wsdl:message name="AuthenticateUserPasswordSoapIn">
+    <wsdl:part name="parameters" element="tns:AuthenticateUserPassword"/>
+  </wsdl:message>
+  <wsdl:message name="AuthenticateUserPasswordSoapOut">
+    <wsdl:part name="parameters" element="tns:AuthenticateUserPasswordResponse"/>
+  </wsdl:message>
+  <wsdl:message name="AuthenticateUserDigitalSignatureSoapIn">
+    <wsdl:part name="parameters" element="tns:AuthenticateUserDigitalSignature"/>
+  </wsdl:message>
+  <wsdl:message name="AuthenticateUserDigitalSignatureSoapOut">
+    <wsdl:part name="parameters" element="tns:AuthenticateUserDigitalSignatureResponse"/>
+  </wsdl:message>
+  <wsdl:message name="GetCurrentUsageAndLimitationsForCurrentUserSoapIn">
+    <wsdl:part name="parameters" element="tns:GetCurrentUsageAndLimitationsForCurrentUser"/>
+  </wsdl:message>
+  <wsdl:message name="GetCurrentUsageAndLimitationsForCurrentUserSoapOut">
+    <wsdl:part name="parameters" element="tns:GetCurrentUsageAndLimitationsForCurrentUserResponse"/>
+  </wsdl:message>
+  <wsdl:portType name="UserAndLimitationManagementWsSoap">
+    <wsdl:operation name="AuthenticateUserPassword">
+      <wsdl:input message="tns:AuthenticateUserPasswordSoapIn"/>
+      <wsdl:output message="tns:AuthenticateUserPasswordSoapOut"/>
+    </wsdl:operation>
+    <wsdl:operation name="AuthenticateUserDigitalSignature">
+      <wsdl:input message="tns:AuthenticateUserDigitalSignatureSoapIn"/>
+      <wsdl:output message="tns:AuthenticateUserDigitalSignatureSoapOut"/>
+    </wsdl:operation>
+    <wsdl:operation name="GetCurrentUsageAndLimitationsForCurrentUser">
+      <wsdl:input message="tns:GetCurrentUsageAndLimitationsForCurrentUserSoapIn"/>
+      <wsdl:output message="tns:GetCurrentUsageAndLimitationsForCurrentUserSoapOut"/>
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="UserAndLimitationManagementWsSoap" type="tns:UserAndLimitationManagementWsSoap">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="AuthenticateUserPassword">
+      <soap:operation soapAction="http://hpcaas.it4i.cz/AuthenticateUserPassword" style="document"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="AuthenticateUserDigitalSignature">
+      <soap:operation soapAction="http://hpcaas.it4i.cz/AuthenticateUserDigitalSignature" style="document"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetCurrentUsageAndLimitationsForCurrentUser">
+      <soap:operation soapAction="http://hpcaas.it4i.cz/GetCurrentUsageAndLimitationsForCurrentUser" style="document"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:binding name="UserAndLimitationManagementWsSoap12" type="tns:UserAndLimitationManagementWsSoap">
+    <soap12:binding transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="AuthenticateUserPassword">
+      <soap12:operation soapAction="http://hpcaas.it4i.cz/AuthenticateUserPassword" style="document"/>
+      <wsdl:input>
+        <soap12:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="AuthenticateUserDigitalSignature">
+      <soap12:operation soapAction="http://hpcaas.it4i.cz/AuthenticateUserDigitalSignature" style="document"/>
+      <wsdl:input>
+        <soap12:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetCurrentUsageAndLimitationsForCurrentUser">
+      <soap12:operation soapAction="http://hpcaas.it4i.cz/GetCurrentUsageAndLimitationsForCurrentUser" style="document"/>
+      <wsdl:input>
+        <soap12:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="UserAndLimitationManagementWs">
+    <wsdl:port name="UserAndLimitationManagementWsSoap" binding="tns:UserAndLimitationManagementWsSoap">
+      <soap:address location="http://haas.vsb.cz/HaasWsFiji/UserAndLimitationManagementWs.asmx"/>
+    </wsdl:port>
+    <wsdl:port name="UserAndLimitationManagementWsSoap12" binding="tns:UserAndLimitationManagementWsSoap12">
+      <soap12:address location="http://haas.vsb.cz/HaasWsFiji/UserAndLimitationManagementWs.asmx"/>
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

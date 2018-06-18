@@ -1,0 +1,582 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions xmlns:s="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/" xmlns:http="http://schemas.xmlsoap.org/wsdl/http/" xmlns:mime="http://schemas.xmlsoap.org/wsdl/mime/" xmlns:tns="http://hpcaas.it4i.cz/" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:tm="http://microsoft.com/wsdl/mime/textMatching/" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" targetNamespace="http://hpcaas.it4i.cz/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+  <wsdl:types>
+    <s:schema elementFormDefault="qualified" targetNamespace="http://hpcaas.it4i.cz/">
+      <s:element name="CreateJob">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="specification" type="tns:JobSpecificationExt"/>
+            <s:element minOccurs="0" maxOccurs="1" name="sessionCode" type="s:string"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="JobSpecificationExt">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="1" name="name" type="s:string"/>
+          <s:element minOccurs="1" maxOccurs="1" name="minCores" nillable="true" type="s:int"/>
+          <s:element minOccurs="1" maxOccurs="1" name="maxCores" nillable="true" type="s:int"/>
+          <s:element minOccurs="1" maxOccurs="1" name="priority" nillable="true" type="tns:JobPriorityExt"/>
+          <s:element minOccurs="0" maxOccurs="1" name="project" type="s:string"/>
+          <s:element minOccurs="1" maxOccurs="1" name="waitingLimit" nillable="true" type="s:int"/>
+          <s:element minOccurs="1" maxOccurs="1" name="walltimeLimit" nillable="true" type="s:int"/>
+          <s:element minOccurs="0" maxOccurs="1" name="notificationEmail" type="s:string"/>
+          <s:element minOccurs="0" maxOccurs="1" name="phoneNumber" type="s:string"/>
+          <s:element minOccurs="1" maxOccurs="1" name="notifyOnAbort" nillable="true" type="s:boolean"/>
+          <s:element minOccurs="1" maxOccurs="1" name="notifyOnFinish" nillable="true" type="s:boolean"/>
+          <s:element minOccurs="1" maxOccurs="1" name="notifyOnStart" nillable="true" type="s:boolean"/>
+          <s:element minOccurs="1" maxOccurs="1" name="clusterNodeTypeId" nillable="true" type="s:long"/>
+          <s:element minOccurs="0" maxOccurs="1" name="environmentVariables" type="tns:ArrayOfEnvironmentVariableExt"/>
+          <s:element minOccurs="0" maxOccurs="1" name="tasks" type="tns:ArrayOfTaskSpecificationExt"/>
+        </s:sequence>
+      </s:complexType>
+      <s:simpleType name="JobPriorityExt">
+        <s:restriction base="s:string">
+          <s:enumeration value="Lowest"/>
+          <s:enumeration value="VeryLow"/>
+          <s:enumeration value="Low"/>
+          <s:enumeration value="BelowAverage"/>
+          <s:enumeration value="Average"/>
+          <s:enumeration value="AboveAverage"/>
+          <s:enumeration value="High"/>
+          <s:enumeration value="VeryHigh"/>
+          <s:enumeration value="Critical"/>
+        </s:restriction>
+      </s:simpleType>
+      <s:complexType name="ArrayOfEnvironmentVariableExt">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="EnvironmentVariableExt" nillable="true" type="tns:EnvironmentVariableExt"/>
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="EnvironmentVariableExt">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="1" name="name" type="s:string"/>
+          <s:element minOccurs="0" maxOccurs="1" name="value" type="s:string"/>
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ArrayOfTaskSpecificationExt">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="TaskSpecificationExt" nillable="true" type="tns:TaskSpecificationExt"/>
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="TaskSpecificationExt">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="1" name="name" type="s:string"/>
+          <s:element minOccurs="1" maxOccurs="1" name="minCores" nillable="true" type="s:int"/>
+          <s:element minOccurs="1" maxOccurs="1" name="maxCores" nillable="true" type="s:int"/>
+          <s:element minOccurs="1" maxOccurs="1" name="walltimeLimit" nillable="true" type="s:int"/>
+          <s:element minOccurs="0" maxOccurs="1" name="requiredNodes" type="s:string"/>
+          <s:element minOccurs="1" maxOccurs="1" name="isExclusive" nillable="true" type="s:boolean"/>
+          <s:element minOccurs="1" maxOccurs="1" name="isRerunnable" nillable="true" type="s:boolean"/>
+          <s:element minOccurs="0" maxOccurs="1" name="standardInputFile" type="s:string"/>
+          <s:element minOccurs="0" maxOccurs="1" name="standardOutputFile" type="s:string"/>
+          <s:element minOccurs="0" maxOccurs="1" name="standardErrorFile" type="s:string"/>
+          <s:element minOccurs="0" maxOccurs="1" name="progressFile" type="s:string"/>
+          <s:element minOccurs="0" maxOccurs="1" name="logFile" type="s:string"/>
+          <s:element minOccurs="0" maxOccurs="1" name="clusterTaskSubdirectory" type="s:string"/>
+          <s:element minOccurs="1" maxOccurs="1" name="commandTemplateId" nillable="true" type="s:long"/>
+          <s:element minOccurs="0" maxOccurs="1" name="environmentVariables" type="tns:ArrayOfEnvironmentVariableExt"/>
+          <s:element minOccurs="0" maxOccurs="1" name="dependsOn" type="tns:ArrayOfTaskSpecificationExt"/>
+          <s:element minOccurs="0" maxOccurs="1" name="templateParameterValues" type="tns:ArrayOfCommandTemplateParameterValueExt"/>
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ArrayOfCommandTemplateParameterValueExt">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="CommandTemplateParameterValueExt" nillable="true" type="tns:CommandTemplateParameterValueExt"/>
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="CommandTemplateParameterValueExt">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="1" name="commandParameterIdentifier" type="s:string"/>
+          <s:element minOccurs="0" maxOccurs="1" name="parameterValue" type="s:string"/>
+        </s:sequence>
+      </s:complexType>
+      <s:element name="CreateJobResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="CreateJobResult" type="tns:SubmittedJobInfoExt"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="SubmittedJobInfoExt">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="id" nillable="true" type="s:long"/>
+          <s:element minOccurs="0" maxOccurs="1" name="name" type="s:string"/>
+          <s:element minOccurs="1" maxOccurs="1" name="state" nillable="true" type="tns:JobStateExt"/>
+          <s:element minOccurs="1" maxOccurs="1" name="priority" nillable="true" type="tns:JobPriorityExt"/>
+          <s:element minOccurs="0" maxOccurs="1" name="project" type="s:string"/>
+          <s:element minOccurs="1" maxOccurs="1" name="creationTime" nillable="true" type="s:dateTime"/>
+          <s:element minOccurs="1" maxOccurs="1" name="submitTime" nillable="true" type="s:dateTime"/>
+          <s:element minOccurs="1" maxOccurs="1" name="startTime" nillable="true" type="s:dateTime"/>
+          <s:element minOccurs="1" maxOccurs="1" name="endTime" nillable="true" type="s:dateTime"/>
+          <s:element minOccurs="1" maxOccurs="1" name="totalAllocatedTime" nillable="true" type="s:double"/>
+          <s:element minOccurs="0" maxOccurs="1" name="allParameters" type="s:string"/>
+          <s:element minOccurs="0" maxOccurs="1" name="nodeType" type="tns:ClusterNodeTypeExt"/>
+          <s:element minOccurs="0" maxOccurs="1" name="tasks" type="tns:ArrayOfSubmittedTaskInfoExt"/>
+        </s:sequence>
+      </s:complexType>
+      <s:simpleType name="JobStateExt">
+        <s:restriction base="s:string">
+          <s:enumeration value="Configuring"/>
+          <s:enumeration value="Submitted"/>
+          <s:enumeration value="Queued"/>
+          <s:enumeration value="Running"/>
+          <s:enumeration value="Finished"/>
+          <s:enumeration value="Failed"/>
+          <s:enumeration value="Canceled"/>
+        </s:restriction>
+      </s:simpleType>
+      <s:complexType name="ClusterNodeTypeExt">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="id" nillable="true" type="s:long"/>
+          <s:element minOccurs="0" maxOccurs="1" name="name" type="s:string"/>
+          <s:element minOccurs="0" maxOccurs="1" name="description" type="s:string"/>
+          <s:element minOccurs="1" maxOccurs="1" name="numberOfNodes" nillable="true" type="s:int"/>
+          <s:element minOccurs="1" maxOccurs="1" name="coresPerNode" nillable="true" type="s:int"/>
+          <s:element minOccurs="1" maxOccurs="1" name="maxWalltime" nillable="true" type="s:int"/>
+          <s:element minOccurs="0" maxOccurs="1" name="possibleCommands" type="tns:ArrayOfCommandTemplateExt"/>
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ArrayOfCommandTemplateExt">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="CommandTemplateExt" nillable="true" type="tns:CommandTemplateExt"/>
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="CommandTemplateExt">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="id" nillable="true" type="s:long"/>
+          <s:element minOccurs="0" maxOccurs="1" name="name" type="s:string"/>
+          <s:element minOccurs="0" maxOccurs="1" name="description" type="s:string"/>
+          <s:element minOccurs="0" maxOccurs="1" name="code" type="s:string"/>
+          <s:element minOccurs="0" maxOccurs="1" name="templateParameters" type="tns:ArrayOfCommandTemplateParameterExt"/>
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ArrayOfCommandTemplateParameterExt">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="CommandTemplateParameterExt" nillable="true" type="tns:CommandTemplateParameterExt"/>
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="CommandTemplateParameterExt">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="1" name="identifier" type="s:string"/>
+          <s:element minOccurs="0" maxOccurs="1" name="description" type="s:string"/>
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ArrayOfSubmittedTaskInfoExt">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="SubmittedTaskInfoExt" nillable="true" type="tns:SubmittedTaskInfoExt"/>
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="SubmittedTaskInfoExt">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="id" nillable="true" type="s:long"/>
+          <s:element minOccurs="0" maxOccurs="1" name="name" type="s:string"/>
+          <s:element minOccurs="1" maxOccurs="1" name="state" nillable="true" type="tns:TaskStateExt"/>
+          <s:element minOccurs="1" maxOccurs="1" name="allocatedTime" nillable="true" type="s:double"/>
+          <s:element minOccurs="0" maxOccurs="1" name="allocatedCoreIds" type="s:string"/>
+          <s:element minOccurs="1" maxOccurs="1" name="startTime" nillable="true" type="s:dateTime"/>
+          <s:element minOccurs="1" maxOccurs="1" name="endTime" nillable="true" type="s:dateTime"/>
+          <s:element minOccurs="0" maxOccurs="1" name="errorMessage" type="s:string"/>
+          <s:element minOccurs="0" maxOccurs="1" name="allParameters" type="s:string"/>
+        </s:sequence>
+      </s:complexType>
+      <s:simpleType name="TaskStateExt">
+        <s:restriction base="s:string">
+          <s:enumeration value="Configuring"/>
+          <s:enumeration value="Submitted"/>
+          <s:enumeration value="Queued"/>
+          <s:enumeration value="Running"/>
+          <s:enumeration value="Finished"/>
+          <s:enumeration value="Failed"/>
+          <s:enumeration value="Canceled"/>
+        </s:restriction>
+      </s:simpleType>
+      <s:element name="SubmitJob">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="createdJobInfoId" type="s:long"/>
+            <s:element minOccurs="0" maxOccurs="1" name="sessionCode" type="s:string"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="SubmitJobResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="SubmitJobResult" type="tns:SubmittedJobInfoExt"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="CancelJob">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="submittedJobInfoId" type="s:long"/>
+            <s:element minOccurs="0" maxOccurs="1" name="sessionCode" type="s:string"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="CancelJobResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="CancelJobResult" type="tns:SubmittedJobInfoExt"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="DeleteJob">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="submittedJobInfoId" type="s:long"/>
+            <s:element minOccurs="0" maxOccurs="1" name="sessionCode" type="s:string"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="DeleteJobResponse">
+        <s:complexType/>
+      </s:element>
+      <s:element name="ListJobsForCurrentUser">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="sessionCode" type="s:string"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="ListJobsForCurrentUserResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="ListJobsForCurrentUserResult" type="tns:ArrayOfSubmittedJobInfoExt"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="ArrayOfSubmittedJobInfoExt">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="SubmittedJobInfoExt" nillable="true" type="tns:SubmittedJobInfoExt"/>
+        </s:sequence>
+      </s:complexType>
+      <s:element name="GetCurrentInfoForJob">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="submittedJobInfoId" type="s:long"/>
+            <s:element minOccurs="0" maxOccurs="1" name="sessionCode" type="s:string"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetCurrentInfoForJobResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="GetCurrentInfoForJobResult" type="tns:SubmittedJobInfoExt"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="CopyJobDataToTemp">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="submittedJobInfoId" type="s:long"/>
+            <s:element minOccurs="0" maxOccurs="1" name="sessionCode" type="s:string"/>
+            <s:element minOccurs="0" maxOccurs="1" name="path" type="s:string"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="CopyJobDataToTempResponse">
+        <s:complexType/>
+      </s:element>
+      <s:element name="CopyJobDataFromTemp">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="createdJobInfoId" type="s:long"/>
+            <s:element minOccurs="0" maxOccurs="1" name="sessionCode" type="s:string"/>
+            <s:element minOccurs="0" maxOccurs="1" name="tempSessionCode" type="s:string"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="CopyJobDataFromTempResponse">
+        <s:complexType/>
+      </s:element>
+      <s:element name="GetAllocatedNodesIPs">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="submittedJobInfoId" type="s:long"/>
+            <s:element minOccurs="0" maxOccurs="1" name="sessionCode" type="s:string"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetAllocatedNodesIPsResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="GetAllocatedNodesIPsResult" type="tns:ArrayOfString"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="ArrayOfString">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="string" nillable="true" type="s:string"/>
+        </s:sequence>
+      </s:complexType>
+    </s:schema>
+  </wsdl:types>
+  <wsdl:message name="CreateJobSoapIn">
+    <wsdl:part name="parameters" element="tns:CreateJob"/>
+  </wsdl:message>
+  <wsdl:message name="CreateJobSoapOut">
+    <wsdl:part name="parameters" element="tns:CreateJobResponse"/>
+  </wsdl:message>
+  <wsdl:message name="SubmitJobSoapIn">
+    <wsdl:part name="parameters" element="tns:SubmitJob"/>
+  </wsdl:message>
+  <wsdl:message name="SubmitJobSoapOut">
+    <wsdl:part name="parameters" element="tns:SubmitJobResponse"/>
+  </wsdl:message>
+  <wsdl:message name="CancelJobSoapIn">
+    <wsdl:part name="parameters" element="tns:CancelJob"/>
+  </wsdl:message>
+  <wsdl:message name="CancelJobSoapOut">
+    <wsdl:part name="parameters" element="tns:CancelJobResponse"/>
+  </wsdl:message>
+  <wsdl:message name="DeleteJobSoapIn">
+    <wsdl:part name="parameters" element="tns:DeleteJob"/>
+  </wsdl:message>
+  <wsdl:message name="DeleteJobSoapOut">
+    <wsdl:part name="parameters" element="tns:DeleteJobResponse"/>
+  </wsdl:message>
+  <wsdl:message name="ListJobsForCurrentUserSoapIn">
+    <wsdl:part name="parameters" element="tns:ListJobsForCurrentUser"/>
+  </wsdl:message>
+  <wsdl:message name="ListJobsForCurrentUserSoapOut">
+    <wsdl:part name="parameters" element="tns:ListJobsForCurrentUserResponse"/>
+  </wsdl:message>
+  <wsdl:message name="GetCurrentInfoForJobSoapIn">
+    <wsdl:part name="parameters" element="tns:GetCurrentInfoForJob"/>
+  </wsdl:message>
+  <wsdl:message name="GetCurrentInfoForJobSoapOut">
+    <wsdl:part name="parameters" element="tns:GetCurrentInfoForJobResponse"/>
+  </wsdl:message>
+  <wsdl:message name="CopyJobDataToTempSoapIn">
+    <wsdl:part name="parameters" element="tns:CopyJobDataToTemp"/>
+  </wsdl:message>
+  <wsdl:message name="CopyJobDataToTempSoapOut">
+    <wsdl:part name="parameters" element="tns:CopyJobDataToTempResponse"/>
+  </wsdl:message>
+  <wsdl:message name="CopyJobDataFromTempSoapIn">
+    <wsdl:part name="parameters" element="tns:CopyJobDataFromTemp"/>
+  </wsdl:message>
+  <wsdl:message name="CopyJobDataFromTempSoapOut">
+    <wsdl:part name="parameters" element="tns:CopyJobDataFromTempResponse"/>
+  </wsdl:message>
+  <wsdl:message name="GetAllocatedNodesIPsSoapIn">
+    <wsdl:part name="parameters" element="tns:GetAllocatedNodesIPs"/>
+  </wsdl:message>
+  <wsdl:message name="GetAllocatedNodesIPsSoapOut">
+    <wsdl:part name="parameters" element="tns:GetAllocatedNodesIPsResponse"/>
+  </wsdl:message>
+  <wsdl:portType name="JobManagementWsSoap">
+    <wsdl:operation name="CreateJob">
+      <wsdl:input message="tns:CreateJobSoapIn"/>
+      <wsdl:output message="tns:CreateJobSoapOut"/>
+    </wsdl:operation>
+    <wsdl:operation name="SubmitJob">
+      <wsdl:input message="tns:SubmitJobSoapIn"/>
+      <wsdl:output message="tns:SubmitJobSoapOut"/>
+    </wsdl:operation>
+    <wsdl:operation name="CancelJob">
+      <wsdl:input message="tns:CancelJobSoapIn"/>
+      <wsdl:output message="tns:CancelJobSoapOut"/>
+    </wsdl:operation>
+    <wsdl:operation name="DeleteJob">
+      <wsdl:input message="tns:DeleteJobSoapIn"/>
+      <wsdl:output message="tns:DeleteJobSoapOut"/>
+    </wsdl:operation>
+    <wsdl:operation name="ListJobsForCurrentUser">
+      <wsdl:input message="tns:ListJobsForCurrentUserSoapIn"/>
+      <wsdl:output message="tns:ListJobsForCurrentUserSoapOut"/>
+    </wsdl:operation>
+    <wsdl:operation name="GetCurrentInfoForJob">
+      <wsdl:input message="tns:GetCurrentInfoForJobSoapIn"/>
+      <wsdl:output message="tns:GetCurrentInfoForJobSoapOut"/>
+    </wsdl:operation>
+    <wsdl:operation name="CopyJobDataToTemp">
+      <wsdl:input message="tns:CopyJobDataToTempSoapIn"/>
+      <wsdl:output message="tns:CopyJobDataToTempSoapOut"/>
+    </wsdl:operation>
+    <wsdl:operation name="CopyJobDataFromTemp">
+      <wsdl:input message="tns:CopyJobDataFromTempSoapIn"/>
+      <wsdl:output message="tns:CopyJobDataFromTempSoapOut"/>
+    </wsdl:operation>
+    <wsdl:operation name="GetAllocatedNodesIPs">
+      <wsdl:input message="tns:GetAllocatedNodesIPsSoapIn"/>
+      <wsdl:output message="tns:GetAllocatedNodesIPsSoapOut"/>
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="JobManagementWsSoap" type="tns:JobManagementWsSoap">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="CreateJob">
+      <soap:operation soapAction="http://hpcaas.it4i.cz/CreateJob" style="document"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="SubmitJob">
+      <soap:operation soapAction="http://hpcaas.it4i.cz/SubmitJob" style="document"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="CancelJob">
+      <soap:operation soapAction="http://hpcaas.it4i.cz/CancelJob" style="document"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="DeleteJob">
+      <soap:operation soapAction="http://hpcaas.it4i.cz/DeleteJob" style="document"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="ListJobsForCurrentUser">
+      <soap:operation soapAction="http://hpcaas.it4i.cz/ListJobsForCurrentUser" style="document"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetCurrentInfoForJob">
+      <soap:operation soapAction="http://hpcaas.it4i.cz/GetCurrentInfoForJob" style="document"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="CopyJobDataToTemp">
+      <soap:operation soapAction="http://hpcaas.it4i.cz/CopyJobDataToTemp" style="document"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="CopyJobDataFromTemp">
+      <soap:operation soapAction="http://hpcaas.it4i.cz/CopyJobDataFromTemp" style="document"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetAllocatedNodesIPs">
+      <soap:operation soapAction="http://hpcaas.it4i.cz/GetAllocatedNodesIPs" style="document"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:binding name="JobManagementWsSoap12" type="tns:JobManagementWsSoap">
+    <soap12:binding transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="CreateJob">
+      <soap12:operation soapAction="http://hpcaas.it4i.cz/CreateJob" style="document"/>
+      <wsdl:input>
+        <soap12:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="SubmitJob">
+      <soap12:operation soapAction="http://hpcaas.it4i.cz/SubmitJob" style="document"/>
+      <wsdl:input>
+        <soap12:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="CancelJob">
+      <soap12:operation soapAction="http://hpcaas.it4i.cz/CancelJob" style="document"/>
+      <wsdl:input>
+        <soap12:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="DeleteJob">
+      <soap12:operation soapAction="http://hpcaas.it4i.cz/DeleteJob" style="document"/>
+      <wsdl:input>
+        <soap12:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="ListJobsForCurrentUser">
+      <soap12:operation soapAction="http://hpcaas.it4i.cz/ListJobsForCurrentUser" style="document"/>
+      <wsdl:input>
+        <soap12:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetCurrentInfoForJob">
+      <soap12:operation soapAction="http://hpcaas.it4i.cz/GetCurrentInfoForJob" style="document"/>
+      <wsdl:input>
+        <soap12:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="CopyJobDataToTemp">
+      <soap12:operation soapAction="http://hpcaas.it4i.cz/CopyJobDataToTemp" style="document"/>
+      <wsdl:input>
+        <soap12:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="CopyJobDataFromTemp">
+      <soap12:operation soapAction="http://hpcaas.it4i.cz/CopyJobDataFromTemp" style="document"/>
+      <wsdl:input>
+        <soap12:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetAllocatedNodesIPs">
+      <soap12:operation soapAction="http://hpcaas.it4i.cz/GetAllocatedNodesIPs" style="document"/>
+      <wsdl:input>
+        <soap12:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="JobManagementWs">
+    <wsdl:port name="JobManagementWsSoap" binding="tns:JobManagementWsSoap">
+      <soap:address location="http://haas.vsb.cz/HaasWsFiji/JobManagementWs.asmx"/>
+    </wsdl:port>
+    <wsdl:port name="JobManagementWsSoap12" binding="tns:JobManagementWsSoap12">
+      <soap12:address location="http://haas.vsb.cz/HaasWsFiji/JobManagementWs.asmx"/>
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

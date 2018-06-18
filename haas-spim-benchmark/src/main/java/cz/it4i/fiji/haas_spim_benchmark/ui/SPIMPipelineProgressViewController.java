@@ -160,7 +160,6 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 	}
 
 	private void fillTable() {
-		log.info("fillTable");
 		List<Task> tasks = job.getTasks();
 		if (tasks == null) {
 			timer.schedule(new TimerTask() {
@@ -223,7 +222,6 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 	}
 
 	private void updateTable() {
-		log.info("updateTable");
 		registry.update();
 	}
 

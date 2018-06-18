@@ -1,0 +1,305 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions xmlns:s="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/" xmlns:http="http://schemas.xmlsoap.org/wsdl/http/" xmlns:mime="http://schemas.xmlsoap.org/wsdl/mime/" xmlns:tns="http://hpcaas.it4i.cz/" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:tm="http://microsoft.com/wsdl/mime/textMatching/" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" targetNamespace="http://hpcaas.it4i.cz/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+  <wsdl:types>
+    <s:schema elementFormDefault="qualified" targetNamespace="http://hpcaas.it4i.cz/">
+      <s:element name="GetFileTransferMethod">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="submittedJobInfoId" type="s:long"/>
+            <s:element minOccurs="0" maxOccurs="1" name="sessionCode" type="s:string"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetFileTransferMethodResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="GetFileTransferMethodResult" type="tns:FileTransferMethodExt"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="FileTransferMethodExt">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="1" name="serverHostname" type="s:string"/>
+          <s:element minOccurs="0" maxOccurs="1" name="sharedBasepath" type="s:string"/>
+          <s:element minOccurs="1" maxOccurs="1" name="protocol" nillable="true" type="tns:FileTransferProtocolExt"/>
+          <s:element minOccurs="0" maxOccurs="1" name="credentials" type="tns:AsymmetricKeyCredentialsExt"/>
+        </s:sequence>
+      </s:complexType>
+      <s:simpleType name="FileTransferProtocolExt">
+        <s:restriction base="s:string">
+          <s:enumeration value="NetworkShare"/>
+          <s:enumeration value="SftpScp"/>
+        </s:restriction>
+      </s:simpleType>
+      <s:complexType name="AsymmetricKeyCredentialsExt">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:AuthenticationCredentialsExt">
+            <s:sequence>
+              <s:element minOccurs="0" maxOccurs="1" name="privateKey" type="s:string"/>
+              <s:element minOccurs="0" maxOccurs="1" name="publicKey" type="s:string"/>
+            </s:sequence>
+          </s:extension>
+        </s:complexContent>
+      </s:complexType>
+      <s:complexType name="AuthenticationCredentialsExt">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="1" name="username" type="s:string"/>
+        </s:sequence>
+      </s:complexType>
+      <s:element name="EndFileTransfer">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="submittedJobInfoId" type="s:long"/>
+            <s:element minOccurs="0" maxOccurs="1" name="usedTransferMethod" type="tns:FileTransferMethodExt"/>
+            <s:element minOccurs="0" maxOccurs="1" name="sessionCode" type="s:string"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="EndFileTransferResponse">
+        <s:complexType/>
+      </s:element>
+      <s:element name="DownloadPartsOfJobFilesFromCluster">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="submittedJobInfoId" type="s:long"/>
+            <s:element minOccurs="0" maxOccurs="1" name="taskFileOffsets" type="tns:ArrayOfTaskFileOffsetExt"/>
+            <s:element minOccurs="0" maxOccurs="1" name="sessionCode" type="s:string"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="ArrayOfTaskFileOffsetExt">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="TaskFileOffsetExt" nillable="true" type="tns:TaskFileOffsetExt"/>
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="TaskFileOffsetExt">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="submittedTaskInfoId" nillable="true" type="s:long"/>
+          <s:element minOccurs="1" maxOccurs="1" name="fileType" nillable="true" type="tns:SynchronizableFilesExt"/>
+          <s:element minOccurs="1" maxOccurs="1" name="offset" nillable="true" type="s:long"/>
+        </s:sequence>
+      </s:complexType>
+      <s:simpleType name="SynchronizableFilesExt">
+        <s:restriction base="s:string">
+          <s:enumeration value="LogFile"/>
+          <s:enumeration value="ProgressFile"/>
+          <s:enumeration value="StandardErrorFile"/>
+          <s:enumeration value="StandardOutputFile"/>
+        </s:restriction>
+      </s:simpleType>
+      <s:element name="DownloadPartsOfJobFilesFromClusterResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="DownloadPartsOfJobFilesFromClusterResult" type="tns:ArrayOfJobFileContentExt"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="ArrayOfJobFileContentExt">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="JobFileContentExt" nillable="true" type="tns:JobFileContentExt"/>
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="JobFileContentExt">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="1" name="content" type="s:string"/>
+          <s:element minOccurs="0" maxOccurs="1" name="relativePath" type="s:string"/>
+          <s:element minOccurs="1" maxOccurs="1" name="offset" nillable="true" type="s:long"/>
+          <s:element minOccurs="1" maxOccurs="1" name="fileType" nillable="true" type="tns:SynchronizableFilesExt"/>
+          <s:element minOccurs="1" maxOccurs="1" name="submittedTaskInfoId" nillable="true" type="s:long"/>
+        </s:sequence>
+      </s:complexType>
+      <s:element name="ListChangedFilesForJob">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="submittedJobInfoId" type="s:long"/>
+            <s:element minOccurs="0" maxOccurs="1" name="sessionCode" type="s:string"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="ListChangedFilesForJobResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="ListChangedFilesForJobResult" type="tns:ArrayOfString"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="ArrayOfString">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="string" nillable="true" type="s:string"/>
+        </s:sequence>
+      </s:complexType>
+      <s:element name="DownloadFileFromCluster">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="submittedJobInfoId" type="s:long"/>
+            <s:element minOccurs="0" maxOccurs="1" name="relativeFilePath" type="s:string"/>
+            <s:element minOccurs="0" maxOccurs="1" name="sessionCode" type="s:string"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="DownloadFileFromClusterResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="DownloadFileFromClusterResult" type="s:base64Binary"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+    </s:schema>
+  </wsdl:types>
+  <wsdl:message name="GetFileTransferMethodSoapIn">
+    <wsdl:part name="parameters" element="tns:GetFileTransferMethod"/>
+  </wsdl:message>
+  <wsdl:message name="GetFileTransferMethodSoapOut">
+    <wsdl:part name="parameters" element="tns:GetFileTransferMethodResponse"/>
+  </wsdl:message>
+  <wsdl:message name="EndFileTransferSoapIn">
+    <wsdl:part name="parameters" element="tns:EndFileTransfer"/>
+  </wsdl:message>
+  <wsdl:message name="EndFileTransferSoapOut">
+    <wsdl:part name="parameters" element="tns:EndFileTransferResponse"/>
+  </wsdl:message>
+  <wsdl:message name="DownloadPartsOfJobFilesFromClusterSoapIn">
+    <wsdl:part name="parameters" element="tns:DownloadPartsOfJobFilesFromCluster"/>
+  </wsdl:message>
+  <wsdl:message name="DownloadPartsOfJobFilesFromClusterSoapOut">
+    <wsdl:part name="parameters" element="tns:DownloadPartsOfJobFilesFromClusterResponse"/>
+  </wsdl:message>
+  <wsdl:message name="ListChangedFilesForJobSoapIn">
+    <wsdl:part name="parameters" element="tns:ListChangedFilesForJob"/>
+  </wsdl:message>
+  <wsdl:message name="ListChangedFilesForJobSoapOut">
+    <wsdl:part name="parameters" element="tns:ListChangedFilesForJobResponse"/>
+  </wsdl:message>
+  <wsdl:message name="DownloadFileFromClusterSoapIn">
+    <wsdl:part name="parameters" element="tns:DownloadFileFromCluster"/>
+  </wsdl:message>
+  <wsdl:message name="DownloadFileFromClusterSoapOut">
+    <wsdl:part name="parameters" element="tns:DownloadFileFromClusterResponse"/>
+  </wsdl:message>
+  <wsdl:portType name="FileTransferWsSoap">
+    <wsdl:operation name="GetFileTransferMethod">
+      <wsdl:input message="tns:GetFileTransferMethodSoapIn"/>
+      <wsdl:output message="tns:GetFileTransferMethodSoapOut"/>
+    </wsdl:operation>
+    <wsdl:operation name="EndFileTransfer">
+      <wsdl:input message="tns:EndFileTransferSoapIn"/>
+      <wsdl:output message="tns:EndFileTransferSoapOut"/>
+    </wsdl:operation>
+    <wsdl:operation name="DownloadPartsOfJobFilesFromCluster">
+      <wsdl:input message="tns:DownloadPartsOfJobFilesFromClusterSoapIn"/>
+      <wsdl:output message="tns:DownloadPartsOfJobFilesFromClusterSoapOut"/>
+    </wsdl:operation>
+    <wsdl:operation name="ListChangedFilesForJob">
+      <wsdl:input message="tns:ListChangedFilesForJobSoapIn"/>
+      <wsdl:output message="tns:ListChangedFilesForJobSoapOut"/>
+    </wsdl:operation>
+    <wsdl:operation name="DownloadFileFromCluster">
+      <wsdl:input message="tns:DownloadFileFromClusterSoapIn"/>
+      <wsdl:output message="tns:DownloadFileFromClusterSoapOut"/>
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="FileTransferWsSoap" type="tns:FileTransferWsSoap">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="GetFileTransferMethod">
+      <soap:operation soapAction="http://hpcaas.it4i.cz/GetFileTransferMethod" style="document"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="EndFileTransfer">
+      <soap:operation soapAction="http://hpcaas.it4i.cz/EndFileTransfer" style="document"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="DownloadPartsOfJobFilesFromCluster">
+      <soap:operation soapAction="http://hpcaas.it4i.cz/DownloadPartsOfJobFilesFromCluster" style="document"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="ListChangedFilesForJob">
+      <soap:operation soapAction="http://hpcaas.it4i.cz/ListChangedFilesForJob" style="document"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="DownloadFileFromCluster">
+      <soap:operation soapAction="http://hpcaas.it4i.cz/DownloadFileFromCluster" style="document"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:binding name="FileTransferWsSoap12" type="tns:FileTransferWsSoap">
+    <soap12:binding transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="GetFileTransferMethod">
+      <soap12:operation soapAction="http://hpcaas.it4i.cz/GetFileTransferMethod" style="document"/>
+      <wsdl:input>
+        <soap12:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="EndFileTransfer">
+      <soap12:operation soapAction="http://hpcaas.it4i.cz/EndFileTransfer" style="document"/>
+      <wsdl:input>
+        <soap12:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="DownloadPartsOfJobFilesFromCluster">
+      <soap12:operation soapAction="http://hpcaas.it4i.cz/DownloadPartsOfJobFilesFromCluster" style="document"/>
+      <wsdl:input>
+        <soap12:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="ListChangedFilesForJob">
+      <soap12:operation soapAction="http://hpcaas.it4i.cz/ListChangedFilesForJob" style="document"/>
+      <wsdl:input>
+        <soap12:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="DownloadFileFromCluster">
+      <soap12:operation soapAction="http://hpcaas.it4i.cz/DownloadFileFromCluster" style="document"/>
+      <wsdl:input>
+        <soap12:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="FileTransferWs">
+    <wsdl:port name="FileTransferWsSoap" binding="tns:FileTransferWsSoap">
+      <soap:address location="http://haas.vsb.cz/HaasWsFiji/FileTransferWs.asmx"/>
+    </wsdl:port>
+    <wsdl:port name="FileTransferWsSoap12" binding="tns:FileTransferWsSoap12">
+      <soap12:address location="http://haas.vsb.cz/HaasWsFiji/FileTransferWs.asmx"/>
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

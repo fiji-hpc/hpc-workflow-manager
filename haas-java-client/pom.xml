@@ -1,4 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>cz.it4i.fiji</groupId>
@@ -21,17 +22,77 @@
 				</configuration>
 			</plugin>
 			<plugin>
-		      <artifactId>maven-source-plugin</artifactId>
-		      <version>3.0.1</version>
-		      <executions>
-		        <execution>
-		          <id>attach-sources</id>
-		          <phase>compile</phase>
-		          <goals><goal>jar-no-fork</goal></goals> 
-		        </execution>
-		      </executions>
-		    </plugin>
+				<artifactId>maven-source-plugin</artifactId>
+				<version>3.0.1</version>
+				<executions>
+					<execution>
+						<id>attach-sources</id>
+						<phase>compile</phase>
+						<goals>
+							<goal>jar-no-fork</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
+			<!-- usage of jax-ws maven plugin -->
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>jaxws-maven-plugin</artifactId>
+				<version>1.12</version>
+				<executions>
+					<execution>
+						<id>wsimport-from-jdk</id>
+						<goals>
+							<goal>wsimport</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<!-- using wsdl from an url -->
+					<!-- <wsdlUrls> <wsdlUrl> http://haas.vsb.cz/HaasWsFiji/UserAndLimitationManagementWs.asmx?WSDL 
+						</wsdlUrl> <wsdlUrl> http://haas.vsb.cz/HaasWsFiji/JobManagementWs.asmx?WSDL 
+						</wsdlUrl> <wsdlUrl> http://haas.vsb.cz/HaasWsFiji/DataTransferWs.asmx?WSDL 
+						</wsdlUrl> <wsdlUrl> http://haas.vsb.cz/HaasWsFiji/FileTransferWs.asmx?WSDL 
+						</wsdlUrl> </wsdlUrls> -->
+					<!-- or using wsdls file directory -->
+					<wsdlDirectory>src/wsdl</wsdlDirectory>
+					<!-- which wsdl file -->
+					<wsdlFiles>
+						<wsdlFile>UserAndLimitationManagementWs.wsdl</wsdlFile>
+						<wsdlFile>JobManagementWs.wsdl</wsdlFile>
+						<wsdlFile>DataTransferWs.wsdl</wsdlFile>
+						<wsdlFile>FileTransferWs.wsdl</wsdlFile>
+					</wsdlFiles>
+					<!-- Keep generated files -->
+					<!-- Package name -->
+					<!-- generated source files destination -->
+					<extension>true</extension>
+					<keep>true</keep>
+					<packageName>cz.it4i.fiji.haas_java_client.proxy</packageName>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>build-helper-maven-plugin</artifactId>
+				<version>1.9</version>
+				<executions>
+					<execution>
+						<id>add-source</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>add-source</goal>
+						</goals>
+						<configuration>
+							<sources>
+								<source>${project.build.directory}}/haxws/wsimport/java</source>
+							</sources>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
+
 	</build>
 	<dependencies>
 		<dependency>
@@ -46,13 +107,13 @@
 			<artifactId>java-scpclient</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
-		
-		<!-- https://mvnrepository.com/artifact/javax.mail/mail --> 
-	    <dependency> 
-	      <groupId>javax.mail</groupId> 
-	      <artifactId>mail</artifactId> 
-	      <version>1.4.7</version> 
-	    </dependency> 
+
+		<!-- https://mvnrepository.com/artifact/javax.mail/mail -->
+		<dependency>
+			<groupId>javax.mail</groupId>
+			<artifactId>mail</artifactId>
+			<version>1.4.7</version>
+		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.apache.axis/axis -->
 		<dependency>
 			<groupId>org.apache.axis</groupId>
@@ -68,9 +129,9 @@
 		<!-- https://mvnrepository.com/artifact/javax.xml/jaxrpc -->
 		<!-- https://mvnrepository.com/artifact/javax.xml/jaxrpc-api -->
 		<dependency>
-		    <groupId>javax.xml</groupId>
-		    <artifactId>jaxrpc-api</artifactId>
-		    <version>1.1</version>
+			<groupId>javax.xml</groupId>
+			<artifactId>jaxrpc-api</artifactId>
+			<version>1.1</version>
 		</dependency>
 
 		<!-- https://mvnrepository.com/artifact/wsdl4j/wsdl4j -->
@@ -80,7 +141,7 @@
 			<version>1.5.1</version>
 		</dependency>
 
-		
+
 	</dependencies>
 	<distributionManagement>
 		<repository>

@@ -14,8 +14,11 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.rpc.ServiceException;
 
 import org.slf4j.Logger;
@@ -23,13 +26,16 @@ import org.slf4j.LoggerFactory;
 
 import com.jcraft.jsch.JSchException;
 
+import cz.it4i.fiji.haas_java_client.proxy.ArrayOfCommandTemplateParameterValueExt;
+import cz.it4i.fiji.haas_java_client.proxy.ArrayOfEnvironmentVariableExt;
+import cz.it4i.fiji.haas_java_client.proxy.ArrayOfTaskFileOffsetExt;
+import cz.it4i.fiji.haas_java_client.proxy.ArrayOfTaskSpecificationExt;
 import cz.it4i.fiji.haas_java_client.proxy.CommandTemplateParameterValueExt;
-import cz.it4i.fiji.haas_java_client.proxy.EnvironmentVariableExt;
 import cz.it4i.fiji.haas_java_client.proxy.FileTransferMethodExt;
-import cz.it4i.fiji.haas_java_client.proxy.FileTransferWsLocator;
+import cz.it4i.fiji.haas_java_client.proxy.FileTransferWs;
 import cz.it4i.fiji.haas_java_client.proxy.FileTransferWsSoap;
 import cz.it4i.fiji.haas_java_client.proxy.JobFileContentExt;
-import cz.it4i.fiji.haas_java_client.proxy.JobManagementWsLocator;
+import cz.it4i.fiji.haas_java_client.proxy.JobManagementWs;
 import cz.it4i.fiji.haas_java_client.proxy.JobManagementWsSoap;
 import cz.it4i.fiji.haas_java_client.proxy.JobPriorityExt;
 import cz.it4i.fiji.haas_java_client.proxy.JobSpecificationExt;
@@ -39,7 +45,7 @@ import cz.it4i.fiji.haas_java_client.proxy.SubmittedJobInfoExt;
 import cz.it4i.fiji.haas_java_client.proxy.SynchronizableFilesExt;
 import cz.it4i.fiji.haas_java_client.proxy.TaskFileOffsetExt;
 import cz.it4i.fiji.haas_java_client.proxy.TaskSpecificationExt;
-import cz.it4i.fiji.haas_java_client.proxy.UserAndLimitationManagementWsLocator;
+import cz.it4i.fiji.haas_java_client.proxy.UserAndLimitationManagementWs;
 import cz.it4i.fiji.haas_java_client.proxy.UserAndLimitationManagementWsSoap;
 import cz.it4i.fiji.scpclient.ScpClient;
 import cz.it4i.fiji.scpclient.TransferFileProgress;
@@ -47,36 +53,36 @@ import cz.it4i.fiji.scpclient.TransferFileProgress;
 public class HaaSClient {
 
 	public static final TransferFileProgress DUMMY_TRANSFER_FILE_PROGRESS = new TransferFileProgress() {
-		
+
 		@Override
 		public void dataTransfered(long bytesTransfered) {
 			// TODO Auto-generated method stub
-			
+
 		}
 	};
 
 	public static ProgressNotifier DUMMY_PROGRESS_NOTIFIER = new ProgressNotifier() {
-	
+
 		@Override
 		public void setTitle(String title) {
 		}
-	
+
 		@Override
 		public void setItemCount(int count, int total) {
 		}
-	
+
 		@Override
 		public void setCount(int count, int total) {
 		}
-	
+
 		@Override
 		public void itemDone(Object item) {
 		}
-	
+
 		@Override
 		public void done() {
 		}
-	
+
 		@Override
 		public void addItem(Object item) {
 		}
@@ -142,13 +148,13 @@ public class HaaSClient {
 		private SynchronizableFilesExt getType(SynchronizableFileType type) {
 			switch (type) {
 			case LogFile:
-				return SynchronizableFilesExt.LogFile;
+				return SynchronizableFilesExt.LOG_FILE;
 			case ProgressFile:
-				return SynchronizableFilesExt.ProgressFile;
+				return SynchronizableFilesExt.PROGRESS_FILE;
 			case StandardErrorFile:
-				return SynchronizableFilesExt.StandardErrorFile;
+				return SynchronizableFilesExt.STANDARD_ERROR_FILE;
 			case StandardOutputFile:
-				return SynchronizableFilesExt.StandardOutputFile;
+				return SynchronizableFilesExt.STANDARD_OUTPUT_FILE;
 			default:
 				throw new UnsupportedOperationException("Unsupported type: " + type);
 			}
@@ -162,16 +168,16 @@ public class HaaSClient {
 
 	static {
 		Map<JobStateExt, JobState> map = new HashMap<JobStateExt, JobState>();
-		map.put(JobStateExt.Canceled, JobState.Canceled);
-		map.put(JobStateExt.Configuring, JobState.Configuring);
-		map.put(JobStateExt.Failed, JobState.Failed);
-		map.put(JobStateExt.Finished, JobState.Finished);
-		map.put(JobStateExt.Queued, JobState.Queued);
-		map.put(JobStateExt.Running, JobState.Running);
-		map.put(JobStateExt.Submitted, JobState.Submitted);
+		map.put(JobStateExt.CANCELED, JobState.Canceled);
+		map.put(JobStateExt.CONFIGURING, JobState.Configuring);
+		map.put(JobStateExt.FAILED, JobState.Failed);
+		map.put(JobStateExt.FINISHED, JobState.Finished);
+		map.put(JobStateExt.QUEUED, JobState.Queued);
+		map.put(JobStateExt.RUNNING, JobState.Running);
+		map.put(JobStateExt.SUBMITTED, JobState.Submitted);
 		WS_STATE2STATE = Collections.unmodifiableMap(map);
 	}
-	
+
 	private String sessionID;
 
 	private UserAndLimitationManagementWsSoap userAndLimitationManagement;
@@ -190,7 +196,6 @@ public class HaaSClient {
 
 	private final Map<Long, P_FileTransferPool> filetransferPoolMap = new HashMap<>();
 
-	
 	private final Settings settings;
 
 	private final int numberOfCoresPerNodes;
@@ -204,14 +209,14 @@ public class HaaSClient {
 		this.numberOfCoresPerNodes = settings.getNumberOfCoresPerNode();
 	}
 
-	public long createJob(String name,int numberOfNodes, Collection<Entry<String, String>> templateParameters) {
+	public long createJob(String name, int numberOfNodes, Collection<Entry<String, String>> templateParameters) {
 		try {
 			return doCreateJob(name, numberOfNodes, templateParameters);
 		} catch (RemoteException | ServiceException e) {
 			throw new RuntimeException(e);
 		}
 	}
-	
+
 	public long createJob(String name, Collection<Entry<String, String>> templateParameters) {
 		return createJob(name, 1, templateParameters);
 	}
@@ -223,7 +228,7 @@ public class HaaSClient {
 			throw new HaaSClientException(e);
 		}
 	}
-	
+
 	public HaaSFileTransfer startFileTransfer(long jobId) {
 		return startFileTransfer(jobId, DUMMY_TRANSFER_FILE_PROGRESS);
 	}
@@ -239,7 +244,7 @@ public class HaaSClient {
 	public JobInfo obtainJobInfo(long jobId) {
 		try {
 			final SubmittedJobInfoExt info = getJobManagement().getCurrentInfoForJob(jobId, getSessionID());
-			final Collection<Long> tasksId = Arrays.asList(info.getTasks()).stream().map(ti -> ti.getId())
+			final Collection<Long> tasksId = info.getTasks().getSubmittedTaskInfoExt().stream().map(ti -> ti.getId())
 					.collect(Collectors.toList());
 			return new JobInfo() {
 				@Override
@@ -254,17 +259,17 @@ public class HaaSClient {
 
 				@Override
 				public java.util.Calendar getStartTime() {
-					return info.getStartTime();
+					return toGregorian(info.getStartTime());
 				};
 
 				@Override
 				public java.util.Calendar getEndTime() {
-					return info.getEndTime();
+					return toGregorian(info.getEndTime());
 				};
 
 				@Override
 				public Calendar getCreationTime() {
-					return info.getCreationTime();
+					return toGregorian(info.getCreationTime());
 				};
 			};
 		} catch (RemoteException | ServiceException e) {
@@ -275,8 +280,10 @@ public class HaaSClient {
 
 	public Collection<JobFileContentExt> downloadPartsOfJobFiles(Long jobId, HaaSClient.SynchronizableFiles files) {
 		try {
-			return Arrays.asList(getFileTransfer().downloadPartsOfJobFilesFromCluster(jobId,
-					files.getFiles().stream().toArray(TaskFileOffsetExt[]::new), getSessionID()));
+			ArrayOfTaskFileOffsetExt fileOffsetExt = new ArrayOfTaskFileOffsetExt();
+			fileOffsetExt.getTaskFileOffsetExt().addAll(files.getFiles());
+			return getFileTransfer().downloadPartsOfJobFilesFromCluster(jobId, fileOffsetExt, getSessionID())
+					.getJobFileContentExt();
 		} catch (RemoteException | ServiceException e) {
 			throw new HaaSClientException(e);
 		}
@@ -284,7 +291,7 @@ public class HaaSClient {
 
 	public Collection<String> getChangedFiles(long jobId) {
 		try {
-			return Arrays.asList(getFileTransfer().listChangedFilesForJob(jobId, getSessionID()));
+			return getFileTransfer().listChangedFilesForJob(jobId, getSessionID()).getString();
 		} catch (RemoteException | ServiceException e) {
 			throw new HaaSClientException(e);
 		}
@@ -347,12 +354,13 @@ public class HaaSClient {
 		return new ScpClient(fileTransfer.getServerHostname(), fileTransfer.getCredentials().getUsername(), pvtKey);
 	}
 
-	private JobSpecificationExt createJobSpecification(String name, int numberOfNodes, Collection<TaskSpecificationExt> tasks) {
+	private JobSpecificationExt createJobSpecification(String name, int numberOfNodes,
+			Collection<TaskSpecificationExt> tasks) {
 		JobSpecificationExt testJob = new JobSpecificationExt();
 		testJob.setName(name);
 		testJob.setMinCores(numberOfCoresPerNodes * numberOfNodes);
 		testJob.setMaxCores(numberOfCoresPerNodes * numberOfNodes);
-		testJob.setPriority(JobPriorityExt.Average);
+		testJob.setPriority(JobPriorityExt.AVERAGE);
 		testJob.setProject(projectId);
 		testJob.setWaitingLimit(null);
 		testJob.setWalltimeLimit(timeOut);
@@ -362,14 +370,13 @@ public class HaaSClient {
 		testJob.setNotifyOnFinish(false);
 		testJob.setNotifyOnStart(false);
 		testJob.setClusterNodeTypeId(clusterNodeType);
-		testJob.setEnvironmentVariables(new EnvironmentVariableExt[0]);
-		testJob.setTasks(tasks.stream().toArray(TaskSpecificationExt[]::new));
-		
+		testJob.setEnvironmentVariables( new ArrayOfEnvironmentVariableExt());
+		testJob.setTasks(getAndFill(new ArrayOfTaskSpecificationExt(), a -> a.getTaskSpecificationExt().addAll(tasks)));
 		return testJob;
 	}
 
-	private TaskSpecificationExt createTaskSpecification(String name, long templateId,
-			int numberOfNodes, Collection<Entry<String, String>> templateParameters) {
+	private TaskSpecificationExt createTaskSpecification(String name, long templateId, int numberOfNodes,
+			Collection<Entry<String, String>> templateParameters) {
 
 		TaskSpecificationExt testTask = new TaskSpecificationExt();
 		testTask.setName(name);
@@ -386,37 +393,38 @@ public class HaaSClient {
 		testTask.setLogFile("console_Stdlog");
 		testTask.setClusterTaskSubdirectory(null);
 		testTask.setCommandTemplateId(templateId); // commandTemplateID
-		testTask.setEnvironmentVariables(new EnvironmentVariableExt[0]);
+		testTask.setEnvironmentVariables(new ArrayOfEnvironmentVariableExt());
 		testTask.setDependsOn(null);
-		testTask.setTemplateParameterValues(templateParameters.stream()
-				.map(pair -> new CommandTemplateParameterValueExt(pair.getKey(), pair.getValue()))
-				.toArray(CommandTemplateParameterValueExt[]::new));
+		testTask.setTemplateParameterValues(getAndFill(new ArrayOfCommandTemplateParameterValueExt(),
+				t -> t.getCommandTemplateParameterValueExt()
+						.addAll(templateParameters.stream()
+								.map(pair -> createCommandTemplateParameterValueExt(pair.getKey(), pair.getValue()))
+								.collect(Collectors.toList()))));
 		return testTask;
 	}
 
 	private String authenticate() throws RemoteException, ServiceException {
 		return getUserAndLimitationManagement()
-				.authenticateUserPassword(new PasswordCredentialsExt(settings.getUserName(), settings.getPassword()));
+				.authenticateUserPassword(createPasswordCredentialsExt(settings.getUserName(), settings.getPassword()));
 	}
 
 	private UserAndLimitationManagementWsSoap getUserAndLimitationManagement() throws ServiceException {
 		if (userAndLimitationManagement == null) {
-			userAndLimitationManagement = new UserAndLimitationManagementWsLocator()
-					.getUserAndLimitationManagementWsSoap12();
+			userAndLimitationManagement = new UserAndLimitationManagementWs().getUserAndLimitationManagementWsSoap12();
 		}
 		return userAndLimitationManagement;
 	}
 
 	private JobManagementWsSoap getJobManagement() throws ServiceException {
 		if (jobManagement == null) {
-			jobManagement = new JobManagementWsLocator().getJobManagementWsSoap();
+			jobManagement = new JobManagementWs().getJobManagementWsSoap12();
 		}
 		return jobManagement;
 	}
 
 	private FileTransferWsSoap getFileTransfer() throws ServiceException {
 		if (fileTransfer == null) {
-			fileTransfer = new FileTransferWsLocator().getFileTransferWsSoap12();
+			fileTransfer = new FileTransferWs().getFileTransferWsSoap12();
 		}
 		return fileTransfer;
 	}
@@ -518,6 +526,29 @@ public class HaaSClient {
 			}
 		}
 
+	}
+
+	private static <T> T getAndFill(T value, Consumer<T> filler) {
+		filler.accept(value);
+		return value;
+	}
+
+	private static Calendar toGregorian(XMLGregorianCalendar time) {
+		return Optional.ofNullable(time).map(t -> t.toGregorianCalendar()).orElse(null);
+	}
+
+	private static CommandTemplateParameterValueExt createCommandTemplateParameterValueExt(String key, String value) {
+		CommandTemplateParameterValueExt result = new CommandTemplateParameterValueExt();
+		result.setCommandParameterIdentifier(key);
+		result.setParameterValue(value);
+		return result;
+	}
+
+	private static PasswordCredentialsExt createPasswordCredentialsExt(String userName, String password) {
+		PasswordCredentialsExt result = new PasswordCredentialsExt();
+		result.setUsername(userName);
+		result.setPassword(password);
+		return result;
 	}
 
 }
