@@ -8,14 +8,15 @@ import java.util.Collection;
 import java.util.DoubleSummaryStatistics;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.google.common.collect.Streams;
 
 public class ResultFileTask {
-	private String name;
-	private List<ResultFileJob> jobs;
+	private final String name;
+	private final List<ResultFileJob> jobs;
 	private DoubleSummaryStatistics memoryUsageStats;
 	private DoubleSummaryStatistics startTimeStats;
 	private DoubleSummaryStatistics wallTimeStats;
@@ -38,8 +39,8 @@ public class ResultFileTask {
 
 		// Calculate start and wall time values
 		DateTimeFormatter formatter = new DateTimeFormatterBuilder()
-				.appendOptional(DateTimeFormatter.ofPattern("EEE MMM dd kk:mm:ss z yyyy"))
-				.appendOptional(DateTimeFormatter.ofPattern("EEE MMM dd kk:mm:ss yyyy")).toFormatter();
+				.appendOptional(DateTimeFormatter.ofPattern("EEE MMM d kk:mm:ss z yyyy"))
+				.appendOptional(DateTimeFormatter.ofPattern("EEE MMM d kk:mm:ss yyyy")).toFormatter(Locale.ENGLISH);
 		Collection<Double> startTimeValues = retrieveValues(Constants.STATISTICS_RESOURCES_START_TIME)
 				.map(s -> s != null && !s.equals("null")
 						? (double) LocalDateTime.parse(s, formatter).toEpochSecond(ZoneOffset.UTC)

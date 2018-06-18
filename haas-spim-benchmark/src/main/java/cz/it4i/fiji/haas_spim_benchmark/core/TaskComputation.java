@@ -16,7 +16,7 @@ import com.google.common.collect.Streams;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
 
-//FIXME: TaskComputation 'done' should be Finished not Queued
+
 public class TaskComputation {
 
 	public static class Log {
