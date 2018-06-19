@@ -39,6 +39,9 @@ public class MidlewareTunnel implements Closeable {
 	}
 
 	public void open(int port) throws UnknownHostException, IOException {
+		if(ss != null) {
+			throw new IllegalStateException();
+		}
 		ss = new ServerSocket(0, 50, InetAddress.getByName("localhost"));
 		ss.setSoTimeout(TIMEOUT);
 
@@ -48,7 +51,7 @@ public class MidlewareTunnel implements Closeable {
 			public void run() {
 				while (!Thread.interrupted() && !ss.isClosed()) {
 					try (Socket soc = ss.accept()) {
-						doTransfer(soc);
+						doTransfer(soc, port);
 					} catch (SocketTimeoutException e) {
 						// ignore and check interruption
 					} catch (IOException e) {
@@ -57,32 +60,6 @@ public class MidlewareTunnel implements Closeable {
 					}
 				}
 
-			}
-
-			private void doTransfer(Socket soc) {
-				TestCommunicationWithNodes.log.info("START: doTransfer");
-				Thread helpingThread = new Thread() {
-					@Override
-					public void run() {
-						readFromMiddleware(soc);
-					}
-				};
-				DataTransferMethodExt transfer = dataTransfer.getDataTransferMethod(ipAddress, port, jobId,
-						sessionCode);
-				helpingThread.start();
-				sendToMiddleware(soc);
-				TestCommunicationWithNodes.log.info("endDataTransfer");
-				dataTransfer.endDataTransfer(transfer, sessionCode);
-				TestCommunicationWithNodes.log.info("endDataTransfer - DONE");
-
-				helpingThread.interrupt();
-				try {
-					helpingThread.join();
-				} catch (InterruptedException e) {
-					Thread.currentThread().interrupt();
-				}
-
-				TestCommunicationWithNodes.log.info("END: doTransfer");
 			}
 		};
 		thread.start();
@@ -105,6 +82,32 @@ public class MidlewareTunnel implements Closeable {
 
 	public int getLocalPort() {
 		return ss.getLocalPort();
+	}
+
+	private void doTransfer(Socket soc, int port) {
+		TestCommunicationWithNodes.log.info("START: doTransfer");
+		Thread helpingThread = new Thread() {
+			@Override
+			public void run() {
+				readFromMiddleware(soc);
+			}
+		};
+		DataTransferMethodExt transfer = dataTransfer.getDataTransferMethod(ipAddress, port, jobId,
+				sessionCode);
+		helpingThread.start();
+		sendToMiddleware(soc);
+		TestCommunicationWithNodes.log.info("endDataTransfer");
+		dataTransfer.endDataTransfer(transfer, sessionCode);
+		TestCommunicationWithNodes.log.info("endDataTransfer - DONE");
+	
+		helpingThread.interrupt();
+		try {
+			helpingThread.join();
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+		}
+	
+		TestCommunicationWithNodes.log.info("END: doTransfer");
 	}
 
 	private void sendToMiddleware(Socket soc) {
