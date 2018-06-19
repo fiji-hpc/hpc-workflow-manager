@@ -12,6 +12,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -429,7 +430,7 @@ public class HaaSClient {
 		return fileTransfer;
 	}
 
-	private String getSessionID() throws RemoteException, ServiceException {
+	String getSessionID() throws RemoteException, ServiceException {
 		if (sessionID == null) {
 			sessionID = authenticate();
 		}
@@ -549,6 +550,11 @@ public class HaaSClient {
 		result.setUsername(userName);
 		result.setPassword(password);
 		return result;
+	}
+
+	public List<String> getNodesIps(long id) throws RemoteException, ServiceException {
+		
+		return getJobManagement().getAllocatedNodesIPs(id, getSessionID()).getString().stream().collect(Collectors.toList());
 	}
 
 }
