@@ -1,22 +1,33 @@
 package cz.it4i.fiji.haas_spim_benchmark.ui;
 
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import cz.it4i.fiji.haas.ui.ObservableValueRegistry;
 import cz.it4i.fiji.haas.ui.UpdatableObservableValue;
 import cz.it4i.fiji.haas.ui.UpdatableObservableValue.UpdateStatus;
 import cz.it4i.fiji.haas_java_client.JobState;
+import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.BenchmarkJob;
 import cz.it4i.fiji.haas_spim_benchmark.core.Task;
 import cz.it4i.fiji.haas_spim_benchmark.core.TaskComputation;
 
 public class ObservableTaskRegistry extends ObservableValueRegistry<Task, UpdatableObservableValue<Task>> {
 
-	public ObservableTaskRegistry(Consumer<Task> removeConsumer) {
+	private final Supplier<BenchmarkJob> jobSupplier;
+
+	public ObservableTaskRegistry(Supplier<BenchmarkJob> jobSupplier,Consumer<Task> removeConsumer) {
 		super(t -> update(t), t -> t.getComputations().stream().map(tc -> tc.getState()).collect(Collectors.toList()),
 				removeConsumer);
+		this.jobSupplier = jobSupplier;
 	}
 
+	@Override
+	public void update() {
+		jobSupplier.get().getTasks();
+		super.update();
+	}
+	
 	@Override
 	protected UpdatableObservableValue<Task> constructObservableValue(Task task) {
 		return new UpdatableObservableValue<Task>(task, getUpdateFunction(), getStateProvider());

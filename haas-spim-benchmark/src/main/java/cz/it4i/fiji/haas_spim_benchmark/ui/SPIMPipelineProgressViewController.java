@@ -118,7 +118,7 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 		JavaFXRoutines.initRootAndController("SPIMPipelineProgressView.fxml", this);
 		tasks.setPrefWidth(PREFERRED_WIDTH);
 		timer = new Timer();
-		registry = new ObservableTaskRegistry(task -> tasks.getItems().remove(registry.get(task)));
+		registry = new ObservableTaskRegistry(()-> job, task -> tasks.getItems().remove(registry.get(task)));
 		TableViewContextMenu<ObservableValue<Task>> menu = new TableViewContextMenu<ObservableValue<Task>>(this.tasks);
 		menu.addItem("Open view", (task, columnIndex) -> proof(task, columnIndex),
 				(x, columnIndex) -> check(x, columnIndex));
