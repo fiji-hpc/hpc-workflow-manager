@@ -19,24 +19,26 @@ public class RunBenchmark {
 
 	public static class CreateJob {
 		public static void main(String[] args) throws IOException {
-			BenchmarkJobManager benchmarkJobManager = new BenchmarkJobManager(getBenchmarkSPIMParameters());
-			BenchmarkJob ji = benchmarkJobManager.createJob(jd -> jd, jd -> jd);
-			log.info("job: " + ji.getId() + " created.");
+			try(BenchmarkJobManager benchmarkJobManager = new BenchmarkJobManager(getBenchmarkSPIMParameters())) {
+				BenchmarkJob ji = benchmarkJobManager.createJob(jd -> jd, jd -> jd);
+				log.info("job: " + ji.getId() + " created.");
+			}
 		}
 	}
 
 	public static class ProcessJobs {
 		public static void main(String[] args) throws IOException {
-			BenchmarkJobManager benchmarkJobManager = new BenchmarkJobManager(getBenchmarkSPIMParameters());
-			for (BenchmarkJob job : benchmarkJobManager.getJobs()) {
-				JobState state;
-				log.info("job: " + job.getId() + " hasStatus " + (state = job.getState()));
-				if (state == JobState.Configuring) {
-					job.startJob(new DummyProgress());
-				} else if (state != JobState.Running && state != JobState.Queued) {
-					job.startDownload();
-				} else if (state == JobState.Running) {
-					log.info(job.getSnakemakeOutput());
+			try( BenchmarkJobManager benchmarkJobManager = new BenchmarkJobManager(getBenchmarkSPIMParameters())) {
+				for (BenchmarkJob job : benchmarkJobManager.getJobs()) {
+					JobState state;
+					log.info("job: " + job.getId() + " hasStatus " + (state = job.getState()));
+					if (state == JobState.Configuring) {
+						job.startJob(new DummyProgress());
+					} else if (state != JobState.Running && state != JobState.Queued) {
+						job.startDownload();
+					} else if (state == JobState.Running) {
+						log.info(job.getSnakemakeOutput());
+					}
 				}
 			}
 		}
