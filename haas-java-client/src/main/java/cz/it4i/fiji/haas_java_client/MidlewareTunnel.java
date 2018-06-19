@@ -28,7 +28,6 @@ public class MidlewareTunnel implements Closeable {
 	private Thread thread;
 	private final String ipAddress;
 	private final String sessionCode;
-	
 
 	public MidlewareTunnel(long jobId, String hostIp, String sessionCode) {
 		this.jobId = jobId;
@@ -42,23 +41,22 @@ public class MidlewareTunnel implements Closeable {
 	public void open(int port) throws UnknownHostException, IOException {
 		ss = new ServerSocket(0, 50, InetAddress.getByName("localhost"));
 		ss.setSoTimeout(TIMEOUT);
-		
-		thread = new Thread () {
-			
+
+		thread = new Thread() {
 
 			@Override
 			public void run() {
-				while(!Thread.interrupted() && !ss.isClosed()) {
-					try(Socket soc = ss.accept()) {
+				while (!Thread.interrupted() && !ss.isClosed()) {
+					try (Socket soc = ss.accept()) {
 						doTransfer(soc);
 					} catch (SocketTimeoutException e) {
-						//ignore and check interruption
-					 } catch (IOException e) {
+						// ignore and check interruption
+					} catch (IOException e) {
 						TestCommunicationWithNodes.log.error(e.getMessage(), e);
 						break;
-					 }
+					}
 				}
-				
+
 			}
 
 			private void doTransfer(Socket soc) {
@@ -76,14 +74,14 @@ public class MidlewareTunnel implements Closeable {
 				TestCommunicationWithNodes.log.info("endDataTransfer");
 				dataTransfer.endDataTransfer(transfer, sessionCode);
 				TestCommunicationWithNodes.log.info("endDataTransfer - DONE");
-				
+
 				helpingThread.interrupt();
 				try {
 					helpingThread.join();
 				} catch (InterruptedException e) {
 					Thread.currentThread().interrupt();
 				}
-				
+
 				TestCommunicationWithNodes.log.info("END: doTransfer");
 			}
 		};
@@ -99,7 +97,7 @@ public class MidlewareTunnel implements Closeable {
 			Thread.currentThread().interrupt();
 			TestCommunicationWithNodes.log.error(e.getMessage(), e);
 		}
-		if(ss != null) {
+		if (ss != null) {
 			ss.close();
 			ss = null;
 		}
@@ -111,60 +109,55 @@ public class MidlewareTunnel implements Closeable {
 
 	private void sendToMiddleware(Socket soc) {
 		TestCommunicationWithNodes.log.info("START: sendToMiddleware");
-		StringBuilder sb = new StringBuilder();
 		try {
 			InputStream is = Channels.newInputStream(Channels.newChannel(soc.getInputStream()));
 			int len;
-			byte []buffer = new byte[4096];
-			while(!Thread.interrupted() && -1 != (len = is.read(buffer))) {
+			byte[] buffer = new byte[4096];
+			while (!Thread.interrupted() && -1 != (len = is.read(buffer))) {
 				byte[] sending;
-				if(len == 0) {
+				if (len == 0) {
 					continue;
 				}
-				if(buffer.length != len) {
+				if (buffer.length != len) {
 					sending = new byte[len];
 					System.arraycopy(buffer, 0, sending, 0, len);
 				} else {
 					sending = buffer;
 				}
-				
-				sb.append(new String(sending));
+
 				int result = dataTransfer.sendDataToJobNode(sending, jobId, ipAddress, sessionCode);
-				if(result <= 0) {
+				if (result <= 0) {
 					return;
 				}
 			}
-		} catch(InterruptedIOException e) {
+		} catch (InterruptedIOException e) {
 			return;
-		} catch(SocketException e) {
-			if(!e.getMessage().equals("Socket closed")) {
+		} catch (SocketException e) {
+			if (!e.getMessage().equals("Socket closed")) {
 				TestCommunicationWithNodes.log.error(e.getMessage(), e);
 			}
 		} catch (IOException e) {
 			return;
 		} finally {
-			TestCommunicationWithNodes.log.info("sent: <" + sb + ">");
 			TestCommunicationWithNodes.log.info("END: sendToMiddleware");
 		}
 	}
 
-			private void readFromMiddleware(Socket soc) {
+	private void readFromMiddleware(Socket soc) {
 		TestCommunicationWithNodes.log.info("START: readFromMiddleware");
-		StringBuilder sb = new StringBuilder();
 		try {
 			OutputStream os = soc.getOutputStream();
-			byte [] received = null;
-			while(!Thread.interrupted() && null != (received = dataTransfer.readDataFromJobNode(jobId, ipAddress, sessionCode))) {
-				if(received.length > 0) {
-					//logData("received",received);
+			byte[] received = null;
+			while (!Thread.interrupted()
+					&& null != (received = dataTransfer.readDataFromJobNode(jobId, ipAddress, sessionCode))) {
+				if (received.length > 0) {
+					// logData("received",received);
 					os.write(received);
 					os.flush();
-					sb.append(new String(received));
 				}
-				
 			}
 			os.flush();
-		} catch(InterruptedIOException e) {
+		} catch (InterruptedIOException e) {
 			return;
 		} catch (IOException e) {
 			TestCommunicationWithNodes.log.error(e.getMessage(), e);
