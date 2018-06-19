@@ -152,6 +152,7 @@ public class MidlewareTunnel implements Closeable {
 			OutputStream os = soc.getOutputStream();
 			byte[] received = null;
 			while (!Thread.interrupted()
+					&& !soc.isClosed()
 					&& null != (received = dataTransfer.readDataFromJobNode(jobId, ipAddress, sessionCode))) {
 				if (received.length > 0) {
 					// logData("received",received);
