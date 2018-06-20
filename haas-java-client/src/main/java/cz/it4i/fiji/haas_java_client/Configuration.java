@@ -9,9 +9,10 @@ public class Configuration {
 	private Properties properties;
 	
 	public Configuration(String configFile) {
-		try(InputStream is = this.getClass().getClassLoader().getResourceAsStream(configFile)) {
-			if(is == null) {
-				throw new IllegalArgumentException("Resource " + configFile + " does not exists. Copy " + configFile + ".template and fill it, please!");
+		try (InputStream is = this.getClass().getClassLoader().getResourceAsStream(configFile)) {
+			if (is == null) {
+				throw new IllegalArgumentException("Resource " + configFile + " does not exist. Copy " + configFile
+						+ ".template and fill it, please!");
 			}
 			this.properties = new Properties();
 			this.properties.load(is);
