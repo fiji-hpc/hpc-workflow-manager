@@ -235,19 +235,26 @@ public class HaaSClient {
 		return startFileTransfer(jobId, DUMMY_TRANSFER_FILE_PROGRESS);
 	}
 	
-	public TunnelToNode openTunnel(long jobId, String nodeIP, int localPort, int remotePort) throws ServiceException, IOException {
-		MidlewareTunnel tunnel = new MidlewareTunnel(Executors.newCachedThreadPool(), jobId, nodeIP, getSessionID());
-		tunnel.open(localPort, remotePort);
-		return new TunnelToNode() {
-			@Override
-			public void close() throws IOException {
-				tunnel.close();
-			}
-			@Override
-			public int getLocalPort() {
-				return tunnel.getLocalPort();
-			}
-		};
+	public TunnelToNode openTunnel(long jobId, String nodeIP, int localPort, int remotePort) {
+		MidlewareTunnel tunnel;
+		try {
+			tunnel = new MidlewareTunnel(Executors.newCachedThreadPool(), jobId, nodeIP, getSessionID());
+			tunnel.open(localPort, remotePort);
+			return new TunnelToNode() {
+				@Override
+				public void close() throws IOException {
+					tunnel.close();
+				}
+
+				@Override
+				public int getLocalPort() {
+					return tunnel.getLocalPort();
+				}
+			};
+		} catch (ServiceException | IOException e) {
+			log.error(e.getMessage(), e);
+			throw new HaaSClientException(e);
+		}
 	}
 
 	public void submitJob(long jobId) {
