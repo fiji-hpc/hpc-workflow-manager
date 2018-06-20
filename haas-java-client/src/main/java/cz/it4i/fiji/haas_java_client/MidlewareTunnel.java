@@ -29,23 +29,28 @@ import cz.it4i.fiji.haas_java_client.proxy.DataTransferWsSoap;
 public class MidlewareTunnel implements Closeable {
 
 	public static final Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas_java_client.MidlewareTunnel.class);
-	
+
 	private static final int TIMEOUT = 1000;
 
 	private static final int DEFAULT_BACKLOG = 50;
+
 	private final long jobId;
+
 	private ServerSocket ss;
+
 	private final DataTransferWsSoap dataTransfer;
+
 	private Future<?> mainFuture;
+
 	private CountDownLatch mainLatch;
+
 	private final String ipAddress;
+
 	private final String sessionCode;
+
 	private final ExecutorService executorService;
 
-	
-
-	
-	public MidlewareTunnel(ExecutorService executorService,long jobId, String hostIp, String sessionCode) {
+	public MidlewareTunnel(ExecutorService executorService, long jobId, String hostIp, String sessionCode) {
 		this.jobId = jobId;
 		this.dataTransfer = new DataTransferWs().getDataTransferWsSoap12();
 		((BindingProvider) dataTransfer).getRequestContext().put("javax.xml.ws.client.connectionTimeout", "" + TIMEOUT);
@@ -54,15 +59,16 @@ public class MidlewareTunnel implements Closeable {
 		this.sessionCode = sessionCode;
 		this.executorService = executorService;
 	}
+
 	public void open(int port) throws UnknownHostException, IOException {
 		open(0, port);
 	}
-	
+
 	public void open(int localport, int port) throws UnknownHostException, IOException {
 		open(localport, port, DEFAULT_BACKLOG);
 	}
-	
-	public void open(int localport, int port,int backlog) throws UnknownHostException, IOException {
+
+	public void open(int localport, int port, int backlog) throws UnknownHostException, IOException {
 		if (ss != null) {
 			throw new IllegalStateException();
 		}
@@ -84,7 +90,7 @@ public class MidlewareTunnel implements Closeable {
 			} finally {
 				log.info("MiddlewareTunnel - interrupted");
 				mainLatch.countDown();
-		
+
 			}
 		});
 	}
@@ -122,7 +128,7 @@ public class MidlewareTunnel implements Closeable {
 		});
 		connection.setServerHandler(c -> readFromMiddleware(c));
 		connection.establish();
-		
+
 		log.info("END: doTransfer");
 	}
 
@@ -133,7 +139,7 @@ public class MidlewareTunnel implements Closeable {
 			int len;
 			byte[] buffer = new byte[4096];
 			while (!connection.isServerClosed() && -1 != (len = is.read(buffer))) {
-				if(connection.isServerClosed()) {
+				if (connection.isServerClosed()) {
 					break;
 				}
 				byte[] sending;
@@ -174,7 +180,7 @@ public class MidlewareTunnel implements Closeable {
 			byte[] received = null;
 			while (!connection.isClientClosed()
 					&& null != (received = dataTransfer.readDataFromJobNode(jobId, ipAddress, sessionCode))) {
-				if(connection.isClientClosed()) {
+				if (connection.isClientClosed()) {
 					break;
 				}
 				if (received.length > 0) {
@@ -200,7 +206,7 @@ public class MidlewareTunnel implements Closeable {
 
 		private final Socket socket;
 
-		private final Runnable[] runnable = new Runnable [2];
+		private final Runnable[] runnable = new Runnable[2];
 
 		private final Future<?>[] futures = new Future[2];
 
@@ -223,19 +229,19 @@ public class MidlewareTunnel implements Closeable {
 		public void clientClosed() {
 			setClosed(FROM_CLIENT);
 		}
-		
+
 		public void serverClosed() {
 			setClosed(FROM_SERVER);
 		}
-		
+
 		public boolean isClientClosed() {
 			return isClosed(FROM_CLIENT);
 		}
-		
+
 		public boolean isServerClosed() {
 			return isClosed(FROM_SERVER);
 		}
-		
+
 		public void establish() {
 			CountDownLatch localLatch = new CountDownLatch(2);
 			for (int i = 0; i < runnable.length; i++) {
@@ -246,14 +252,15 @@ public class MidlewareTunnel implements Closeable {
 					return null;
 				});
 			}
-			
+
 			try {
 				localLatch.await();
 			} catch (InterruptedException e) {
 				stop(localLatch);
 				Thread.currentThread().interrupt();
-			};
-			
+			}
+			;
+
 		}
 
 		private void stop(CountDownLatch localLatch) {
