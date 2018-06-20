@@ -12,6 +12,9 @@ import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.nio.channels.Channels;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.function.Consumer;
 
 import javax.xml.ws.BindingProvider;
@@ -28,33 +31,46 @@ public class MidlewareTunnel implements Closeable {
 	public static final Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas_java_client.MidlewareTunnel.class);
 	
 	private static final int TIMEOUT = 1000;
+
+	private static final int DEFAULT_BACKLOG = 50;
 	private final long jobId;
 	private ServerSocket ss;
 	private final DataTransferWsSoap dataTransfer;
-	private Thread thread;
+	private Future<?> mainFuture;
+	private CountDownLatch mainLatch;
 	private final String ipAddress;
 	private final String sessionCode;
+	private final ExecutorService executorService;
 
-	public MidlewareTunnel(long jobId, String hostIp, String sessionCode) {
+	
+
+	
+	public MidlewareTunnel(ExecutorService executorService,long jobId, String hostIp, String sessionCode) {
 		this.jobId = jobId;
 		this.dataTransfer = new DataTransferWs().getDataTransferWsSoap12();
 		((BindingProvider) dataTransfer).getRequestContext().put("javax.xml.ws.client.connectionTimeout", "" + TIMEOUT);
 		((BindingProvider) dataTransfer).getRequestContext().put("javax.xml.ws.client.receiveTimeout", "" + TIMEOUT);
 		this.ipAddress = hostIp;
 		this.sessionCode = sessionCode;
+		this.executorService = executorService;
 	}
-
 	public void open(int port) throws UnknownHostException, IOException {
+		open(0, port);
+	}
+	
+	public void open(int localport, int port) throws UnknownHostException, IOException {
+		open(localport, port, DEFAULT_BACKLOG);
+	}
+	
+	public void open(int localport, int port,int backlog) throws UnknownHostException, IOException {
 		if (ss != null) {
 			throw new IllegalStateException();
 		}
-		ss = new ServerSocket(0, 50, InetAddress.getByName("localhost"));
+		ss = new ServerSocket(localport, backlog, InetAddress.getByName("localhost"));
 		ss.setSoTimeout(TIMEOUT);
-
-		thread = new Thread() {
-
-			@Override
-			public void run() {
+		mainLatch = new CountDownLatch(1);
+		mainFuture = executorService.submit(() -> {
+			try {
 				while (!Thread.interrupted() && !ss.isClosed()) {
 					try (Socket soc = ss.accept()) {
 						doTransfer(soc, port);
@@ -65,17 +81,17 @@ public class MidlewareTunnel implements Closeable {
 						break;
 					}
 				}
-
+			} finally {
+				mainLatch.countDown();
 			}
-		};
-		thread.start();
+		});
 	}
 
 	@Override
 	public void close() throws IOException {
-		thread.interrupt();
+		mainFuture.cancel(true);
 		try {
-			thread.join();
+			mainLatch.await();
 		} catch (InterruptedException e) {
 			Thread.currentThread().interrupt();
 			log.error(e.getMessage(), e);
@@ -181,19 +197,20 @@ public class MidlewareTunnel implements Closeable {
 
 		private final Socket socket;
 
-		
-		private final Thread[] threads = new Thread[2];
+		private final Runnable[] runnable = new Runnable [2];
+
+		private final Future<?>[] futures = new Future[2];
 
 		public P_Connection(Socket soc) {
 			this.socket = soc;
 		}
 
 		public void setClientHandler(Consumer<P_Connection> callable) {
-			threads[FROM_CLIENT] = new Thread(() -> callable.accept(this));
+			runnable[FROM_CLIENT] = () -> callable.accept(this);
 		}
 
 		public void setServerHandler(Consumer<P_Connection> callable) {
-			threads[FROM_SERVER] = new Thread(() -> callable.accept(this));
+			runnable[FROM_SERVER] = () -> callable.accept(this);
 		}
 
 		public Socket getSocket() {
@@ -217,31 +234,33 @@ public class MidlewareTunnel implements Closeable {
 		}
 		
 		public void establish() {
-			for (Thread thread : threads) {
-				thread.start();
+			CountDownLatch localLatch = new CountDownLatch(2);
+			for (int i = 0; i < runnable.length; i++) {
+				int final_i = i;
+				futures[i] = executorService.submit(() -> {
+					runnable[final_i].run();
+					localLatch.countDown();
+					return null;
+				});
 			}
 			
-			for (Thread thread : threads) {
-				try {
-					thread.join();
-				} catch (InterruptedException e) {
-					stop();
-					Thread.currentThread().interrupt();
-				};
-			}
+			try {
+				localLatch.await();
+			} catch (InterruptedException e) {
+				stop(localLatch);
+				Thread.currentThread().interrupt();
+			};
+			
 		}
 
-		private void stop() {
-			for (Thread thread : threads) {
-				thread.interrupt();
+		private void stop(CountDownLatch localLatch) {
+			for (Future<?> thread : futures) {
+				thread.cancel(true);
 			}
-			
-			for (Thread thread : threads) {
-				try {
-					thread.join();
-				} catch (InterruptedException e) {
-					log.error(e.getMessage(), e);
-				}
+			try {
+				localLatch.await();
+			} catch (InterruptedException e) {
+				log.error(e.getMessage(), e);
 			}
 		}
 
@@ -250,7 +269,7 @@ public class MidlewareTunnel implements Closeable {
 		}
 
 		private void setClosed(int type) {
-			threads[(type + 1) % 2].interrupt();
+			futures[(type + 1) % 2].cancel(true);
 		}
 
 	}

@@ -3,6 +3,8 @@ package cz.it4i.fiji.haas_java_client;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Scanner;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.xml.rpc.ServiceException;
 
@@ -46,8 +48,9 @@ public class TestCommunicationWithNodes {
 		}
 
 		log.info("adresess " + client.getNodesIps(id));
-		try(MidlewareTunnel tunnel = new MidlewareTunnel(id, client.getNodesIps(id).get(0), sessionID)) {
-			tunnel.open(8080);
+		ExecutorService service = Executors.newCachedThreadPool();
+		try(MidlewareTunnel tunnel = new MidlewareTunnel(service, id, client.getNodesIps(id).get(0), sessionID)) {
+			tunnel.open(8080, 8080);
 			log.info("localhost:" + tunnel.getLocalPort());
 			Scanner sc = new Scanner(System.in);
 			System.out.println("Press enter");
