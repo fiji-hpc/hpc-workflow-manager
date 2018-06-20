@@ -82,7 +82,9 @@ public class MidlewareTunnel implements Closeable {
 					}
 				}
 			} finally {
+				log.info("MiddlewareTunnel - interrupted");
 				mainLatch.countDown();
+		
 			}
 		});
 	}
@@ -100,6 +102,7 @@ public class MidlewareTunnel implements Closeable {
 			ss.close();
 			ss = null;
 		}
+		executorService.shutdown();
 	}
 
 	public int getLocalPort() {
