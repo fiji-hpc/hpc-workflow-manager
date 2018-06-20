@@ -250,6 +250,11 @@ public class HaaSClient {
 				public int getLocalPort() {
 					return tunnel.getLocalPort();
 				}
+
+				@Override
+				public String getLocalHost() {
+					return tunnel.getLocalHost();
+				}
 			};
 		} catch (ServiceException | IOException e) {
 			log.error(e.getMessage(), e);

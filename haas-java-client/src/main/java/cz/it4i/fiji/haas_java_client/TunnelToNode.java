@@ -4,4 +4,6 @@ import java.io.Closeable;
 
 public interface TunnelToNode extends Closeable{
 	int getLocalPort();
+
+	String getLocalHost();
 }

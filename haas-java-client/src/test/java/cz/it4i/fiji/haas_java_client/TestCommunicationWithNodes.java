@@ -47,7 +47,7 @@ public class TestCommunicationWithNodes {
 		String ip;
 		log.info("adresess " + (ip = client.obtainJobInfo(id).getNodesIPs().get(0)));
 		try(TunnelToNode tunnel = client.openTunnel( id, ip, 8080, 8080)) {
-			log.info("localhost:" + tunnel.getLocalPort());
+			log.info(tunnel.getLocalHost() + ":" + tunnel.getLocalPort());
 			System.out.println("Press enter");
 			new Scanner(System.in).nextLine();
 		}

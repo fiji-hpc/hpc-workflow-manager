@@ -114,6 +114,10 @@ class MidlewareTunnel implements Closeable {
 	public int getLocalPort() {
 		return ss.getLocalPort();
 	}
+	
+	public String getLocalHost() { 
+	    return ss.getInetAddress().getHostAddress(); 
+	}
 
 	private void doTransfer(Socket soc, int port) {
 		log.info("START: doTransfer");
