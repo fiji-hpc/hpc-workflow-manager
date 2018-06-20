@@ -12,9 +12,12 @@ import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.nio.channels.Channels;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 
 import javax.xml.ws.BindingProvider;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import cz.it4i.fiji.haas_java_client.proxy.DataTransferMethodExt;
 import cz.it4i.fiji.haas_java_client.proxy.DataTransferWs;
@@ -22,6 +25,8 @@ import cz.it4i.fiji.haas_java_client.proxy.DataTransferWsSoap;
 
 public class MidlewareTunnel implements Closeable {
 
+	public static final Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas_java_client.MidlewareTunnel.class);
+	
 	private static final int TIMEOUT = 1000;
 	private final long jobId;
 	private ServerSocket ss;
@@ -40,7 +45,7 @@ public class MidlewareTunnel implements Closeable {
 	}
 
 	public void open(int port) throws UnknownHostException, IOException {
-		if(ss != null) {
+		if (ss != null) {
 			throw new IllegalStateException();
 		}
 		ss = new ServerSocket(0, 50, InetAddress.getByName("localhost"));
@@ -56,7 +61,7 @@ public class MidlewareTunnel implements Closeable {
 					} catch (SocketTimeoutException e) {
 						// ignore and check interruption
 					} catch (IOException e) {
-						TestCommunicationWithNodes.log.error(e.getMessage(), e);
+						log.error(e.getMessage(), e);
 						break;
 					}
 				}
@@ -73,7 +78,7 @@ public class MidlewareTunnel implements Closeable {
 			thread.join();
 		} catch (InterruptedException e) {
 			Thread.currentThread().interrupt();
-			TestCommunicationWithNodes.log.error(e.getMessage(), e);
+			log.error(e.getMessage(), e);
 		}
 		if (ss != null) {
 			ss.close();
@@ -86,39 +91,32 @@ public class MidlewareTunnel implements Closeable {
 	}
 
 	private void doTransfer(Socket soc, int port) {
+		log.info("START: doTransfer");
+		DataTransferMethodExt transfer = dataTransfer.getDataTransferMethod(ipAddress, port, jobId, sessionCode);
 		P_Connection connection = new P_Connection(soc);
-		TestCommunicationWithNodes.log.info("START: doTransfer");
-		Thread helpingThread = new Thread() {
-			@Override
-			public void run() {
-				readFromMiddleware(connection);
-			}
-		};
-		DataTransferMethodExt transfer = dataTransfer.getDataTransferMethod(ipAddress, port, jobId,
-				sessionCode);
-		helpingThread.start();
-		sendToMiddleware(connection);
-		TestCommunicationWithNodes.log.info("endDataTransfer");
-		dataTransfer.endDataTransfer(transfer, sessionCode);
-		TestCommunicationWithNodes.log.info("endDataTransfer - DONE");
-	
-		helpingThread.interrupt();
-		try {
-			helpingThread.join();
-		} catch (InterruptedException e) {
-			Thread.currentThread().interrupt();
-		}
-	
-		TestCommunicationWithNodes.log.info("END: doTransfer");
+		connection.setClientHandler(c -> {
+			sendToMiddleware(c);
+			log.info("endDataTransfer");
+			dataTransfer.endDataTransfer(transfer, sessionCode);
+			log.info("endDataTransfer - DONE");
+
+		});
+		connection.setServerHandler(c -> readFromMiddleware(c));
+		connection.establish();
+		
+		log.info("END: doTransfer");
 	}
 
 	private void sendToMiddleware(P_Connection connection) {
-		TestCommunicationWithNodes.log.info("START: sendToMiddleware");
+		log.info("START: sendToMiddleware");
 		try {
-			InputStream is = Channels.newInputStream(Channels.newChannel(connection.soc.getInputStream()));
+			InputStream is = Channels.newInputStream(Channels.newChannel(connection.getSocket().getInputStream()));
 			int len;
 			byte[] buffer = new byte[4096];
-			while (!Thread.interrupted() && !connection.serverClosed.get() && -1 != (len = is.read(buffer))) {
+			while (!connection.isServerClosed() && -1 != (len = is.read(buffer))) {
+				if(connection.isServerClosed()) {
+					break;
+				}
 				byte[] sending;
 				if (len == 0) {
 					continue;
@@ -135,54 +133,125 @@ public class MidlewareTunnel implements Closeable {
 					return;
 				}
 			}
-			connection.clientClosed.set(true);
-			
+			connection.clientClosed();
+
 		} catch (InterruptedIOException e) {
 			return;
 		} catch (SocketException e) {
 			if (!e.getMessage().equals("Socket closed")) {
-				TestCommunicationWithNodes.log.error(e.getMessage(), e);
+				log.error(e.getMessage(), e);
 			}
 		} catch (IOException e) {
 			return;
 		} finally {
-			TestCommunicationWithNodes.log.info("END: sendToMiddleware");
+			log.info("END: sendToMiddleware");
 		}
 	}
 
 	private void readFromMiddleware(P_Connection connection) {
-		TestCommunicationWithNodes.log.info("START: readFromMiddleware");
+		log.info("START: readFromMiddleware");
 		try {
-			OutputStream os = connection.soc.getOutputStream();
+			OutputStream os = connection.getSocket().getOutputStream();
 			byte[] received = null;
-			while (!Thread.interrupted()
-					&& !connection.clientClosed.get()
+			while (!connection.isClientClosed()
 					&& null != (received = dataTransfer.readDataFromJobNode(jobId, ipAddress, sessionCode))) {
+				if(connection.isClientClosed()) {
+					break;
+				}
 				if (received.length > 0) {
-					// logData("received",received);
 					os.write(received);
 					os.flush();
 				}
 			}
 			os.flush();
-			connection.serverClosed.set(true);
+			connection.serverClosed();
 		} catch (InterruptedIOException e) {
 			return;
 		} catch (IOException e) {
-			TestCommunicationWithNodes.log.error(e.getMessage(), e);
+			log.error(e.getMessage(), e);
 			return;
 		} finally {
-			TestCommunicationWithNodes.log.info("END: readFromMiddleware");
+			log.info("END: readFromMiddleware");
 		}
 	}
-	
+
 	private class P_Connection {
-		public Socket soc;
-		public AtomicBoolean clientClosed = new AtomicBoolean(false);
-		public AtomicBoolean serverClosed = new AtomicBoolean(false);
+		private static final int FROM_CLIENT = 0;
+		private static final int FROM_SERVER = 1;
+
+		private final Socket socket;
+
+		
+		private final Thread[] threads = new Thread[2];
+
 		public P_Connection(Socket soc) {
-			this.soc = soc;
+			this.socket = soc;
+		}
+
+		public void setClientHandler(Consumer<P_Connection> callable) {
+			threads[FROM_CLIENT] = new Thread(() -> callable.accept(this));
+		}
+
+		public void setServerHandler(Consumer<P_Connection> callable) {
+			threads[FROM_SERVER] = new Thread(() -> callable.accept(this));
+		}
+
+		public Socket getSocket() {
+			return socket;
+		}
+
+		public void clientClosed() {
+			setClosed(FROM_CLIENT);
 		}
 		
+		public void serverClosed() {
+			setClosed(FROM_SERVER);
+		}
+		
+		public boolean isClientClosed() {
+			return isClosed(FROM_CLIENT);
+		}
+		
+		public boolean isServerClosed() {
+			return isClosed(FROM_SERVER);
+		}
+		
+		public void establish() {
+			for (Thread thread : threads) {
+				thread.start();
+			}
+			
+			for (Thread thread : threads) {
+				try {
+					thread.join();
+				} catch (InterruptedException e) {
+					stop();
+					Thread.currentThread().interrupt();
+				};
+			}
+		}
+
+		private void stop() {
+			for (Thread thread : threads) {
+				thread.interrupt();
+			}
+			
+			for (Thread thread : threads) {
+				try {
+					thread.join();
+				} catch (InterruptedException e) {
+					log.error(e.getMessage(), e);
+				}
+			}
+		}
+
+		private boolean isClosed(int type) {
+			return Thread.interrupted();
+		}
+
+		private void setClosed(int type) {
+			threads[(type + 1) % 2].interrupt();
+		}
+
 	}
 }
