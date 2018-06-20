@@ -33,7 +33,7 @@ public class TestCommunicationWithNodes {
 		Settings settings = SettingsProvider.getSettings(6l, 3600, 7l, "OPEN-12-20",
 				TestingConstants.CONFIGURATION_FILE_NAME);
 		HaaSClient client = new HaaSClient(settings);
-		long id = 363;//startJob(client);
+		long id = 362;//startJob(client);
 		String sessionID = client.getSessionID();
 		log.info(id + " - " + client.obtainJobInfo(id).getState() + " - " + sessionID);
 		if(client.obtainJobInfo(id).getState() != JobState.Running && client.obtainJobInfo(id).getState() != JobState.Queued) {
