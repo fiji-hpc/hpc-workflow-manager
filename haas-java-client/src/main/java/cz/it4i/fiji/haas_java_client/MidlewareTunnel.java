@@ -146,25 +146,16 @@ class MidlewareTunnel implements Closeable {
 				if (connection.isServerClosed()) {
 					break;
 				}
-				byte[] sending;
 				if (len == 0) {
 					continue;
 				}
-				if (buffer.length != len) {
-					sending = new byte[len];
-					System.arraycopy(buffer, 0, sending, 0, len);
-				} else {
-					sending = buffer;
-				}
-
-				int result = dataTransfer.sendDataToJobNode(sending, jobId, ipAddress, sessionCode);
-				if (result <= 0) {
+				if (!sendToMiddleware(buffer, len, connection)) {
 					return;
 				}
 			}
 			connection.clientClosed();
 
-		} catch (InterruptedIOException e) {
+		} catch (InterruptedIOException e) { 
 			return;
 		} catch (SocketException e) {
 			if (!e.getMessage().equals("Socket closed")) {
@@ -175,6 +166,27 @@ class MidlewareTunnel implements Closeable {
 		} finally {
 			log.info("END: sendToMiddleware");
 		}
+	}
+
+	private boolean sendToMiddleware(byte[] buffer, int len, P_Connection connection) {
+		byte[] sending;
+		int toSend = len;
+		int offset = 0;
+		do {
+			if (toSend != buffer.length || offset != 0) {
+				sending = new byte[toSend];
+				System.arraycopy(buffer, offset, sending, 0, toSend);
+			} else {
+				sending = buffer;
+			}
+			int reallySend = dataTransfer.sendDataToJobNode(sending, jobId, ipAddress, sessionCode);
+			if (reallySend == -1) {
+				return false;
+			}
+			toSend -= reallySend;
+			offset += reallySend; 
+		} while(toSend != 0 && !connection.isServerClosed());
+		return true;
 	}
 
 	private void readFromMiddleware(P_Connection connection) {
