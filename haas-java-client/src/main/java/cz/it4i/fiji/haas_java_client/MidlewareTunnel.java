@@ -26,7 +26,7 @@ import cz.it4i.fiji.haas_java_client.proxy.DataTransferMethodExt;
 import cz.it4i.fiji.haas_java_client.proxy.DataTransferWs;
 import cz.it4i.fiji.haas_java_client.proxy.DataTransferWsSoap;
 
-public class MidlewareTunnel implements Closeable {
+class MidlewareTunnel implements Closeable {
 
 	public static final Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas_java_client.MidlewareTunnel.class);
 
@@ -64,7 +64,7 @@ public class MidlewareTunnel implements Closeable {
 		open(0, port);
 	}
 
-	public void open(int localport, int port) throws UnknownHostException, IOException {
+	public void open(int localport, int port) throws IOException {
 		open(localport, port, DEFAULT_BACKLOG);
 	}
 
@@ -72,7 +72,7 @@ public class MidlewareTunnel implements Closeable {
 		if (ss != null) {
 			throw new IllegalStateException();
 		}
-		ss = new ServerSocket(localport, backlog, InetAddress.getByName("localhost"));
+		ss = new ServerSocket(localport, backlog, InetAddress.getLocalHost());
 		ss.setSoTimeout(TIMEOUT);
 		mainLatch = new CountDownLatch(1);
 		mainFuture = executorService.submit(() -> {

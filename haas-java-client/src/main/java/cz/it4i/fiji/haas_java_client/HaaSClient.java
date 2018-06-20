@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -233,6 +234,21 @@ public class HaaSClient {
 	public HaaSFileTransfer startFileTransfer(long jobId) {
 		return startFileTransfer(jobId, DUMMY_TRANSFER_FILE_PROGRESS);
 	}
+	
+	public TunnelToNode openTunnel(long jobId, String nodeIP, int localPort, int remotePort) throws ServiceException, IOException {
+		MidlewareTunnel tunnel = new MidlewareTunnel(Executors.newCachedThreadPool(), jobId, nodeIP, getSessionID());
+		tunnel.open(localPort, remotePort);
+		return new TunnelToNode() {
+			@Override
+			public void close() throws IOException {
+				tunnel.close();
+			}
+			@Override
+			public int getLocalPort() {
+				return tunnel.getLocalPort();
+			}
+		};
+	}
 
 	public void submitJob(long jobId) {
 		try {
@@ -245,9 +261,11 @@ public class HaaSClient {
 	public JobInfo obtainJobInfo(long jobId) {
 		try {
 			final SubmittedJobInfoExt info = getJobManagement().getCurrentInfoForJob(jobId, getSessionID());
+			
 			final Collection<Long> tasksId = info.getTasks().getSubmittedTaskInfoExt().stream().map(ti -> ti.getId())
 					.collect(Collectors.toList());
 			return new JobInfo() {
+				private List<String> ips;
 				@Override
 				public Collection<Long> getTasks() {
 					return tasksId;
@@ -272,6 +290,18 @@ public class HaaSClient {
 				public Calendar getCreationTime() {
 					return toGregorian(info.getCreationTime());
 				};
+				
+				@Override
+				public List<String> getNodesIPs() {
+					if(ips == null) {
+						try {
+							ips = getJobManagement().getAllocatedNodesIPs(jobId, getSessionID()).getString().stream().collect(Collectors.toList());
+						} catch (RemoteException | ServiceException e) {
+							log.error(e.getMessage(), e);
+						}
+					}
+					return ips;
+				}
 			};
 		} catch (RemoteException | ServiceException e) {
 			throw new HaaSClientException(e);
@@ -550,11 +580,6 @@ public class HaaSClient {
 		result.setUsername(userName);
 		result.setPassword(password);
 		return result;
-	}
-
-	public List<String> getNodesIps(long id) throws RemoteException, ServiceException {
-		
-		return getJobManagement().getAllocatedNodesIPs(id, getSessionID()).getString().stream().collect(Collectors.toList());
 	}
 
 }

@@ -1,10 +1,7 @@
 package cz.it4i.fiji.haas_java_client;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.Scanner;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import javax.xml.rpc.ServiceException;
 
@@ -17,6 +14,7 @@ public class TestCommunicationWithNodes {
 
 	private static String[] predefined  = new String[2];
 	
+	@SuppressWarnings("resource")
 	public static void main(String[] args) throws ServiceException, IOException, InterruptedException {
 		predefined[0] = "POST /modules/'command:net.imagej.ops.math.PrimitiveMath$IntegerAdd'?process=false HTTP/1.1\r\n" +
                 "Content-Type: application/json\r\n" +
@@ -46,26 +44,15 @@ public class TestCommunicationWithNodes {
 			log.info("" + client.obtainJobInfo(id).getState());
 			Thread.sleep(5000);
 		}
-
-		log.info("adresess " + client.getNodesIps(id));
-		ExecutorService service = Executors.newCachedThreadPool();
-		try(MidlewareTunnel tunnel = new MidlewareTunnel(service, id, client.getNodesIps(id).get(0), sessionID)) {
-			tunnel.open(8080, 8080);
+		String ip;
+		log.info("adresess " + (ip = client.obtainJobInfo(id).getNodesIPs().get(0)));
+		try(TunnelToNode tunnel = client.openTunnel( id, ip, 8080, 8080)) {
 			log.info("localhost:" + tunnel.getLocalPort());
-			Scanner sc = new Scanner(System.in);
 			System.out.println("Press enter");
-			sc.nextLine();
+			new Scanner(System.in).nextLine();
 		}
 	}
 
-	private static void logData(String direction, byte[] received) {
-		log.info(direction + " - " + new String(received));
-	}
-
-	private static long startJob(HaaSClient client) {
-		long id = client.createJob("Proof", 1, Collections.emptyList());
-		client.submitJob(id);
-		return id;
-	}
+	
 
 }
