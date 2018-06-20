@@ -50,20 +50,18 @@
 				</executions>
 				<configuration>
 					<!-- using wsdl from an url -->
-					<!-- <wsdlUrls> <wsdlUrl> http://haas.vsb.cz/HaasWsFiji/UserAndLimitationManagementWs.asmx?WSDL 
-						</wsdlUrl> <wsdlUrl> http://haas.vsb.cz/HaasWsFiji/JobManagementWs.asmx?WSDL 
-						</wsdlUrl> <wsdlUrl> http://haas.vsb.cz/HaasWsFiji/DataTransferWs.asmx?WSDL 
-						</wsdlUrl> <wsdlUrl> http://haas.vsb.cz/HaasWsFiji/FileTransferWs.asmx?WSDL 
-						</wsdlUrl> </wsdlUrls> -->
+					<wsdlUrls>
+						<wsdlUrl>http://haas.vsb.cz/HaasWsFiji/UserAndLimitationManagementWs.asmx?WSDL</wsdlUrl>
+						<wsdlUrl>http://haas.vsb.cz/HaasWsFiji/JobManagementWs.asmx?WSDL</wsdlUrl>
+						<wsdlUrl>http://haas.vsb.cz/HaasWsFiji/DataTransferWs.asmx?WSDL</wsdlUrl>
+						<wsdlUrl>http://haas.vsb.cz/HaasWsFiji/FileTransferWs.asmx?WSDL</wsdlUrl>
+					</wsdlUrls>
 					<!-- or using wsdls file directory -->
-					<wsdlDirectory>src/wsdl</wsdlDirectory>
+					<!-- <wsdlDirectory>src/wsdl</wsdlDirectory> -->
 					<!-- which wsdl file -->
-					<wsdlFiles>
-						<wsdlFile>UserAndLimitationManagementWs.wsdl</wsdlFile>
-						<wsdlFile>JobManagementWs.wsdl</wsdlFile>
-						<wsdlFile>DataTransferWs.wsdl</wsdlFile>
-						<wsdlFile>FileTransferWs.wsdl</wsdlFile>
-					</wsdlFiles>
+					<!-- <wsdlFiles> <wsdlFile>UserAndLimitationManagementWs.wsdl</wsdlFile> 
+						<wsdlFile>JobManagementWs.wsdl</wsdlFile> <wsdlFile>DataTransferWs.wsdl</wsdlFile> 
+						<wsdlFile>FileTransferWs.wsdl</wsdlFile> </wsdlFiles> -->
 					<!-- Keep generated files -->
 					<!-- Package name -->
 					<!-- generated source files destination -->
