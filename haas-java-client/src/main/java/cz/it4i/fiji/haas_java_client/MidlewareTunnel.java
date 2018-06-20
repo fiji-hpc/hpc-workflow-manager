@@ -193,6 +193,7 @@ class MidlewareTunnel implements Closeable {
 			if(reallySend == 0) {
 				zeroCounter++;
 				if(zeroCounter >= ZERO_COUNT_THRESHOLD) {
+					log.info("zero bytes sent from middleware for " + zeroCounter + " time");
 					return false;
 				}
 				try {
@@ -201,6 +202,8 @@ class MidlewareTunnel implements Closeable {
 					Thread.currentThread().interrupt();
 					return false;
 				}
+			} else {
+				zeroCounter = 0;
 			}
 		} while(toSend != 0 && !connection.isServerClosed());
 		return true;
@@ -211,6 +214,7 @@ class MidlewareTunnel implements Closeable {
 		try {
 			OutputStream os = connection.getSocket().getOutputStream();
 			byte[] received = null;
+			int zeroCounter = 0;
 			while (!connection.isClientClosed()
 					&& null != (received = dataTransfer.readDataFromJobNode(jobId, ipAddress, sessionCode))) {
 				if (connection.isClientClosed()) {
@@ -219,6 +223,19 @@ class MidlewareTunnel implements Closeable {
 				if (received.length > 0) {
 					os.write(received);
 					os.flush();
+					zeroCounter = 0;
+				} else {
+					zeroCounter++;
+					if(zeroCounter >= ZERO_COUNT_THRESHOLD) {
+						log.info("zero bytes received from middleware for " + zeroCounter + " time");
+						break;
+					}
+					try {
+						Thread.sleep(ZERO_COUNT_PAUSE);
+					} catch (InterruptedException e) {
+						Thread.currentThread().interrupt();
+						break;
+					}
 				}
 			}
 			os.flush();
