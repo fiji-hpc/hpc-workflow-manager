@@ -72,7 +72,7 @@ class MidlewareTunnel implements Closeable {
 		if (ss != null) {
 			throw new IllegalStateException();
 		}
-		ss = new ServerSocket(localport, backlog, InetAddress.getLocalHost());
+		ss = new ServerSocket(localport, backlog, InetAddress.getLoopbackAddress());
 		ss.setSoTimeout(TIMEOUT);
 		mainLatch = new CountDownLatch(1);
 		mainFuture = executorService.submit(() -> {
