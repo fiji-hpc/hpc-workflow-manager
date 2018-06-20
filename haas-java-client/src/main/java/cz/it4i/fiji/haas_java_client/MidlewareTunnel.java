@@ -34,6 +34,10 @@ class MidlewareTunnel implements Closeable {
 
 	private static final int DEFAULT_BACKLOG = 50;
 
+	private static final int ZERO_COUNT_THRESHOLD = 10;
+
+	private static final long ZERO_COUNT_PAUSE = 500;
+
 	private final long jobId;
 
 	private ServerSocket ss;
@@ -150,7 +154,7 @@ class MidlewareTunnel implements Closeable {
 					continue;
 				}
 				if (!sendToMiddleware(buffer, len, connection)) {
-					return;
+					break;
 				}
 			}
 			connection.clientClosed();
@@ -172,6 +176,7 @@ class MidlewareTunnel implements Closeable {
 		byte[] sending;
 		int toSend = len;
 		int offset = 0;
+		int zeroCounter = 0;
 		do {
 			if (toSend != buffer.length || offset != 0) {
 				sending = new byte[toSend];
@@ -184,7 +189,19 @@ class MidlewareTunnel implements Closeable {
 				return false;
 			}
 			toSend -= reallySend;
-			offset += reallySend; 
+			offset += reallySend;
+			if(reallySend == 0) {
+				zeroCounter++;
+				if(zeroCounter >= ZERO_COUNT_THRESHOLD) {
+					return false;
+				}
+				try {
+					Thread.sleep(ZERO_COUNT_PAUSE);
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
+					return false;
+				}
+			}
 		} while(toSend != 0 && !connection.isServerClosed());
 		return true;
 	}
