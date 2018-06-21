@@ -51,11 +51,12 @@
 				<configuration>
 					<!-- using wsdl from an url -->
 					<wsdlUrls>
-						<wsdlUrl>http://haas.vsb.cz/HaasWsFiji/UserAndLimitationManagementWs.asmx?WSDL</wsdlUrl>
-						<wsdlUrl>http://haas.vsb.cz/HaasWsFiji/JobManagementWs.asmx?WSDL</wsdlUrl>
-						<wsdlUrl>http://haas.vsb.cz/HaasWsFiji/DataTransferWs.asmx?WSDL</wsdlUrl>
-						<wsdlUrl>http://haas.vsb.cz/HaasWsFiji/FileTransferWs.asmx?WSDL</wsdlUrl>
+						<wsdlUrl>http://localhost/wsdl/UserAndLimitationManagementWs.wsdl</wsdlUrl>
+						<wsdlUrl>http://localhost/wsdl/JobManagementWs.wsdl</wsdlUrl>
+						<wsdlUrl>http://localhost/wsdl/DataTransferWs.wsdl</wsdlUrl>
+						<wsdlUrl>http://localhost/wsdl/FileTransferWs.wsdl</wsdlUrl>
 					</wsdlUrls>
+					<catalog>${project.basedir}/src/main/resources/META-INF/jax-ws-catalog.xml</catalog>
 					<!-- or using wsdls file directory -->
 					<!-- <wsdlDirectory>src/wsdl</wsdlDirectory> -->
 					<!-- which wsdl file -->

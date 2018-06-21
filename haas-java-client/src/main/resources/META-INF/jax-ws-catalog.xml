@@ -1,0 +1,11 @@
+<catalog xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog"
+	prefer="system">
+	<system systemId="http://localhost/wsdl/DataTransferWs.wsdl"
+		uri="wsdl/DataTransferWs.wsdl" />
+	<system systemId="http://localhost/wsdl/FileTransferWs.wsdl"
+		uri="wsdl/FileTransferWs.wsdl" />
+	<system systemId="http://localhost/wsdl/JobManagementWs.wsdl"
+		uri="wsdl/JobManagementWs.wsdl" />
+	<system systemId="http://localhost/wsdl/UserAndLimitationManagementWs.wsdl"
+		uri="wsdl/UserAndLimitationManagementWs.wsdl" />
+</catalog>
