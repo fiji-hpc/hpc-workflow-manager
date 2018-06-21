@@ -92,7 +92,9 @@ class MidlewareTunnel implements Closeable {
 					}
 				}
 			} finally {
-				log.info("MiddlewareTunnel - interrupted");
+				if(log.isDebugEnabled()) {
+					log.debug("MiddlewareTunnel - interrupted");
+				}
 				mainLatch.countDown();
 
 			}
@@ -124,24 +126,31 @@ class MidlewareTunnel implements Closeable {
 	}
 
 	private void doTransfer(Socket soc, int port) {
-		log.info("START: doTransfer");
+		log.debug("START: doTransfer");
 		DataTransferMethodExt transfer = dataTransfer.getDataTransferMethod(ipAddress, port, jobId, sessionCode);
 		P_Connection connection = new P_Connection(soc);
 		connection.setClientHandler(c -> {
 			sendToMiddleware(c);
-			log.info("endDataTransfer");
+			if(log.isDebugEnabled()) {
+			log.debug("endDataTransfer");
+			}
 			dataTransfer.endDataTransfer(transfer, sessionCode);
-			log.info("endDataTransfer - DONE");
+			if(log.isDebugEnabled()) {
+			log.debug("endDataTransfer - DONE");
+			}
 
 		});
 		connection.setServerHandler(c -> readFromMiddleware(c));
 		connection.establish();
-
-		log.info("END: doTransfer");
+		if(log.isDebugEnabled()) {
+		log.debug("END: doTransfer");
+		}
 	}
 
 	private void sendToMiddleware(P_Connection connection) {
-		log.info("START: sendToMiddleware");
+		if(log.isDebugEnabled()) {
+		log.debug("START: sendToMiddleware");
+		}
 		try {
 			InputStream is = Channels.newInputStream(Channels.newChannel(connection.getSocket().getInputStream()));
 			int len;
@@ -168,7 +177,9 @@ class MidlewareTunnel implements Closeable {
 		} catch (IOException e) {
 			return;
 		} finally {
-			log.info("END: sendToMiddleware");
+			if(log.isDebugEnabled()) {
+				log.debug("END: sendToMiddleware");
+			}
 		}
 	}
 
@@ -193,7 +204,9 @@ class MidlewareTunnel implements Closeable {
 			if(reallySend == 0) {
 				zeroCounter++;
 				if(zeroCounter >= ZERO_COUNT_THRESHOLD) {
-					log.info("zero bytes sent from middleware for " + zeroCounter + " time");
+					if(log.isDebugEnabled()) {
+						log.debug("zero bytes sent from middleware for " + zeroCounter + " time");
+					}
 					return false;
 				}
 				try {
@@ -210,7 +223,9 @@ class MidlewareTunnel implements Closeable {
 	}
 
 	private void readFromMiddleware(P_Connection connection) {
-		log.info("START: readFromMiddleware");
+		if(log.isDebugEnabled()) {
+			log.debug("START: readFromMiddleware");
+		}
 		try {
 			OutputStream os = connection.getSocket().getOutputStream();
 			byte[] received = null;
@@ -227,7 +242,9 @@ class MidlewareTunnel implements Closeable {
 				} else {
 					zeroCounter++;
 					if(zeroCounter >= ZERO_COUNT_THRESHOLD) {
-						log.info("zero bytes received from middleware for " + zeroCounter + " time");
+						if(log.isDebugEnabled()) {
+							log.debug("zero bytes received from middleware for " + zeroCounter + " time");
+						}
 						break;
 					}
 					try {
@@ -246,7 +263,7 @@ class MidlewareTunnel implements Closeable {
 			log.error(e.getMessage(), e);
 			return;
 		} finally {
-			log.info("END: readFromMiddleware");
+			log.debug("END: readFromMiddleware");
 		}
 	}
 
@@ -309,8 +326,6 @@ class MidlewareTunnel implements Closeable {
 				stop(localLatch);
 				Thread.currentThread().interrupt();
 			}
-			;
-
 		}
 
 		private void stop(CountDownLatch localLatch) {
@@ -331,6 +346,5 @@ class MidlewareTunnel implements Closeable {
 		private void setClosed(int type) {
 			futures[(type + 1) % 2].cancel(true);
 		}
-
 	}
 }
