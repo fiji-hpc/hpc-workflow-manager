@@ -106,6 +106,9 @@ class MidlewareTunnel implements Closeable {
 						break;
 					}
 				}
+				if(lastConnection != null) {
+					lastConnection.finishIfNeeded();
+				}
 			} finally {
 				if (log.isDebugEnabled()) {
 					log.debug("MiddlewareTunnel - interrupted");
