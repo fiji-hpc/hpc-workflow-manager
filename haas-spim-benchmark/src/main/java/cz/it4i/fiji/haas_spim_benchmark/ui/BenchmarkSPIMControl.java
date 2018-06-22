@@ -36,6 +36,7 @@ import cz.it4i.fiji.haas.ui.ProgressDialog;
 import cz.it4i.fiji.haas.ui.ShellRoutines;
 import cz.it4i.fiji.haas.ui.StringValueUpdater;
 import cz.it4i.fiji.haas.ui.TableCellAdapter;
+import cz.it4i.fiji.haas.ui.TableCellAdapter.TableCellUpdater;
 import cz.it4i.fiji.haas.ui.TableViewContextMenu;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.UploadingFile;
@@ -50,8 +51,10 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Region;
 import net.imagej.updater.util.Progress;
@@ -332,9 +335,18 @@ public class BenchmarkSPIMControl extends BorderPane implements CloseableControl
 	private void setCellValueFactoryCompletable(int index, Function<BenchmarkJob, CompletableFuture<String>> mapper) {
 		JavaFXRoutines.setCellValueFactory(jobs, index, mapper);
 		((TableColumn<ObservableBenchmarkJob, CompletableFuture<String>>) jobs.getColumns().get(index))
-				.setCellFactory(column -> new TableCellAdapter<ObservableBenchmarkJob, CompletableFuture<String>>(
-						new FutureValueUpdater<ObservableBenchmarkJob, String, CompletableFuture<String>>(
-								new StringValueUpdater<ObservableBenchmarkJob>(), executorServiceFX)));
+				.setCellFactory(column -> new TableCellAdapter<ObservableBenchmarkJob, CompletableFuture<String>> //
+										(//
+												new P_TableCellUpdaterDecoratorWithToolTip<>//
+												(//
+														new FutureValueUpdater<ObservableBenchmarkJob, String, CompletableFuture<String>>//
+														(//
+																new StringValueUpdater<ObservableBenchmarkJob>(), executorServiceFX//
+														),//
+														"Doubleclick to open Dashboard" 
+												)
+										)
+								);
 	}
 
 	private void openJobDetailsWindow(BenchmarkJob job) {
@@ -347,5 +359,28 @@ public class BenchmarkSPIMControl extends BorderPane implements CloseableControl
 
 	private interface P_JobAction {
 		public void doAction(Progress p) throws IOException;
+	}
+	
+	private class P_TableCellUpdaterDecoratorWithToolTip<S,T> implements TableCellUpdater<S, T> {
+
+		private final TableCellUpdater<S, T> decorated;
+		
+		private final String toolTipText;
+		
+		
+		
+		public P_TableCellUpdaterDecoratorWithToolTip(TableCellUpdater<S, T> decorated, String toolTipText) {
+			this.decorated = decorated;
+			this.toolTipText = toolTipText;
+		}
+
+
+
+		@Override
+		public void accept(TableCell<?, ?> cell, T value, boolean empty) {
+			decorated.accept(cell, value, empty);
+			cell.setTooltip(new Tooltip(toolTipText));
+		}
+		
 	}
 }
