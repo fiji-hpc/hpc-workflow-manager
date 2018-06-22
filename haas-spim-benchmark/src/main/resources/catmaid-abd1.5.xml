@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SpimData version="0.1">
+  <BasePath type="relative">.</BasePath>
+  <SequenceDescription>
+    <ImageLoader format="catmaid">
+      <width>22775</width>
+      <height>18326</height>
+      <depth>463</depth>
+      <resXY>4</resXY>
+      <resZ>50</resZ>
+      <numScales>6</numScales>
+      <urlFormat>http://fly.mpi-cbg.de/map/abd1.5/%5$d/%8$d_%9$d_%1$d.jpg</urlFormat>
+      <tileWidth>256</tileWidth>
+      <tileHeight>256</tileHeight>
+    </ImageLoader>
+    <ViewSetups>
+      <ViewSetup>
+        <id>0</id>
+        <size>22775 18326 463</size>
+        <voxelSize>
+          <unit>nm</unit>
+          <size>4.0 4.0 50.0</size>
+        </voxelSize>
+      </ViewSetup>
+    </ViewSetups>
+    <Timepoints type="list">
+      <Timepoint>
+        <id>0</id>
+      </Timepoint>
+    </Timepoints>
+  </SequenceDescription>
+  <ViewRegistrations>
+    <ViewRegistration timepoint="0" setup="0">
+      <ViewTransform type="affine">
+      <affine>1.0 0.0 0.0 0.0
+              0.0 1.0 0.0 0.0
+              0.0 0.0 1.0 0.0</affine>
+      </ViewTransform>
+    </ViewRegistration>
+  </ViewRegistrations>
+</SpimData>

@@ -2,8 +2,11 @@ package cz.it4i.fiji.haas_spim_benchmark.ui;
 
 import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.CONFIG_YAML;
 
+import java.awt.BorderLayout;
 import java.awt.Window;
+import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.EnumSet;
@@ -20,11 +23,18 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Function;
 
+import javax.swing.JFrame;
 import javax.swing.WindowConstants;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import bdv.spimdata.SpimDataMinimal;
+import bdv.spimdata.XmlIoSpimDataMinimal;
+import bdv.util.Bdv;
+import bdv.util.BdvFunctions;
+import bdv.util.BdvHandlePanel;
+import bdv.util.BdvStackSource;
 import cz.it4i.fiji.haas.UploadingFileFromResource;
 import cz.it4i.fiji.haas.ui.CloseableControl;
 import cz.it4i.fiji.haas.ui.DummyProgress;
@@ -57,6 +67,7 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Region;
+import mpicbg.spim.data.SpimDataException;
 import net.imagej.updater.util.Progress;
 
 public class BenchmarkSPIMControl extends BorderPane implements CloseableControl, InitiableControl {
@@ -137,6 +148,9 @@ public class BenchmarkSPIMControl extends BorderPane implements CloseableControl
 				job -> JavaFXRoutines.notNullValue(job, j -> true));
 		
 		menu.addItem("Open working directory", j -> open(j.getValue()), x -> JavaFXRoutines.notNullValue(x, j -> true));
+		
+		menu.addItem("Open in BigDataViewer", j -> openBigDataViewer(j.getValue()), x -> JavaFXRoutines.notNullValue(x, j -> true));
+		
 		
 		menu.addSeparator();
 
@@ -354,6 +368,36 @@ public class BenchmarkSPIMControl extends BorderPane implements CloseableControl
 		} catch (IOException e) {
 			log.error(e.getMessage(), e);
 		}
+	}
+	
+	private void openBigDataViewer(BenchmarkJob job) {
+			final URL iconURL = ClassLoader.getSystemClassLoader().getResource( "catmaid-abd1.5.xml" );
+			final File file = new File( iconURL.getPath() );
+			String xmlFilename = file.getAbsolutePath();
+		
+		
+		SpimDataMinimal spimData = null;
+		try {
+			spimData = new XmlIoSpimDataMinimal().load( xmlFilename );
+		} catch ( final SpimDataException e ) {
+			e.printStackTrace();
+		}
+
+		JFrame frame = new JFrame( "Result of job " + job.getId() );
+		frame.setBounds( 50, 50, 1200, 900 );
+
+		// Add a BDV panel to our JFrame
+		final BdvHandlePanel bdvHandlePanel = new BdvHandlePanel( frame, Bdv.options() );
+		frame.add( bdvHandlePanel.getViewerPanel(), BorderLayout.CENTER );
+
+		frame.setVisible( true );
+
+		// Add an image to our BDV HandlePanel
+		@SuppressWarnings("unused")
+		final List< BdvStackSource< ? > > bdvSources = BdvFunctions.show(
+				spimData,
+				Bdv.options().addTo( bdvHandlePanel ) );
+		
 	}
 
 	private interface P_JobAction {
