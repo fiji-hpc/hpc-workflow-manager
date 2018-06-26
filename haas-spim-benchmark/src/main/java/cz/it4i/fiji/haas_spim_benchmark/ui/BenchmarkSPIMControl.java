@@ -2,11 +2,8 @@ package cz.it4i.fiji.haas_spim_benchmark.ui;
 
 import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.CONFIG_YAML;
 
-import java.awt.BorderLayout;
 import java.awt.Window;
-import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.EnumSet;
@@ -23,18 +20,14 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Function;
 
-import javax.swing.JFrame;
 import javax.swing.WindowConstants;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import bdv.spimdata.SpimDataMinimal;
-import bdv.spimdata.XmlIoSpimDataMinimal;
-import bdv.util.Bdv;
-import bdv.util.BdvFunctions;
-import bdv.util.BdvHandlePanel;
-import bdv.util.BdvStackSource;
+import bdv.BigDataViewer;
+import bdv.export.ProgressWriterConsole;
+import bdv.viewer.ViewerOptions;
 import cz.it4i.fiji.haas.UploadingFileFromResource;
 import cz.it4i.fiji.haas.ui.CloseableControl;
 import cz.it4i.fiji.haas.ui.DummyProgress;
@@ -146,12 +139,12 @@ public class BenchmarkSPIMControl extends BorderPane implements CloseableControl
 
 		menu.addItem("Job dashboard", job -> openJobDetailsWindow(job.getValue()),
 				job -> JavaFXRoutines.notNullValue(job, j -> true));
-		
+
 		menu.addItem("Open working directory", j -> open(j.getValue()), x -> JavaFXRoutines.notNullValue(x, j -> true));
-		
-		menu.addItem("Open in BigDataViewer", j -> openBigDataViewer(j.getValue()), x -> JavaFXRoutines.notNullValue(x, j -> true));
-		
-		
+
+		menu.addItem("Open in BigDataViewer", j -> openBigDataViewer(j.getValue()),
+				x -> JavaFXRoutines.notNullValue(x, j -> true));
+
 		menu.addSeparator();
 
 		menu.addItem("Upload data", job -> executeWSCallAsync("Uploading data", p -> job.getValue().startUpload()),
@@ -177,9 +170,10 @@ public class BenchmarkSPIMControl extends BorderPane implements CloseableControl
 				job -> JavaFXRoutines.notNullValue(job, j -> j.getState().equals(JobState.Failed)));
 
 		menu.addSeparator();
-		
-		menu.addItem("Delete job", j -> deleteJob(j.getValue()), x -> JavaFXRoutines.notNullValue(x, j -> j.getState() != JobState.Running));
-		
+
+		menu.addItem("Delete job", j -> deleteJob(j.getValue()),
+				x -> JavaFXRoutines.notNullValue(x, j -> j.getState() != JobState.Running));
+
 	}
 
 	private void deleteJob(BenchmarkJob bj) {
@@ -208,7 +202,7 @@ public class BenchmarkSPIMControl extends BorderPane implements CloseableControl
 											+ "\". Would you like to copy it into the job working directory \""
 											+ job.getDirectory() + "\"?",
 									ButtonType.YES, ButtonType.NO);
-					
+
 							al.setHeaderText(null);
 							al.setTitle("Copy " + CONFIG_YAML + "?");
 							al.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
@@ -314,7 +308,8 @@ public class BenchmarkSPIMControl extends BorderPane implements CloseableControl
 	private void initTable() {
 		registry = new ObservableBenchmarkJobRegistry(bj -> remove(bj), executorServiceJobState, executorServiceFX);
 		setCellValueFactory(0, j -> j.getId() + "");
-		setCellValueFactoryCompletable(1, j -> j.getStateAsync(executorServiceJobState).thenApply(state -> "" + provider.getName(state)));
+		setCellValueFactoryCompletable(1,
+				j -> j.getStateAsync(executorServiceJobState).thenApply(state -> "" + provider.getName(state)));
 		setCellValueFactory(2, j -> j.getCreationTime().toString());
 		setCellValueFactory(3, j -> j.getStartTime().toString());
 		setCellValueFactory(4, j -> j.getEndTime().toString());
@@ -349,17 +344,14 @@ public class BenchmarkSPIMControl extends BorderPane implements CloseableControl
 		JavaFXRoutines.setCellValueFactory(jobs, index, mapper);
 		((TableColumn<ObservableBenchmarkJob, CompletableFuture<String>>) jobs.getColumns().get(index))
 				.setCellFactory(column -> new TableCellAdapter<ObservableBenchmarkJob, CompletableFuture<String>> //
-										(//
-												new P_TableCellUpdaterDecoratorWithToolTip<>//
-												(//
-														new FutureValueUpdater<ObservableBenchmarkJob, String, CompletableFuture<String>>//
-														(//
-																new StringValueUpdater<ObservableBenchmarkJob>(), executorServiceFX//
-														),//
-														"Doubleclick to open Dashboard" 
-												)
-										)
-								);
+		(//
+				new P_TableCellUpdaterDecoratorWithToolTip<>//
+				(//
+						new FutureValueUpdater<ObservableBenchmarkJob, String, CompletableFuture<String>>//
+						(//
+								new StringValueUpdater<ObservableBenchmarkJob>(), executorServiceFX//
+						), //
+						"Doubleclick to open Dashboard")));
 	}
 
 	private void openJobDetailsWindow(BenchmarkJob job) {
@@ -369,61 +361,35 @@ public class BenchmarkSPIMControl extends BorderPane implements CloseableControl
 			log.error(e.getMessage(), e);
 		}
 	}
-	
+
 	private void openBigDataViewer(BenchmarkJob job) {
-			final URL iconURL = ClassLoader.getSystemClassLoader().getResource( "catmaid-abd1.5.xml" );
-			final File file = new File( iconURL.getPath() );
-			String xmlFilename = file.getAbsolutePath();
-		
-		
-		SpimDataMinimal spimData = null;
 		try {
-			spimData = new XmlIoSpimDataMinimal().load( xmlFilename );
-		} catch ( final SpimDataException e ) {
-			e.printStackTrace();
+			BigDataViewer.open( "http://localhost:8080/Data/", "Result of job " + job.getId(), new ProgressWriterConsole() , ViewerOptions.options() );
+		} catch (SpimDataException e) {
+			log.error(e.getMessage(), e);
 		}
-
-		JFrame frame = new JFrame( "Result of job " + job.getId() );
-		frame.setBounds( 50, 50, 1200, 900 );
-
-		// Add a BDV panel to our JFrame
-		final BdvHandlePanel bdvHandlePanel = new BdvHandlePanel( frame, Bdv.options() );
-		frame.add( bdvHandlePanel.getViewerPanel(), BorderLayout.CENTER );
-
-		frame.setVisible( true );
-
-		// Add an image to our BDV HandlePanel
-		@SuppressWarnings("unused")
-		final List< BdvStackSource< ? > > bdvSources = BdvFunctions.show(
-				spimData,
-				Bdv.options().addTo( bdvHandlePanel ) );
-		
 	}
-
+	
 	private interface P_JobAction {
 		public void doAction(Progress p) throws IOException;
 	}
-	
-	private class P_TableCellUpdaterDecoratorWithToolTip<S,T> implements TableCellUpdater<S, T> {
+
+	private class P_TableCellUpdaterDecoratorWithToolTip<S, T> implements TableCellUpdater<S, T> {
 
 		private final TableCellUpdater<S, T> decorated;
-		
+
 		private final String toolTipText;
-		
-		
-		
+
 		public P_TableCellUpdaterDecoratorWithToolTip(TableCellUpdater<S, T> decorated, String toolTipText) {
 			this.decorated = decorated;
 			this.toolTipText = toolTipText;
 		}
-
-
 
 		@Override
 		public void accept(TableCell<?, ?> cell, T value, boolean empty) {
 			decorated.accept(cell, value, empty);
 			cell.setTooltip(new Tooltip(toolTipText));
 		}
-		
+
 	}
 }
