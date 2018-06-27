@@ -1,3 +1,4 @@
+
 package cz.it4i.fiji.haas_spim_benchmark.ui;
 
 import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.CONFIG_YAML;
@@ -363,13 +364,26 @@ public class BenchmarkSPIMControl extends BorderPane implements CloseableControl
 	}
 
 	private void openBigDataViewer(BenchmarkJob job) {
+		Path resultXML = job.getResultXML();
+		Path localPathToResultXML = job.getOutputDirectory().resolve(resultXML);
+		String openFile;
+		if(Files.exists(localPathToResultXML)) {
+			openFile = localPathToResultXML.toString();
+		} else { 
+			openFile = startBDSForData(job, resultXML);
+		}
 		try {
-			BigDataViewer.open( "http://localhost:8080/Data/", "Result of job " + job.getId(), new ProgressWriterConsole() , ViewerOptions.options() );
+			BigDataViewer.open( openFile, "Result of job " + job.getId(), new ProgressWriterConsole() , ViewerOptions.options() );
 		} catch (SpimDataException e) {
 			log.error(e.getMessage(), e);
 		}
 	}
 	
+	private String startBDSForData(BenchmarkJob job, Path resultXML) {
+		throw new UnsupportedOperationException("File " + resultXML + " was not found in " + job.getOutputDirectory()
+				+ " and remote BigDataServer is not implemented yet.");
+	}
+
 	private interface P_JobAction {
 		public void doAction(Progress p) throws IOException;
 	}

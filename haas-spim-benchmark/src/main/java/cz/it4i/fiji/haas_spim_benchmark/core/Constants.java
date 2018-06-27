@@ -20,6 +20,9 @@ public interface Constants {
 	String SPIM_OUTPUT_FILENAME_PATTERN = "spim.outputFilenamePattern";
 	String CONFIG_YAML = "config.yaml";
 	String BENCHMARK_RESULT_FILE = "benchmark_result.csv";
+	String HDF5_XML_FILENAME = "hdf5_xml_filename";
+	String FUSION_SWITCH = "fusion_switch";
+	
 	
 	// This map is considered as ground truth for chronologic task sorting
 	Map<String, String> BENCHMARK_TASK_NAME_MAP = new LinkedHashMap<String, String>() {

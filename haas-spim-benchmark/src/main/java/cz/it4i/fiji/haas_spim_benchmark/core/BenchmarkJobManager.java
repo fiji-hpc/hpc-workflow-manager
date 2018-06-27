@@ -2,7 +2,9 @@ package cz.it4i.fiji.haas_spim_benchmark.core;
 
 import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.BENCHMARK_RESULT_FILE;
 import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.BENCHMARK_TASK_NAME_MAP;
+import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.FUSION_SWITCH;
 import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.HAAS_UPDATE_TIMEOUT;
+import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.HDF5_XML_FILENAME;
 import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.SPIM_OUTPUT_FILENAME_PATTERN;
 import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.UI_TO_HAAS_FREQUENCY_UPDATE_RATIO;
 
@@ -11,7 +13,6 @@ import java.io.Closeable;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
@@ -24,8 +25,6 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import java.util.Scanner;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -36,7 +35,6 @@ import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.yaml.snakeyaml.Yaml;
 
 import cz.it4i.fiji.haas.HaaSOutputHolder;
 import cz.it4i.fiji.haas.HaaSOutputHolderImpl;
@@ -89,13 +87,14 @@ public class BenchmarkJobManager implements Closeable {
 
 		public synchronized void startJob(Progress progress) throws IOException {
 			job.uploadFile(Constants.CONFIG_YAML, new P_ProgressNotifierAdapter(progress));
-			String outputName = getOutputName(job.openLocalFile(Constants.CONFIG_YAML));
+			LoadedYAML yaml = new LoadedYAML(job.openLocalFile(Constants.CONFIG_YAML));
+			
 			verifiedState = null;
 			verifiedStateProcessed = false;
 			running = null;
 			job.submit();
-			job.setProperty(SPIM_OUTPUT_FILENAME_PATTERN, outputName);
-
+			job.setProperty(SPIM_OUTPUT_FILENAME_PATTERN,
+					yaml.getCommonProperty(FUSION_SWITCH) + "_" + yaml.getCommonProperty(HDF5_XML_FILENAME));
 		}
 
 		public JobState getState() {
@@ -269,6 +268,10 @@ public class BenchmarkJobManager implements Closeable {
 
 		public Path getOutputDirectory() {
 			return job.getOutputDirectory();
+		}
+		
+		public Path getResultXML() {
+			return Paths.get(job.getProperty(SPIM_OUTPUT_FILENAME_PATTERN) + ".xml");
 		}
 
 		private ProgressNotifier convertTo(Progress progress) {
@@ -596,26 +599,7 @@ public class BenchmarkJobManager implements Closeable {
 		return new BenchmarkJob(job);
 	}
 
-	private String getOutputName(InputStream openLocalFile) throws IOException {
-		try (InputStream is = openLocalFile) {
-			Yaml yaml = new Yaml();
-			Map<String, Map<String, String>> map = yaml.load(is);
-			String result = Optional.ofNullable(map).map(m -> m.get("common")).map(m -> m.get("hdf5_xml_filename"))
-					.orElse(null);
-			if (result == null) {
-				throw new IllegalArgumentException("hdf5_xml_filename not found");
-			}
-			if (result.charAt(0) == '"' || result.charAt(0) == '\'') {
-				if (result.charAt(result.length() - 1) != result.charAt(0)) {
-					throw new IllegalArgumentException(result);
-				}
-				result = result.substring(1, result.length() - 1);
-			}
-
-			return result;
-		}
-
-	}
+	
 
 	private static Predicate<String> downloadFinishedData(String filePattern) {
 		return name -> {
