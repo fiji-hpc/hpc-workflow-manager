@@ -6,7 +6,7 @@ import cz.it4i.fiji.haas_java_client.ProgressNotifier;
 
 public class ProgressNotifierTemporarySwitchOff {
 
-	private final ProgressNotifier notifier;
+	private ProgressNotifier notifier;
 	private final Job job;
 	
 	public ProgressNotifierTemporarySwitchOff(ProgressNotifier downloadNotifier, Job job) {
@@ -17,10 +17,11 @@ public class ProgressNotifierTemporarySwitchOff {
 		}
 	}
 
-	public void switchOn() {
+	synchronized public void switchOn() {
 		if(notifier != null) {
 			this.job.setDownloadNotifier(notifier);
 		}
+		notifier = null;
 	}
 
 }

@@ -418,28 +418,24 @@ public class BenchmarkJobManager implements Closeable {
 			String mainFile = job.getProperty(SPIM_OUTPUT_FILENAME_PATTERN) + ".xml";
 			final ProgressNotifierTemporarySwitchOff notifierSwitch = new ProgressNotifierTemporarySwitchOff(downloadNotifier, job);
 			
-			job.startDownload(downloadFileNameExtractDecorator(fileName->fileName.equals(mainFile)))
-			.whenComplete((X,e1)-> {
-				notifierSwitch.switchOn();
-				if(e1 == null) {
-					Set<String> otherFiles = extractNames(getOutputDirectory().resolve(mainFile));
-					try {
-						job.startDownload(downloadFileNameExtractDecorator(name -> otherFiles.contains(name)))
-								.whenComplete((X2,e2) -> {
-									result.complete(null);
-									if(e2 != null) {
-										log.error(e2.getMessage(), e2);
-									}
-								});
-					} catch (IOException e) {
-						e1 = e;
-					}
-				}
-				if(e1 != null){
-					log.error(e1.getMessage(), e1);
-					result.complete(null);
-				}
-			});
+			job.startDownload(downloadFileNameExtractDecorator(fileName -> fileName.equals(mainFile)))
+					.whenComplete((X, E) -> {
+						notifierSwitch.switchOn();
+					}).thenCompose(X -> {
+						Set<String> otherFiles = extractNames(getOutputDirectory().resolve(mainFile));
+						try {
+							return job
+									.startDownload(downloadFileNameExtractDecorator(name -> otherFiles.contains(name)));
+						} catch (IOException e) {
+							throw new RuntimeException(e);
+						}
+
+					}).whenComplete((X, e) -> {
+						if (e != null) {
+							log.error(e.getMessage(), e);
+						}
+						result.complete(null);
+					});
 		}
 		
 		private Set<String> extractNames(Path resolve) {
