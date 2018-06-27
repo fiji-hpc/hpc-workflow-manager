@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -58,7 +59,7 @@ public abstract class PersistentSynchronizationProcess<T> {
 		this.index = new PersistentIndex<>(indexFile, convertor);
 	}
 
-	public synchronized void start() throws IOException {
+	public synchronized CompletableFuture<?> start() throws IOException {
 		startFinished = false;
 		index.clear();
 		try {
@@ -66,7 +67,7 @@ public abstract class PersistentSynchronizationProcess<T> {
 				index.insert(item);
 				toProcessQueue.add(item);
 			}
-			runner.runIfNotRunning(this::doProcess);
+			return runner.runIfNotRunning(this::doProcess);
 		} finally {
 			startFinished = true;
 			index.storeToWorkingFile();
@@ -115,7 +116,13 @@ public abstract class PersistentSynchronizationProcess<T> {
 			}
 			this.notifier.itemDone(INIT_TRANSFER_ITEM);
 			this.notifier.done();
-			while (!interrupted && !toProcessQueue.isEmpty()) {
+			do {
+				synchronized (reRun) {
+					if(interrupted || toProcessQueue.isEmpty()) {
+						reRun.set(false);
+						break;
+					}
+				}
 				T p = toProcessQueue.poll();
 				String item = p.toString();
 				notifier.addItem(item);
@@ -127,8 +134,7 @@ public abstract class PersistentSynchronizationProcess<T> {
 					interrupted = true;
 				}
 				notifier.itemDone(item);
-				reRun.set(false);
-			}
+			} while(true);
 		} finally {
 			runningTransferThreads.remove(Thread.currentThread());
 			synchronized (this) {

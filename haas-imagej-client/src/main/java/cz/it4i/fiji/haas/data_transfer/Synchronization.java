@@ -10,6 +10,7 @@ import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Predicate;
@@ -86,9 +87,9 @@ public class Synchronization implements Closeable {
 		uploadProcess.resume();
 	}
 
-	public synchronized void startDownload(Collection<String> files) throws IOException {
+	public synchronized CompletableFuture<?> startDownload(Collection<String> files) throws IOException {
 		this.downloadProcess.setItems(files);
-		this.downloadProcess.start();
+		return this.downloadProcess.start();
 	}
 
 	public synchronized void stopDownload() throws IOException {
@@ -117,7 +118,7 @@ public class Synchronization implements Closeable {
 				workingDirectory.resolve(FILE_INDEX_TO_UPLOAD_FILENAME), name -> inputDirectory.resolve(name)) {
 
 			@Override
-			protected Iterable<Path> getItems() throws IOException {
+			protected Collection<Path> getItems() throws IOException {
 				try (DirectoryStream<Path> ds = Files.newDirectoryStream(inputDirectory,
 						Synchronization.this::canUpload)) {
 					return StreamSupport.stream(ds.spliterator(), false).collect(Collectors.toList());
@@ -166,7 +167,7 @@ public class Synchronization implements Closeable {
 		}
 
 		@Override
-		protected synchronized Iterable<String> getItems() throws IOException {
+		protected synchronized Collection<String> getItems() throws IOException {
 			return items;
 		}
 

@@ -13,6 +13,7 @@ import java.io.Closeable;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
@@ -26,6 +27,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Scanner;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.Function;
@@ -33,8 +35,20 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 import cz.it4i.fiji.haas.HaaSOutputHolder;
 import cz.it4i.fiji.haas.HaaSOutputHolderImpl;
@@ -69,6 +83,7 @@ public class BenchmarkJobManager implements Closeable {
 		private JobState verifiedState;
 		private boolean verifiedStateProcessed;
 		private CompletableFuture<JobState> running;
+		private ProgressNotifier downloadNotifier;
 
 		public BenchmarkJob(Job job) {
 			this.job = job;
@@ -78,7 +93,7 @@ public class BenchmarkJobManager implements Closeable {
 		}
 
 		public void setDownloadNotifier(Progress progress) {
-			job.setDownloadNotifier(convertTo(progress));
+			job.setDownloadNotifier(downloadNotifier = convertTo(progress));
 		}
 
 		public void setUploadNotifier(Progress progress) {
@@ -86,7 +101,7 @@ public class BenchmarkJobManager implements Closeable {
 		}
 
 		public synchronized void startJob(Progress progress) throws IOException {
-			job.uploadFile(Constants.CONFIG_YAML, new P_ProgressNotifierAdapter(progress));
+			job.uploadFile(Constants.CONFIG_YAML, new ProgressNotifierAdapter(progress));
 			LoadedYAML yaml = new LoadedYAML(job.openLocalFile(Constants.CONFIG_YAML));
 			
 			verifiedState = null;
@@ -120,12 +135,15 @@ public class BenchmarkJobManager implements Closeable {
 			return result;
 		}
 
-		public void startDownload() throws IOException {
+		public CompletableFuture<?> startDownload() throws IOException {
 			if (job.getState() == JobState.Finished) {
-				String filePattern = job.getProperty(SPIM_OUTPUT_FILENAME_PATTERN);
-				job.startDownload(downloadFinishedData(filePattern));
+				CompletableFuture<?> result = new CompletableFuture<Void>();
+				startDownloadResults(result);
+				return result;
 			} else if (job.getState() == JobState.Failed || job.getState() == JobState.Canceled) {
-				job.startDownload(downloadFailedData());
+				return job.startDownload(downloadFailedData());
+			} else {
+				return CompletableFuture.completedFuture(null);
 			}
 		}
 
@@ -134,7 +152,7 @@ public class BenchmarkJobManager implements Closeable {
 		}
 
 		public void downloadStatistics(Progress progress) throws IOException {
-			job.download(BenchmarkJobManager.downloadStatistics(), new P_ProgressNotifierAdapter(progress));
+			job.download(BenchmarkJobManager.downloadStatistics(), new ProgressNotifierAdapter(progress));
 			Path resultFile = job.getDirectory().resolve(BENCHMARK_RESULT_FILE);
 			if (resultFile != null)
 				BenchmarkJobManager.formatResultFile(resultFile);
@@ -275,7 +293,7 @@ public class BenchmarkJobManager implements Closeable {
 		}
 
 		private ProgressNotifier convertTo(Progress progress) {
-			return progress == null ? null : new P_ProgressNotifierAdapter(progress);
+			return progress == null ? null : new ProgressNotifierAdapter(progress);
 		}
 
 		private synchronized CompletableFuture<JobState> doGetStateAsync(Executor executor) {
@@ -394,6 +412,54 @@ public class BenchmarkJobManager implements Closeable {
 				Collections.sort(tasks,
 						Comparator.comparingInt(task -> chronologicList.indexOf(task.getDescription())));
 			}
+		}
+
+		private void startDownloadResults(CompletableFuture<?> result) throws IOException {
+			String mainFile = job.getProperty(SPIM_OUTPUT_FILENAME_PATTERN) + ".xml";
+			final ProgressNotifierTemporarySwitchOff notifierSwitch = new ProgressNotifierTemporarySwitchOff(downloadNotifier, job);
+			
+			job.startDownload(downloadFileNameExtractDecorator(fileName->fileName.equals(mainFile)))
+			.whenComplete((X,e1)-> {
+				notifierSwitch.switchOn();
+				if(e1 == null) {
+					Set<String> otherFiles = extractNames(getOutputDirectory().resolve(mainFile));
+					try {
+						job.startDownload(downloadFileNameExtractDecorator(name -> otherFiles.contains(name)))
+								.whenComplete((X2,e2) -> {
+									result.complete(null);
+									if(e2 != null) {
+										log.error(e2.getMessage(), e2);
+									}
+								});
+					} catch (IOException e) {
+						e1 = e;
+					}
+				}
+				if(e1 != null){
+					log.error(e1.getMessage(), e1);
+					result.complete(null);
+				}
+			});
+		}
+		
+		private Set<String> extractNames(Path resolve) {
+			Set<String> result = new HashSet<>();
+			try(InputStream fileIS = Files.newInputStream(resolve)) {
+				DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
+				DocumentBuilder builder = builderFactory.newDocumentBuilder();
+				Document xmlDocument = builder.parse(fileIS);
+				XPath xPath = XPathFactory.newInstance().newXPath();
+				Node imageLoader = ((NodeList) xPath.evaluate("/SpimData/SequenceDescription/ImageLoader", xmlDocument, XPathConstants.NODESET)).item(0);
+				Node hdf5 = ((NodeList) xPath.evaluate("hdf5", imageLoader, XPathConstants.NODESET)).item(0);
+				result.add(hdf5.getTextContent());
+				NodeList nl = (NodeList) xPath.evaluate("partition/path", imageLoader, XPathConstants.NODESET);
+				for(int i = 0; i < nl.getLength(); i++) {
+					result.add(nl.item(i).getTextContent());
+				}
+			} catch (IOException | ParserConfigurationException | SAXException | XPathExpressionException e) {
+				log.error(e.getMessage(), e);
+			}
+			return result;
 		}
 
 		private void processOutput() {
@@ -599,17 +665,14 @@ public class BenchmarkJobManager implements Closeable {
 		return new BenchmarkJob(job);
 	}
 
-	
-
-	private static Predicate<String> downloadFinishedData(String filePattern) {
+	private static Predicate<String> downloadFileNameExtractDecorator(Predicate<String> decorated) {
 		return name -> {
 			Path path = getPathSafely(name);
 			if (path == null)
 				return false;
 
 			String fileName = path.getFileName().toString();
-			return fileName.startsWith(filePattern) && fileName.endsWith("h5") || fileName.equals(filePattern + ".xml")
-					|| fileName.equals(Constants.BENCHMARK_RESULT_FILE);
+			return decorated.test(fileName);
 		};
 	}
 
@@ -696,45 +759,6 @@ public class BenchmarkJobManager implements Closeable {
 				return Constants.CORES_PER_NODE;
 			}
 		};
-	}
-
-	private class P_ProgressNotifierAdapter implements ProgressNotifier {
-		private final Progress progress;
-
-		public P_ProgressNotifierAdapter(Progress progress) {
-			this.progress = progress;
-		}
-
-		@Override
-		public void setTitle(String title) {
-			progress.setTitle(title);
-		}
-
-		@Override
-		public void setCount(int count, int total) {
-			progress.setCount(count, total);
-		}
-
-		@Override
-		public void addItem(Object item) {
-			progress.addItem(item);
-		}
-
-		@Override
-		public void setItemCount(int count, int total) {
-			progress.setItemCount(count, total);
-		}
-
-		@Override
-		public void itemDone(Object item) {
-			progress.itemDone(item);
-		}
-
-		@Override
-		public void done() {
-			progress.done();
-		}
-
 	}
 
 }

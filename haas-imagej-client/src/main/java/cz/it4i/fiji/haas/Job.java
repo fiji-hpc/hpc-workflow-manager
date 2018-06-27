@@ -12,6 +12,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -140,11 +141,14 @@ public class Job {
 		}
 	}
 
-	public void startDownload(Predicate<String> predicate) throws IOException {
-		setProperty(JOB_NEEDS_DOWNLOAD, true);
+	public CompletableFuture<?> startDownload(Predicate<String> predicate) throws IOException {
 		Collection<String> files = getHaaSClient().getChangedFiles(jobId).stream().filter(predicate)
 				.collect(Collectors.toList());
-		synchronization.startDownload(files);
+		if(files.isEmpty()) {
+			return CompletableFuture.completedFuture(null);
+		}
+		setProperty(JOB_NEEDS_DOWNLOAD, true);
+		return synchronization.startDownload(files);
 	}
 
 	public void stopDownloadData() {
