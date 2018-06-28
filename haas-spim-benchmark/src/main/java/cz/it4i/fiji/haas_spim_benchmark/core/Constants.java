@@ -9,7 +9,7 @@ public interface Constants {
 	short UI_TO_HAAS_FREQUENCY_UPDATE_RATIO = 10;
 	String HAAS_JOB_NAME = "HaaSSPIMBenchmark";
 	int HAAS_CLUSTER_NODE_TYPE = 6;
-	int HAAS_TEMPLATE_ID = 4;
+	int HAAS_TEMPLATE_ID = 2;
 	String HAAS_PROJECT_ID = "OPEN-12-20";
 	int HAAS_TIMEOUT = 9600; //Walltime in seconds
 	
@@ -19,7 +19,6 @@ public interface Constants {
 
 	String SPIM_OUTPUT_FILENAME_PATTERN = "spim.outputFilenamePattern";
 	String CONFIG_YAML = "config.yaml";
-	String BENCHMARK_RESULT_FILE = "benchmark_result.csv";
 	String HDF5_XML_FILENAME = "hdf5_xml_filename";
 	String FUSION_SWITCH = "fusion_switch";
 	

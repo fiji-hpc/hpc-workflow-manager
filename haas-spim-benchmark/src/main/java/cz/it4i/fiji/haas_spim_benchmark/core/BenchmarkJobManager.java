@@ -1,6 +1,5 @@
 package cz.it4i.fiji.haas_spim_benchmark.core;
 
-import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.BENCHMARK_RESULT_FILE;
 import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.BENCHMARK_TASK_NAME_MAP;
 import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.FUSION_SWITCH;
 import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.HAAS_UPDATE_TIMEOUT;
@@ -149,13 +148,6 @@ public class BenchmarkJobManager implements Closeable {
 
 		public boolean canBeDownloaded() {
 			return job.canBeDownloaded();
-		}
-
-		public void downloadStatistics(Progress progress) throws IOException {
-			job.download(BenchmarkJobManager.downloadStatistics(), new ProgressNotifierAdapter(progress));
-			Path resultFile = job.getDirectory().resolve(BENCHMARK_RESULT_FILE);
-			if (resultFile != null)
-				BenchmarkJobManager.formatResultFile(resultFile);
 		}
 
 		public long getId() {
@@ -669,17 +661,6 @@ public class BenchmarkJobManager implements Closeable {
 
 			String fileName = path.getFileName().toString();
 			return decorated.test(fileName);
-		};
-	}
-
-	private static Predicate<String> downloadStatistics() {
-		return name -> {
-			Path path = getPathSafely(name);
-			if (path == null)
-				return false;
-
-			String fileName = path.getFileName().toString();
-			return fileName.equals(Constants.BENCHMARK_RESULT_FILE);
 		};
 	}
 
