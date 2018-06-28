@@ -27,6 +27,7 @@ import cz.it4i.fiji.haas.data_transfer.Synchronization;
 import cz.it4i.fiji.haas_java_client.HaaSClient;
 import cz.it4i.fiji.haas_java_client.HaaSFileTransfer;
 import cz.it4i.fiji.haas_java_client.JobInfo;
+import cz.it4i.fiji.haas_java_client.JobSettings;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.ProgressNotifier;
 import cz.it4i.fiji.haas_java_client.TransferFileProgressForHaaSClient;
@@ -94,17 +95,17 @@ public class Job {
 
 	
 
-	public Job(JobManager4Job jobManager, String name, Path basePath, Supplier<HaaSClient> haasClientSupplier,
+	public Job(JobManager4Job jobManager, JobSettings jobSettings, Path basePath, Supplier<HaaSClient> haasClientSupplier,
 			Function<Path, Path> inputDirectoryProvider, Function<Path, Path> outputDirectoryProvider)
 			throws IOException {
 		this(jobManager, haasClientSupplier);
 		HaaSClient client = getHaaSClient();
-		long id = client.createJob(name, Collections.emptyList());
+		long id = client.createJob(jobSettings, Collections.emptyList());
 		setJobDirectory(basePath.resolve("" + id), inputDirectoryProvider, outputDirectoryProvider);
 		propertyHolder = new PropertyHolder(jobDir.resolve(JOB_INFO_FILENAME));
 		Files.createDirectory(this.jobDir);
 		storeInputOutputDirectory();
-		setName(name);
+		setName(jobSettings.getJobName());
 
 	}
 

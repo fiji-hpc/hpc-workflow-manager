@@ -30,7 +30,7 @@ public class TestCommunicationWithNodes {
 				"Accept: */*\r\n" + //
 				"\r\n";
 		
-		Settings settings = SettingsProvider.getSettings(6l, 3600, 7l, "OPEN-12-20",
+		HaaSClientSettings settings = SettingsProvider.getSettings("OPEN-12-20",
 				TestingConstants.CONFIGURATION_FILE_NAME);
 		HaaSClient client = new HaaSClient(settings);
 		long id = 376;//client.createJob("New job", Collections.emptyList());

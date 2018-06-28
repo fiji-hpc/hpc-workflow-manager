@@ -19,7 +19,7 @@ public class GetJobInfo {
 	public static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas_java_client.GetJobInfo.class);
 
 	public static void main(String[] args) throws ServiceException, IOException {
-		Settings settings = SettingsProvider.getSettings(1l, 600, 7l, "OPEN-12-20", TestingConstants.CONFIGURATION_FILE_NAME);
+		HaaSClientSettings settings = SettingsProvider.getSettings("OPEN-12-20", TestingConstants.CONFIGURATION_FILE_NAME);
 		HaaSClient client = new HaaSClient(settings);
 		JobInfo ji = client.obtainJobInfo(334);
 		System.out.println("created: " + ji.getCreationTime());

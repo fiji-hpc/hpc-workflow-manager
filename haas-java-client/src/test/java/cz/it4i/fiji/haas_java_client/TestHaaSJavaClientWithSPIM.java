@@ -21,10 +21,11 @@ public class TestHaaSJavaClientWithSPIM {
 	private static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas_java_client.TestHaaSJavaClientWithSPIM.class);
 
 	public static void main(String[] args) throws ServiceException, IOException {
-		HaaSClient client = new HaaSClient(SettingsProvider.getSettings(2, 9600, 6l, "DD-17-31", TestingConstants.CONFIGURATION_FILE_NAME));
+		HaaSClient client = new HaaSClient(SettingsProvider.getSettings("DD-17-31", TestingConstants.CONFIGURATION_FILE_NAME));
 		Path baseDir = Paths.get("/home/koz01/Work/vyzkumnik/fiji/work/aaa");
 
-		long jobId = client.createJob("TestOutRedirect", Collections.emptyList());
+		long jobId = client.createJob(new JobSettingsBuilder().setJobName("TestOutRedirect").setTemplateId(2)
+				.setWalltimeLimit(9600).setClusterNodeType(6).build(), Collections.emptyList());
 
 		try (HaaSFileTransfer tr = client.startFileTransfer(jobId, HaaSClient.DUMMY_TRANSFER_FILE_PROGRESS)) {
 			StreamSupport.stream(getAllFiles(baseDir.resolve("spim-data")).spliterator(), false)

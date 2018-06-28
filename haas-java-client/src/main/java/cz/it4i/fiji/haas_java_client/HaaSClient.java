@@ -188,39 +188,25 @@ public class HaaSClient {
 
 	private FileTransferWsSoap fileTransfer;
 
-	private final Integer timeOut;
-
-	private final Long templateId;
-
-	private final Long clusterNodeType;
-
 	private final String projectId;
 
 	private final Map<Long, P_FileTransferPool> filetransferPoolMap = new HashMap<>();
 
-	private final Settings settings;
+	private final HaaSClientSettings settings;
 
-	private final int numberOfCoresPerNodes;
+	
 
-	public HaaSClient(Settings settings) {
+	public HaaSClient(HaaSClientSettings settings) {
 		this.settings = settings;
-		this.templateId = settings.getTemplateId();
-		this.timeOut = settings.getTimeout();
-		this.clusterNodeType = settings.getClusterNodeType();
 		this.projectId = settings.getProjectId();
-		this.numberOfCoresPerNodes = settings.getNumberOfCoresPerNode();
 	}
 
-	public long createJob(String name, int numberOfNodes, Collection<Entry<String, String>> templateParameters) {
+	public long createJob(JobSettings settings, Collection<Entry<String, String>> templateParameters) {
 		try {
-			return doCreateJob(name, numberOfNodes, templateParameters);
+			return doCreateJob(settings, templateParameters);
 		} catch (RemoteException | ServiceException e) {
 			throw new RuntimeException(e);
 		}
-	}
-
-	public long createJob(String name, Collection<Entry<String, String>> templateParameters) {
-		return createJob(name, 1, templateParameters);
 	}
 
 	public HaaSFileTransfer startFileTransfer(long jobId, TransferFileProgress notifier) {
@@ -234,7 +220,7 @@ public class HaaSClient {
 	public HaaSFileTransfer startFileTransfer(long jobId) {
 		return startFileTransfer(jobId, DUMMY_TRANSFER_FILE_PROGRESS);
 	}
-	
+
 	public TunnelToNode openTunnel(long jobId, String nodeIP, int localPort, int remotePort) {
 		MidlewareTunnel tunnel;
 		try {
@@ -273,11 +259,12 @@ public class HaaSClient {
 	public JobInfo obtainJobInfo(long jobId) {
 		try {
 			final SubmittedJobInfoExt info = getJobManagement().getCurrentInfoForJob(jobId, getSessionID());
-			
+
 			final Collection<Long> tasksId = info.getTasks().getSubmittedTaskInfoExt().stream().map(ti -> ti.getId())
 					.collect(Collectors.toList());
 			return new JobInfo() {
 				private List<String> ips;
+
 				@Override
 				public Collection<Long> getTasks() {
 					return tasksId;
@@ -302,12 +289,13 @@ public class HaaSClient {
 				public Calendar getCreationTime() {
 					return toGregorian(info.getCreationTime());
 				};
-				
+
 				@Override
 				public List<String> getNodesIPs() {
-					if(ips == null) {
+					if (ips == null) {
 						try {
-							ips = getJobManagement().getAllocatedNodesIPs(jobId, getSessionID()).getString().stream().collect(Collectors.toList());
+							ips = getJobManagement().getAllocatedNodesIPs(jobId, getSessionID()).getString().stream()
+									.collect(Collectors.toList());
 						} catch (RemoteException | ServiceException e) {
 							log.error(e.getMessage(), e);
 						}
@@ -382,11 +370,11 @@ public class HaaSClient {
 		getJobManagement().submitJob(jobId, getSessionID());
 	}
 
-	private long doCreateJob(String name, int numberOfNodes, Collection<Entry<String, String>> templateParameters)
+	private long doCreateJob(JobSettings jobSettings, Collection<Entry<String, String>> templateParameters)
 			throws RemoteException, ServiceException {
 		Collection<TaskSpecificationExt> taskSpec = Arrays
-				.asList(createTaskSpecification(name + "-task", templateId, numberOfNodes, templateParameters));
-		JobSpecificationExt jobSpecification = createJobSpecification(name, numberOfNodes, taskSpec);
+				.asList(createTaskSpecification(jobSettings, templateParameters));
+		JobSpecificationExt jobSpecification = createJobSpecification(jobSettings, taskSpec);
 		SubmittedJobInfoExt job = getJobManagement().createJob(jobSpecification, getSessionID());
 		return job.getId();
 	}
@@ -397,35 +385,35 @@ public class HaaSClient {
 		return new ScpClient(fileTransfer.getServerHostname(), fileTransfer.getCredentials().getUsername(), pvtKey);
 	}
 
-	private JobSpecificationExt createJobSpecification(String name, int numberOfNodes,
+	private JobSpecificationExt createJobSpecification(JobSettings jobSettings,
 			Collection<TaskSpecificationExt> tasks) {
 		JobSpecificationExt testJob = new JobSpecificationExt();
-		testJob.setName(name);
-		testJob.setMinCores(numberOfCoresPerNodes * numberOfNodes);
-		testJob.setMaxCores(numberOfCoresPerNodes * numberOfNodes);
+		testJob.setName(jobSettings.getJobName());
+		testJob.setMinCores(jobSettings.getNumberOfCoresPerNode() * jobSettings.getNumberOfNodes());
+		testJob.setMaxCores(jobSettings.getNumberOfCoresPerNode() * jobSettings.getNumberOfNodes());
 		testJob.setPriority(JobPriorityExt.AVERAGE);
 		testJob.setProject(projectId);
 		testJob.setWaitingLimit(null);
-		testJob.setWalltimeLimit(timeOut);
+		testJob.setWalltimeLimit(jobSettings.getWalltimeLimit());
 		testJob.setNotificationEmail(settings.getEmail());
 		testJob.setPhoneNumber(settings.getPhone());
 		testJob.setNotifyOnAbort(false);
 		testJob.setNotifyOnFinish(false);
 		testJob.setNotifyOnStart(false);
-		testJob.setClusterNodeTypeId(clusterNodeType);
-		testJob.setEnvironmentVariables( new ArrayOfEnvironmentVariableExt());
+		testJob.setClusterNodeTypeId(jobSettings.getClusterNodeType());
+		testJob.setEnvironmentVariables(new ArrayOfEnvironmentVariableExt());
 		testJob.setTasks(getAndFill(new ArrayOfTaskSpecificationExt(), a -> a.getTaskSpecificationExt().addAll(tasks)));
 		return testJob;
 	}
 
-	private TaskSpecificationExt createTaskSpecification(String name, long templateId, int numberOfNodes,
+	private TaskSpecificationExt createTaskSpecification(JobSettings jobSettings,
 			Collection<Entry<String, String>> templateParameters) {
 
 		TaskSpecificationExt testTask = new TaskSpecificationExt();
-		testTask.setName(name);
-		testTask.setMinCores(numberOfCoresPerNodes * numberOfNodes);
-		testTask.setMaxCores(numberOfCoresPerNodes * numberOfNodes);
-		testTask.setWalltimeLimit(timeOut);
+		testTask.setName(jobSettings.getJobName() + "-task");
+		testTask.setMinCores(jobSettings.getNumberOfCoresPerNode() * jobSettings.getNumberOfNodes());
+		testTask.setMaxCores(jobSettings.getNumberOfCoresPerNode() * jobSettings.getNumberOfNodes());
+		testTask.setWalltimeLimit(jobSettings.getWalltimeLimit());
 		testTask.setRequiredNodes(null);
 		testTask.setIsExclusive(false);
 		testTask.setIsRerunnable(false);
@@ -435,7 +423,7 @@ public class HaaSClient {
 		testTask.setProgressFile("console_Stdprog");
 		testTask.setLogFile("console_Stdlog");
 		testTask.setClusterTaskSubdirectory(null);
-		testTask.setCommandTemplateId(templateId); // commandTemplateID
+		testTask.setCommandTemplateId(jobSettings.getTemplateId());
 		testTask.setEnvironmentVariables(new ArrayOfEnvironmentVariableExt());
 		testTask.setDependsOn(null);
 		testTask.setTemplateParameterValues(getAndFill(new ArrayOfCommandTemplateParameterValueExt(),

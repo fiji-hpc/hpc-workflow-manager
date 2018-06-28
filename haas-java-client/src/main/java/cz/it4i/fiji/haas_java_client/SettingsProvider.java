@@ -2,13 +2,10 @@ package cz.it4i.fiji.haas_java_client;
 
 public interface SettingsProvider {
 	
-	static Settings getSettings(long templateId, int timeOut, long clusterNodeType, String projectId, String configFileName) {
-		return getSettings(templateId, timeOut, clusterNodeType, projectId, 1, configFileName);
-	}
 	
-	static Settings getSettings(long templateId, int timeOut, long clusterNodeType, String projectId, int numberOfCores,String configFileName) {
+	static HaaSClientSettings getSettings(String projectId, String configFileName) {
 		Constants constants = new Constants(configFileName);
-		return new Settings() {
+		return new HaaSClientSettings() {
 			
 			@Override
 			public String getUserName() {
@@ -30,35 +27,13 @@ public interface SettingsProvider {
 				return constants.getEmail();
 			}
 
-			@Override
-			public long getTemplateId() {
-				return templateId;
-			}
-			
-			@Override
-			public int getTimeout() {
-				return timeOut;
-			}
-			
-			@Override
-			public long getClusterNodeType() {
-				return clusterNodeType;
-			}
-
+		
 			@Override
 			public String getProjectId() {
 				return projectId;
 			}
 
-			@Override
-			public String getJobName() {
-				return "TestOutRedirect";
-			}
-
-			@Override
-			public int getNumberOfCoresPerNode() {
-				return numberOfCores;
-			}
+			
 		};
 	}
 	

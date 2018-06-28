@@ -55,7 +55,9 @@ import cz.it4i.fiji.haas.Job;
 import cz.it4i.fiji.haas.JobManager;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.ProgressNotifier;
-import cz.it4i.fiji.haas_java_client.Settings;
+import cz.it4i.fiji.haas_java_client.HaaSClientSettings;
+import cz.it4i.fiji.haas_java_client.JobSettings;
+import cz.it4i.fiji.haas_java_client.JobSettingsBuilder;
 import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
 import cz.it4i.fiji.haas_java_client.UploadingFile;
 import net.imagej.updater.util.Progress;
@@ -102,7 +104,7 @@ public class BenchmarkJobManager implements Closeable {
 		public synchronized void startJob(Progress progress) throws IOException {
 			job.uploadFile(Constants.CONFIG_YAML, new ProgressNotifierAdapter(progress));
 			LoadedYAML yaml = new LoadedYAML(job.openLocalFile(Constants.CONFIG_YAML));
-			
+
 			verifiedState = null;
 			verifiedStateProcessed = false;
 			running = null;
@@ -408,8 +410,9 @@ public class BenchmarkJobManager implements Closeable {
 
 		private void startDownloadResults(CompletableFuture<?> result) throws IOException {
 			String mainFile = job.getProperty(SPIM_OUTPUT_FILENAME_PATTERN) + ".xml";
-			final ProgressNotifierTemporarySwitchOff notifierSwitch = new ProgressNotifierTemporarySwitchOff(downloadNotifier, job);
-			
+			final ProgressNotifierTemporarySwitchOff notifierSwitch = new ProgressNotifierTemporarySwitchOff(
+					downloadNotifier, job);
+
 			job.startDownload(downloadFileNameExtractDecorator(fileName -> fileName.equals(mainFile)))
 					.whenComplete((X, E) -> {
 						notifierSwitch.switchOn();
@@ -429,19 +432,20 @@ public class BenchmarkJobManager implements Closeable {
 						result.complete(null);
 					});
 		}
-		
+
 		private Set<String> extractNames(Path resolve) {
 			Set<String> result = new HashSet<>();
-			try(InputStream fileIS = Files.newInputStream(resolve)) {
+			try (InputStream fileIS = Files.newInputStream(resolve)) {
 				DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
 				DocumentBuilder builder = builderFactory.newDocumentBuilder();
 				Document xmlDocument = builder.parse(fileIS);
 				XPath xPath = XPathFactory.newInstance().newXPath();
-				Node imageLoader = ((NodeList) xPath.evaluate("/SpimData/SequenceDescription/ImageLoader", xmlDocument, XPathConstants.NODESET)).item(0);
+				Node imageLoader = ((NodeList) xPath.evaluate("/SpimData/SequenceDescription/ImageLoader", xmlDocument,
+						XPathConstants.NODESET)).item(0);
 				Node hdf5 = ((NodeList) xPath.evaluate("hdf5", imageLoader, XPathConstants.NODESET)).item(0);
 				result.add(hdf5.getTextContent());
 				NodeList nl = (NodeList) xPath.evaluate("partition/path", imageLoader, XPathConstants.NODESET);
-				for(int i = 0; i < nl.getLength(); i++) {
+				for (int i = 0; i < nl.getLength(); i++) {
 					result.add(nl.item(i).getTextContent());
 				}
 			} catch (IOException | ParserConfigurationException | SAXException | XPathExpressionException e) {
@@ -531,7 +535,7 @@ public class BenchmarkJobManager implements Closeable {
 
 	public BenchmarkJob createJob(Function<Path, Path> inputDirectoryProvider,
 			Function<Path, Path> outputDirectoryProvider) throws IOException {
-		Job job = jobManager.createJob(inputDirectoryProvider, outputDirectoryProvider);
+		Job job = jobManager.createJob( getJobSettings(),inputDirectoryProvider, outputDirectoryProvider);
 		return convertJob(job);
 	}
 
@@ -653,6 +657,12 @@ public class BenchmarkJobManager implements Closeable {
 		return new BenchmarkJob(job);
 	}
 
+	private static JobSettings getJobSettings() {
+		return new JobSettingsBuilder().setJobName(Constants.HAAS_JOB_NAME)
+				.setClusterNodeType(Constants.HAAS_CLUSTER_NODE_TYPE).setTemplateId(Constants.HAAS_TEMPLATE_ID)
+				.setWalltimeLimit(Constants.HAAS_TIMEOUT).setNumberOfCoresPerNode(Constants.CORES_PER_NODE).build();
+	}
+
 	private static Predicate<String> downloadFileNameExtractDecorator(Predicate<String> decorated) {
 		return name -> {
 			Path path = getPathSafely(name);
@@ -683,22 +693,12 @@ public class BenchmarkJobManager implements Closeable {
 		}
 	}
 
-	private static Settings constructSettingsFromParams(BenchmarkSPIMParameters params) {
-		return new Settings() {
+	private static HaaSClientSettings constructSettingsFromParams(BenchmarkSPIMParameters params) {
+		return new HaaSClientSettings() {
 
 			@Override
 			public String getUserName() {
 				return params.username();
-			}
-
-			@Override
-			public int getTimeout() {
-				return Constants.HAAS_TIMEOUT;
-			}
-
-			@Override
-			public long getTemplateId() {
-				return Constants.HAAS_TEMPLATE_ID;
 			}
 
 			@Override
@@ -717,24 +717,10 @@ public class BenchmarkJobManager implements Closeable {
 			}
 
 			@Override
-			public String getJobName() {
-				return Constants.HAAS_JOB_NAME;
-			}
-
-			@Override
 			public String getEmail() {
 				return params.email();
 			}
 
-			@Override
-			public long getClusterNodeType() {
-				return Constants.HAAS_CLUSTER_NODE_TYPE;
-			}
-
-			@Override
-			public int getNumberOfCoresPerNode() {
-				return Constants.CORES_PER_NODE;
-			}
 		};
 	}
 
