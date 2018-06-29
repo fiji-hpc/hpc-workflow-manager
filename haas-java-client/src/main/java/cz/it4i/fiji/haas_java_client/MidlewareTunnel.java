@@ -12,6 +12,7 @@ import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.nio.channels.Channels;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -181,12 +182,14 @@ class MidlewareTunnel implements Closeable {
 			}
 			sendEOF2Middleware();
 		} catch (InterruptedIOException e) {
+			log.error(e.getMessage(), e);
 			return;
 		} catch (SocketException e) {
 			if (!e.getMessage().equals("Socket closed")) {
 				log.error(e.getMessage(), e);
 			}
 		} catch (IOException e) {
+			log.error(e.getMessage(), e);
 			return;
 		} finally {
 			if (log.isDebugEnabled()) {
@@ -196,7 +199,7 @@ class MidlewareTunnel implements Closeable {
 	}
 
 	private void sendEOF2Middleware() {
-		dataTransfer.sendDataToJobNode(null, jobId, ipAddress, sessionCode);
+		dataTransfer.writeDataToJobNode(null, jobId, ipAddress, sessionCode, true);
 	}
 
 	private boolean sendToMiddleware(byte[] buffer, int len) {
@@ -211,7 +214,7 @@ class MidlewareTunnel implements Closeable {
 			} else {
 				sending = buffer;
 			}
-			int reallySend = dataTransfer.sendDataToJobNode(sending, jobId, ipAddress, sessionCode);
+			int reallySend = dataTransfer.writeDataToJobNode(sending, jobId, ipAddress, sessionCode, false);
 			if (reallySend == -1) {
 				return false;
 			}
@@ -292,7 +295,8 @@ class MidlewareTunnel implements Closeable {
 
 		private final Runnable[] runnable = new Runnable[2];
 
-		private final Future<?>[] futures = new Future[2];
+		
+		private final CompletableFuture<?>[] futures = new CompletableFuture[2];
 		
 		private final CountDownLatch latchFromClient = new CountDownLatch(1);
 		
@@ -318,13 +322,17 @@ class MidlewareTunnel implements Closeable {
 			
 			for (int i = 0; i < runnable.length; i++) {
 				int final_i = i;
-				futures[i] = executorService.submit(() -> {
+				futures[i] = CompletableFuture.runAsync(() -> {
 					runnable[final_i].run();
-					if(final_i == FROM_CLIENT) {
+				}, executorService).whenComplete((id,e) -> {
+					if (final_i == FROM_CLIENT) {
 						latchFromClient.countDown();
 					}
+
 					latchOfBothDirections.countDown();
-					return null;
+					if(e != null) {
+						log.error(e.getMessage(), e);
+					}
 				});
 			}
 
