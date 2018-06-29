@@ -28,31 +28,31 @@ public class JobSettingsBuilder {
 	private int numberOfCoresPerNode = DEFAULT_NUMBER_OF_CORES_PER_NODE;
 	
 
-	public JobSettingsBuilder setTemplateId(long templateId) {
+	public JobSettingsBuilder templateId(long templateId) {
 		this.templateId = templateId;
 		return this;
 	}
 	
-	public JobSettingsBuilder setWalltimeLimit(int walltimeLimit) {
+	public JobSettingsBuilder walltimeLimit(int walltimeLimit) {
 		this.walltimeLimit = walltimeLimit;
 		return this;
 	}
 	
-	public JobSettingsBuilder setClusterNodeType(long clusterNodeType) {
+	public JobSettingsBuilder clusterNodeType(long clusterNodeType) {
 		this.clusterNodeType = clusterNodeType;
 		return this;
 	}
-	public JobSettingsBuilder setJobName(String jobName) {
+	public JobSettingsBuilder jobName(String jobName) {
 		this.jobName = jobName;
 		return this;
 	}
 	
-	public JobSettingsBuilder setNumberOfNodes(int numberOfNodes) {
+	public JobSettingsBuilder numberOfNodes(int numberOfNodes) {
 		this.numberOfNodes = numberOfNodes;
 		return this;
 	}
 	
-	public JobSettingsBuilder setNumberOfCoresPerNode(int numberOfCoresPerNode) {
+	public JobSettingsBuilder numberOfCoresPerNode(int numberOfCoresPerNode) {
 		this.numberOfCoresPerNode = numberOfCoresPerNode;
 		return this;
 	}

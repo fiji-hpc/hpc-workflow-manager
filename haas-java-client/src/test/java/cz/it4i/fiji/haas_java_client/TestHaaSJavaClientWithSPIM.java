@@ -24,8 +24,8 @@ public class TestHaaSJavaClientWithSPIM {
 		HaaSClient client = new HaaSClient(SettingsProvider.getSettings("DD-17-31", TestingConstants.CONFIGURATION_FILE_NAME));
 		Path baseDir = Paths.get("/home/koz01/Work/vyzkumnik/fiji/work/aaa");
 
-		long jobId = client.createJob(new JobSettingsBuilder().setJobName("TestOutRedirect").setTemplateId(2)
-				.setWalltimeLimit(9600).setClusterNodeType(6).build(), Collections.emptyList());
+		long jobId = client.createJob(new JobSettingsBuilder().jobName("TestOutRedirect").templateId(2)
+				.walltimeLimit(9600).clusterNodeType(6).build(), Collections.emptyList());
 
 		try (HaaSFileTransfer tr = client.startFileTransfer(jobId, HaaSClient.DUMMY_TRANSFER_FILE_PROGRESS)) {
 			StreamSupport.stream(getAllFiles(baseDir.resolve("spim-data")).spliterator(), false)

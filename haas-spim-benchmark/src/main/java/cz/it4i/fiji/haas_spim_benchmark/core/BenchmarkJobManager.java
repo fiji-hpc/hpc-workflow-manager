@@ -658,9 +658,9 @@ public class BenchmarkJobManager implements Closeable {
 	}
 
 	private static JobSettings getJobSettings() {
-		return new JobSettingsBuilder().setJobName(Constants.HAAS_JOB_NAME)
-				.setClusterNodeType(Constants.HAAS_CLUSTER_NODE_TYPE).setTemplateId(Constants.HAAS_TEMPLATE_ID)
-				.setWalltimeLimit(Constants.HAAS_TIMEOUT).setNumberOfCoresPerNode(Constants.CORES_PER_NODE).build();
+		return new JobSettingsBuilder().jobName(Constants.HAAS_JOB_NAME)
+				.clusterNodeType(Constants.HAAS_CLUSTER_NODE_TYPE).templateId(Constants.HAAS_TEMPLATE_ID)
+				.walltimeLimit(Constants.HAAS_TIMEOUT).numberOfCoresPerNode(Constants.CORES_PER_NODE).build();
 	}
 
 	private static Predicate<String> downloadFileNameExtractDecorator(Predicate<String> decorated) {
