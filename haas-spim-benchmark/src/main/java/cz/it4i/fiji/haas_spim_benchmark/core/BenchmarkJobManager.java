@@ -536,6 +536,9 @@ public class BenchmarkJobManager implements Closeable {
 	public BenchmarkJob createJob(Function<Path, Path> inputDirectoryProvider,
 			Function<Path, Path> outputDirectoryProvider) throws IOException {
 		Job job = jobManager.createJob( getJobSettings(),inputDirectoryProvider, outputDirectoryProvider);
+		if(job.getInputDirectory() == null) {
+			job.createEmptyFile(Constants.DEMO_DATA_SIGNAL_FILE_NAME);
+		}
 		return convertJob(job);
 	}
 

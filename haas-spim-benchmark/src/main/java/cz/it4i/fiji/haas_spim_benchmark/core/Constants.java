@@ -55,5 +55,6 @@ public interface Constants {
 	String SUMMARY_FILE_HEADER = "Task;AvgMemoryUsage;AvgWallTime;MaxWallTime;TotalTime;JobCount";
 	String DONE_TASK = "done";
 	int CORES_PER_NODE = 24;
+	String DEMO_DATA_SIGNAL_FILE_NAME = "demodata";
 	
 }

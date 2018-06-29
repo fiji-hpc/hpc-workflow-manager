@@ -32,6 +32,7 @@ import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.ProgressNotifier;
 import cz.it4i.fiji.haas_java_client.TransferFileProgressForHaaSClient;
 import cz.it4i.fiji.haas_java_client.UploadingFile;
+import cz.it4i.fiji.haas_java_client.UploadingFileData;
 import cz.it4i.fiji.scpclient.TransferFileProgress;
 
 /***
@@ -482,6 +483,12 @@ public class Job {
 
 	private void setCanBeDownloaded(boolean b) {
 		setProperty(JOB_CAN_BE_DOWNLOADED, b);
+	}
+
+	public void createEmptyFile(String fileName) throws InterruptedIOException {
+		try(HaaSFileTransfer transfer = haasClientSupplier.get().startFileTransfer(getId())) {
+			transfer.upload(new UploadingFileData(fileName));
+		}
 	}
 
 }

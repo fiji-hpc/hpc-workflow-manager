@@ -36,7 +36,7 @@ public class TestHaaSJavaClient {
 		JobInfo info;
 		do {
 			try {
-				Thread.sleep(30000);
+				Thread.sleep(1000);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
@@ -52,7 +52,7 @@ public class TestHaaSJavaClient {
 					client.getChangedFiles(jobId).forEach(file -> wrap(() -> fileTransfer.download(file, workDir)));
 				}
 			}
-			log.info("JobId :" + jobId + ", state" + info.getState());
+			log.info("JobId :" + jobId + ", state - " + info.getState());
 		} while (info.getState() != JobState.Canceled && info.getState() != JobState.Failed
 				&& info.getState() != JobState.Finished);
 	}
