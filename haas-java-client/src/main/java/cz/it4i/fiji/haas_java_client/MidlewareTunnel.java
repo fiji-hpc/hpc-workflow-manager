@@ -61,6 +61,8 @@ class MidlewareTunnel implements Closeable {
 
 	private P_Connection lastConnection;
 
+	private DataTransferMethodExt dataTransferMethod;
+
 	public MidlewareTunnel(ExecutorService executorService, long jobId, String hostIp, String sessionCode) {
 		this.jobId = jobId;
 		this.dataTransfer = new DataTransferWs().getDataTransferWsSoap12();
@@ -90,13 +92,12 @@ class MidlewareTunnel implements Closeable {
 			try {
 				while (!Thread.interrupted() && !ss.isClosed()) {
 					try (Socket soc = ss.accept()) {
-						DataTransferMethodExt transfer = dataTransfer.getDataTransferMethod(ipAddress, port, jobId,
-								sessionCode);
+						obtainTransferMethodIfNeeded(port);
 						doTransfer(soc, port);
 						if (log.isDebugEnabled()) {
 							log.debug("endDataTransfer");
 						}
-						dataTransfer.endDataTransfer(transfer, sessionCode);
+						
 						if (log.isDebugEnabled()) {
 							log.debug("endDataTransfer - DONE");
 						}
@@ -112,7 +113,7 @@ class MidlewareTunnel implements Closeable {
 				}
 			} finally {
 				if (log.isDebugEnabled()) {
-					log.debug("MiddlewareTunnel - interrupted");
+					log.debug("MiddlewareTunnel - interrupted - socket is closed: " + ss.isClosed());
 				}
 
 				mainLatch.countDown();
@@ -121,13 +122,20 @@ class MidlewareTunnel implements Closeable {
 	}
 
 	@Override
-	public void close() throws IOException {
+	synchronized public void close() throws IOException {
+		if(ss == null) {
+			return;
+		}
 		mainFuture.cancel(true);
 		try {
 			mainLatch.await();
 		} catch (InterruptedException e) {
 			Thread.currentThread().interrupt();
 			log.error(e.getMessage(), e);
+		}
+		if(dataTransferMethod != null) {
+			dataTransfer.endDataTransfer(dataTransferMethod, sessionCode);
+			dataTransferMethod = null;
 		}
 		if (ss != null) {
 			ss.close();
@@ -142,6 +150,13 @@ class MidlewareTunnel implements Closeable {
 
 	public String getLocalHost() {
 		return ss.getInetAddress().getHostAddress();
+	}
+
+	synchronized private void obtainTransferMethodIfNeeded(int port) {
+		if(dataTransferMethod == null) {
+			dataTransferMethod = dataTransfer.getDataTransferMethod(ipAddress, port, jobId,
+					sessionCode);
+		}
 	}
 
 	private void doTransfer(Socket soc, int port) {
@@ -166,24 +181,26 @@ class MidlewareTunnel implements Closeable {
 			InputStream is = Channels.newInputStream(Channels.newChannel(connection.getSocket().getInputStream()));
 			int len;
 			byte[] buffer = new byte[sendBufferData];
-			while (-1 != (len = is.read(buffer))) {
-
-				if (len == 0) {
-					continue;
+			try {
+				while (-1 != (len = is.read(buffer))) {
+	
+					if (len == 0) {
+						continue;
+					}
+					if (!sendToMiddleware(buffer, len)) {
+						break;
+					}
+					if (log.isDebugEnabled()) {
+						log.debug("send " + len + " bytes to middleware");
+						log.debug("send data: " + new String(buffer, 0, Math.min(len, 100)));
+	
+					}
 				}
-				if (!sendToMiddleware(buffer, len)) {
-					break;
-				}
-				if (log.isDebugEnabled()) {
-					log.debug("send " + len + " bytes to middleware");
-					log.debug("send data: " + new String(buffer, 0, Math.min(len, 100)));
-
-				}
+			} finally {
+				sendEOF2Middleware();
 			}
-			sendEOF2Middleware();
 		} catch (InterruptedIOException e) {
 			log.error(e.getMessage(), e);
-			return;
 		} catch (SocketException e) {
 			if (!e.getMessage().equals("Socket closed")) {
 				log.error(e.getMessage(), e);
@@ -191,15 +208,14 @@ class MidlewareTunnel implements Closeable {
 		} catch (IOException e) {
 			log.error(e.getMessage(), e);
 			return;
+		} catch(RuntimeException e) {
+			log.error(e.getMessage(), e);
+			throw e;
 		} finally {
 			if (log.isDebugEnabled()) {
 				log.debug("END: sendToMiddleware");
 			}
 		}
-	}
-
-	private void sendEOF2Middleware() {
-		dataTransfer.writeDataToJobNode(null, jobId, ipAddress, sessionCode, true);
 	}
 
 	private boolean sendToMiddleware(byte[] buffer, int len) {
@@ -240,6 +256,13 @@ class MidlewareTunnel implements Closeable {
 		}
 		;
 		return true;
+	}
+
+	private void sendEOF2Middleware() {
+		if (log.isDebugEnabled()) {
+			log.debug("sendEOF to middleware");
+		}
+		dataTransfer.writeDataToJobNode(null, jobId, ipAddress, sessionCode, true);
 	}
 
 	private void readFromMiddleware(P_Connection connection) {

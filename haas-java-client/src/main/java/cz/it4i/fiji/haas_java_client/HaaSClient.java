@@ -33,6 +33,9 @@ import cz.it4i.fiji.haas_java_client.proxy.ArrayOfEnvironmentVariableExt;
 import cz.it4i.fiji.haas_java_client.proxy.ArrayOfTaskFileOffsetExt;
 import cz.it4i.fiji.haas_java_client.proxy.ArrayOfTaskSpecificationExt;
 import cz.it4i.fiji.haas_java_client.proxy.CommandTemplateParameterValueExt;
+import cz.it4i.fiji.haas_java_client.proxy.DataTransferMethodExt;
+import cz.it4i.fiji.haas_java_client.proxy.DataTransferWs;
+import cz.it4i.fiji.haas_java_client.proxy.DataTransferWsSoap;
 import cz.it4i.fiji.haas_java_client.proxy.FileTransferMethodExt;
 import cz.it4i.fiji.haas_java_client.proxy.FileTransferWs;
 import cz.it4i.fiji.haas_java_client.proxy.FileTransferWsSoap;
@@ -194,6 +197,8 @@ public class HaaSClient {
 
 	private final HaaSClientSettings settings;
 
+	private DataTransferWsSoap dataTransferWs;
+
 	
 
 	public HaaSClient(HaaSClientSettings settings) {
@@ -211,7 +216,7 @@ public class HaaSClient {
 
 	public HaaSFileTransfer startFileTransfer(long jobId, TransferFileProgress notifier) {
 		try {
-			return getFileTransferMethod(jobId, notifier);
+			return createFileTransfer(jobId, notifier);
 		} catch (RemoteException | ServiceException | UnsupportedEncodingException | JSchException e) {
 			throw new HaaSClientException(e);
 		}
@@ -344,7 +349,18 @@ public class HaaSClient {
 		}
 	}
 
-	private HaaSFileTransferImp getFileTransferMethod(long jobId, TransferFileProgress progress)
+	public HaaSDataTransfer startDataTransfer(long jobId, int nodeNumber, int port) throws RemoteException, ServiceException {
+		return createDataTransfer(jobId, nodeNumber, port);
+	}
+
+	synchronized String getSessionID() throws RemoteException, ServiceException {
+		if (sessionID == null) {
+			sessionID = authenticate();
+		}
+		return sessionID;
+	}
+
+	private HaaSFileTransferImp createFileTransfer(long jobId, TransferFileProgress progress)
 			throws RemoteException, UnsupportedEncodingException, ServiceException, JSchException {
 		P_FileTransferPool pool = filetransferPoolMap.computeIfAbsent(jobId, id -> new P_FileTransferPool(id));
 		FileTransferMethodExt ft = pool.obtain();
@@ -364,6 +380,36 @@ public class HaaSClient {
 			pool.release();
 			throw e;
 		}
+	}
+
+	private HaaSDataTransfer createDataTransfer(long jobId, int nodeNumber, int port)
+			throws ServiceException, RemoteException {
+		String host = getJobManagement().getAllocatedNodesIPs(jobId, getSessionID()).getString().get(nodeNumber);
+		DataTransferWsSoap ws = getDataTransfer();
+		DataTransferMethodExt dataTransferMethodExt = ws.getDataTransferMethod(host, port, jobId,
+				getSessionID());
+		String sessionId = getSessionID(); 
+		return new HaaSDataTransfer() {
+	
+			@Override
+			public void close() throws IOException {
+				ws.endDataTransfer(dataTransferMethodExt, sessionId);
+			}
+	
+			@Override
+			public void write(byte[] buffer) {
+				ws.writeDataToJobNode(buffer, jobId, host, sessionId, false);
+			}
+	
+			@Override
+			public byte[] read() {
+				return ws.readDataFromJobNode(jobId, host, sessionId);
+			}
+	
+			@Override
+			public void closeConnection() {
+				ws.writeDataToJobNode(null, jobId, host, sessionId, true);
+			}};
 	}
 
 	private void doSubmitJob(long jobId) throws RemoteException, ServiceException {
@@ -439,32 +485,32 @@ public class HaaSClient {
 				.authenticateUserPassword(createPasswordCredentialsExt(settings.getUserName(), settings.getPassword()));
 	}
 
-	private UserAndLimitationManagementWsSoap getUserAndLimitationManagement() throws ServiceException {
+	synchronized private DataTransferWsSoap getDataTransfer() {
+		if(dataTransferWs == null) {
+			dataTransferWs = new DataTransferWs().getDataTransferWsSoap12();
+		}
+		return dataTransferWs;
+	}
+
+	synchronized private UserAndLimitationManagementWsSoap getUserAndLimitationManagement() throws ServiceException {
 		if (userAndLimitationManagement == null) {
 			userAndLimitationManagement = new UserAndLimitationManagementWs().getUserAndLimitationManagementWsSoap12();
 		}
 		return userAndLimitationManagement;
 	}
 
-	private JobManagementWsSoap getJobManagement() throws ServiceException {
+	synchronized private JobManagementWsSoap getJobManagement() throws ServiceException {
 		if (jobManagement == null) {
 			jobManagement = new JobManagementWs().getJobManagementWsSoap12();
 		}
 		return jobManagement;
 	}
 
-	private FileTransferWsSoap getFileTransfer() throws ServiceException {
+	synchronized private FileTransferWsSoap getFileTransfer() throws ServiceException {
 		if (fileTransfer == null) {
 			fileTransfer = new FileTransferWs().getFileTransferWsSoap12();
 		}
 		return fileTransfer;
-	}
-
-	String getSessionID() throws RemoteException, ServiceException {
-		if (sessionID == null) {
-			sessionID = authenticate();
-		}
-		return sessionID;
 	}
 
 	public static class P_ProgressNotifierDecorator4Size extends P_ProgressNotifierDecorator {
