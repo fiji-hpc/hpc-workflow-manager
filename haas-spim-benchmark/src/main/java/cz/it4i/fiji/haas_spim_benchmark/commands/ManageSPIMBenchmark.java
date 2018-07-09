@@ -8,7 +8,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import javax.swing.JDialog;
 import javax.swing.WindowConstants;
 
 import org.scijava.Context;
@@ -71,18 +70,20 @@ public class ManageSPIMBenchmark implements Command {
 				return;
 			}
 			try {
-				final JDialog dialog = new BenchmarkSPIMWindow(null,
+				final BenchmarkSPIMWindow dialog = new BenchmarkSPIMWindow(null,
 						new BenchmarkSPIMParametersImpl(userName, password, Constants.PHONE, email, workingDirPath));
-				dialog.setTitle(Constants.MENU_ITEM_NAME + " " + Constants.SUBMENU_ITEM_NAME);
-				dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-				dialog.addWindowListener(new WindowAdapter() {
-					@Override
-					public void windowClosing(final WindowEvent e) {
-						super.windowClosing(e);
-						fl.close();
-					}
+				dialog.executeAdjustment(() -> {
+					dialog.setTitle(Constants.MENU_ITEM_NAME + " " + Constants.SUBMENU_ITEM_NAME);
+					dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+					dialog.addWindowListener(new WindowAdapter() {
+						@Override
+						public void windowClosing(final WindowEvent e) {
+							super.windowClosing(e);
+							fl.close();
+						}
+					});
+					dialog.setVisible(true);
 				});
-				dialog.setVisible(true);
 			} catch(final IOException e) {
 				fl.close();
 				throw e;
