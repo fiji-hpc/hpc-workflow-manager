@@ -197,7 +197,6 @@ class MiddlewareTunnel implements Closeable {
 			final byte[] buffer = new byte[sendBufferData];
 			try {
 				while (-1 != (len = is.read(buffer))) {
-
 					if (len == 0) {
 						continue;
 					}
@@ -360,7 +359,10 @@ class MiddlewareTunnel implements Closeable {
 
 		private final CompletableFuture<?>[] futures = new CompletableFuture[2];
 
+		private final Thread[] threads = new Thread[2];
+		
 		private final CountDownLatch latchOfBothDirections = new CountDownLatch(2);
+		
 
 		public P_Connection(final Socket soc) {
 			this.socket = soc;
@@ -391,6 +393,7 @@ class MiddlewareTunnel implements Closeable {
 			for (int i = 0; i < runnable.length; i++) {
 				final int final_i = i;
 				futures[i] = CompletableFuture.runAsync(() -> {
+					threads[final_i] = Thread.currentThread();
 					runnable[final_i].run();
 				}, executorService).whenComplete((id, e) -> {
 					latchOfBothDirections.countDown();
@@ -416,6 +419,11 @@ class MiddlewareTunnel implements Closeable {
 		private void stop(final CountDownLatch localLatch) {
 			for (final Future<?> thread : futures) {
 				thread.cancel(true);
+			}
+			for (final Thread thread : threads) {
+				if(thread != null) {
+					thread.interrupt();
+				}
 			}
 			try {
 				localLatch.await();
