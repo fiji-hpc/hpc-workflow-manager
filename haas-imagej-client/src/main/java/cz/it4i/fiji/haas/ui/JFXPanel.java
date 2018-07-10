@@ -41,7 +41,7 @@ public class JFXPanel<T extends Parent> extends javafx.embed.swing.JFXPanel {
 		this.setMinimumSize(dim);
 		this.setMaximumSize(dim);
 		this.setPreferredSize(dim);
-	};
+	}
 	
 	public T getControl() {
 		return control;

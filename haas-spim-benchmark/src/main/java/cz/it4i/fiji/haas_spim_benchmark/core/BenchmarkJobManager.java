@@ -9,7 +9,6 @@ import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.UI_TO_HAAS_FREQUEN
 
 import java.io.BufferedReader;
 import java.io.Closeable;
-import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -42,6 +41,8 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
+import net.imagej.updater.util.Progress;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -53,14 +54,13 @@ import cz.it4i.fiji.haas.HaaSOutputHolder;
 import cz.it4i.fiji.haas.HaaSOutputHolderImpl;
 import cz.it4i.fiji.haas.Job;
 import cz.it4i.fiji.haas.JobManager;
-import cz.it4i.fiji.haas_java_client.JobState;
-import cz.it4i.fiji.haas_java_client.ProgressNotifier;
 import cz.it4i.fiji.haas_java_client.HaaSClientSettings;
 import cz.it4i.fiji.haas_java_client.JobSettings;
 import cz.it4i.fiji.haas_java_client.JobSettingsBuilder;
+import cz.it4i.fiji.haas_java_client.JobState;
+import cz.it4i.fiji.haas_java_client.ProgressNotifier;
 import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
 import cz.it4i.fiji.haas_java_client.UploadingFile;
-import net.imagej.updater.util.Progress;
 
 public class BenchmarkJobManager implements Closeable {
 
@@ -88,8 +88,8 @@ public class BenchmarkJobManager implements Closeable {
 
 		public BenchmarkJob(Job job) {
 			this.job = job;
-			tasks = new LinkedList<Task>();
-			nonTaskSpecificErrors = new LinkedList<BenchmarkError>();
+			tasks = new LinkedList<>();
+			nonTaskSpecificErrors = new LinkedList<>();
 			computationAccessor = getComputationAccessor();
 		}
 
@@ -358,6 +358,7 @@ public class BenchmarkJobManager implements Closeable {
 			// If no job count definition has been found, search through the output and list
 			// all errors
 			if (!found) {
+				@SuppressWarnings("resource")
 				Scanner scanner = new Scanner(getSnakemakeOutput());
 				String currentLine;
 				while (scanner.hasNextLine()) {
@@ -380,6 +381,7 @@ public class BenchmarkJobManager implements Closeable {
 			}
 
 			// After the job count definition, task specification is expected
+			@SuppressWarnings("resource")
 			Scanner scanner = new Scanner(output.substring(processedOutputLength));
 			scanner.nextLine(); // Immediately after job count definition, task specification table header is
 								// expected
@@ -510,7 +512,7 @@ public class BenchmarkJobManager implements Closeable {
 				@Override
 				public List<String> getFileContents(List<String> logs) {
 					return job.getFileContents(logs);
-				};
+				}
 			};
 
 			result = new SPIMComputationAccessorDecoratorWithTimeout(result,
@@ -528,7 +530,7 @@ public class BenchmarkJobManager implements Closeable {
 
 	}
 
-	public BenchmarkJobManager(BenchmarkSPIMParameters params) throws IOException {
+	public BenchmarkJobManager(BenchmarkSPIMParameters params) {
 		jobManager = new JobManager(params.workingDirectory(), constructSettingsFromParams(params));
 		jobManager.setUploadFilter(this::canUpload);
 	}
@@ -542,13 +544,13 @@ public class BenchmarkJobManager implements Closeable {
 		return convertJob(job);
 	}
 
-	public Collection<BenchmarkJob> getJobs() throws IOException {
+	public Collection<BenchmarkJob> getJobs() {
 		return jobManager.getJobs().stream().map(this::convertJob).collect(Collectors.toList());
 	}
 
-	public static void formatResultFile(Path filename) throws FileNotFoundException {
+	public static void formatResultFile(Path filename) {
 
-		List<ResultFileTask> identifiedTasks = new LinkedList<ResultFileTask>();
+		List<ResultFileTask> identifiedTasks = new LinkedList<>();
 
 		try {
 			String line = null;
@@ -639,8 +641,10 @@ public class BenchmarkJobManager implements Closeable {
 			log.error(e.getMessage(), e);
 		} finally {
 			try {
-				fileWriter.flush();
-				fileWriter.close();
+				if (fileWriter != null) {
+					fileWriter.flush();
+					fileWriter.close();
+				}
 			} catch (Exception e) {
 				log.error(e.getMessage(), e);
 			}

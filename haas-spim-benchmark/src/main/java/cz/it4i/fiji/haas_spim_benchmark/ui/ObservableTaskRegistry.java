@@ -30,7 +30,7 @@ public class ObservableTaskRegistry extends ObservableValueRegistry<Task, Updata
 	
 	@Override
 	protected UpdatableObservableValue<Task> constructObservableValue(Task task) {
-		return new UpdatableObservableValue<Task>(task, getUpdateFunction(), getStateProvider());
+		return new UpdatableObservableValue<>(task, getUpdateFunction(), getStateProvider());
 	}
 
 	private static UpdateStatus update(Task t) {

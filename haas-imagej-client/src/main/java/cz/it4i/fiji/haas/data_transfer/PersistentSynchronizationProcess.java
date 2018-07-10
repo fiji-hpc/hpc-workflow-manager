@@ -37,7 +37,7 @@ public abstract class PersistentSynchronizationProcess<T> {
 
 	private final PersistentIndex<T> index;
 
-	private final Queue<T> toProcessQueue = new LinkedBlockingQueue<T>();
+	private final Queue<T> toProcessQueue = new LinkedBlockingQueue<>();
 
 	private final Set<Thread> runningTransferThreads = Collections.synchronizedSet(new HashSet<>());
 
@@ -107,10 +107,10 @@ public abstract class PersistentSynchronizationProcess<T> {
 		boolean interrupted = false;
 		this.notifier.addItem(INIT_TRANSFER_ITEM);
 		runningTransferThreads.add(Thread.currentThread());
-		TransferFileProgressForHaaSClient notifier = DUMMY_FILE_PROGRESS;
+		TransferFileProgressForHaaSClient actualnotifier = DUMMY_FILE_PROGRESS;
 		try (HaaSFileTransfer tr = fileTransferSupplier.get()) {
 			try {
-				tr.setProgress(notifier = getTransferFileProgress(tr));
+				tr.setProgress(actualnotifier = getTransferFileProgress(tr));
 			} catch (InterruptedIOException e1) {
 				interrupted = true;
 			}
@@ -125,7 +125,7 @@ public abstract class PersistentSynchronizationProcess<T> {
 				}
 				T p = toProcessQueue.poll();
 				String item = p.toString();
-				notifier.addItem(item);
+				actualnotifier.addItem(item);
 				try {
 					processItem(tr, p);
 					fileTransfered(p);
@@ -133,7 +133,7 @@ public abstract class PersistentSynchronizationProcess<T> {
 					toProcessQueue.clear();
 					interrupted = true;
 				}
-				notifier.itemDone(item);
+				actualnotifier.itemDone(item);
 			} while(true);
 		} finally {
 			runningTransferThreads.remove(Thread.currentThread());
@@ -141,7 +141,7 @@ public abstract class PersistentSynchronizationProcess<T> {
 				if (startFinished) {
 					if (!interrupted && !Thread.interrupted()) {
 						processFinishedNotifier.run();
-						notifier.done();
+						actualnotifier.done();
 					} else {
 						notifyStop();
 						reRun.set(false);

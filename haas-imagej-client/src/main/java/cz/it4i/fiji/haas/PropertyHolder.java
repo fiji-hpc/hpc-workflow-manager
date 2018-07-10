@@ -17,8 +17,8 @@ public class PropertyHolder {
 	}
 
 	public String getValue(String key) {
-		Properties properties = getProperties();
-		return properties.getProperty(key);
+		Properties _properties = getProperties();
+		return _properties.getProperty(key);
 	}
 
 	public void setValue(String key, String value) {

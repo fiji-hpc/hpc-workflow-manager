@@ -1,5 +1,7 @@
 package cz.it4i.fiji.haas_java_client;
 
+import com.jcraft.jsch.JSchException;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
@@ -25,8 +27,6 @@ import javax.xml.rpc.ServiceException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.jcraft.jsch.JSchException;
 
 import cz.it4i.fiji.haas_java_client.proxy.ArrayOfCommandTemplateParameterValueExt;
 import cz.it4i.fiji.haas_java_client.proxy.ArrayOfEnvironmentVariableExt;
@@ -172,7 +172,7 @@ public class HaaSClient {
 	final static private Map<JobStateExt, JobState> WS_STATE2STATE;
 
 	static {
-		Map<JobStateExt, JobState> map = new HashMap<JobStateExt, JobState>();
+		Map<JobStateExt, JobState> map = new HashMap<>();
 		map.put(JobStateExt.CANCELED, JobState.Canceled);
 		map.put(JobStateExt.CONFIGURING, JobState.Configuring);
 		map.put(JobStateExt.FAILED, JobState.Failed);
@@ -189,7 +189,7 @@ public class HaaSClient {
 
 	private JobManagementWsSoap jobManagement;
 
-	private FileTransferWsSoap fileTransfer;
+	private FileTransferWsSoap fileTransferWS;
 
 	private final String projectId;
 
@@ -206,12 +206,8 @@ public class HaaSClient {
 		this.projectId = settings.getProjectId();
 	}
 
-	public long createJob(JobSettings settings, Collection<Entry<String, String>> templateParameters) {
-		try {
-			return doCreateJob(settings, templateParameters);
-		} catch (RemoteException | ServiceException e) {
-			throw new RuntimeException(e);
-		}
+	public long createJob(JobSettings jobSettings, Collection<Entry<String, String>> templateParameters) {
+		return doCreateJob(jobSettings, templateParameters);
 	}
 
 	public HaaSFileTransfer startFileTransfer(long jobId, TransferFileProgress notifier) {
@@ -227,9 +223,9 @@ public class HaaSClient {
 	}
 
 	public TunnelToNode openTunnel(long jobId, String nodeIP, int localPort, int remotePort) {
-		MidlewareTunnel tunnel;
+		MiddlewareTunnel tunnel;
 		try {
-			tunnel = new MidlewareTunnel(Executors.newCachedThreadPool(), jobId, nodeIP, getSessionID());
+			tunnel = new MiddlewareTunnel(Executors.newCachedThreadPool(), jobId, nodeIP, getSessionID());
 			tunnel.open(localPort, remotePort);
 			return new TunnelToNode() {
 				@Override
@@ -247,113 +243,85 @@ public class HaaSClient {
 					return tunnel.getLocalHost();
 				}
 			};
-		} catch (ServiceException | IOException e) {
+		} catch (IOException e) {
 			log.error(e.getMessage(), e);
 			throw new HaaSClientException(e);
 		}
 	}
 
 	public void submitJob(long jobId) {
-		try {
-			doSubmitJob(jobId);
-		} catch (RemoteException | ServiceException e) {
-			throw new HaaSClientException(e);
-		}
+		doSubmitJob(jobId);
 	}
 
 	public JobInfo obtainJobInfo(long jobId) {
-		try {
-			final SubmittedJobInfoExt info = getJobManagement().getCurrentInfoForJob(jobId, getSessionID());
+		final SubmittedJobInfoExt info = getJobManagement().getCurrentInfoForJob(jobId, getSessionID());
 
-			final Collection<Long> tasksId = info.getTasks().getSubmittedTaskInfoExt().stream().map(ti -> ti.getId())
-					.collect(Collectors.toList());
-			return new JobInfo() {
-				private List<String> ips;
+		final Collection<Long> tasksId = info.getTasks().getSubmittedTaskInfoExt().stream().map(ti -> ti.getId())
+				.collect(Collectors.toList());
+		return new JobInfo() {
+			private List<String> ips;
 
-				@Override
-				public Collection<Long> getTasks() {
-					return tasksId;
+			@Override
+			public Collection<Long> getTasks() {
+				return tasksId;
+			}
+
+			@Override
+			public JobState getState() {
+				return WS_STATE2STATE.get(info.getState());
+			}
+
+			@Override
+			public java.util.Calendar getStartTime() {
+				return toGregorian(info.getStartTime());
+			}
+
+			@Override
+			public java.util.Calendar getEndTime() {
+				return toGregorian(info.getEndTime());
+			}
+
+			@Override
+			public Calendar getCreationTime() {
+				return toGregorian(info.getCreationTime());
+			}
+
+			@Override
+			public List<String> getNodesIPs() {
+				if (ips == null) {
+					ips = getJobManagement().getAllocatedNodesIPs(jobId, getSessionID())
+						.getString().stream().collect(Collectors.toList());
+
 				}
-
-				@Override
-				public JobState getState() {
-					return WS_STATE2STATE.get(info.getState());
-				}
-
-				@Override
-				public java.util.Calendar getStartTime() {
-					return toGregorian(info.getStartTime());
-				};
-
-				@Override
-				public java.util.Calendar getEndTime() {
-					return toGregorian(info.getEndTime());
-				};
-
-				@Override
-				public Calendar getCreationTime() {
-					return toGregorian(info.getCreationTime());
-				};
-
-				@Override
-				public List<String> getNodesIPs() {
-					if (ips == null) {
-						try {
-							ips = getJobManagement().getAllocatedNodesIPs(jobId, getSessionID()).getString().stream()
-									.collect(Collectors.toList());
-						} catch (RemoteException | ServiceException e) {
-							log.error(e.getMessage(), e);
-						}
-					}
-					return ips;
-				}
-			};
-		} catch (RemoteException | ServiceException e) {
-			throw new HaaSClientException(e);
-		}
-
+				return ips;
+			}
+		};
 	}
 
 	public Collection<JobFileContentExt> downloadPartsOfJobFiles(Long jobId, HaaSClient.SynchronizableFiles files) {
-		try {
-			ArrayOfTaskFileOffsetExt fileOffsetExt = new ArrayOfTaskFileOffsetExt();
-			fileOffsetExt.getTaskFileOffsetExt().addAll(files.getFiles());
-			return getFileTransfer().downloadPartsOfJobFilesFromCluster(jobId, fileOffsetExt, getSessionID())
-					.getJobFileContentExt();
-		} catch (RemoteException | ServiceException e) {
-			throw new HaaSClientException(e);
-		}
+		ArrayOfTaskFileOffsetExt fileOffsetExt = new ArrayOfTaskFileOffsetExt();
+		fileOffsetExt.getTaskFileOffsetExt().addAll(files.getFiles());
+		return getFileTransfer().downloadPartsOfJobFilesFromCluster(jobId, fileOffsetExt, getSessionID())
+				.getJobFileContentExt();
 	}
 
 	public Collection<String> getChangedFiles(long jobId) {
-		try {
-			return getFileTransfer().listChangedFilesForJob(jobId, getSessionID()).getString();
-		} catch (RemoteException | ServiceException e) {
-			throw new HaaSClientException(e);
-		}
+		return getFileTransfer().listChangedFilesForJob(jobId, getSessionID()).getString();
 	}
 
 	public void cancelJob(Long jobId) {
-		try {
-			getJobManagement().cancelJob(jobId, getSessionID());
-		} catch (RemoteException | ServiceException e) {
-			throw new HaaSClientException(e);
-		}
+		getJobManagement().cancelJob(jobId, getSessionID());
 	}
 
 	public void deleteJob(long id) {
-		try {
-			getJobManagement().deleteJob(id, getSessionID());
-		} catch (RemoteException | ServiceException e) {
-			throw new HaaSClientException(e);
-		}
+		getJobManagement().deleteJob(id, getSessionID());
 	}
 
-	public HaaSDataTransfer startDataTransfer(long jobId, int nodeNumber, int port) throws RemoteException, ServiceException {
+	public HaaSDataTransfer startDataTransfer(long jobId, int nodeNumber, int port) {
 		return createDataTransfer(jobId, nodeNumber, port);
 	}
 
-	synchronized String getSessionID() throws RemoteException, ServiceException {
+	synchronized String getSessionID() {
 		if (sessionID == null) {
 			sessionID = authenticate();
 		}
@@ -374,7 +342,7 @@ public class HaaSClient {
 					} catch (RemoteException | ServiceException e) {
 						throw new HaaSClientException(e);
 					}
-				};
+				}
 			};
 		} catch (UnsupportedEncodingException | JSchException e) {
 			pool.release();
@@ -382,8 +350,7 @@ public class HaaSClient {
 		}
 	}
 
-	private HaaSDataTransfer createDataTransfer(long jobId, int nodeNumber, int port)
-			throws ServiceException, RemoteException {
+	private HaaSDataTransfer createDataTransfer(long jobId, int nodeNumber, int port) {
 		String host = getJobManagement().getAllocatedNodesIPs(jobId, getSessionID()).getString().get(nodeNumber);
 		DataTransferWsSoap ws = getDataTransfer();
 		DataTransferMethodExt dataTransferMethodExt = ws.getDataTransferMethod(host, port, jobId,
@@ -412,12 +379,11 @@ public class HaaSClient {
 			}};
 	}
 
-	private void doSubmitJob(long jobId) throws RemoteException, ServiceException {
+	private void doSubmitJob(long jobId) {
 		getJobManagement().submitJob(jobId, getSessionID());
 	}
 
-	private long doCreateJob(JobSettings jobSettings, Collection<Entry<String, String>> templateParameters)
-			throws RemoteException, ServiceException {
+	private long doCreateJob(JobSettings jobSettings, Collection<Entry<String, String>> templateParameters) {
 		Collection<TaskSpecificationExt> taskSpec = Arrays
 				.asList(createTaskSpecification(jobSettings, templateParameters));
 		JobSpecificationExt jobSpecification = createJobSpecification(jobSettings, taskSpec);
@@ -480,7 +446,7 @@ public class HaaSClient {
 		return testTask;
 	}
 
-	private String authenticate() throws RemoteException, ServiceException {
+	private String authenticate() {
 		return getUserAndLimitationManagement()
 				.authenticateUserPassword(createPasswordCredentialsExt(settings.getUserName(), settings.getPassword()));
 	}
@@ -492,25 +458,25 @@ public class HaaSClient {
 		return dataTransferWs;
 	}
 
-	synchronized private UserAndLimitationManagementWsSoap getUserAndLimitationManagement() throws ServiceException {
+	synchronized private UserAndLimitationManagementWsSoap getUserAndLimitationManagement() {
 		if (userAndLimitationManagement == null) {
 			userAndLimitationManagement = new UserAndLimitationManagementWs().getUserAndLimitationManagementWsSoap12();
 		}
 		return userAndLimitationManagement;
 	}
 
-	synchronized private JobManagementWsSoap getJobManagement() throws ServiceException {
+	synchronized private JobManagementWsSoap getJobManagement() {
 		if (jobManagement == null) {
 			jobManagement = new JobManagementWs().getJobManagementWsSoap12();
 		}
 		return jobManagement;
 	}
 
-	synchronized private FileTransferWsSoap getFileTransfer() throws ServiceException {
-		if (fileTransfer == null) {
-			fileTransfer = new FileTransferWs().getFileTransferWsSoap12();
+	synchronized private FileTransferWsSoap getFileTransfer() {
+		if (fileTransferWS == null) {
+			fileTransferWS = new FileTransferWs().getFileTransferWsSoap12();
 		}
-		return fileTransfer;
+		return fileTransferWS;
 	}
 
 	public static class P_ProgressNotifierDecorator4Size extends P_ProgressNotifierDecorator {

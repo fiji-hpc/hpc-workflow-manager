@@ -27,9 +27,9 @@ import cz.it4i.fiji.haas_java_client.proxy.DataTransferMethodExt;
 import cz.it4i.fiji.haas_java_client.proxy.DataTransferWs;
 import cz.it4i.fiji.haas_java_client.proxy.DataTransferWsSoap;
 
-class MidlewareTunnel implements Closeable {
+class MiddlewareTunnel implements Closeable {
 
-	public static final Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas_java_client.MidlewareTunnel.class);
+	public static final Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas_java_client.MiddlewareTunnel.class);
 
 	private static final int TIMEOUT = 1000;
 
@@ -63,7 +63,7 @@ class MidlewareTunnel implements Closeable {
 
 	private DataTransferMethodExt dataTransferMethod;
 
-	public MidlewareTunnel(ExecutorService executorService, long jobId, String hostIp, String sessionCode) {
+	public MiddlewareTunnel(ExecutorService executorService, long jobId, String hostIp, String sessionCode) {
 		this.jobId = jobId;
 		this.dataTransfer = new DataTransferWs().getDataTransferWsSoap12();
 		((BindingProvider) dataTransfer).getRequestContext().put("javax.xml.ws.client.connectionTimeout", "" + TIMEOUT);
@@ -93,7 +93,7 @@ class MidlewareTunnel implements Closeable {
 				while (!Thread.interrupted() && !ss.isClosed()) {
 					try (Socket soc = ss.accept()) {
 						obtainTransferMethodIfNeeded(port);
-						doTransfer(soc, port);
+						doTransfer(soc);
 						if (log.isDebugEnabled()) {
 							log.debug("endDataTransfer");
 						}
@@ -159,7 +159,7 @@ class MidlewareTunnel implements Closeable {
 		}
 	}
 
-	private void doTransfer(Socket soc, int port) {
+	private void doTransfer(Socket soc) {
 		log.debug("START: doTransfer");
 		if(lastConnection != null) {
 			lastConnection.finishIfNeeded();
@@ -254,7 +254,6 @@ class MidlewareTunnel implements Closeable {
 				zeroCounter = 0;
 			}
 		}
-		;
 		return true;
 	}
 

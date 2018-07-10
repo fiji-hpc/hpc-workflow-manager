@@ -32,9 +32,8 @@ public interface JavaFXRoutines {
 			try {
 				if (c.equals(parent.getClass())) {
 					return parent;
-				} else {
-					return c.newInstance();
 				}
+				return c.newInstance();
 			} catch (InstantiationException | IllegalAccessException e) {
 				throw new RuntimeException(e);
 			}
@@ -58,7 +57,7 @@ public interface JavaFXRoutines {
 	static public <U, T extends ObservableValue<U>, V> void setCellValueFactory(TableView<T> tableView, int index,
 			Function<U, V> mapper) {
 		((TableColumn<T, V>) tableView.getColumns().get(index))
-				.setCellValueFactory(f -> new ObservableValueAdapter<U, V>(f.getValue(), mapper));
+				.setCellValueFactory(f -> new ObservableValueAdapter<>(f.getValue(), mapper));
 
 	}
 
@@ -86,9 +85,8 @@ public interface JavaFXRoutines {
 	public static <T> boolean notNullValue(ObservableValue<T> j, Predicate<T> pred) {
 		if (j == null || j.getValue() == null) {
 			return false;
-		} else {
-			return pred.test(j.getValue());
 		}
+		return pred.test(j.getValue());
 	}
 
 	static public<T,U extends ObservableValue<T>>void setOnDoubleClickAction(TableView<U> tableView ,ExecutorService executorService,Predicate<T> openAllowed, Consumer<T> r) {

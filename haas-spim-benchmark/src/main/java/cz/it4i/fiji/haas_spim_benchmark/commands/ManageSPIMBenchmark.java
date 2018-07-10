@@ -64,30 +64,26 @@ public class ManageSPIMBenchmark implements Command {
 			if (!Files.isDirectory(workingDirPath)) {
 				Files.createDirectories(workingDirPath);
 			}
+			@SuppressWarnings("resource")
 			final FileLock fl = new FileLock(workingDirPath.resolve(LOCK_FILE_NAME));
 			if(!fl.tryLock()) {
 				uiService.showDialog("Working directory is already used by someone else", MessageType.ERROR_MESSAGE);
 				return;
 			}
-			try {
-				final BenchmarkSPIMWindow dialog = new BenchmarkSPIMWindow(null,
-						new BenchmarkSPIMParametersImpl(userName, password, Constants.PHONE, email, workingDirPath));
-				dialog.executeAdjustment(() -> {
-					dialog.setTitle(Constants.MENU_ITEM_NAME + " " + Constants.SUBMENU_ITEM_NAME);
-					dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-					dialog.addWindowListener(new WindowAdapter() {
-						@Override
-						public void windowClosing(final WindowEvent e) {
-							super.windowClosing(e);
-							fl.close();
-						}
-					});
-					dialog.setVisible(true);
+			final BenchmarkSPIMWindow dialog = new BenchmarkSPIMWindow(null,
+					new BenchmarkSPIMParametersImpl(userName, password, Constants.PHONE, email, workingDirPath));
+			dialog.executeAdjustment(() -> {
+				dialog.setTitle(Constants.MENU_ITEM_NAME + " " + Constants.SUBMENU_ITEM_NAME);
+				dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+				dialog.addWindowListener(new WindowAdapter() {
+					@Override
+					public void windowClosing(final WindowEvent e) {
+						super.windowClosing(e);
+						fl.close();
+					}
 				});
-			} catch(final IOException e) {
-				fl.close();
-				throw e;
-			}
+				dialog.setVisible(true);
+			});
 		} catch (final IOException e) {
 			log.error(e.getMessage(), e);
 		}

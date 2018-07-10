@@ -9,8 +9,6 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.xml.rpc.ServiceException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,7 +19,7 @@ public class TestHaaSJavaClient {
 
 	private static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas_java_client.TestHaaSJavaClient.class);
 
-	public static void main(String[] args) throws ServiceException, IOException {
+	public static void main(String[] args) throws IOException {
 		Map<String, String> params = new HashMap<>();
 		params.put("inputParam", "someStringParam");
 		Path baseDir = Paths.get("/home/koz01/aaa");

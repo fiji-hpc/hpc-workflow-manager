@@ -20,40 +20,40 @@ public class JobSettingsBuilder {
 	private static final int DEFAULT_NUMBER_OF_CORES_PER_NODE = 24;
 	
 	
-	private long templateId = DEFAULT_TEMPLATE;
-	private int walltimeLimit = DEFAULT_WALLTIME;
-	private long clusterNodeType = DEFAULT_CLUSTER_NODE_TYPE;
-	private String jobName = DEFAULT_JOB_NAME;
-	private int numberOfNodes = DEFAULT_NUMBER_OF_NODES;
-	private int numberOfCoresPerNode = DEFAULT_NUMBER_OF_CORES_PER_NODE;
+	private long _templateId = DEFAULT_TEMPLATE;
+	private int _walltimeLimit = DEFAULT_WALLTIME;
+	private long _clusterNodeType = DEFAULT_CLUSTER_NODE_TYPE;
+	private String _jobName = DEFAULT_JOB_NAME;
+	private int _numberOfNodes = DEFAULT_NUMBER_OF_NODES;
+	private int _numberOfCoresPerNode = DEFAULT_NUMBER_OF_CORES_PER_NODE;
 	
 
 	public JobSettingsBuilder templateId(long templateId) {
-		this.templateId = templateId;
+		this._templateId = templateId;
 		return this;
 	}
 	
 	public JobSettingsBuilder walltimeLimit(int walltimeLimit) {
-		this.walltimeLimit = walltimeLimit;
+		this._walltimeLimit = walltimeLimit;
 		return this;
 	}
 	
 	public JobSettingsBuilder clusterNodeType(long clusterNodeType) {
-		this.clusterNodeType = clusterNodeType;
+		this._clusterNodeType = clusterNodeType;
 		return this;
 	}
 	public JobSettingsBuilder jobName(String jobName) {
-		this.jobName = jobName;
+		this._jobName = jobName;
 		return this;
 	}
 	
 	public JobSettingsBuilder numberOfNodes(int numberOfNodes) {
-		this.numberOfNodes = numberOfNodes;
+		this._numberOfNodes = numberOfNodes;
 		return this;
 	}
 	
 	public JobSettingsBuilder numberOfCoresPerNode(int numberOfCoresPerNode) {
-		this.numberOfCoresPerNode = numberOfCoresPerNode;
+		this._numberOfCoresPerNode = numberOfCoresPerNode;
 		return this;
 	}
 	
@@ -62,32 +62,32 @@ public class JobSettingsBuilder {
 			
 			@Override
 			public int getWalltimeLimit() {
-				return walltimeLimit;
+				return _walltimeLimit;
 			}
 			
 			@Override
 			public long getTemplateId() {
-				return templateId;
+				return _templateId;
 			}
 			
 			@Override
 			public int getNumberOfNodes() {
-				return numberOfNodes;
+				return _numberOfNodes;
 			}
 			
 			@Override
 			public String getJobName() {
-				return jobName;
+				return _jobName;
 			}
 			
 			@Override
 			public long getClusterNodeType() {
-				return clusterNodeType;
+				return _clusterNodeType;
 			}
 
 			@Override
 			public int getNumberOfCoresPerNode() {
-				return numberOfCoresPerNode;
+				return _numberOfCoresPerNode;
 			}
 		};
 	}

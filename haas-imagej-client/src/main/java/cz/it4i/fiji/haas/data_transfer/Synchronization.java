@@ -113,8 +113,8 @@ public class Synchronization implements Closeable {
 	}
 
 	private PersistentSynchronizationProcess<Path> createUploadProcess(Supplier<HaaSFileTransfer> fileTransferSupplier,
-			ExecutorService service, Runnable uploadFinishedNotifier) throws IOException {
-		return new PersistentSynchronizationProcess<Path>(service, fileTransferSupplier, uploadFinishedNotifier,
+			ExecutorService executorService, Runnable uploadFinishedNotifier) throws IOException {
+		return new PersistentSynchronizationProcess<Path>(executorService, fileTransferSupplier, uploadFinishedNotifier,
 				workingDirectory.resolve(FILE_INDEX_TO_UPLOAD_FILENAME), name -> inputDirectory.resolve(name)) {
 
 			@Override
@@ -147,9 +147,9 @@ public class Synchronization implements Closeable {
 	}
 
 	private P_PersistentDownloadProcess createDownloadProcess(Supplier<HaaSFileTransfer> fileTransferSupplier,
-			ExecutorService service, Runnable uploadFinishedNotifier) throws IOException {
+			ExecutorService executorService, Runnable uploadFinishedNotifier) throws IOException {
 
-		return new P_PersistentDownloadProcess(service, fileTransferSupplier, uploadFinishedNotifier);
+		return new P_PersistentDownloadProcess(executorService, fileTransferSupplier, uploadFinishedNotifier);
 	}
 
 	private class P_PersistentDownloadProcess extends PersistentSynchronizationProcess<String> {
@@ -183,8 +183,8 @@ public class Synchronization implements Closeable {
 		}
 
 		@Override
-		protected long getTotalSize(Iterable<String> items, HaaSFileTransfer tr) throws InterruptedIOException {
-			return tr.obtainSize(StreamSupport.stream(items.spliterator(), false).collect(Collectors.toList())).stream()
+		protected long getTotalSize(Iterable<String> files, HaaSFileTransfer tr) throws InterruptedIOException {
+			return tr.obtainSize(StreamSupport.stream(files.spliterator(), false).collect(Collectors.toList())).stream()
 					.collect(Collectors.summingLong(val -> val));
 		}
 

@@ -3,8 +3,6 @@ package cz.it4i.fiji.haas_java_client;
 import java.io.IOException;
 import java.util.Scanner;
 
-import javax.xml.rpc.ServiceException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,7 +13,7 @@ public class TestCommunicationWithNodes {
 	private static String[] predefined  = new String[2];
 	
 	@SuppressWarnings("resource")
-	public static void main(String[] args) throws ServiceException, IOException, InterruptedException {
+	public static void main(String[] args) throws IOException, InterruptedException {
 		predefined[0] = "POST /modules/'command:net.imagej.ops.math.PrimitiveMath$IntegerAdd'?process=false HTTP/1.1\r\n" +
                 "Content-Type: application/json\r\n" +
                 "Host: localhost:8080\r\n" +

@@ -59,10 +59,10 @@ public class TaskComputationControl extends TabPane implements CloseableControl,
 			remoteFilesInfo.setFiles(adapter.getOutputs());
 			remoteFilesInfo.init(parameter);
 			Collection<Runnable> runs = new LinkedList<>();
-			for (ObservableLog log : adapter.getLogs()) {
+			for (ObservableLog observableLog : adapter.getLogs()) {
 				LogViewControl logViewControl = new LogViewControl();
-				logViewControl.setObservable(log.getContent());
-				runs.add(() -> addTab(log.getName(), logViewControl));
+				logViewControl.setObservable(observableLog.getContent());
+				runs.add(() -> addTab(observableLog.getName(), logViewControl));
 			}
 			uiExecutor.execute(() -> runs.forEach(r -> r.run()));
 		});

@@ -23,6 +23,8 @@ import java.util.function.Function;
 
 import javax.swing.WindowConstants;
 
+import net.imagej.updater.util.Progress;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,7 +64,6 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Region;
 import mpicbg.spim.data.SpimDataException;
-import net.imagej.updater.util.Progress;
 
 public class BenchmarkSPIMControl extends BorderPane implements CloseableControl, InitiableControl {
 
@@ -96,8 +97,8 @@ public class BenchmarkSPIMControl extends BorderPane implements CloseableControl
 	}
 
 	@Override
-	public void init(Window root) {
-		this.root = root;
+	public void init(Window rootWindow) {
+		this.root = rootWindow;
 		executorServiceWS = Executors.newSingleThreadExecutor();
 		executorServiceUI = Executors.newSingleThreadExecutor();
 		timer = new Timer();
@@ -274,28 +275,22 @@ public class BenchmarkSPIMControl extends BorderPane implements CloseableControl
 				: new DummyProgress();
 
 		executorServiceWS.execute(() -> {
-
-			try {
-				List<BenchmarkJob> jobs = new LinkedList<>(manager.getJobs());
-				jobs.sort((bj1, bj2) -> (int) (bj1.getId() - bj2.getId()));
-				for (BenchmarkJob bj : jobs) {
-					registry.addIfAbsent(bj);
-				}
-				registry.update();
-				Set<ObservableValue<BenchmarkJob>> actual = new HashSet<>(this.jobs.getItems());
-
-				executorServiceFX.execute(() -> {
-					for (ObservableBenchmarkJob value : registry.getAllItems()) {
-						if (!actual.contains(value)) {
-							addJobToItems(value);
-						}
-					}
-				});
-				progress.done();
-			} catch (IOException e) {
-				log.error(e.getMessage(), e);
+			List<BenchmarkJob> inspectedJobs = new LinkedList<>(manager.getJobs());
+			inspectedJobs.sort((bj1, bj2) -> (int) (bj1.getId() - bj2.getId()));
+			for (BenchmarkJob bj : inspectedJobs) {
+				registry.addIfAbsent(bj);
 			}
+			registry.update();
+			Set<ObservableValue<BenchmarkJob>> actual = new HashSet<>(this.jobs.getItems());
 
+			executorServiceFX.execute(() -> {
+				for (ObservableBenchmarkJob value : registry.getAllItems()) {
+					if (!actual.contains(value)) {
+						addJobToItems(value);
+					}
+				}
+			});
+			progress.done();
 		});
 	}
 
@@ -337,11 +332,11 @@ public class BenchmarkSPIMControl extends BorderPane implements CloseableControl
 	private void setCellValueFactoryCompletable(int index, Function<BenchmarkJob, CompletableFuture<String>> mapper) {
 		JavaFXRoutines.setCellValueFactory(jobs, index, mapper);
 		((TableColumn<ObservableBenchmarkJob, CompletableFuture<String>>) jobs.getColumns().get(index))
-				.setCellFactory(column -> new TableCellAdapter<ObservableBenchmarkJob, CompletableFuture<String>> //
+				.setCellFactory(column -> new TableCellAdapter<> //
 				(//
 						new P_TableCellUpdaterDecoratorWithToolTip<>//
 						(//
-								new FutureValueUpdater<ObservableBenchmarkJob, String, CompletableFuture<String>>//
+								new FutureValueUpdater<>//
 								(//
 										new StringValueUpdater<ObservableBenchmarkJob>(), executorServiceFX//
 								), //
@@ -349,11 +344,7 @@ public class BenchmarkSPIMControl extends BorderPane implements CloseableControl
 	}
 
 	private void openJobDetailsWindow(BenchmarkJob job) {
-		try {
-			new JobDetailWindow(root, job).setVisible(true);
-		} catch (IOException e) {
-			log.error(e.getMessage(), e);
-		}
+		new JobDetailWindow(root, job).setVisible(true);
 	}
 
 	private void openBigDataViewer(BenchmarkJob job) {

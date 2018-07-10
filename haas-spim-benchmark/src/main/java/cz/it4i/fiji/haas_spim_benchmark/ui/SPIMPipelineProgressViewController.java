@@ -119,7 +119,7 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 		tasks.setPrefWidth(PREFERRED_WIDTH);
 		timer = new Timer();
 		registry = new ObservableTaskRegistry(()-> job, task -> tasks.getItems().remove(registry.get(task)));
-		TableViewContextMenu<ObservableValue<Task>> menu = new TableViewContextMenu<ObservableValue<Task>>(this.tasks);
+		TableViewContextMenu<ObservableValue<Task>> menu = new TableViewContextMenu<>(this.tasks);
 		menu.addItem("Open view", (task, columnIndex) -> proof(task, columnIndex),
 				(x, columnIndex) -> check(x, columnIndex));
 	}
@@ -160,8 +160,8 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 	}
 
 	private void fillTable() {
-		List<Task> tasks = job.getTasks();
-		if (tasks == null) {
+		List<Task> processedTasks = job.getTasks();
+		if (processedTasks == null) {
 			timer.schedule(new TimerTask() {
 				@Override
 				public void run() {
@@ -170,13 +170,13 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 			}, Constants.HAAS_UPDATE_TIMEOUT / Constants.UI_TO_HAAS_FREQUENCY_UPDATE_RATIO);
 		} else {
 
-			Optional<List<TaskComputation>> optional = tasks.stream().map(task -> task.getComputations())
+			Optional<List<TaskComputation>> optional = processedTasks.stream().map(task -> task.getComputations())
 					.collect(Collectors.<List<TaskComputation>>maxBy((a, b) -> a.size() - b.size()));
 			if (!optional.isPresent()) {
 				return;
 			}
 			List<TaskComputation> computations = optional.get();
-			List<ObservableValue<Task>> taskList = (tasks.stream().map(task -> registry.addIfAbsent(task))
+			List<ObservableValue<Task>> taskList = (processedTasks.stream().map(task -> registry.addIfAbsent(task))
 					.collect(Collectors.toList()));
 			executorFx.execute(() -> {
 				int i = 0;
@@ -204,9 +204,8 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 		JavaFXRoutines.setCellValueFactory(this.tasks, index, (Function<Task, TaskComputation>) v -> {
 			if (v.getComputations().size() >= index) {
 				return v.getComputations().get(index - 1);
-			} else {
-				return null;
-			}
+			} 
+			return null;
 		});
 		((TableColumn<ObservableValue<Task>, TaskComputation>) this.tasks.getColumns().get(index))
 				.setCellFactory(column -> new TableCellAdapter<>((cell, val, empty) -> {

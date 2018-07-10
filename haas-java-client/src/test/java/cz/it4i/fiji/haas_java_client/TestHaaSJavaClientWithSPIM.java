@@ -1,5 +1,7 @@
 package cz.it4i.fiji.haas_java_client;
 
+import static cz.it4i.fiji.haas_java_client.LambdaExceptionHandlerWrapper.wrap;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -7,20 +9,17 @@ import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.stream.StreamSupport;
 
-import javax.xml.rpc.ServiceException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import cz.it4i.fiji.haas_java_client.HaaSClient.SynchronizableFiles;
 import cz.it4i.fiji.haas_java_client.proxy.JobFileContentExt;
-import static cz.it4i.fiji.haas_java_client.LambdaExceptionHandlerWrapper.wrap;
 
 public class TestHaaSJavaClientWithSPIM {
 
 	private static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas_java_client.TestHaaSJavaClientWithSPIM.class);
 
-	public static void main(String[] args) throws ServiceException, IOException {
+	public static void main(String[] args) throws IOException {
 		HaaSClient client = new HaaSClient(SettingsProvider.getSettings("DD-17-31", TestingConstants.CONFIGURATION_FILE_NAME));
 		Path baseDir = Paths.get("/home/koz01/Work/vyzkumnik/fiji/work/aaa");
 

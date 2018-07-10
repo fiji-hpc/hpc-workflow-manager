@@ -38,7 +38,7 @@ public class TaskComputationAdapter implements Closeable {
 	public void init() {
 		Map<String, Long> sizes = computation.getOutFileSizes();
 		computation.getOutputs().forEach(outputFile -> addOutputFile(outputFile, sizes.get(outputFile)));
-		computation.getLogs().forEach(log -> logs.add(new ObservableLog(log)));
+		computation.getLogs().forEach(decoratedLog -> logs.add(new ObservableLog(decoratedLog)));
 		synchronized (this) {
 			if(timer != null) {
 				timer.schedule(new P_TimerTask(), Constants.HAAS_TIMEOUT, Constants.HAAS_TIMEOUT);
@@ -94,21 +94,21 @@ public class TaskComputationAdapter implements Closeable {
 	
 		private class P_ObservableString extends ObservableValueBase<String> {
 	
-			private String value;
+			private String innerValue;
 	
 			public P_ObservableString(String value) {
-				this.value = value;
+				this.innerValue = value;
 			}
 	
 			@Override
 			public String getValue() {
-				return value;
+				return innerValue;
 			}
 			
 			public void setValue(String value) {
-				if(this.value != null && !this.value.equals(value) ||
-					value != null && !value.equals(this.value)) {
-					this.value = value;
+				if(this.innerValue != null && !this.innerValue.equals(value) ||
+					value != null && !value.equals(this.innerValue)) {
+					this.innerValue = value;
 					fireValueChangedEvent();
 				}
 			}
@@ -159,10 +159,10 @@ public class TaskComputationAdapter implements Closeable {
 		@Override
 		public void run() {
 			Map<String, Long> sizes = computation.getOutFileSizes();
-			Map<String, Log> logs = computation.getLogs().stream()
-					.collect(Collectors.<Log, String, Log>toMap((Log log) -> log.getName(), (Log log) -> log));
+			Map<String, Log> computationLogs = computation.getLogs().stream()
+					.collect(Collectors.<Log, String, Log>toMap((Log l) -> l.getName(), (Log l) -> l));
 			TaskComputationAdapter.this.logs
-					.forEach(log -> log.setContentValue(logs.get(log.getName())));
+					.forEach(processedLog -> processedLog.setContentValue(computationLogs.get(processedLog.getName())));
 			outputs.forEach(value -> ((ObservableOutputFile) value).setSize(sizes.get(value.getValue().getName())));
 		}
 

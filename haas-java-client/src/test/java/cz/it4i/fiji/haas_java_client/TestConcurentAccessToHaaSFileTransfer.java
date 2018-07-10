@@ -3,8 +3,6 @@ package cz.it4i.fiji.haas_java_client;
 import java.io.IOException;
 import java.util.Arrays;
 
-import javax.xml.rpc.ServiceException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,7 +10,8 @@ public class TestConcurentAccessToHaaSFileTransfer {
 
 	private static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas_java_client.TestConcurentAccessToHaaSFileTransfer.class);
 
-	public static void main(String[] args) throws ServiceException, IOException {
+	@SuppressWarnings("resource")
+	public static void main(String[] args) throws IOException {
 		HaaSClient client = new HaaSClient(SettingsProvider.getSettings("OPEN-12-20",TestingConstants.CONFIGURATION_FILE_NAME));
 		HaaSFileTransfer tr1 = client.startFileTransfer(250, HaaSClient.DUMMY_TRANSFER_FILE_PROGRESS);
 		HaaSFileTransfer tr2 = client.startFileTransfer(249, HaaSClient.DUMMY_TRANSFER_FILE_PROGRESS);
