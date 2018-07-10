@@ -121,13 +121,16 @@ class MiddlewareTunnel implements Closeable {
 				if (lastConnection != null) {
 					lastConnection.finishIfNeeded();
 				}
-			}
-			finally {
 				if (log.isDebugEnabled()) {
 					log.debug("MiddlewareTunnel - interrupted - socket is closed: " + ss
 						.isClosed());
 				}
 
+			} catch(RuntimeException e) {
+				log.error(e.getMessage(), e);
+				throw e;
+			}
+			finally {
 				mainLatch.countDown();
 			}
 		});
@@ -209,6 +212,9 @@ class MiddlewareTunnel implements Closeable {
 							100)));
 
 					}
+				}
+				if (log.isDebugEnabled()) {
+					log.debug("EOF detected from client");
 				}
 			}
 			finally {
@@ -357,8 +363,7 @@ class MiddlewareTunnel implements Closeable {
 
 		private final Runnable[] runnable = new Runnable[2];
 
-		private final CompletableFuture<?>[] futures = new CompletableFuture[2];
-
+		
 		private final Thread[] threads = new Thread[2];
 		
 		private final CountDownLatch latchOfBothDirections = new CountDownLatch(2);
@@ -392,7 +397,7 @@ class MiddlewareTunnel implements Closeable {
 
 			for (int i = 0; i < runnable.length; i++) {
 				final int final_i = i;
-				futures[i] = CompletableFuture.runAsync(() -> {
+				CompletableFuture.runAsync(() -> {
 					threads[final_i] = Thread.currentThread();
 					runnable[final_i].run();
 				}, executorService).whenComplete((id, e) -> {
@@ -417,9 +422,6 @@ class MiddlewareTunnel implements Closeable {
 		}
 
 		private void stop(final CountDownLatch localLatch) {
-			for (final Future<?> thread : futures) {
-				thread.cancel(true);
-			}
 			for (final Thread thread : threads) {
 				if(thread != null) {
 					thread.interrupt();

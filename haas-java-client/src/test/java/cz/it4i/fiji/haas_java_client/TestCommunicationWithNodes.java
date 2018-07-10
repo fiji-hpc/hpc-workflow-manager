@@ -1,6 +1,8 @@
 package cz.it4i.fiji.haas_java_client;
 
 import java.io.IOException;
+import java.io.InterruptedIOException;
+import java.util.Collections;
 import java.util.Scanner;
 
 import org.slf4j.Logger;
@@ -31,7 +33,7 @@ public class TestCommunicationWithNodes {
 		HaaSClientSettings settings = SettingsProvider.getSettings("OPEN-12-20",
 				TestingConstants.CONFIGURATION_FILE_NAME);
 		HaaSClient client = new HaaSClient(settings);
-		long id = 376;//client.createJob("New job", Collections.emptyList());
+		long id = startBDS(client);
 		String sessionID = client.getSessionID();
 		log.info(id + " - " + client.obtainJobInfo(id).getState() + " - " + sessionID);
 		if(client.obtainJobInfo(id).getState() != JobState.Running && client.obtainJobInfo(id).getState() != JobState.Queued) {
@@ -51,6 +53,29 @@ public class TestCommunicationWithNodes {
 		}
 	}
 
+	public static long startBDS(HaaSClient client) throws InterruptedException {
+		long jobId =  client.createJob(new
+		  JobSettingsBuilder().jobName("TestOutRedirect").templateId(4l)
+		  .walltimeLimit(3600).clusterNodeType(7l).build(), Collections.emptyList());
+	 
+	
+		JobInfo info = client.obtainJobInfo(jobId);
+		log.info("JobId :" + jobId + ", state - " + info.getState());
+		if (info.getState() != JobState.Running) {
+			try (HaaSFileTransfer transfer = client.startFileTransfer(jobId)) {
+				transfer.upload(new UploadingFileData("run-bds"));
+			} catch (InterruptedIOException e) {
+				log.error(e.getMessage(), e);
+			}
+			client.submitJob(jobId);
+		}
+		JobState state;
+		while((state = client.obtainJobInfo(jobId).getState()) != JobState.Running) {
+			log.info("state - " + state);
+			Thread.sleep(3000);
+		}
+		return jobId;
+	}
 	
 
 }
