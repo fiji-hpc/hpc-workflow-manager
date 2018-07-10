@@ -192,7 +192,7 @@ class MiddlewareTunnel implements Closeable {
 		}
 		try {
 			final InputStream is = Channels.newInputStream(Channels.newChannel(
-				connection.getSocket().getInputStream()));
+				connection.getInputStream()));
 			int len;
 			final byte[] buffer = new byte[sendBufferData];
 			try {
@@ -294,8 +294,8 @@ class MiddlewareTunnel implements Closeable {
 		if (log.isDebugEnabled()) {
 			log.debug("START: readFromMiddleware");
 		}
-		try (OutputStream os = connection.getSocket().getOutputStream()) {
-
+		try {
+			final OutputStream os = connection.getOutputStream();
 			byte[] received = null;
 			int zeroCounter = 0;
 			while (null != (received = dataTransfer.readDataFromJobNode(jobId,
@@ -339,6 +339,12 @@ class MiddlewareTunnel implements Closeable {
 			return;
 		}
 		finally {
+			try {
+				connection.shutdownOutput();
+			}
+			catch (IOException exc) {
+				log.error(exc.getMessage(), exc);
+			}
 			log.debug("END: readFromMiddleware");
 		}
 	}
@@ -354,12 +360,22 @@ class MiddlewareTunnel implements Closeable {
 
 		private final CompletableFuture<?>[] futures = new CompletableFuture[2];
 
-		private final CountDownLatch latchFromClient = new CountDownLatch(1);
-
 		private final CountDownLatch latchOfBothDirections = new CountDownLatch(2);
 
 		public P_Connection(final Socket soc) {
 			this.socket = soc;
+		}
+
+		public void shutdownOutput() throws IOException {
+			socket.shutdownOutput();
+		}
+
+		public InputStream getInputStream() throws IOException {
+			return socket.getInputStream();
+		}
+
+		public OutputStream getOutputStream() throws IOException {
+			return socket.getOutputStream();
 		}
 
 		public void setClientHandler(final Consumer<P_Connection> callable) {
@@ -370,10 +386,6 @@ class MiddlewareTunnel implements Closeable {
 			runnable[FROM_SERVER] = () -> callable.accept(this);
 		}
 
-		public Socket getSocket() {
-			return socket;
-		}
-
 		public void establish() {
 
 			for (int i = 0; i < runnable.length; i++) {
@@ -381,10 +393,6 @@ class MiddlewareTunnel implements Closeable {
 				futures[i] = CompletableFuture.runAsync(() -> {
 					runnable[final_i].run();
 				}, executorService).whenComplete((id, e) -> {
-					if (final_i == FROM_CLIENT) {
-						latchFromClient.countDown();
-					}
-
 					latchOfBothDirections.countDown();
 					if (e != null) {
 						log.error(e.getMessage(), e);
@@ -393,7 +401,7 @@ class MiddlewareTunnel implements Closeable {
 			}
 
 			try {
-				latchFromClient.await();
+				latchOfBothDirections.await();
 			}
 			catch (final InterruptedException e) {
 				stop(latchOfBothDirections);
