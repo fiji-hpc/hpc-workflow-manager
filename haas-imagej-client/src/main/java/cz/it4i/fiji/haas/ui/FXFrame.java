@@ -22,12 +22,12 @@ public abstract class FXFrame<T extends Parent&CloseableControl> extends JDialog
 	private static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas.ui.FXFrame.class);
 	private static final long serialVersionUID = 1L;
 	private JFXPanel<T> fxPanel;
-
+	
 	public FXFrame(Supplier<T> fxSupplier) {
-		this(null,fxSupplier);
+		this(null, fxSupplier);
 	}
-
-	public FXFrame(Window parent, Supplier<T> fxSupplier) {
+	
+	public FXFrame(Window parent, Supplier<T> fxSupplier){
 		super(parent, ModalityType.MODELESS);
 		fxPanel = new JFXPanel<>(fxSupplier);
 		init();
@@ -36,6 +36,17 @@ public abstract class FXFrame<T extends Parent&CloseableControl> extends JDialog
 			control.init(this);
 		}
 	}
+
+	public JFXPanel<T> getFxPanel() {
+		return fxPanel;
+	}
+	
+	public void executeAdjustment(Runnable command) {
+		JavaFXRoutines.runOnFxThread(() -> {
+			command.run();
+		});
+	}
+
 
 	private void init() {
 		addWindowListener(new WindowAdapter() {
@@ -56,12 +67,9 @@ public abstract class FXFrame<T extends Parent&CloseableControl> extends JDialog
 		this.setLayout(new BorderLayout());
 		//JScrollPane scrollPane = new JScrollPane(this.fxPanel);
 		this.add(fxPanel, BorderLayout.CENTER);
-		JavaFXRoutines.runOnFxThread(() -> this.pack());
-		
-	}
-
-
-	public JFXPanel<T> getFxPanel() {
-		return fxPanel;
+		JavaFXRoutines.runOnFxThread(() -> {
+			this.pack();
+			SwingRoutines.centerOnScreen(this);
+		});
 	}
 }

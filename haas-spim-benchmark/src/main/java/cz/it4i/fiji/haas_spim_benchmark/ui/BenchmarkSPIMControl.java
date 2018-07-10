@@ -140,12 +140,9 @@ public class BenchmarkSPIMControl extends BorderPane implements CloseableControl
 
 		menu.addItem("Job dashboard", job -> openJobDetailsWindow(job.getValue()),
 				job -> JavaFXRoutines.notNullValue(job, j -> true));
-
-		menu.addItem("Open working directory", j -> open(j.getValue()), x -> JavaFXRoutines.notNullValue(x, j -> true));
-
+		menu.addItem("Open job subdirectory", j -> open(j.getValue()), x -> JavaFXRoutines.notNullValue(x, j -> true));
 		menu.addItem("Open in BigDataViewer", j -> openBigDataViewer(j.getValue()),
 				x -> JavaFXRoutines.notNullValue(x, j -> true));
-
 		menu.addSeparator();
 
 		menu.addItem("Upload data", job -> executeWSCallAsync("Uploading data", p -> job.getValue().startUpload()),
@@ -341,14 +338,14 @@ public class BenchmarkSPIMControl extends BorderPane implements CloseableControl
 		JavaFXRoutines.setCellValueFactory(jobs, index, mapper);
 		((TableColumn<ObservableBenchmarkJob, CompletableFuture<String>>) jobs.getColumns().get(index))
 				.setCellFactory(column -> new TableCellAdapter<ObservableBenchmarkJob, CompletableFuture<String>> //
-		(//
-				new P_TableCellUpdaterDecoratorWithToolTip<>//
 				(//
-						new FutureValueUpdater<ObservableBenchmarkJob, String, CompletableFuture<String>>//
+						new P_TableCellUpdaterDecoratorWithToolTip<>//
 						(//
-								new StringValueUpdater<ObservableBenchmarkJob>(), executorServiceFX//
-						), //
-						"Doubleclick to open Dashboard")));
+								new FutureValueUpdater<ObservableBenchmarkJob, String, CompletableFuture<String>>//
+								(//
+										new StringValueUpdater<ObservableBenchmarkJob>(), executorServiceFX//
+								), //
+								"Doubleclick to open Dashboard")));
 	}
 
 	private void openJobDetailsWindow(BenchmarkJob job) {
@@ -363,18 +360,19 @@ public class BenchmarkSPIMControl extends BorderPane implements CloseableControl
 		Path resultXML = job.getResultXML();
 		Path localPathToResultXML = job.getOutputDirectory().resolve(resultXML);
 		String openFile;
-		if(Files.exists(localPathToResultXML)) {
+		if (Files.exists(localPathToResultXML)) {
 			openFile = localPathToResultXML.toString();
-		} else { 
+		} else {
 			openFile = startBDSForData(job, resultXML);
 		}
 		try {
-			BigDataViewer.open( openFile, "Result of job " + job.getId(), new ProgressWriterConsole() , ViewerOptions.options() );
+			BigDataViewer.open(openFile, "Result of job " + job.getId(), new ProgressWriterConsole(),
+					ViewerOptions.options());
 		} catch (SpimDataException e) {
 			log.error(e.getMessage(), e);
 		}
 	}
-	
+
 	private String startBDSForData(BenchmarkJob job, Path resultXML) {
 		throw new UnsupportedOperationException("File " + resultXML + " was not found in " + job.getOutputDirectory()
 				+ " and remote BigDataServer is not implemented yet.");

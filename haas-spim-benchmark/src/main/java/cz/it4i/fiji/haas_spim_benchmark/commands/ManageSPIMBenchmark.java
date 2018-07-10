@@ -8,7 +8,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import javax.swing.JDialog;
 import javax.swing.WindowConstants;
 
 import org.scijava.Context;
@@ -31,7 +30,7 @@ import net.imagej.ImageJ;
  * @author koz01
  *
  */
-@Plugin(type = Command.class, headless = false, menuPath = "Plugins>SPIM benchmark")
+@Plugin(type = Command.class, headless = false, menuPath = "Plugins>" + Constants.MENU_ITEM_NAME + ">" + Constants.SUBMENU_ITEM_NAME)
 public class ManageSPIMBenchmark implements Command {
 
 	private static Logger log = LoggerFactory
@@ -61,33 +60,35 @@ public class ManageSPIMBenchmark implements Command {
 	@Override
 	public void run() {
 		try {
-			Path workingDirPath = Paths.get(workingDirectory.getPath());
+			final Path workingDirPath = Paths.get(workingDirectory.getPath());
 			if (!Files.isDirectory(workingDirPath)) {
 				Files.createDirectories(workingDirPath);
 			}
-			FileLock fl = new FileLock(workingDirPath.resolve(LOCK_FILE_NAME));
+			final FileLock fl = new FileLock(workingDirPath.resolve(LOCK_FILE_NAME));
 			if(!fl.tryLock()) {
 				uiService.showDialog("Working directory is already used by someone else", MessageType.ERROR_MESSAGE);
 				return;
 			}
 			try {
-				JDialog dialog = new BenchmarkSPIMWindow(null,
+				final BenchmarkSPIMWindow dialog = new BenchmarkSPIMWindow(null,
 						new BenchmarkSPIMParametersImpl(userName, password, Constants.PHONE, email, workingDirPath));
-				dialog.setTitle("SPIM workflow computation manager");
-				dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-				dialog.addWindowListener(new WindowAdapter() {
-					@Override
-					public void windowClosing(WindowEvent e) {
-						super.windowClosing(e);
-						fl.close();
-					}
+				dialog.executeAdjustment(() -> {
+					dialog.setTitle(Constants.MENU_ITEM_NAME + " " + Constants.SUBMENU_ITEM_NAME);
+					dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+					dialog.addWindowListener(new WindowAdapter() {
+						@Override
+						public void windowClosing(final WindowEvent e) {
+							super.windowClosing(e);
+							fl.close();
+						}
+					});
+					dialog.setVisible(true);
 				});
-				dialog.setVisible(true);
-			} catch(IOException e) {
+			} catch(final IOException e) {
 				fl.close();
 				throw e;
 			}
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			log.error(e.getMessage(), e);
 		}
 

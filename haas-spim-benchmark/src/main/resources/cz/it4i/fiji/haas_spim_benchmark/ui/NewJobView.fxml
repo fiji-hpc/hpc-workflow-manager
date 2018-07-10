@@ -36,10 +36,10 @@
                               </RadioButton>
                               <RadioButton maxHeight="1.7976931348623157E308" mnemonicParsing="false" toggleGroup="$tg_inputDataLocation">
                                  <graphic>
-                                    <Label maxHeight="1.7976931348623157E308" text="Job working directory" />
+                                    <Label maxHeight="1.7976931348623157E308" text="Job subdirectory" />
                                  </graphic>
                                  <tooltip>
-                                    <Tooltip text="Job working directory will be used as location for input data. Data and config.yaml will be needed to copy into it." />
+                                    <Tooltip text="Local job subdirectory will be used as location for input data. Data and config.yaml will be needed to copy into it." />
                                  </tooltip>
                               </RadioButton>
                               <RadioButton fx:id="rb_ownInput" mnemonicParsing="false" toggleGroup="$tg_inputDataLocation">
@@ -74,7 +74,7 @@
                                           <ToggleGroup fx:id="tg_outputDataLocation" />
                                        </toggleGroup>
                                        <graphic>
-                                          <Label maxHeight="1.7976931348623157E308" text="Job working directory" />
+                                          <Label maxHeight="1.7976931348623157E308" text="Job subdirectory" />
                                        </graphic>
                                     </RadioButton>
                                  </children>

@@ -4,6 +4,10 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public interface Constants {
+	
+	String MENU_ITEM_NAME = "Multiview Reconstruction";
+	String SUBMENU_ITEM_NAME = "Remote Workflow Manager";
+	
 	String PHONE = "123456789";
 	int HAAS_UPDATE_TIMEOUT = 30000;
 	short UI_TO_HAAS_FREQUENCY_UPDATE_RATIO = 10;
