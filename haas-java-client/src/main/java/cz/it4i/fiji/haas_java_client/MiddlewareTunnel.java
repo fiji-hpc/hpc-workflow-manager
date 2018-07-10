@@ -1,3 +1,4 @@
+
 package cz.it4i.fiji.haas_java_client;
 
 import java.io.Closeable;
@@ -29,7 +30,8 @@ import cz.it4i.fiji.haas_java_client.proxy.DataTransferWsSoap;
 
 class MiddlewareTunnel implements Closeable {
 
-	public static final Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas_java_client.MiddlewareTunnel.class);
+	public static final Logger log = LoggerFactory.getLogger(
+		cz.it4i.fiji.haas_java_client.MiddlewareTunnel.class);
 
 	private static final int TIMEOUT = 1000;
 
@@ -63,25 +65,31 @@ class MiddlewareTunnel implements Closeable {
 
 	private DataTransferMethodExt dataTransferMethod;
 
-	public MiddlewareTunnel(ExecutorService executorService, long jobId, String hostIp, String sessionCode) {
+	public MiddlewareTunnel(final ExecutorService executorService,
+		final long jobId, final String hostIp, final String sessionCode)
+	{
 		this.jobId = jobId;
 		this.dataTransfer = new DataTransferWs().getDataTransferWsSoap12();
-		((BindingProvider) dataTransfer).getRequestContext().put("javax.xml.ws.client.connectionTimeout", "" + TIMEOUT);
-		((BindingProvider) dataTransfer).getRequestContext().put("javax.xml.ws.client.receiveTimeout", "" + TIMEOUT);
+		((BindingProvider) dataTransfer).getRequestContext().put(
+			"javax.xml.ws.client.connectionTimeout", "" + TIMEOUT);
+		((BindingProvider) dataTransfer).getRequestContext().put(
+			"javax.xml.ws.client.receiveTimeout", "" + TIMEOUT);
 		this.ipAddress = hostIp;
 		this.sessionCode = sessionCode;
 		this.executorService = executorService;
 	}
 
-	public void open(int port) throws UnknownHostException, IOException {
+	public void open(final int port) throws UnknownHostException, IOException {
 		open(0, port);
 	}
 
-	public void open(int localport, int port) throws IOException {
+	public void open(final int localport, final int port) throws IOException {
 		open(localport, port, DEFAULT_BACKLOG);
 	}
 
-	public void open(int localport, int port, int backlog) throws UnknownHostException, IOException {
+	public void open(final int localport, final int port, final int backlog)
+		throws UnknownHostException, IOException
+	{
 		if (ss != null) {
 			throw new IllegalStateException();
 		}
@@ -97,51 +105,32 @@ class MiddlewareTunnel implements Closeable {
 						if (log.isDebugEnabled()) {
 							log.debug("endDataTransfer");
 						}
-						
+
 						if (log.isDebugEnabled()) {
 							log.debug("endDataTransfer - DONE");
 						}
-					} catch (SocketTimeoutException e) {
+					}
+					catch (final SocketTimeoutException e) {
 						// ignore and check interruption
-					} catch (IOException e) {
+					}
+					catch (final IOException e) {
 						log.error(e.getMessage(), e);
 						break;
 					}
 				}
-				if(lastConnection != null) {
+				if (lastConnection != null) {
 					lastConnection.finishIfNeeded();
 				}
-			} finally {
+			}
+			finally {
 				if (log.isDebugEnabled()) {
-					log.debug("MiddlewareTunnel - interrupted - socket is closed: " + ss.isClosed());
+					log.debug("MiddlewareTunnel - interrupted - socket is closed: " + ss
+						.isClosed());
 				}
 
 				mainLatch.countDown();
 			}
 		});
-	}
-
-	@Override
-	synchronized public void close() throws IOException {
-		if(ss == null) {
-			return;
-		}
-		mainFuture.cancel(true);
-		try {
-			mainLatch.await();
-		} catch (InterruptedException e) {
-			Thread.currentThread().interrupt();
-			log.error(e.getMessage(), e);
-		}
-		if(dataTransferMethod != null) {
-			dataTransfer.endDataTransfer(dataTransferMethod, sessionCode);
-			dataTransferMethod = null;
-		}
-		if (ss != null) {
-			ss.close();
-			ss = null;
-		}
-		executorService.shutdown();
 	}
 
 	public int getLocalPort() {
@@ -152,16 +141,40 @@ class MiddlewareTunnel implements Closeable {
 		return ss.getInetAddress().getHostAddress();
 	}
 
-	synchronized private void obtainTransferMethodIfNeeded(int port) {
-		if(dataTransferMethod == null) {
-			dataTransferMethod = dataTransfer.getDataTransferMethod(ipAddress, port, jobId,
-					sessionCode);
+	@Override
+	synchronized public void close() throws IOException {
+		if (ss == null) {
+			return;
+		}
+		mainFuture.cancel(true);
+		try {
+			mainLatch.await();
+		}
+		catch (final InterruptedException e) {
+			Thread.currentThread().interrupt();
+			log.error(e.getMessage(), e);
+		}
+		if (dataTransferMethod != null) {
+			dataTransfer.endDataTransfer(dataTransferMethod, sessionCode);
+			dataTransferMethod = null;
+		}
+		if (ss != null) {
+			ss.close();
+			ss = null;
+		}
+		executorService.shutdown();
+	}
+
+	synchronized private void obtainTransferMethodIfNeeded(final int port) {
+		if (dataTransferMethod == null) {
+			dataTransferMethod = dataTransfer.getDataTransferMethod(ipAddress, port,
+				jobId, sessionCode);
 		}
 	}
 
-	private void doTransfer(Socket soc) {
+	private void doTransfer(final Socket soc) {
 		log.debug("START: doTransfer");
-		if(lastConnection != null) {
+		if (lastConnection != null) {
 			lastConnection.finishIfNeeded();
 		}
 		lastConnection = new P_Connection(soc);
@@ -173,17 +186,18 @@ class MiddlewareTunnel implements Closeable {
 		}
 	}
 
-	private void sendToMiddleware(P_Connection connection) {
+	private void sendToMiddleware(final P_Connection connection) {
 		if (log.isDebugEnabled()) {
 			log.debug("START: sendToMiddleware");
 		}
 		try {
-			InputStream is = Channels.newInputStream(Channels.newChannel(connection.getSocket().getInputStream()));
+			final InputStream is = Channels.newInputStream(Channels.newChannel(
+				connection.getSocket().getInputStream()));
 			int len;
-			byte[] buffer = new byte[sendBufferData];
+			final byte[] buffer = new byte[sendBufferData];
 			try {
 				while (-1 != (len = is.read(buffer))) {
-	
+
 					if (len == 0) {
 						continue;
 					}
@@ -192,33 +206,40 @@ class MiddlewareTunnel implements Closeable {
 					}
 					if (log.isDebugEnabled()) {
 						log.debug("send " + len + " bytes to middleware");
-						log.debug("send data: " + new String(buffer, 0, Math.min(len, 100)));
-	
+						log.debug("send data: " + new String(buffer, 0, Math.min(len,
+							100)));
+
 					}
 				}
-			} finally {
+			}
+			finally {
 				sendEOF2Middleware();
 			}
-		} catch (InterruptedIOException e) {
+		}
+		catch (final InterruptedIOException e) {
 			log.error(e.getMessage(), e);
-		} catch (SocketException e) {
+		}
+		catch (final SocketException e) {
 			if (!e.getMessage().equals("Socket closed")) {
 				log.error(e.getMessage(), e);
 			}
-		} catch (IOException e) {
+		}
+		catch (final IOException e) {
 			log.error(e.getMessage(), e);
 			return;
-		} catch(RuntimeException e) {
+		}
+		catch (final RuntimeException e) {
 			log.error(e.getMessage(), e);
 			throw e;
-		} finally {
+		}
+		finally {
 			if (log.isDebugEnabled()) {
 				log.debug("END: sendToMiddleware");
 			}
 		}
 	}
 
-	private boolean sendToMiddleware(byte[] buffer, int len) {
+	private boolean sendToMiddleware(final byte[] buffer, final int len) {
 		byte[] sending;
 		int toSend = len;
 		int offset = 0;
@@ -227,10 +248,12 @@ class MiddlewareTunnel implements Closeable {
 			if (toSend != buffer.length || offset != 0) {
 				sending = new byte[toSend];
 				System.arraycopy(buffer, offset, sending, 0, toSend);
-			} else {
+			}
+			else {
 				sending = buffer;
 			}
-			int reallySend = dataTransfer.writeDataToJobNode(sending, jobId, ipAddress, sessionCode, false);
+			final int reallySend = dataTransfer.writeDataToJobNode(sending, jobId,
+				ipAddress, sessionCode, false);
 			if (reallySend == -1) {
 				return false;
 			}
@@ -240,17 +263,20 @@ class MiddlewareTunnel implements Closeable {
 				zeroCounter++;
 				if (zeroCounter >= ZERO_COUNT_THRESHOLD) {
 					if (log.isDebugEnabled()) {
-						log.debug("zero bytes sent to middleware for " + zeroCounter + " time");
+						log.debug("zero bytes sent to middleware for " + zeroCounter +
+							" time");
 					}
 					return false;
 				}
 				try {
 					Thread.sleep(ZERO_COUNT_PAUSE);
-				} catch (InterruptedException e) {
+				}
+				catch (final InterruptedException e) {
 					Thread.currentThread().interrupt();
 					return false;
 				}
-			} else {
+			}
+			else {
 				zeroCounter = 0;
 			}
 		}
@@ -264,30 +290,35 @@ class MiddlewareTunnel implements Closeable {
 		dataTransfer.writeDataToJobNode(null, jobId, ipAddress, sessionCode, true);
 	}
 
-	private void readFromMiddleware(P_Connection connection) {
+	private void readFromMiddleware(final P_Connection connection) {
 		if (log.isDebugEnabled()) {
 			log.debug("START: readFromMiddleware");
 		}
 		try (OutputStream os = connection.getSocket().getOutputStream()) {
-			
+
 			byte[] received = null;
 			int zeroCounter = 0;
-			while (null != (received = dataTransfer.readDataFromJobNode(jobId, ipAddress, sessionCode))) {
+			while (null != (received = dataTransfer.readDataFromJobNode(jobId,
+				ipAddress, sessionCode)))
+			{
 				if (received.length > 0) {
 					os.write(received);
 					os.flush();
 					zeroCounter = 0;
-				} else {
+				}
+				else {
 					zeroCounter++;
 					if (zeroCounter >= ZERO_COUNT_THRESHOLD) {
 						if (log.isDebugEnabled()) {
-							log.debug("zero bytes received from middleware for " + zeroCounter + " time");
+							log.debug("zero bytes received from middleware for " +
+								zeroCounter + " time");
 						}
 						break;
 					}
 					try {
 						Thread.sleep(ZERO_COUNT_PAUSE);
-					} catch (InterruptedException e) {
+					}
+					catch (final InterruptedException e) {
 						Thread.currentThread().interrupt();
 						break;
 					}
@@ -299,17 +330,21 @@ class MiddlewareTunnel implements Closeable {
 					}
 				}
 			}
-		} catch (InterruptedIOException e) {
+		}
+		catch (final InterruptedIOException e) {
 			return;
-		} catch (IOException e) {
+		}
+		catch (final IOException e) {
 			log.error(e.getMessage(), e);
 			return;
-		} finally {
+		}
+		finally {
 			log.debug("END: readFromMiddleware");
 		}
 	}
 
 	private class P_Connection {
+
 		private static final int FROM_CLIENT = 0;
 		private static final int FROM_SERVER = 1;
 
@@ -317,22 +352,21 @@ class MiddlewareTunnel implements Closeable {
 
 		private final Runnable[] runnable = new Runnable[2];
 
-		
 		private final CompletableFuture<?>[] futures = new CompletableFuture[2];
-		
+
 		private final CountDownLatch latchFromClient = new CountDownLatch(1);
-		
+
 		private final CountDownLatch latchOfBothDirections = new CountDownLatch(2);
 
-		public P_Connection(Socket soc) {
+		public P_Connection(final Socket soc) {
 			this.socket = soc;
 		}
 
-		public void setClientHandler(Consumer<P_Connection> callable) {
+		public void setClientHandler(final Consumer<P_Connection> callable) {
 			runnable[FROM_CLIENT] = () -> callable.accept(this);
 		}
 
-		public void setServerHandler(Consumer<P_Connection> callable) {
+		public void setServerHandler(final Consumer<P_Connection> callable) {
 			runnable[FROM_SERVER] = () -> callable.accept(this);
 		}
 
@@ -341,18 +375,18 @@ class MiddlewareTunnel implements Closeable {
 		}
 
 		public void establish() {
-			
+
 			for (int i = 0; i < runnable.length; i++) {
-				int final_i = i;
+				final int final_i = i;
 				futures[i] = CompletableFuture.runAsync(() -> {
 					runnable[final_i].run();
-				}, executorService).whenComplete((id,e) -> {
+				}, executorService).whenComplete((id, e) -> {
 					if (final_i == FROM_CLIENT) {
 						latchFromClient.countDown();
 					}
 
 					latchOfBothDirections.countDown();
-					if(e != null) {
+					if (e != null) {
 						log.error(e.getMessage(), e);
 					}
 				});
@@ -360,27 +394,28 @@ class MiddlewareTunnel implements Closeable {
 
 			try {
 				latchFromClient.await();
-			} catch (InterruptedException e) {
+			}
+			catch (final InterruptedException e) {
 				stop(latchOfBothDirections);
 				Thread.currentThread().interrupt();
 			}
 		}
-		
+
 		public void finishIfNeeded() {
 			stop(latchOfBothDirections);
 		}
 
-		private void stop(CountDownLatch localLatch) {
-			for (Future<?> thread : futures) {
+		private void stop(final CountDownLatch localLatch) {
+			for (final Future<?> thread : futures) {
 				thread.cancel(true);
 			}
 			try {
 				localLatch.await();
-			} catch (InterruptedException e) {
+			}
+			catch (final InterruptedException e) {
 				log.error(e.getMessage(), e);
 			}
 		}
 
-		
 	}
 }
