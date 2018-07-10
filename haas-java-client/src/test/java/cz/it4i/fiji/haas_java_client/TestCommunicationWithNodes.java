@@ -2,7 +2,6 @@ package cz.it4i.fiji.haas_java_client;
 
 import java.io.IOException;
 import java.io.InterruptedIOException;
-import java.util.Collections;
 import java.util.Scanner;
 
 import org.slf4j.Logger;
@@ -46,7 +45,7 @@ public class TestCommunicationWithNodes {
 		}
 		String ip;
 		log.info("adresess " + (ip = client.obtainJobInfo(id).getNodesIPs().get(0)));
-		try(TunnelToNode tunnel = client.openTunnel( id, ip, 8080, 8080)) {
+		try(TunnelToNode tunnel = client.openTunnel( id, ip, 8081, 8081)) {
 			log.info(tunnel.getLocalHost() + ":" + tunnel.getLocalPort());
 			System.out.println("Press enter");
 			new Scanner(System.in).nextLine();
@@ -54,9 +53,9 @@ public class TestCommunicationWithNodes {
 	}
 
 	public static long startBDS(HaaSClient client) throws InterruptedException {
-		long jobId =  client.createJob(new
+		long jobId =  429;/*client.createJob(new
 		  JobSettingsBuilder().jobName("TestOutRedirect").templateId(4l)
-		  .walltimeLimit(3600).clusterNodeType(7l).build(), Collections.emptyList());
+		  .walltimeLimit(3600).clusterNodeType(7l).build(), Collections.emptyList());*/
 	 
 	
 		JobInfo info = client.obtainJobInfo(jobId);
