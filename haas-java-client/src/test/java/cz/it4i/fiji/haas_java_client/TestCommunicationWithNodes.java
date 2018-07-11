@@ -53,14 +53,14 @@ public class TestCommunicationWithNodes {
 	}
 
 	public static long startBDS(HaaSClient client) throws InterruptedException {
-		long jobId =  429;/*client.createJob(new
+		long jobId =  439; /*client.createJob(new
 		  JobSettingsBuilder().jobName("TestOutRedirect").templateId(4l)
 		  .walltimeLimit(3600).clusterNodeType(7l).build(), Collections.emptyList());*/
 	 
 	
 		JobInfo info = client.obtainJobInfo(jobId);
 		log.info("JobId :" + jobId + ", state - " + info.getState());
-		if (info.getState() != JobState.Running) {
+		if (info.getState() != JobState.Running && info.getState() != JobState.Queued) {
 			try (HaaSFileTransfer transfer = client.startFileTransfer(jobId)) {
 				transfer.upload(new UploadingFileData("run-bds"));
 			} catch (InterruptedIOException e) {

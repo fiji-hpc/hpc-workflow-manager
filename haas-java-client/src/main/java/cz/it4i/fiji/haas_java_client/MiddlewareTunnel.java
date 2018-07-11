@@ -102,13 +102,7 @@ class MiddlewareTunnel implements Closeable {
 					try (Socket soc = ss.accept()) {
 						obtainTransferMethodIfNeeded(port);
 						doTransfer(soc);
-						if (log.isDebugEnabled()) {
-							log.debug("endDataTransfer");
-						}
-
-						if (log.isDebugEnabled()) {
-							log.debug("endDataTransfer - DONE");
-						}
+						
 					}
 					catch (final SocketTimeoutException e) {
 						// ignore and check interruption
@@ -158,7 +152,13 @@ class MiddlewareTunnel implements Closeable {
 			log.error(e.getMessage(), e);
 		}
 		if (dataTransferMethod != null) {
+			if (log.isDebugEnabled()) {
+				log.debug("endDataTransfer");
+			}
 			dataTransfer.endDataTransfer(dataTransferMethod, sessionCode);
+			if (log.isDebugEnabled()) {
+				log.debug("endDataTransfer - DONE");
+			}
 			dataTransferMethod = null;
 		}
 		if (ss != null) {
@@ -257,6 +257,9 @@ class MiddlewareTunnel implements Closeable {
 			else {
 				sending = buffer;
 			}
+			if (log.isDebugEnabled()) {
+				log.debug("writing to middleware");
+			}
 			final int reallySend = dataTransfer.writeDataToJobNode(sending, jobId,
 				ipAddress, sessionCode, false);
 			if (reallySend == -1) {
@@ -306,6 +309,9 @@ class MiddlewareTunnel implements Closeable {
 			while (null != (received = dataTransfer.readDataFromJobNode(jobId,
 				ipAddress, sessionCode)))
 			{
+				if (log.isDebugEnabled()) {
+					log.debug("receiving from middleware");
+				}
 				if (received.length > 0) {
 					os.write(received);
 					os.flush();
@@ -333,6 +339,11 @@ class MiddlewareTunnel implements Closeable {
 					if (received.length > 0) {
 						log.debug("received data " + new String(received));
 					}
+				}
+			}
+			if(received == null) {
+				if (log.isDebugEnabled()) {
+					log.debug("EOF from middleware detected");
 				}
 			}
 		}
