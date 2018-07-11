@@ -1,5 +1,16 @@
 package cz.it4i.fiji.scpclient;
 
+import com.jcraft.jsch.Channel;
+import com.jcraft.jsch.ChannelExec;
+import com.jcraft.jsch.ChannelSftp;
+import com.jcraft.jsch.ChannelSftp.LsEntry;
+import com.jcraft.jsch.Identity;
+import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.Session;
+import com.jcraft.jsch.SftpException;
+import com.jcraft.jsch.UserInfo;
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
@@ -16,20 +27,15 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.jcraft.jsch.Channel;
-import com.jcraft.jsch.ChannelExec;
-import com.jcraft.jsch.ChannelSftp;
-import com.jcraft.jsch.ChannelSftp.LsEntry;
-import com.jcraft.jsch.Identity;
-import com.jcraft.jsch.JSch;
-import com.jcraft.jsch.JSchException;
-import com.jcraft.jsch.Session;
-import com.jcraft.jsch.SftpException;
-import com.jcraft.jsch.UserInfo;
-
 public class ScpClient implements Closeable {
 	
 	public static final Logger log = LoggerFactory.getLogger(cz.it4i.fiji.scpclient.ScpClient.class);
+
+
+	private static final int MAX_NUMBER_OF_CONNECTION_ATTEMPTS = 3;
+
+
+	private static final long TIMEOUT_BETWEEN_CONNECTION_ATTEMPTS = 500;
 	
 	
 	private String hostName;
@@ -349,9 +355,27 @@ public class ScpClient implements Closeable {
 
 			session.setUserInfo(ui);
 		}
-		if (!session.isConnected()) {
+		int connectRetry = 0;
+		while (!session.isConnected()) {
 			//log.info("connect");
-			session.connect();
+			try {
+				session.connect();
+			}
+			catch(JSchException e) {
+				if(e.getMessage().contains("Auth fail") && connectRetry < MAX_NUMBER_OF_CONNECTION_ATTEMPTS) {
+					connectRetry++;
+					try {
+						Thread.sleep(TIMEOUT_BETWEEN_CONNECTION_ATTEMPTS);
+					}
+					catch (InterruptedException exc) {
+						log.info("Interruption detected");
+						throw new JSchException(exc.getMessage(), exc);
+					}
+					continue;
+				}
+				throw e;
+			}
+			
 		}
 		return session;
 	}
