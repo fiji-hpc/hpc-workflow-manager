@@ -203,8 +203,13 @@ class MiddlewareTunnel implements Closeable {
 					if (len == 0) {
 						continue;
 					}
-					if (!sendToMiddleware(buffer, len)) {
-						break;
+					try {
+						if (!sendToMiddleware(buffer, len)) {
+							break;
+						}
+					}
+					finally {
+						connection.dataSentNotify();
 					}
 					if (log.isDebugEnabled()) {
 						log.debug("send " + len + " bytes to middleware");
@@ -264,6 +269,7 @@ class MiddlewareTunnel implements Closeable {
 			}
 			final int reallySend = dataTransfer.writeDataToJobNode(sending, jobId,
 				ipAddress, sessionCode, false);
+
 			if (reallySend == -1) {
 				return false;
 			}
@@ -301,6 +307,12 @@ class MiddlewareTunnel implements Closeable {
 	}
 
 	private void readFromMiddleware(final P_Connection connection) {
+		try {
+			connection.waitForFirstDataSent();
+		}
+		catch (InterruptedException exc1) {
+			return;
+		}
 		if (log.isDebugEnabled()) {
 			log.debug("START: readFromMiddleware");
 		}
@@ -350,12 +362,12 @@ class MiddlewareTunnel implements Closeable {
 			}
 		}
 		catch (final InterruptedIOException e) {
-			//ignore this
+			// ignore this
 		}
-		catch(SocketException e) {
-			if(!e.getMessage().equals("Broken pipe (Write failed)")) {
+		catch (SocketException e) {
+			if (!e.getMessage().equals("Broken pipe (Write failed)")) {
 				log.error(e.getMessage(), e);
-			} 
+			}
 		}
 		catch (final IOException e) {
 			log.error(e.getMessage(), e);
@@ -383,6 +395,8 @@ class MiddlewareTunnel implements Closeable {
 		private final Thread[] threads = new Thread[2];
 
 		private final CountDownLatch latchOfBothDirections = new CountDownLatch(2);
+
+		private final CountDownLatch dataSentFlag = new CountDownLatch(1);
 
 		public P_Connection(final Socket soc) {
 			this.socket = soc;
@@ -434,6 +448,16 @@ class MiddlewareTunnel implements Closeable {
 
 		public void finishIfNeeded() {
 			stop(latchOfBothDirections);
+		}
+
+		public void dataSentNotify() {
+			if (dataSentFlag.getCount() > 0) {
+				dataSentFlag.countDown();
+			}
+		}
+
+		public void waitForFirstDataSent() throws InterruptedException {
+			dataSentFlag.await();
 		}
 
 		private void stop(final CountDownLatch localLatch) {
