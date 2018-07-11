@@ -19,9 +19,9 @@ public class TransferFileProgressForHaaSClient implements TransferFileProgress {
 		this.notifier = notifier;
 	}
 
-	public void startNewFile(long fileSize) {
+	public void startNewFile(long initialFileSize) {
 		fileTransfered = 0;
-		this.fileSize = fileSize;
+		this.fileSize = initialFileSize;
 	}
 	
 	@Override

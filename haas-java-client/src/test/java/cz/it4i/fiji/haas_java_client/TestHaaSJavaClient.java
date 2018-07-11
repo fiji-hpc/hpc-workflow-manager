@@ -9,8 +9,6 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.xml.rpc.ServiceException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,15 +19,13 @@ public class TestHaaSJavaClient {
 
 	private static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas_java_client.TestHaaSJavaClient.class);
 
-	public static void main(String[] args) throws ServiceException, IOException {
+	public static void main(String[] args) throws IOException {
 		Map<String, String> params = new HashMap<>();
 		params.put("inputParam", "someStringParam");
 		Path baseDir = Paths.get("/home/koz01/aaa");
-		HaaSClient client = new HaaSClient(SettingsProvider.getSettings(1l, 600, 7l, "DD-17-31", TestingConstants.CONFIGURATION_FILE_NAME));
-		long jobId = client.createJob("TestOutRedirect", params.entrySet());
-		try (HaaSFileTransfer tr = client.startFileTransfer(jobId, HaaSClient.DUMMY_TRANSFER_FILE_PROGRESS)) {
-			tr.upload(new UploadingFileImpl(Paths.get("/home/koz01/aaa/vecmath.jar")));
-		}
+		HaaSClient client = new HaaSClient(SettingsProvider.getSettings( "DD-17-31", TestingConstants.CONFIGURATION_FILE_NAME));
+		long jobId = client.createJob(new JobSettingsBuilder().jobName("TestOutRedirect").templateId(1l)
+				.walltimeLimit(600).clusterNodeType(7l).build(), params.entrySet());
 		client.submitJob(jobId);
 		Path workDir = baseDir.resolve("" + jobId);
 		if (!Files.isDirectory(workDir)) {
@@ -38,7 +34,7 @@ public class TestHaaSJavaClient {
 		JobInfo info;
 		do {
 			try {
-				Thread.sleep(30000);
+				Thread.sleep(1000);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
@@ -54,7 +50,7 @@ public class TestHaaSJavaClient {
 					client.getChangedFiles(jobId).forEach(file -> wrap(() -> fileTransfer.download(file, workDir)));
 				}
 			}
-			log.info("JobId :" + jobId + ", state" + info.getState());
+			log.info("JobId :" + jobId + ", state - " + info.getState());
 		} while (info.getState() != JobState.Canceled && info.getState() != JobState.Failed
 				&& info.getState() != JobState.Finished);
 	}

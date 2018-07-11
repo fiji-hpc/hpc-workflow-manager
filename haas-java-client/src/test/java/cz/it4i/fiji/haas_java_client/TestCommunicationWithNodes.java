@@ -1,9 +1,8 @@
 package cz.it4i.fiji.haas_java_client;
 
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.util.Scanner;
-
-import javax.xml.rpc.ServiceException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +14,7 @@ public class TestCommunicationWithNodes {
 	private static String[] predefined  = new String[2];
 	
 	@SuppressWarnings("resource")
-	public static void main(String[] args) throws ServiceException, IOException, InterruptedException {
+	public static void main(String[] args) throws IOException, InterruptedException {
 		predefined[0] = "POST /modules/'command:net.imagej.ops.math.PrimitiveMath$IntegerAdd'?process=false HTTP/1.1\r\n" +
                 "Content-Type: application/json\r\n" +
                 "Host: localhost:8080\r\n" +
@@ -30,10 +29,10 @@ public class TestCommunicationWithNodes {
 				"Accept: */*\r\n" + //
 				"\r\n";
 		
-		Settings settings = SettingsProvider.getSettings(6l, 3600, 7l, "OPEN-12-20",
+		HaaSClientSettings settings = SettingsProvider.getSettings("OPEN-12-20",
 				TestingConstants.CONFIGURATION_FILE_NAME);
 		HaaSClient client = new HaaSClient(settings);
-		long id = 376;//client.createJob("New job", Collections.emptyList());
+		long id = startBDS(client);
 		String sessionID = client.getSessionID();
 		log.info(id + " - " + client.obtainJobInfo(id).getState() + " - " + sessionID);
 		if(client.obtainJobInfo(id).getState() != JobState.Running && client.obtainJobInfo(id).getState() != JobState.Queued) {
@@ -46,13 +45,36 @@ public class TestCommunicationWithNodes {
 		}
 		String ip;
 		log.info("adresess " + (ip = client.obtainJobInfo(id).getNodesIPs().get(0)));
-		try(TunnelToNode tunnel = client.openTunnel( id, ip, 8080, 8080)) {
+		try(TunnelToNode tunnel = client.openTunnel( id, ip, 8081, 8081)) {
 			log.info(tunnel.getLocalHost() + ":" + tunnel.getLocalPort());
 			System.out.println("Press enter");
 			new Scanner(System.in).nextLine();
 		}
 	}
 
+	public static long startBDS(HaaSClient client) throws InterruptedException {
+		long jobId =  439; /*client.createJob(new
+		  JobSettingsBuilder().jobName("TestOutRedirect").templateId(4l)
+		  .walltimeLimit(3600).clusterNodeType(7l).build(), Collections.emptyList());*/
+	 
+	
+		JobInfo info = client.obtainJobInfo(jobId);
+		log.info("JobId :" + jobId + ", state - " + info.getState());
+		if (info.getState() != JobState.Running && info.getState() != JobState.Queued) {
+			try (HaaSFileTransfer transfer = client.startFileTransfer(jobId)) {
+				transfer.upload(new UploadingFileData("run-bds"));
+			} catch (InterruptedIOException e) {
+				log.error(e.getMessage(), e);
+			}
+			client.submitJob(jobId);
+		}
+		JobState state;
+		while((state = client.obtainJobInfo(jobId).getState()) != JobState.Running) {
+			log.info("state - " + state);
+			Thread.sleep(3000);
+		}
+		return jobId;
+	}
 	
 
 }

@@ -32,7 +32,7 @@
 
 		<issueManagement.system>GitLab Issues</issueManagement.system>
 		<issueManagement.url>https://code.it4i.cz/fiji/haas-java-client/issues</issueManagement.url>
-
+		<maven.deploy.skip>true</maven.deploy.skip>
 	</properties>
 	<repositories>
 		<repository>

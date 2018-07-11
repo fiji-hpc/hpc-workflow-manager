@@ -14,7 +14,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import cz.it4i.fiji.haas_java_client.HaaSClient;
-import cz.it4i.fiji.haas_java_client.Settings;
+import cz.it4i.fiji.haas_java_client.HaaSClientSettings;
+import cz.it4i.fiji.haas_java_client.JobSettings;
 import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
 
 public class JobManager implements Closeable {
@@ -35,7 +36,7 @@ public class JobManager implements Closeable {
 
 	private HaaSClient haasClient;
 
-	private final Settings settings;
+	private final HaaSClientSettings settings;
 
 	private BiPredicate<Job, Path> uploadFilter = DUMMY_UPLOAD_FILTER;
 
@@ -53,16 +54,16 @@ public class JobManager implements Closeable {
 		}
 	};
 
-	public JobManager(Path workDirectory, Settings settings) {
+	public JobManager(Path workDirectory, HaaSClientSettings settings) {
 		this.workDirectory = workDirectory;
 		this.settings = settings;
 	}
 
-	public Job createJob(Function<Path, Path> inputDirectoryProvider, Function<Path, Path> outputDirectoryProvider)
+	public Job createJob(JobSettings jobSettings ,Function<Path, Path> inputDirectoryProvider, Function<Path, Path> outputDirectoryProvider)
 			throws IOException {
 		Job result;
 		initJobsIfNecessary();
-		jobs.add(result = new Job(remover, settings.getJobName(), workDirectory, this::getHaasClient,
+		jobs.add(result = new Job(remover, jobSettings, workDirectory, this::getHaasClient,
 				inputDirectoryProvider, outputDirectoryProvider));
 		return result;
 	}

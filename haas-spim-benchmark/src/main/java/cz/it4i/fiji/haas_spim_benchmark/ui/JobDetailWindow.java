@@ -1,7 +1,6 @@
 package cz.it4i.fiji.haas_spim_benchmark.ui;
 
 import java.awt.Window;
-import java.io.IOException;
 
 import cz.it4i.fiji.haas.ui.FXFrame;
 import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.BenchmarkJob;
@@ -12,7 +11,7 @@ public class JobDetailWindow extends FXFrame<JobDetailControl>{
 	
 
 	
-	public JobDetailWindow(Window parentWindow, BenchmarkJob job) throws IOException {
+	public JobDetailWindow(Window parentWindow, BenchmarkJob job) {
 		super(parentWindow,()->{
 			return new JobDetailControl(job);
 			

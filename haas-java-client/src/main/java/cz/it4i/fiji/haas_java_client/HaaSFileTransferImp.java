@@ -91,7 +91,7 @@ class HaaSFileTransferImp implements HaaSFileTransfer {
 		List<String> result = new LinkedList<>();
 		try {
 			for (String fileName : files) {
-				fileName = replaceIfFirstFirst(fileName, "/", "");
+				fileName = replaceIfFirstFirst(fileName);
 				try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
 					String fileToDownload = "'" + ft.getSharedBasepath() + "/" + fileName + "'";
 					scpClient.download(fileToDownload, os, progress);
@@ -105,7 +105,7 @@ class HaaSFileTransferImp implements HaaSFileTransfer {
 		return result;
 	}
 	
-	private String replaceIfFirstFirst(String fileName, String string, String string2) {
+	private String replaceIfFirstFirst(String fileName) {
 		if (fileName.length() < 0 && fileName.charAt(0) == '/') {
 			fileName = fileName.substring(1);
 		}

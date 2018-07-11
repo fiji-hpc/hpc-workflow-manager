@@ -12,6 +12,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -26,10 +27,12 @@ import cz.it4i.fiji.haas.data_transfer.Synchronization;
 import cz.it4i.fiji.haas_java_client.HaaSClient;
 import cz.it4i.fiji.haas_java_client.HaaSFileTransfer;
 import cz.it4i.fiji.haas_java_client.JobInfo;
+import cz.it4i.fiji.haas_java_client.JobSettings;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.ProgressNotifier;
 import cz.it4i.fiji.haas_java_client.TransferFileProgressForHaaSClient;
 import cz.it4i.fiji.haas_java_client.UploadingFile;
+import cz.it4i.fiji.haas_java_client.UploadingFileData;
 import cz.it4i.fiji.scpclient.TransferFileProgress;
 
 /***
@@ -93,17 +96,17 @@ public class Job {
 
 	
 
-	public Job(JobManager4Job jobManager, String name, Path basePath, Supplier<HaaSClient> haasClientSupplier,
+	public Job(JobManager4Job jobManager, JobSettings jobSettings, Path basePath, Supplier<HaaSClient> haasClientSupplier,
 			Function<Path, Path> inputDirectoryProvider, Function<Path, Path> outputDirectoryProvider)
 			throws IOException {
 		this(jobManager, haasClientSupplier);
 		HaaSClient client = getHaaSClient();
-		long id = client.createJob(name, Collections.emptyList());
+		long id = client.createJob(jobSettings, Collections.emptyList());
 		setJobDirectory(basePath.resolve("" + id), inputDirectoryProvider, outputDirectoryProvider);
 		propertyHolder = new PropertyHolder(jobDir.resolve(JOB_INFO_FILENAME));
 		Files.createDirectory(this.jobDir);
 		storeInputOutputDirectory();
-		setName(name);
+		setName(jobSettings.getJobName());
 
 	}
 
@@ -140,11 +143,14 @@ public class Job {
 		}
 	}
 
-	public void startDownload(Predicate<String> predicate) throws IOException {
-		setProperty(JOB_NEEDS_DOWNLOAD, true);
+	public CompletableFuture<?> startDownload(Predicate<String> predicate) throws IOException {
 		Collection<String> files = getHaaSClient().getChangedFiles(jobId).stream().filter(predicate)
 				.collect(Collectors.toList());
-		synchronization.startDownload(files);
+		if(files.isEmpty()) {
+			return CompletableFuture.completedFuture(null);
+		}
+		setProperty(JOB_NEEDS_DOWNLOAD, true);
+		return synchronization.startDownload(files);
 	}
 
 	public void stopDownloadData() {
@@ -477,6 +483,12 @@ public class Job {
 
 	private void setCanBeDownloaded(boolean b) {
 		setProperty(JOB_CAN_BE_DOWNLOADED, b);
+	}
+
+	public void createEmptyFile(String fileName) throws InterruptedIOException {
+		try(HaaSFileTransfer transfer = haasClientSupplier.get().startFileTransfer(getId())) {
+			transfer.upload(new UploadingFileData(fileName));
+		}
 	}
 
 }

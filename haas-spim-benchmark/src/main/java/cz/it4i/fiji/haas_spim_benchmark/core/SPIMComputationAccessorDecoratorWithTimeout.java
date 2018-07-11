@@ -25,7 +25,7 @@ public class SPIMComputationAccessorDecoratorWithTimeout implements SPIMComputat
 		this.intervalForQueryInMs = intervalForQueryInMs;
 		this.decorated = decorated;
 		initAllowedTypes(allowedTypes);
-		outputCache = new P_ResultCacheHolder<List<String>>(x -> decorated.getActualOutput(this.allowedTypes));
+		outputCache = new P_ResultCacheHolder<>(x -> decorated.getActualOutput(this.allowedTypes));
 		changedFilesCache = new P_ResultCacheHolder<>(set -> {
 			if (set == null) {
 				set = new HashSet<>();
@@ -61,8 +61,8 @@ public class SPIMComputationAccessorDecoratorWithTimeout implements SPIMComputat
 		return decorated.getFileContents(logs);
 	}
 
-	private void initAllowedTypes(Set<SynchronizableFileType> allowedTypes) {
-		for (SynchronizableFileType type : allowedTypes) {
+	private void initAllowedTypes(Set<SynchronizableFileType> usedAllowedTypes) {
+		for (SynchronizableFileType type : usedAllowedTypes) {
 			this.allowedTypes.add(type);
 			this.allowedTypesIndices.put(type, this.allowedTypes.size() - 1);
 		}

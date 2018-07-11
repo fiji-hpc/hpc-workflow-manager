@@ -19,9 +19,6 @@ import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.ScrollPaneConstants;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import net.imagej.ui.swing.updater.SwingTools;
 import net.imagej.updater.util.Progress;
 import net.imagej.updater.util.UpdateCanceledException;
@@ -30,11 +27,8 @@ import net.imagej.updater.util.UpdateCanceledException;
  * 
  * @author Johannes Schindelin
  */
-@SuppressWarnings("serial")
 public class ProgressDialog extends JDialog implements Progress {
-	@SuppressWarnings("unused")
-	public final static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas.ui.ProgressDialog.class);
-
+	
 	JProgressBar progress;
 	JButton detailsToggle;
 	int toggleHeight = -1;
@@ -80,7 +74,9 @@ public class ProgressDialog extends JDialog implements Progress {
 			public void actionPerformed(final ActionEvent e) {
 				canceled = true;
 				ProgressDialog.this.dispose();
-				cancelableAction.run();
+				if (cancelableAction != null) {
+					cancelableAction.run();
+				}
 			}
 		});
 		if(canCancel) {
@@ -260,8 +256,8 @@ public class ProgressDialog extends JDialog implements Progress {
 			setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		}
 
-		public void addDetail(final String title) {
-			addDetail(new Detail(title));
+		public void addDetail(final String panelTitle) {
+			addDetail(new Detail(panelTitle));
 		}
 
 		public void addDetail(final Detail detail) {

@@ -1,6 +1,5 @@
 package cz.it4i.fiji.haas.ui;
 
-import java.awt.Window;
 import java.util.function.Supplier;
 
 import org.slf4j.Logger;
@@ -18,11 +17,8 @@ public abstract class FXFrameNative<T extends Parent&CloseableControl> {
 	private JFXPanel<T> fxPanel;
 	private Stage stage;
 
-	public FXFrameNative(Supplier<T> fxSupplier) {
-		this(null,fxSupplier);
-	}
 
-	public FXFrameNative(Window applicationFrame, Supplier<T> fxSupplier) {
+	public FXFrameNative(Supplier<T> fxSupplier) {
 		new javafx.embed.swing.JFXPanel();
 		JavaFXRoutines.runOnFxThread(() -> {
 			stage = new Stage();

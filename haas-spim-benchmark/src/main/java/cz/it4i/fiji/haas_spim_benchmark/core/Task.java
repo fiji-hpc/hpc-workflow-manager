@@ -28,7 +28,7 @@ public class Task {
 	 * Looks up next task computation (i.e. with lowest timepoint) of the current
 	 * task and populates its parameters
 	 * 
-	 * @param positionInOutput:
+	 * @param positionInOutput
 	 *            Index of the output position to search from
 	 * @return success flag
 	 */

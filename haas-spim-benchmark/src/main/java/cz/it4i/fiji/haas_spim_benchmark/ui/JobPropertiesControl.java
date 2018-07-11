@@ -57,13 +57,13 @@ public class JobPropertiesControl extends BorderPane implements Closeable {
 
 	private void fillTable() {
 		properties.getItems()
-				.add(new UpdatableObservableValue<JobPropertiesControl.P_Value>(
+				.add(new UpdatableObservableValue<>(
 						new P_Value("Input", job.getInputDirectory(), "Demo data on the Salomon IT4I cluster"),
 						x -> UpdateStatus.NotUpdated, x -> x));
-		properties.getItems().add(new UpdatableObservableValue<JobPropertiesControl.P_Value>(
+		properties.getItems().add(new UpdatableObservableValue<>(
 				new P_Value("Output", job.getOutputDirectory(), "N/A"), x -> UpdateStatus.NotUpdated, x -> x));
 
-		properties.getItems().add(new UpdatableObservableValue<JobPropertiesControl.P_Value>(
+		properties.getItems().add(new UpdatableObservableValue<>(
 				new P_Value("Working", job.getDirectory(), "N/A"), x -> UpdateStatus.NotUpdated, x -> x));
 
 	}

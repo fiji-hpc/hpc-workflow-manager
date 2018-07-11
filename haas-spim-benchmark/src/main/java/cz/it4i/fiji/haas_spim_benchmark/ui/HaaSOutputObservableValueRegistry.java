@@ -78,11 +78,11 @@ public class HaaSOutputObservableValueRegistry implements Closeable {
 
 		String value;
 
-		private synchronized void update(String value) {
+		private synchronized void update(String newValue) {
 			String oldValue = this.value;
-			this.value = value;
-			if (value != null && oldValue == null || value == null && oldValue != null
-					|| value != null && !value.equals(oldValue)) {
+			this.value = newValue;
+			if (newValue != null && oldValue == null || newValue == null && oldValue != null
+					|| newValue != null && !newValue.equals(oldValue)) {
 				fireValueChangedEvent();
 			}
 		}

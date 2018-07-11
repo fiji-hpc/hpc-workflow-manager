@@ -10,6 +10,7 @@ import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Predicate;
@@ -86,9 +87,9 @@ public class Synchronization implements Closeable {
 		uploadProcess.resume();
 	}
 
-	public synchronized void startDownload(Collection<String> files) throws IOException {
+	public synchronized CompletableFuture<?> startDownload(Collection<String> files) throws IOException {
 		this.downloadProcess.setItems(files);
-		this.downloadProcess.start();
+		return this.downloadProcess.start();
 	}
 
 	public synchronized void stopDownload() throws IOException {
@@ -112,12 +113,12 @@ public class Synchronization implements Closeable {
 	}
 
 	private PersistentSynchronizationProcess<Path> createUploadProcess(Supplier<HaaSFileTransfer> fileTransferSupplier,
-			ExecutorService service, Runnable uploadFinishedNotifier) throws IOException {
-		return new PersistentSynchronizationProcess<Path>(service, fileTransferSupplier, uploadFinishedNotifier,
+			ExecutorService executorService, Runnable uploadFinishedNotifier) throws IOException {
+		return new PersistentSynchronizationProcess<Path>(executorService, fileTransferSupplier, uploadFinishedNotifier,
 				workingDirectory.resolve(FILE_INDEX_TO_UPLOAD_FILENAME), name -> inputDirectory.resolve(name)) {
 
 			@Override
-			protected Iterable<Path> getItems() throws IOException {
+			protected Collection<Path> getItems() throws IOException {
 				try (DirectoryStream<Path> ds = Files.newDirectoryStream(inputDirectory,
 						Synchronization.this::canUpload)) {
 					return StreamSupport.stream(ds.spliterator(), false).collect(Collectors.toList());
@@ -146,9 +147,9 @@ public class Synchronization implements Closeable {
 	}
 
 	private P_PersistentDownloadProcess createDownloadProcess(Supplier<HaaSFileTransfer> fileTransferSupplier,
-			ExecutorService service, Runnable uploadFinishedNotifier) throws IOException {
+			ExecutorService executorService, Runnable uploadFinishedNotifier) throws IOException {
 
-		return new P_PersistentDownloadProcess(service, fileTransferSupplier, uploadFinishedNotifier);
+		return new P_PersistentDownloadProcess(executorService, fileTransferSupplier, uploadFinishedNotifier);
 	}
 
 	private class P_PersistentDownloadProcess extends PersistentSynchronizationProcess<String> {
@@ -166,7 +167,7 @@ public class Synchronization implements Closeable {
 		}
 
 		@Override
-		protected synchronized Iterable<String> getItems() throws IOException {
+		protected synchronized Collection<String> getItems() throws IOException {
 			return items;
 		}
 
@@ -182,8 +183,8 @@ public class Synchronization implements Closeable {
 		}
 
 		@Override
-		protected long getTotalSize(Iterable<String> items, HaaSFileTransfer tr) throws InterruptedIOException {
-			return tr.obtainSize(StreamSupport.stream(items.spliterator(), false).collect(Collectors.toList())).stream()
+		protected long getTotalSize(Iterable<String> files, HaaSFileTransfer tr) throws InterruptedIOException {
+			return tr.obtainSize(StreamSupport.stream(files.spliterator(), false).collect(Collectors.toList())).stream()
 					.collect(Collectors.summingLong(val -> val));
 		}
 

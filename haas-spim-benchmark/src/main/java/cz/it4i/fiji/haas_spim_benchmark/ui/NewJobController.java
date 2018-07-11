@@ -13,7 +13,6 @@ import cz.it4i.fiji.haas.ui.CloseableControl;
 import cz.it4i.fiji.haas.ui.FXFrame;
 import cz.it4i.fiji.haas.ui.InitiableControl;
 import cz.it4i.fiji.haas.ui.JavaFXRoutines;
-import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
 import javafx.scene.Parent;
 import javafx.scene.control.Alert;
@@ -77,8 +76,8 @@ public class NewJobController extends BorderPane implements CloseableControl, In
 		JavaFXRoutines.initRootAndController("NewJobView.fxml", this);
 		getStylesheets().add(getClass().getResource("NewJobView.css").toExternalForm());
 		bt_create.setOnMouseClicked(X -> createPressed());
-		tg_inputDataLocation.selectedToggleProperty().addListener((v, old, n) -> selected(v, old, n, rb_ownInput));
-		tg_outputDataLocation.selectedToggleProperty().addListener((v, o, n) -> selected(v, o, n, rb_ownOutput));
+		tg_inputDataLocation.selectedToggleProperty().addListener((v, old, n) -> selected(n, rb_ownInput));
+		tg_outputDataLocation.selectedToggleProperty().addListener((v, o, n) -> selected(n, rb_ownOutput));
 		initSelectButton(et_inputDirectory, bt_selectInput);
 		initSelectButton(et_outputDirectory, bt_selectOutput);
 	}
@@ -176,7 +175,7 @@ public class NewJobController extends BorderPane implements CloseableControl, In
 		return DataLocation.values()[DataLocation.values().length - backawardOrderOfSelected];
 	}
 
-	private void selected(ObservableValue<? extends Toggle> v, Toggle o, Toggle n, Parent disableIfNotSelected) {
+	private void selected(Toggle n, Parent disableIfNotSelected) {
 		disableIfNotSelected.getChildrenUnmodifiable().forEach(node -> node.setDisable(n != disableIfNotSelected));
 	}
 

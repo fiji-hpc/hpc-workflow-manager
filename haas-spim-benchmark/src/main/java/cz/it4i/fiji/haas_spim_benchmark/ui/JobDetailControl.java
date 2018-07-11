@@ -57,13 +57,13 @@ public class JobDetailControl extends TabPane implements CloseableControl, Initi
 	
 	
 	private void enableOnlySpecificTab(Tab tabToLeaveEnabled) {
-		getTabs().stream().filter(node -> node != jobPropertiesTab).forEach(node -> node.setDisable(true));
+		getTabs().stream().filter(node -> node != tabToLeaveEnabled).forEach(node -> node.setDisable(true));
 		getSelectionModel().select(jobPropertiesTab);
 	}
 
-	private boolean isExecutionDetailsAvailable(BenchmarkJob job) {
-		return job.getState() == JobState.Running || job.getState() == JobState.Finished
-				|| job.getState() == JobState.Failed || job.getState() == JobState.Canceled;
+	private boolean isExecutionDetailsAvailable(BenchmarkJob inspectedJob) {
+		return inspectedJob.getState() == JobState.Running || inspectedJob.getState() == JobState.Finished
+				|| inspectedJob.getState() == JobState.Failed || inspectedJob.getState() == JobState.Canceled;
 	}
 
 	@Override

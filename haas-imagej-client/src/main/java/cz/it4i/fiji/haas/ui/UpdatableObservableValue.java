@@ -48,12 +48,14 @@ public class UpdatableObservableValue<T> extends ObservableValueBase<T> {
 			if (oldState == null && state != null || oldState != null && (state == null || !oldState.equals(state))) {
 				fire = true;
 			}
-		case Updated:
+				//$FALL-THROUGH$
+			case Updated:
 			oldState = state;
 			if (fire) {
 				fireValueChangedEvent();
 			}
-		default:
+				//$FALL-THROUGH$
+			default:
 			return status;
 		}
 

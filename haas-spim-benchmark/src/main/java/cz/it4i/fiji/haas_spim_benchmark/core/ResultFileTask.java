@@ -25,7 +25,7 @@ public class ResultFileTask {
 
 	public ResultFileTask(String name) {
 		this.name = name;
-		this.jobs = new LinkedList<ResultFileJob>();
+		this.jobs = new LinkedList<>();
 	}
 
 	public String getName() {

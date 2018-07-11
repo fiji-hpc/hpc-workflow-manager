@@ -48,7 +48,7 @@ public class JFXPanel<T extends Parent> extends javafx.embed.swing.JFXPanel {
 //		this.setMaximumSize(dim);
 //		this.setPreferredSize(dim);
 		// this.setSize((int) scene.getWidth(), (int) scene.getHeight());
-	};
+	}
 	
 	public T getControl() {
 		return control;

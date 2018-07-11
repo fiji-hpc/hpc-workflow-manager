@@ -1,3 +1,4 @@
+
 package cz.it4i.fiji.haas_spim_benchmark.ui;
 
 import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.CONFIG_YAML;
@@ -22,9 +23,14 @@ import java.util.function.Function;
 
 import javax.swing.WindowConstants;
 
+import net.imagej.updater.util.Progress;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import bdv.BigDataViewer;
+import bdv.export.ProgressWriterConsole;
+import bdv.viewer.ViewerOptions;
 import cz.it4i.fiji.haas.UploadingFileFromResource;
 import cz.it4i.fiji.haas.ui.CloseableControl;
 import cz.it4i.fiji.haas.ui.DummyProgress;
@@ -57,7 +63,7 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Region;
-import net.imagej.updater.util.Progress;
+import mpicbg.spim.data.SpimDataException;
 
 public class BenchmarkSPIMControl extends BorderPane implements CloseableControl, InitiableControl {
 
@@ -91,8 +97,8 @@ public class BenchmarkSPIMControl extends BorderPane implements CloseableControl
 	}
 
 	@Override
-	public void init(Window root) {
-		this.root = root;
+	public void init(Window rootWindow) {
+		this.root = rootWindow;
 		executorServiceWS = Executors.newSingleThreadExecutor();
 		executorServiceUI = Executors.newSingleThreadExecutor();
 		timer = new Timer();
@@ -136,6 +142,8 @@ public class BenchmarkSPIMControl extends BorderPane implements CloseableControl
 		menu.addItem("Job dashboard", job -> openJobDetailsWindow(job.getValue()),
 				job -> JavaFXRoutines.notNullValue(job, j -> true));
 		menu.addItem("Open job subdirectory", j -> open(j.getValue()), x -> JavaFXRoutines.notNullValue(x, j -> true));
+		menu.addItem("Open in BigDataViewer", j -> openBigDataViewer(j.getValue()),
+				x -> JavaFXRoutines.notNullValue(x, j -> true));
 		menu.addSeparator();
 
 		menu.addItem("Upload data", job -> executeWSCallAsync("Uploading data", p -> job.getValue().startUpload()),
@@ -153,17 +161,14 @@ public class BenchmarkSPIMControl extends BorderPane implements CloseableControl
 										.contains(j.getState()) && j.canBeDownloaded()),
 				job -> job != null && job.getDownloadProgress().isWorking());
 
-		menu.addItem("Download statistics",
-				job -> executeWSCallAsync("Downloading data", p -> job.getValue().downloadStatistics(p)),
-				job -> JavaFXRoutines.notNullValue(job, j -> j.getState() == JobState.Finished));
-
 		menu.addItem("Explore errors", job -> job.getValue().exploreErrors(),
 				job -> JavaFXRoutines.notNullValue(job, j -> j.getState().equals(JobState.Failed)));
 
 		menu.addSeparator();
-		
-		menu.addItem("Delete job", j -> deleteJob(j.getValue()), x -> JavaFXRoutines.notNullValue(x, j -> j.getState() != JobState.Running));
-		
+
+		menu.addItem("Delete job", j -> deleteJob(j.getValue()),
+				x -> JavaFXRoutines.notNullValue(x, j -> j.getState() != JobState.Running));
+
 	}
 
 	private void deleteJob(BenchmarkJob bj) {
@@ -192,7 +197,7 @@ public class BenchmarkSPIMControl extends BorderPane implements CloseableControl
 											+ "\". Would you like to copy it into the job working directory \""
 											+ job.getDirectory() + "\"?",
 									ButtonType.YES, ButtonType.NO);
-					
+
 							al.setHeaderText(null);
 							al.setTitle("Copy " + CONFIG_YAML + "?");
 							al.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
@@ -270,35 +275,30 @@ public class BenchmarkSPIMControl extends BorderPane implements CloseableControl
 				: new DummyProgress();
 
 		executorServiceWS.execute(() -> {
-
-			try {
-				List<BenchmarkJob> jobs = new LinkedList<>(manager.getJobs());
-				jobs.sort((bj1, bj2) -> (int) (bj1.getId() - bj2.getId()));
-				for (BenchmarkJob bj : jobs) {
-					registry.addIfAbsent(bj);
-				}
-				registry.update();
-				Set<ObservableValue<BenchmarkJob>> actual = new HashSet<>(this.jobs.getItems());
-
-				executorServiceFX.execute(() -> {
-					for (ObservableBenchmarkJob value : registry.getAllItems()) {
-						if (!actual.contains(value)) {
-							addJobToItems(value);
-						}
-					}
-				});
-				progress.done();
-			} catch (IOException e) {
-				log.error(e.getMessage(), e);
+			List<BenchmarkJob> inspectedJobs = new LinkedList<>(manager.getJobs());
+			inspectedJobs.sort((bj1, bj2) -> (int) (bj1.getId() - bj2.getId()));
+			for (BenchmarkJob bj : inspectedJobs) {
+				registry.addIfAbsent(bj);
 			}
+			registry.update();
+			Set<ObservableValue<BenchmarkJob>> actual = new HashSet<>(this.jobs.getItems());
 
+			executorServiceFX.execute(() -> {
+				for (ObservableBenchmarkJob value : registry.getAllItems()) {
+					if (!actual.contains(value)) {
+						addJobToItems(value);
+					}
+				}
+			});
+			progress.done();
 		});
 	}
 
 	private void initTable() {
 		registry = new ObservableBenchmarkJobRegistry(bj -> remove(bj), executorServiceJobState, executorServiceFX);
 		setCellValueFactory(0, j -> j.getId() + "");
-		setCellValueFactoryCompletable(1, j -> j.getStateAsync(executorServiceJobState).thenApply(state -> "" + provider.getName(state)));
+		setCellValueFactoryCompletable(1,
+				j -> j.getStateAsync(executorServiceJobState).thenApply(state -> "" + provider.getName(state)));
 		setCellValueFactory(2, j -> j.getCreationTime().toString());
 		setCellValueFactory(3, j -> j.getStartTime().toString());
 		setCellValueFactory(4, j -> j.getEndTime().toString());
@@ -332,52 +332,63 @@ public class BenchmarkSPIMControl extends BorderPane implements CloseableControl
 	private void setCellValueFactoryCompletable(int index, Function<BenchmarkJob, CompletableFuture<String>> mapper) {
 		JavaFXRoutines.setCellValueFactory(jobs, index, mapper);
 		((TableColumn<ObservableBenchmarkJob, CompletableFuture<String>>) jobs.getColumns().get(index))
-				.setCellFactory(column -> new TableCellAdapter<ObservableBenchmarkJob, CompletableFuture<String>> //
-										(//
-												new P_TableCellUpdaterDecoratorWithToolTip<>//
-												(//
-														new FutureValueUpdater<ObservableBenchmarkJob, String, CompletableFuture<String>>//
-														(//
-																new StringValueUpdater<ObservableBenchmarkJob>(), executorServiceFX//
-														),//
-														"Doubleclick to open Dashboard" 
-												)
-										)
-								);
+				.setCellFactory(column -> new TableCellAdapter<> //
+				(//
+						new P_TableCellUpdaterDecoratorWithToolTip<>//
+						(//
+								new FutureValueUpdater<>//
+								(//
+										new StringValueUpdater<ObservableBenchmarkJob>(), executorServiceFX//
+								), //
+								"Doubleclick to open Dashboard")));
 	}
 
 	private void openJobDetailsWindow(BenchmarkJob job) {
+		new JobDetailWindow(root, job).setVisible(true);
+	}
+
+	private void openBigDataViewer(BenchmarkJob job) {
+		Path resultXML = job.getResultXML();
+		Path localPathToResultXML = job.getOutputDirectory().resolve(resultXML);
+		String openFile;
+		if (Files.exists(localPathToResultXML)) {
+			openFile = localPathToResultXML.toString();
+		} else {
+			openFile = startBDSForData(job, resultXML);
+		}
 		try {
-			new JobDetailWindow(root, job).setVisible(true);
-		} catch (IOException e) {
+			BigDataViewer.open(openFile, "Result of job " + job.getId(), new ProgressWriterConsole(),
+					ViewerOptions.options());
+		} catch (SpimDataException e) {
 			log.error(e.getMessage(), e);
 		}
+	}
+
+	private String startBDSForData(BenchmarkJob job, Path resultXML) {
+		throw new UnsupportedOperationException("File " + resultXML + " was not found in " + job.getOutputDirectory()
+				+ " and remote BigDataServer is not implemented yet.");
 	}
 
 	private interface P_JobAction {
 		public void doAction(Progress p) throws IOException;
 	}
-	
-	private class P_TableCellUpdaterDecoratorWithToolTip<S,T> implements TableCellUpdater<S, T> {
+
+	private class P_TableCellUpdaterDecoratorWithToolTip<S, T> implements TableCellUpdater<S, T> {
 
 		private final TableCellUpdater<S, T> decorated;
-		
+
 		private final String toolTipText;
-		
-		
-		
+
 		public P_TableCellUpdaterDecoratorWithToolTip(TableCellUpdater<S, T> decorated, String toolTipText) {
 			this.decorated = decorated;
 			this.toolTipText = toolTipText;
 		}
-
-
 
 		@Override
 		public void accept(TableCell<?, ?> cell, T value, boolean empty) {
 			decorated.accept(cell, value, empty);
 			cell.setTooltip(new Tooltip(toolTipText));
 		}
-		
+
 	}
 }

@@ -37,26 +37,31 @@ public class TaskComputation {
 		}
 
 		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + ((content == null) ? 0 : content.hashCode());
+			result = prime * result + ((name == null) ? 0 : name.hashCode());
+			return result;
+		}
+
+		@Override
 		public boolean equals(Object obj) {
-			if (this == obj)
-				return true;
-			if (obj == null)
-				return false;
-			if (getClass() != obj.getClass())
-				return false;
+			if (this == obj) return true;
+			if (obj == null) return false;
+			if (getClass() != obj.getClass()) return false;
 			Log other = (Log) obj;
 			if (content == null) {
-				if (other.content != null)
-					return false;
-			} else if (!content.equals(other.content))
-				return false;
+				if (other.content != null) { return false;}
+			}
+			else if (!content.equals(other.content)) return false;
 			if (name == null) {
-				if (other.name != null)
-					return false;
-			} else if (!name.equals(other.name))
-				return false;
+				if (other.name != null) return false;
+			}
+			else if (!name.equals(other.name)) return false;
 			return true;
 		}
+		
 	}
 
 	public static class File {
@@ -99,7 +104,7 @@ public class TaskComputation {
 		this.computationAccessor = computationAccessor;
 		this.taskDescription = taskDescription;
 		this.timepoint = timepoint;
-		this.errors = new LinkedList<BenchmarkError>();
+		this.errors = new LinkedList<>();
 		this.state = JobState.Unknown;
 		updateState();
 	}
@@ -147,11 +152,11 @@ public class TaskComputation {
 	/**
 	 * Populates parameters of the current object by searching the output
 	 * 
-	 * @param positionInOutput:
+	 * @param actualPositionInOutput
 	 *            Index of the output position to search from
 	 * @return success flag
 	 */
-	public boolean populateParameters(int positionInOutput) {
+	public boolean populateParameters(int actualPositionInOutput) {
 
 		// Should the state be different than unknown, there is no need to populate
 		// parameters
@@ -159,7 +164,7 @@ public class TaskComputation {
 			return false;
 		}
 
-		this.positionInOutput = positionInOutput;
+		this.positionInOutput = actualPositionInOutput;
 		if (!resolveJobParameters()) {
 			return false;
 		}
@@ -200,6 +205,7 @@ public class TaskComputation {
 			final String OUTPUT_PARSING_ERRONEOUS_JOB = "Error in job ";
 			final String desiredPatternErroneousJob = OUTPUT_PARSING_ERRONEOUS_JOB + taskDescription;
 
+			@SuppressWarnings("resource")
 			Scanner scanner = new Scanner(getSnakemakeOutput().substring(positionInOutput));
 			String currentLine;
 			while (scanner.hasNextLine()) {
@@ -225,6 +231,7 @@ public class TaskComputation {
 		final String OUTPUT_PARSING_LOGS = "log: ";
 		final String OUTPUT_PARSING_JOB_ID = "jobid: ";
 
+		@SuppressWarnings("resource")
 		Scanner scanner = new Scanner(getSnakemakeOutput().substring(positionInOutput));
 		String currentLine;
 		while (scanner.hasNextLine()) {

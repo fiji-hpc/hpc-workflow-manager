@@ -69,8 +69,8 @@ public class TableViewContextMenu<T> {
 				public void handle(ContextMenuEvent event) {
 					T requestedItem = getRequestedItem();
 					updateColumnIndex(event.getSceneX());
-					int columnIndex = getRequestedColumn();
-					items.forEach(item -> item.updateEnable(requestedItem, columnIndex));
+					int requestedColumnIndex = getRequestedColumn();
+					items.forEach(item -> item.updateEnable(requestedItem, requestedColumnIndex));
 				}
 
 				private void updateColumnIndex(double sceneX) {
@@ -93,7 +93,7 @@ public class TableViewContextMenu<T> {
 	}
 
 	private interface P_Updatable<T> {
-		public void updateEnable(T selected, int columnIndex);
+		public void updateEnable(T selected, int enabledColumnIndex);
 	}
 
 	private class P_UpdatableImpl<I extends MenuItem> implements P_Updatable<T> {
@@ -108,7 +108,7 @@ public class TableViewContextMenu<T> {
 		}
 
 		@Override
-		public void updateEnable(T selected, int columnIndex) {
+		public void updateEnable(T selected, int enabledColumnIndex) {
 			item.setDisable(!enableHandler.test(selected));
 		}
 
@@ -166,8 +166,8 @@ public class TableViewContextMenu<T> {
 		}
 
 		@Override
-		public void updateEnable(T selected, int columnIndex) {
-			super.updateEnable(selected, columnIndex);
+		public void updateEnable(T selected, int enabledColumnIndex) {
+			super.updateEnable(selected, enabledColumnIndex);
 			getItem().setSelected(property.apply(selected));
 		}
 

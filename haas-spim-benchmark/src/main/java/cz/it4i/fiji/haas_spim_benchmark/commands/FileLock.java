@@ -1,7 +1,6 @@
 package cz.it4i.fiji.haas_spim_benchmark.commands;
 
 import java.io.Closeable;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.OverlappingFileLockException;
@@ -22,7 +21,7 @@ public class FileLock implements Closeable {
 
 	private java.nio.channels.FileLock lock;
 
-	public FileLock(Path lockPath) throws FileNotFoundException {
+	public FileLock(Path lockPath) {
 		this.localPath = lockPath;
 	}
 
