@@ -102,7 +102,6 @@ class MiddlewareTunnel implements Closeable {
 					try (Socket soc = ss.accept()) {
 						obtainTransferMethodIfNeeded(port);
 						doTransfer(soc);
-						
 					}
 					catch (final SocketTimeoutException e) {
 						// ignore and check interruption
@@ -120,7 +119,8 @@ class MiddlewareTunnel implements Closeable {
 						.isClosed());
 				}
 
-			} catch(RuntimeException e) {
+			}
+			catch (final RuntimeException e) {
 				log.error(e.getMessage(), e);
 				throw e;
 			}
@@ -225,7 +225,9 @@ class MiddlewareTunnel implements Closeable {
 			log.error(e.getMessage(), e);
 		}
 		catch (final SocketException e) {
-			if (!e.getMessage().equals("Socket closed")) {
+			if (!e.getMessage().equals("Socket closed") || !e.getMessage().equals(
+				"Connection reset"))
+			{
 				log.error(e.getMessage(), e);
 			}
 		}
@@ -341,24 +343,28 @@ class MiddlewareTunnel implements Closeable {
 					}
 				}
 			}
-			if(received == null) {
+			if (received == null) {
 				if (log.isDebugEnabled()) {
 					log.debug("EOF from middleware detected");
 				}
 			}
 		}
 		catch (final InterruptedIOException e) {
-			return;
+			//ignore this
+		}
+		catch(SocketException e) {
+			if(!e.getMessage().equals("Broken pipe (Write failed)")) {
+				log.error(e.getMessage(), e);
+			} 
 		}
 		catch (final IOException e) {
 			log.error(e.getMessage(), e);
-			return;
 		}
 		finally {
 			try {
 				connection.shutdownOutput();
 			}
-			catch (IOException exc) {
+			catch (final IOException exc) {
 				log.error(exc.getMessage(), exc);
 			}
 			log.debug("END: readFromMiddleware");
@@ -374,11 +380,9 @@ class MiddlewareTunnel implements Closeable {
 
 		private final Runnable[] runnable = new Runnable[2];
 
-		
 		private final Thread[] threads = new Thread[2];
-		
+
 		private final CountDownLatch latchOfBothDirections = new CountDownLatch(2);
-		
 
 		public P_Connection(final Socket soc) {
 			this.socket = soc;
@@ -434,7 +438,7 @@ class MiddlewareTunnel implements Closeable {
 
 		private void stop(final CountDownLatch localLatch) {
 			for (final Thread thread : threads) {
-				if(thread != null) {
+				if (thread != null) {
 					thread.interrupt();
 				}
 			}
