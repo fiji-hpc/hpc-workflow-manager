@@ -420,7 +420,7 @@ public class HaaSClient {
 				}
 				final byte[] result = ws.readDataFromJobNode(jobId, host, sessionId);
 				if (log.isDebugEnabled()) {
-					log.debug("read - DONE: {}", result != null ? new String(result)
+					log.debug("read - DONE: \"{}\"", result != null ? new String(result)
 						: "EOF");
 				}
 				return result;
