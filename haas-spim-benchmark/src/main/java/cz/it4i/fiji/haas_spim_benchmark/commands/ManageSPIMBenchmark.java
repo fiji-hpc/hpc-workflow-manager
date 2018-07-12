@@ -10,6 +10,8 @@ import java.nio.file.Paths;
 
 import javax.swing.WindowConstants;
 
+import net.imagej.ImageJ;
+
 import org.scijava.Context;
 import org.scijava.command.Command;
 import org.scijava.plugin.Parameter;
@@ -23,7 +25,6 @@ import org.slf4j.LoggerFactory;
 
 import cz.it4i.fiji.haas_spim_benchmark.core.Constants;
 import cz.it4i.fiji.haas_spim_benchmark.ui.BenchmarkSPIMWindow;
-import net.imagej.ImageJ;
 
 /**
  * 
@@ -73,7 +74,7 @@ public class ManageSPIMBenchmark implements Command {
 			final BenchmarkSPIMWindow dialog = new BenchmarkSPIMWindow(null,
 					new BenchmarkSPIMParametersImpl(userName, password, Constants.PHONE, email, workingDirPath));
 			dialog.executeAdjustment(() -> {
-				dialog.setTitle(Constants.MENU_ITEM_NAME + " " + Constants.SUBMENU_ITEM_NAME);
+				dialog.setTitle(Constants.SUBMENU_ITEM_NAME);
 				dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 				dialog.addWindowListener(new WindowAdapter() {
 					@Override

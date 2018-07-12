@@ -6,7 +6,7 @@ import java.util.Map;
 public interface Constants {
 	
 	String MENU_ITEM_NAME = "Multiview Reconstruction";
-	String SUBMENU_ITEM_NAME = "Remote Workflow Manager";
+	String SUBMENU_ITEM_NAME = "SPIM Workflow Manager for HPC";
 	
 	String PHONE = "123456789";
 	int HAAS_UPDATE_TIMEOUT = 30000;
