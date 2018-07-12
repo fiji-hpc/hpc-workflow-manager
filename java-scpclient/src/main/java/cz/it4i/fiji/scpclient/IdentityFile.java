@@ -12,17 +12,15 @@ class IdentityFile implements Identity {
 
 	static IdentityFile newInstance(String prvfile, String pubfile, JSch jsch) throws JSchException {
 		KeyPair kpair = KeyPair.load(jsch, prvfile, pubfile);
-		return new IdentityFile(jsch, prvfile, kpair);
+		return new IdentityFile(prvfile, kpair);
 	}
 
 	static IdentityFile newInstance(String name, byte[] prvkey, byte[] pubkey, JSch jsch) throws JSchException {
-
 		KeyPair kpair = KeyPair.load(jsch, prvkey, pubkey);
-		return new IdentityFile(jsch, name, kpair);
+		return new IdentityFile(name, kpair);
 	}
 
-	private IdentityFile(JSch jsch, String name, KeyPair kpair) throws JSchException {
-
+	private IdentityFile(String name, KeyPair kpair) {
 		this.identity = name;
 		this.kpair = kpair;
 	}
@@ -35,6 +33,7 @@ class IdentityFile implements Identity {
 	 * @return <tt>true</tt> if the decryption is succeeded or this identity is not
 	 *         cyphered.
 	 */
+	@Override
 	public boolean setPassphrase(byte[] passphrase) throws JSchException {
 		return kpair.decrypt(passphrase);
 	}
@@ -44,6 +43,7 @@ class IdentityFile implements Identity {
 	 * 
 	 * @return the public-key blob
 	 */
+	@Override
 	public byte[] getPublicKeyBlob() {
 		return kpair.getPublicKeyBlob();
 	}
@@ -55,6 +55,7 @@ class IdentityFile implements Identity {
 	 *            data to be signed
 	 * @return the signature
 	 */
+	@Override
 	public byte[] getSignature(byte[] data) {
 		return kpair.getSignature(data);
 	}
@@ -63,6 +64,8 @@ class IdentityFile implements Identity {
 	 * @deprecated This method should not be invoked.
 	 * @see #setPassphrase(byte[] passphrase)
 	 */
+	@Deprecated
+	@Override
 	public boolean decrypt() {
 		throw new RuntimeException("not implemented");
 	}
@@ -72,6 +75,7 @@ class IdentityFile implements Identity {
 	 * 
 	 * @return "ssh-rsa" or "ssh-dss"
 	 */
+	@Override
 	public String getAlgName() {
 		if (kpair.getKeyType() == KeyPair.RSA) {
 			return "ssh-rsa";
@@ -85,6 +89,7 @@ class IdentityFile implements Identity {
 	 * Returns the name of this identity. It will be useful to identify this object
 	 * in the {@link IdentityRepository}.
 	 */
+	@Override
 	public String getName() {
 		return identity;
 	}
@@ -94,6 +99,7 @@ class IdentityFile implements Identity {
 	 * 
 	 * @return <tt>true</tt> if this identity is cyphered.
 	 */
+	@Override
 	public boolean isEncrypted() {
 		return kpair.isEncrypted();
 	}
@@ -101,6 +107,7 @@ class IdentityFile implements Identity {
 	/**
 	 * Disposes internally allocated data, like byte array for the private key.
 	 */
+	@Override
 	public void clear() {
 		kpair.dispose();
 		kpair = null;

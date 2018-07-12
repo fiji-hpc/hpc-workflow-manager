@@ -70,9 +70,9 @@ public class ScpClient implements Closeable {
 		init(hostName, userName, id);
 	}
 
-	private void init(String hostName, String username, Identity privateKeyFile) throws JSchException {
-		this.hostName = hostName;
-		this.username = username;
+	private void init(String initHostName, String initUsername, Identity privateKeyFile) throws JSchException {
+		this.hostName = initHostName;
+		this.username = initUsername;
 		jsch.addIdentity(privateKeyFile, null);
 	}
 
@@ -91,11 +91,9 @@ public class ScpClient implements Closeable {
 
 	public boolean download(String lfile, OutputStream os, TransferFileProgress progress)
 			throws JSchException, IOException {
-		Session session = getConnectedSession();
-
-		// exec 'scp -f rfile' remotely
+				// exec 'scp -f rfile' remotely
 		String command = "scp -f " + lfile;
-		Channel channel = session.openChannel("exec");
+		Channel channel = getConnectedSession().openChannel("exec");
 
 		try {
 			((ChannelExec) channel).setCommand(command);
@@ -200,11 +198,10 @@ public class ScpClient implements Closeable {
 
 	public boolean upload(InputStream is, String fileName, long length, long lastModified,
 			TransferFileProgress progress) throws JSchException, IOException {
-		Session session = getConnectedSession();
 		boolean ptimestamp = true;
 		// exec 'scp -t rfile' remotely
 		String command = "scp " + (ptimestamp ? "-p" : "") + " -t " + fileName;
-		Channel channel = session.openChannel("exec");
+		Channel channel = getConnectedSession().openChannel("exec");
 		((ChannelExec) channel).setCommand(command);
 		// get I/O streams for remote scp
 		try (OutputStream out = channel.getOutputStream(); InputStream in = channel.getInputStream()) {
@@ -263,11 +260,9 @@ public class ScpClient implements Closeable {
 	}
 
 	public long size(String lfile) throws JSchException, IOException {
-		Session session = getConnectedSession();
-
 		// exec 'scp -f rfile' remotely
 		String command = "scp -f " + lfile;
-		Channel channel = session.openChannel("exec");
+		Channel channel = getConnectedSession().openChannel("exec");
 
 		try {
 			((ChannelExec) channel).setCommand(command);
@@ -315,11 +310,10 @@ public class ScpClient implements Closeable {
 	}
 
 	@SuppressWarnings("unchecked")
-	public List<Long> sizeByLs(String lfile) throws JSchException, IOException {
-		Session session = getConnectedSession();
-
+	public List<Long> sizeByLs(String lfile) throws JSchException{
+		
 		// exec 'scp -f rfile' remotely
-		Channel channel = session.openChannel("sftp");
+		Channel channel = getConnectedSession().openChannel("sftp");
 
 		try {
 			channel.connect();
