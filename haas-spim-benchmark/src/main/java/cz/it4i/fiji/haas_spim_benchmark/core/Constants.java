@@ -13,7 +13,7 @@ public interface Constants {
 	short UI_TO_HAAS_FREQUENCY_UPDATE_RATIO = 10;
 	String HAAS_JOB_NAME = "HaaSSPIMBenchmark";
 	int HAAS_CLUSTER_NODE_TYPE = 6;
-	int HAAS_TEMPLATE_ID = 2;
+	int HAAS_TEMPLATE_ID = 4;
 	String HAAS_PROJECT_ID = "OPEN-12-20";
 	int HAAS_TIMEOUT = 9600; //Walltime in seconds
 	
