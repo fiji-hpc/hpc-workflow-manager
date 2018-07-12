@@ -422,7 +422,7 @@ public class BenchmarkJobManager implements Closeable {
 						Set<String> otherFiles = extractNames(getOutputDirectory().resolve(mainFile));
 						try {
 							return job
-									.startDownload(downloadFileNameExtractDecorator(name -> otherFiles.contains(name)));
+									.startDownload(downloadFileNameExtractDecorator( downloadCSVDecorator( name -> otherFiles.contains(name))));
 						} catch (IOException e) {
 							throw new RuntimeException(e);
 						}
@@ -670,7 +670,7 @@ public class BenchmarkJobManager implements Closeable {
 				.walltimeLimit(Constants.HAAS_TIMEOUT).numberOfCoresPerNode(Constants.CORES_PER_NODE).build();
 	}
 
-	private static Predicate<String> downloadFileNameExtractDecorator(Predicate<String> decorated) {
+	static private Predicate<String> downloadFileNameExtractDecorator(Predicate<String> decorated) {
 		return name -> {
 			Path path = getPathSafely(name);
 			if (path == null)
@@ -680,8 +680,18 @@ public class BenchmarkJobManager implements Closeable {
 			return decorated.test(fileName);
 		};
 	}
+	
+	static private Predicate<String> downloadCSVDecorator(Predicate<String> decorated) {
+		return name -> {
+			if(name.toLowerCase().endsWith(".csv")) {
+				return true;
+			}
+			return decorated.test(name);
+		};
+		
+	}
 
-	private static Predicate<String> downloadFailedData() {
+	static private Predicate<String> downloadFailedData() {
 		return name -> {
 			Path path = getPathSafely(name);
 			if (path == null)
