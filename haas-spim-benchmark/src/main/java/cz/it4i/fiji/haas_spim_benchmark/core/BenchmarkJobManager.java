@@ -73,10 +73,6 @@ public class BenchmarkJobManager implements Closeable {
 
 		private final Job job;
 
-		public boolean isUseDemoData() {
-			return job.isUseDemoData();
-		}
-
 		private final List<Task> tasks;
 		private final List<BenchmarkError> nonTaskSpecificErrors;
 		private final SPIMComputationAccessor computationAccessor;
@@ -94,7 +90,8 @@ public class BenchmarkJobManager implements Closeable {
 		}
 
 		public void setDownloadNotifier(Progress progress) {
-			job.setDownloadNotifier(downloadNotifier = convertTo(progress));
+			job.setDownloadNotifier(downloadNotifier =
+				createDownloadNotifierProcessingResultCSV(convertTo(progress)));
 		}
 
 		public void setUploadNotifier(Progress progress) {
@@ -166,6 +163,10 @@ public class BenchmarkJobManager implements Closeable {
 
 		public String getEndTime() {
 			return getStringFromTimeSafely(job.getEndTime());
+		}
+
+		public boolean isUseDemoData() {
+			return job.isUseDemoData();
 		}
 
 		@Override
@@ -528,6 +529,12 @@ public class BenchmarkJobManager implements Closeable {
 			return Stream.concat(nonTaskSpecificErrors.stream(), taskSpecificErrors).collect(Collectors.toList());
 		}
 
+		private ProgressNotifier createDownloadNotifierProcessingResultCSV(
+			ProgressNotifier progressNotifier)
+		{
+			if (progressNotifier == null) return null;
+			return new DownloadNotifierProcessingResultCSV(progressNotifier, this);
+		}
 	}
 
 	public BenchmarkJobManager(BenchmarkSPIMParameters params) {
