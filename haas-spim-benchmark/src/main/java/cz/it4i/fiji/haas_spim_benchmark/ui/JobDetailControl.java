@@ -1,3 +1,4 @@
+
 package cz.it4i.fiji.haas_spim_benchmark.ui;
 
 import java.awt.Window;
@@ -16,33 +17,43 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 
-public class JobDetailControl extends TabPane implements CloseableControl, InitiableControl {
+public class JobDetailControl extends TabPane implements CloseableControl,
+	InitiableControl
+{
+
 	@SuppressWarnings("unused")
-	private static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas_spim_benchmark.ui.JobDetailControl.class);
+	private static Logger log = LoggerFactory.getLogger(
+		cz.it4i.fiji.haas_spim_benchmark.ui.JobDetailControl.class);
 
-	@FXML private SPIMPipelineProgressViewController progressView;
+	@FXML
+	private SPIMPipelineProgressViewController progressView;
 
-	@FXML private LogViewControl errorOutput;
+	@FXML
+	private LogViewControl errorOutput;
 
-	@FXML private LogViewControl standardOutput;
-	
-	@FXML private JobPropertiesControl jobProperties;
-	
-	@FXML private Tab jobPropertiesTab;
-	
+	@FXML
+	private LogViewControl standardOutput;
+
+	@FXML
+	private JobPropertiesControl jobProperties;
+
+	@FXML
+	private Tab jobPropertiesTab;
+
 	private final HaaSOutputObservableValueRegistry observableValueRegistry;
 
 	private final BenchmarkJob job;
 
-	
 	public JobDetailControl(BenchmarkJob job) {
 		JavaFXRoutines.initRootAndController("JobDetail.fxml", this);
 		progressView.setJob(job);
 		observableValueRegistry = new HaaSOutputObservableValueRegistry(job,
-				Constants.HAAS_UPDATE_TIMEOUT / Constants.UI_TO_HAAS_FREQUENCY_UPDATE_RATIO);
-		errorOutput.setObservable(observableValueRegistry.createObservable(SynchronizableFileType.StandardErrorFile));
-		standardOutput
-				.setObservable(observableValueRegistry.createObservable(SynchronizableFileType.StandardOutputFile));
+			Constants.HAAS_UPDATE_TIMEOUT /
+				Constants.UI_TO_HAAS_FREQUENCY_UPDATE_RATIO);
+		errorOutput.setObservable(observableValueRegistry.createObservable(
+			SynchronizableFileType.StandardErrorFile));
+		standardOutput.setObservable(observableValueRegistry.createObservable(
+			SynchronizableFileType.StandardOutputFile));
 		jobProperties.setJob(job);
 		observableValueRegistry.start();
 		this.job = job;
@@ -54,16 +65,18 @@ public class JobDetailControl extends TabPane implements CloseableControl, Initi
 			enableOnlySpecificTab(jobPropertiesTab);
 		}
 	}
-	
-	
+
 	private void enableOnlySpecificTab(Tab tabToLeaveEnabled) {
-		getTabs().stream().filter(node -> node != tabToLeaveEnabled).forEach(node -> node.setDisable(true));
+		getTabs().stream().filter(node -> node != tabToLeaveEnabled).forEach(
+			node -> node.setDisable(true));
 		getSelectionModel().select(jobPropertiesTab);
 	}
 
 	private boolean isExecutionDetailsAvailable(BenchmarkJob inspectedJob) {
-		return inspectedJob.getState() == JobState.Running || inspectedJob.getState() == JobState.Finished
-				|| inspectedJob.getState() == JobState.Failed || inspectedJob.getState() == JobState.Canceled;
+		return inspectedJob.getState() == JobState.Running || inspectedJob
+			.getState() == JobState.Finished || inspectedJob
+				.getState() == JobState.Failed || inspectedJob
+					.getState() == JobState.Canceled;
 	}
 
 	@Override

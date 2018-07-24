@@ -1,3 +1,4 @@
+
 package cz.it4i.fiji.haas.ui;
 
 import java.awt.BorderLayout;
@@ -15,19 +16,21 @@ import org.slf4j.LoggerFactory;
 
 import javafx.scene.Parent;
 
-
-public abstract class FXFrame<T extends Parent&CloseableControl> extends JDialog {
+public abstract class FXFrame<T extends Parent & CloseableControl> extends
+	JDialog
+{
 
 	@SuppressWarnings("unused")
-	private static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas.ui.FXFrame.class);
+	private static Logger log = LoggerFactory.getLogger(
+		cz.it4i.fiji.haas.ui.FXFrame.class);
 	private static final long serialVersionUID = 1L;
-	private JFXPanel<T> fxPanel;
-	
+	private final JFXPanel<T> fxPanel;
+
 	public FXFrame(Supplier<T> fxSupplier) {
 		this(null, fxSupplier);
 	}
-	
-	public FXFrame(Window parent, Supplier<T> fxSupplier){
+
+	public FXFrame(Window parent, Supplier<T> fxSupplier) {
 		super(parent, ModalityType.MODELESS);
 		fxPanel = new JFXPanel<>(fxSupplier);
 		init();
@@ -40,16 +43,16 @@ public abstract class FXFrame<T extends Parent&CloseableControl> extends JDialog
 	public JFXPanel<T> getFxPanel() {
 		return fxPanel;
 	}
-	
+
 	public void executeAdjustment(Runnable command) {
 		JavaFXRoutines.runOnFxThread(() -> {
 			command.run();
 		});
 	}
 
-
 	private void init() {
 		addWindowListener(new WindowAdapter() {
+
 			@Override
 			public void windowClosing(WindowEvent e) {
 				getFxPanel().getControl().close();
@@ -58,14 +61,15 @@ public abstract class FXFrame<T extends Parent&CloseableControl> extends JDialog
 		if (fxPanel.getControl() instanceof ResizeableControl) {
 			ResizeableControl resizable = (ResizeableControl) fxPanel.getControl();
 			addComponentListener(new ComponentAdapter() {
+
 				@Override
 				public void componentResized(ComponentEvent e) {
-					resizable.setSize(e.getComponent().getSize().getWidth(), e.getComponent().getSize().getHeight());
+					resizable.setSize(e.getComponent().getSize().getWidth(), e
+						.getComponent().getSize().getHeight());
 				}
 			});
 		}
 		this.setLayout(new BorderLayout());
-		//JScrollPane scrollPane = new JScrollPane(this.fxPanel);
 		this.add(fxPanel, BorderLayout.CENTER);
 		JavaFXRoutines.runOnFxThread(() -> {
 			this.pack();
