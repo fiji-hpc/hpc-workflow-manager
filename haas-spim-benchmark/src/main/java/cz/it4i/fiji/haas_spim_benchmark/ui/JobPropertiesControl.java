@@ -1,6 +1,7 @@
 package cz.it4i.fiji.haas_spim_benchmark.ui;
 
 import java.io.Closeable;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
@@ -51,8 +52,16 @@ public class JobPropertiesControl extends BorderPane implements Closeable {
 	private void initTable() {
 		setCellValueFactory(0, s -> s.getName());
 		setCellValueFactory(1, s -> s.getValueAsString());
-		JavaFXRoutines.setOnDoubleClickAction(properties, executorServiceUI, rowData -> rowData.isOpenAllowed(),
-				rowData -> ShellRoutines.openDirectoryInBrowser(rowData.getPath()));
+		JavaFXRoutines.setOnDoubleClickAction(properties, executorServiceUI,
+			rowData -> rowData.isOpenAllowed(), rowData -> {
+				try {
+					ShellRoutines.openDirectoryInBrowser(rowData.getPath());
+				}
+				catch (UnsupportedOperationException | IOException e) {
+					// TODO: Escalate an error to the end user
+					log.error(e.getMessage(), e);
+				}
+			});
 	}
 
 	private void fillTable() {

@@ -1,9 +1,13 @@
+
 package cz.it4i.fiji.haas.ui;
 
 import java.io.IOException;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.RunnableFuture;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -62,10 +66,21 @@ public interface JavaFXRoutines {
 	}
 
 	static public void runOnFxThread(Runnable runnable) {
+
+		RunnableFuture<Void> task = new FutureTask<>(runnable, null);
+
 		if (Platform.isFxApplicationThread()) {
-			runnable.run();
-		} else {
-			Platform.runLater(runnable);
+			task.run();
+		}
+		else {
+			Platform.runLater(task);
+		}
+
+		try {
+			task.get();
+		}
+		catch (InterruptedException | ExecutionException e) {
+			log.error(e.getMessage(), e);
 		}
 	}
 

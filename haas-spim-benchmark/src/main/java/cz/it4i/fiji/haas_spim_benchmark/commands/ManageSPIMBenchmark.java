@@ -1,3 +1,4 @@
+
 package cz.it4i.fiji.haas_spim_benchmark.commands;
 
 import java.awt.event.WindowAdapter;
@@ -27,37 +28,36 @@ import cz.it4i.fiji.haas_spim_benchmark.core.Constants;
 import cz.it4i.fiji.haas_spim_benchmark.ui.BenchmarkSPIMWindow;
 
 /**
- * 
  * @author koz01
- *
  */
-@Plugin(type = Command.class, headless = false, menuPath = "Plugins>" + Constants.MENU_ITEM_NAME + ">" + Constants.SUBMENU_ITEM_NAME)
+@Plugin(type = Command.class, headless = false, menuPath = "Plugins>" +
+	Constants.MENU_ITEM_NAME + ">" + Constants.SUBMENU_ITEM_NAME)
 public class ManageSPIMBenchmark implements Command {
 
-	private static Logger log = LoggerFactory
-			.getLogger(cz.it4i.fiji.haas_spim_benchmark.commands.ManageSPIMBenchmark.class);
-	
+	private static Logger log = LoggerFactory.getLogger(
+		cz.it4i.fiji.haas_spim_benchmark.commands.ManageSPIMBenchmark.class);
+
 	private static final String LOCK_FILE_NAME = ".lock";
-	
+
 	@Parameter
 	private UIService uiService;
 
 	@Parameter
 	private Context context;
-	
+
 	@Parameter(style = TextWidget.FIELD_STYLE, label = "User name")
 	private String userName;
-	
+
 	@Parameter(style = TextWidget.PASSWORD_STYLE)
 	private String password;
-	
-	
+
 	@Parameter(style = TextWidget.FIELD_STYLE)
 	private String email;
 
-	@Parameter(label = "Working directory", persist = true, style = FileWidget.DIRECTORY_STYLE)
+	@Parameter(label = "Working directory", persist = true,
+		style = FileWidget.DIRECTORY_STYLE)
 	private File workingDirectory;
-	
+
 	@Override
 	public void run() {
 		try {
@@ -67,16 +67,20 @@ public class ManageSPIMBenchmark implements Command {
 			}
 			@SuppressWarnings("resource")
 			final FileLock fl = new FileLock(workingDirPath.resolve(LOCK_FILE_NAME));
-			if(!fl.tryLock()) {
-				uiService.showDialog("Working directory is already used by someone else", MessageType.ERROR_MESSAGE);
+			if (!fl.tryLock()) {
+				uiService.showDialog(
+					"Working directory is already used by someone else",
+					MessageType.ERROR_MESSAGE);
 				return;
 			}
 			final BenchmarkSPIMWindow dialog = new BenchmarkSPIMWindow(null,
-					new BenchmarkSPIMParametersImpl(userName, password, Constants.PHONE, email, workingDirPath));
+				new BenchmarkSPIMParametersImpl(userName, password, Constants.PHONE,
+					email, workingDirPath));
 			dialog.executeAdjustment(() -> {
 				dialog.setTitle(Constants.SUBMENU_ITEM_NAME);
 				dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 				dialog.addWindowListener(new WindowAdapter() {
+
 					@Override
 					public void windowClosing(final WindowEvent e) {
 						super.windowClosing(e);
@@ -85,7 +89,8 @@ public class ManageSPIMBenchmark implements Command {
 				});
 				dialog.setVisible(true);
 			});
-		} catch (final IOException e) {
+		}
+		catch (final IOException e) {
 			log.error(e.getMessage(), e);
 		}
 
