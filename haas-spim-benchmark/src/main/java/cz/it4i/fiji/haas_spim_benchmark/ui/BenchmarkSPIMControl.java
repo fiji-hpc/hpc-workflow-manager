@@ -65,20 +65,23 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Region;
 import mpicbg.spim.data.SpimDataException;
 
-public class BenchmarkSPIMControl extends BorderPane implements CloseableControl, InitiableControl {
+public class BenchmarkSPIMControl extends BorderPane implements
+	CloseableControl, InitiableControl
+{
 
 	@FXML
 	private TableView<ObservableBenchmarkJob> jobs;
 
 	private final BenchmarkJobManager manager;
 
-	private final ExecutorService executorServiceJobState = Executors.newWorkStealingPool();
+	private final ExecutorService executorServiceJobState = Executors
+		.newWorkStealingPool();
 
 	private final Executor executorServiceFX = new FXFrameExecutorService();
 
 	private Window root;
 
-	private ExecutorService executorServiceUI;
+	private ExecutorService executorServiceShell;
 
 	private ExecutorService executorServiceWS;
 
@@ -88,21 +91,22 @@ public class BenchmarkSPIMControl extends BorderPane implements CloseableControl
 
 	private final JobStateNameProvider provider = new JobStateNameProvider();
 
-	private static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas_spim_benchmark.ui.BenchmarkSPIMControl.class);
+	private static Logger log = LoggerFactory.getLogger(
+		cz.it4i.fiji.haas_spim_benchmark.ui.BenchmarkSPIMControl.class);
 
 	public BenchmarkSPIMControl(BenchmarkJobManager manager) {
 		this.manager = manager;
 		JavaFXRoutines.initRootAndController("BenchmarkSPIM.fxml", this);
-
 	}
 
 	@Override
 	public void init(Window rootWindow) {
 		this.root = rootWindow;
 		executorServiceWS = Executors.newSingleThreadExecutor();
-		executorServiceUI = Executors.newSingleThreadExecutor();
+		executorServiceShell = Executors.newSingleThreadExecutor();
 		timer = new Timer();
 		timer.scheduleAtFixedRate(new TimerTask() {
+
 			@Override
 			public void run() {
 				updateJobs(false);
@@ -110,12 +114,12 @@ public class BenchmarkSPIMControl extends BorderPane implements CloseableControl
 		}, Constants.HAAS_UPDATE_TIMEOUT, Constants.HAAS_UPDATE_TIMEOUT);
 		initTable();
 		initMenu();
-		executorServiceFX.execute(this::updateJobs);
+		executorServiceFX.execute(() -> updateJobs(true));
 	}
 
 	@Override
 	public void close() {
-		executorServiceUI.shutdown();
+		executorServiceShell.shutdown();
 		executorServiceWS.shutdown();
 		executorServiceJobState.shutdown();
 		timer.cancel();
@@ -123,51 +127,55 @@ public class BenchmarkSPIMControl extends BorderPane implements CloseableControl
 	}
 
 	private void initMenu() {
-		TableViewContextMenu<ObservableBenchmarkJob> menu = new TableViewContextMenu<>(jobs);
+		TableViewContextMenu<ObservableBenchmarkJob> menu =
+			new TableViewContextMenu<>(jobs);
 		menu.addItem("Create a new job", x -> askForCreateJob(), j -> true);
 		menu.addSeparator();
 		menu.addItem("Start job", job -> executeWSCallAsync("Starting job", p -> {
 			job.getValue().startJob(p);
 			job.getValue().update();
-		}), job -> JavaFXRoutines.notNullValue(job,
-				j -> j.getState() == JobState.Configuring || j.getState() == JobState.Finished
-						|| j.getState() == JobState.Failed || j.getState() == JobState.Canceled));
+		}), job -> JavaFXRoutines.notNullValue(job, j -> j
+			.getState() == JobState.Configuring || j
+				.getState() == JobState.Finished || j.getState() == JobState.Failed || j
+					.getState() == JobState.Canceled));
 
 		menu.addItem("Cancel job", job -> executeWSCallAsync("Canceling job", p -> {
 			job.getValue().cancelJob();
 			job.getValue().update();
-		}), job -> JavaFXRoutines.notNullValue(job,
-				j -> j.getState() == JobState.Running || j.getState() == JobState.Queued));
+		}), job -> JavaFXRoutines.notNullValue(job, j -> j
+			.getState() == JobState.Running || j.getState() == JobState.Queued));
 
 		menu.addItem("Job dashboard", job -> openJobDetailsWindow(job.getValue()),
-				job -> JavaFXRoutines.notNullValue(job, j -> true));
-		menu.addItem("Open job subdirectory", j -> open(j.getValue()), x -> JavaFXRoutines.notNullValue(x, j -> true));
+			job -> JavaFXRoutines.notNullValue(job, j -> true));
+		menu.addItem("Open job subdirectory", j -> openJobSubdirectory(j
+			.getValue()), x -> JavaFXRoutines.notNullValue(x, j -> true));
 		menu.addItem("Open in BigDataViewer", j -> openBigDataViewer(j.getValue()),
-				x -> JavaFXRoutines.notNullValue(x, j -> true));
+			x -> JavaFXRoutines.notNullValue(x, j -> true));
 		menu.addSeparator();
 
-		menu.addItem("Upload data", job -> executeWSCallAsync("Uploading data", p -> job.getValue().startUpload()),
-				job -> executeWSCallAsync("Stop uploading data", p -> job.getValue().stopUpload()),
-				job -> JavaFXRoutines.notNullValue(job,
-						j -> !j.isUseDemoData()
-								&& !EnumSet.of(JobState.Running, JobState.Disposed).contains(j.getState())),
-				job -> job != null && job.getUploadProgress().isWorking());
-		menu.addItem("Download result",
-				job -> executeWSCallAsync("Downloading data", p -> job.getValue().startDownload()),
-				job -> executeWSCallAsync("Stop downloading data", p -> job.getValue().stopDownload()),
-				job -> JavaFXRoutines
-						.notNullValue(job,
-								j -> EnumSet.of(JobState.Failed, JobState.Finished, JobState.Canceled)
-										.contains(j.getState()) && j.canBeDownloaded()),
-				job -> job != null && job.getDownloadProgress().isWorking());
+		menu.addItem("Upload data", job -> executeWSCallAsync("Uploading data",
+			p -> job.getValue().startUpload()), job -> executeWSCallAsync(
+				"Stop uploading data", p -> job.getValue().stopUpload()),
+			job -> JavaFXRoutines.notNullValue(job, j -> !j.isUseDemoData() &&
+				!EnumSet.of(JobState.Running, JobState.Disposed).contains(j
+					.getState())), job -> job != null && job.getUploadProgress()
+						.isWorking());
+		menu.addItem("Download result", job -> executeWSCallAsync(
+			"Downloading data", p -> job.getValue().startDownload()),
+			job -> executeWSCallAsync("Stop downloading data", p -> job.getValue()
+				.stopDownload()), job -> JavaFXRoutines.notNullValue(job, j -> EnumSet
+					.of(JobState.Failed, JobState.Finished, JobState.Canceled).contains(j
+						.getState()) && j.canBeDownloaded()), job -> job != null && job
+							.getDownloadProgress().isWorking());
 
 		menu.addItem("Explore errors", job -> job.getValue().exploreErrors(),
-				job -> JavaFXRoutines.notNullValue(job, j -> j.getState().equals(JobState.Failed)));
+			job -> JavaFXRoutines.notNullValue(job, j -> j.getState().equals(
+				JobState.Failed)));
 
 		menu.addSeparator();
 
-		menu.addItem("Delete job", j -> deleteJob(j.getValue()),
-				x -> JavaFXRoutines.notNullValue(x, j -> j.getState() != JobState.Running));
+		menu.addItem("Delete job", j -> deleteJob(j.getValue()), x -> JavaFXRoutines
+			.notNullValue(x, j -> j.getState() != JobState.Running));
 
 	}
 
@@ -179,42 +187,47 @@ public class BenchmarkSPIMControl extends BorderPane implements CloseableControl
 	private void askForCreateJob() {
 		NewJobWindow newJobWindow = new NewJobWindow(null);
 		ModalDialogs.doModal(newJobWindow, WindowConstants.DISPOSE_ON_CLOSE);
-		newJobWindow.setCreatePressedNotifier(() -> executeWSCallAsync("Creating job", false, new P_JobAction() {
-			@Override
-			public void doAction(Progress p) throws IOException {
-				BenchmarkJob job = doCreateJob(wd -> newJobWindow.getInputDirectory(wd),
-						wd -> newJobWindow.getOutputDirectory(wd));
-				if (job.isUseDemoData()) {
-					job.storeDataInWorkdirectory(getConfigYamlFile());
-				} else if (Files.exists(job.getInputDirectory().resolve(CONFIG_YAML))) {
-					executorServiceFX.execute(new Runnable() {
+		newJobWindow.setCreatePressedNotifier(() -> executeWSCallAsync(
+			"Creating job", false, new P_JobAction()
+			{
 
-						@Override
-						public void run() {
-							Alert al = new Alert(AlertType.CONFIRMATION,
-									"The file \"" + CONFIG_YAML + "\" found in the defined data input directory \""
-											+ job.getInputDirectory()
-											+ "\". Would you like to copy it into the job working directory \""
-											+ job.getDirectory() + "\"?",
-									ButtonType.YES, ButtonType.NO);
+				@Override
+				public void doAction(Progress p) throws IOException {
+					BenchmarkJob job = doCreateJob(wd -> newJobWindow.getInputDirectory(
+						wd), wd -> newJobWindow.getOutputDirectory(wd));
+					if (job.isUseDemoData()) {
+						job.storeDataInWorkdirectory(getConfigYamlFile());
+					}
+					else if (Files.exists(job.getInputDirectory().resolve(CONFIG_YAML))) {
+						executorServiceFX.execute(new Runnable() {
 
-							al.setHeaderText(null);
-							al.setTitle("Copy " + CONFIG_YAML + "?");
-							al.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
-							if (al.showAndWait().get() == ButtonType.YES) {
-								try {
-									Files.copy(job.getInputDirectory().resolve(CONFIG_YAML),
-											job.getDirectory().resolve(CONFIG_YAML));
-								} catch (IOException e) {
-									log.error(e.getMessage(), e);
+							@Override
+							public void run() {
+								Alert al = new Alert(AlertType.CONFIRMATION, "The file \"" +
+									CONFIG_YAML +
+									"\" found in the defined data input directory \"" + job
+										.getInputDirectory() +
+									"\". Would you like to copy it into the job working directory \"" +
+									job.getDirectory() + "\"?", ButtonType.YES, ButtonType.NO);
+
+								al.setHeaderText(null);
+								al.setTitle("Copy " + CONFIG_YAML + "?");
+								al.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
+								if (al.showAndWait().get() == ButtonType.YES) {
+									try {
+										Files.copy(job.getInputDirectory().resolve(CONFIG_YAML), job
+											.getDirectory().resolve(CONFIG_YAML));
+									}
+									catch (IOException e) {
+										log.error(e.getMessage(), e);
+									}
 								}
 							}
-						}
-					});
+						});
 
+					}
 				}
-			}
-		}));
+			}));
 
 	}
 
@@ -222,8 +235,9 @@ public class BenchmarkSPIMControl extends BorderPane implements CloseableControl
 		return new UploadingFileFromResource("", Constants.CONFIG_YAML);
 	}
 
-	private BenchmarkJob doCreateJob(Function<Path, Path> inputProvider, Function<Path, Path> outputProvider)
-			throws IOException {
+	private BenchmarkJob doCreateJob(Function<Path, Path> inputProvider,
+		Function<Path, Path> outputProvider) throws IOException
+	{
 		BenchmarkJob bj = manager.createJob(inputProvider, outputProvider);
 		ObservableBenchmarkJob obj = registry.addIfAbsent(bj);
 		addJobToItems(obj);
@@ -235,9 +249,15 @@ public class BenchmarkSPIMControl extends BorderPane implements CloseableControl
 		jobs.getItems().add(obj);
 	}
 
-	private void open(BenchmarkJob j) {
-		executorServiceUI.execute(() -> {
-			ShellRoutines.openDirectoryInBrowser(j.getDirectory());
+	private void openJobSubdirectory(BenchmarkJob j) {
+		executorServiceShell.execute(() -> {
+			try {
+				ShellRoutines.openDirectoryInBrowser(j.getDirectory());
+			}
+			catch (UnsupportedOperationException | IOException e) {
+				// TODO: Escalate an error to the end user
+				log.error(e.getMessage(), e);
+			}
 		});
 	}
 
@@ -245,34 +265,33 @@ public class BenchmarkSPIMControl extends BorderPane implements CloseableControl
 		executeWSCallAsync(title, true, action);
 	}
 
-	private void executeWSCallAsync(String title, boolean update, P_JobAction action) {
+	private void executeWSCallAsync(String title, boolean update,
+		P_JobAction action)
+	{
 		JavaFXRoutines.executeAsync(executorServiceWS, (Callable<Void>) () -> {
-			ProgressDialog dialog = ModalDialogs.doModal(new ProgressDialog(root, title),
-					WindowConstants.DO_NOTHING_ON_CLOSE);
+			ProgressDialog dialog = ModalDialogs.doModal(new ProgressDialog(root,
+				title), WindowConstants.DO_NOTHING_ON_CLOSE);
 			try {
 				action.doAction(dialog);
-			} finally {
+			}
+			finally {
 				dialog.done();
 			}
 			return null;
 		}, x -> {
 			if (update) {
-				updateJobs();
+				updateJobs(true);
 			}
 		});
-	}
-
-	private void updateJobs() {
-		updateJobs(true);
 	}
 
 	private void updateJobs(boolean showProgress) {
 		if (manager == null) {
 			return;
 		}
-		Progress progress = showProgress
-				? ModalDialogs.doModal(new ProgressDialog(root, "Updating jobs"), WindowConstants.DO_NOTHING_ON_CLOSE)
-				: new DummyProgress();
+		Progress progress = showProgress ? ModalDialogs.doModal(new ProgressDialog(
+			root, "Updating jobs"), WindowConstants.DO_NOTHING_ON_CLOSE)
+			: new DummyProgress();
 
 		executorServiceWS.execute(() -> {
 			List<BenchmarkJob> inspectedJobs = new LinkedList<>(manager.getJobs());
@@ -281,7 +300,8 @@ public class BenchmarkSPIMControl extends BorderPane implements CloseableControl
 				registry.addIfAbsent(bj);
 			}
 			registry.update();
-			Set<ObservableValue<BenchmarkJob>> actual = new HashSet<>(this.jobs.getItems());
+			Set<ObservableValue<BenchmarkJob>> actual = new HashSet<>(this.jobs
+				.getItems());
 
 			executorServiceFX.execute(() -> {
 				for (ObservableBenchmarkJob value : registry.getAllItems()) {
@@ -295,26 +315,33 @@ public class BenchmarkSPIMControl extends BorderPane implements CloseableControl
 	}
 
 	private void initTable() {
-		registry = new ObservableBenchmarkJobRegistry(bj -> remove(bj), executorServiceJobState, executorServiceFX);
+		registry = new ObservableBenchmarkJobRegistry(bj -> remove(bj),
+			executorServiceJobState, executorServiceFX);
 		setCellValueFactory(0, j -> j.getId() + "");
-		setCellValueFactoryCompletable(1,
-				j -> j.getStateAsync(executorServiceJobState).thenApply(state -> "" + provider.getName(state)));
+		setCellValueFactoryCompletable(1, j -> j.getStateAsync(
+			executorServiceJobState).thenApply(state -> "" + provider.getName(
+				state)));
 		setCellValueFactory(2, j -> j.getCreationTime().toString());
 		setCellValueFactory(3, j -> j.getStartTime().toString());
 		setCellValueFactory(4, j -> j.getEndTime().toString());
-		setCellValueFactory(5, j -> decorateTransfer(registry.get(j).getUploadProgress()));
-		setCellValueFactory(6, j -> decorateTransfer(registry.get(j).getDownloadProgress()));
-		JavaFXRoutines.setOnDoubleClickAction(jobs, executorServiceJobState, openJobDetailsWindow -> true,
-				bj -> openJobDetailsWindow(bj));
+		setCellValueFactory(5, j -> decorateTransfer(registry.get(j)
+			.getUploadProgress()));
+		setCellValueFactory(6, j -> decorateTransfer(registry.get(j)
+			.getDownloadProgress()));
+		JavaFXRoutines.setOnDoubleClickAction(jobs, executorServiceJobState,
+			openJobDetailsWindow -> true, bj -> openJobDetailsWindow(bj));
 	}
 
 	private String decorateTransfer(TransferProgress progress) {
 		if (!progress.isWorking() && !progress.isDone()) {
 			return "";
-		} else if (progress.isWorking()) {
+		}
+		else if (progress.isWorking()) {
 			Long msecs = progress.getRemainingMiliseconds();
-			return "Time remains " + (msecs != null ? RemainingTimeFormater.format(msecs) : "N/A");
-		} else if (progress.isDone()) {
+			return "Time remains " + (msecs != null ? RemainingTimeFormater.format(
+				msecs) : "N/A");
+		}
+		else if (progress.isDone()) {
 			return "Done";
 		}
 		return "N/A";
@@ -324,23 +351,27 @@ public class BenchmarkSPIMControl extends BorderPane implements CloseableControl
 		jobs.getItems().remove(registry.get(bj));
 	}
 
-	private void setCellValueFactory(int index, Function<BenchmarkJob, String> mapper) {
+	private void setCellValueFactory(int index,
+		Function<BenchmarkJob, String> mapper)
+	{
 		JavaFXRoutines.setCellValueFactory(jobs, index, mapper);
 	}
 
 	@SuppressWarnings("unchecked")
-	private void setCellValueFactoryCompletable(int index, Function<BenchmarkJob, CompletableFuture<String>> mapper) {
+	private void setCellValueFactoryCompletable(int index,
+		Function<BenchmarkJob, CompletableFuture<String>> mapper)
+	{
 		JavaFXRoutines.setCellValueFactory(jobs, index, mapper);
-		((TableColumn<ObservableBenchmarkJob, CompletableFuture<String>>) jobs.getColumns().get(index))
-				.setCellFactory(column -> new TableCellAdapter<> //
+		((TableColumn<ObservableBenchmarkJob, CompletableFuture<String>>) jobs
+			.getColumns().get(index)).setCellFactory(column -> new TableCellAdapter<> //
+		(//
+			new P_TableCellUpdaterDecoratorWithToolTip<>//
+			(//
+				new FutureValueUpdater<>//
 				(//
-						new P_TableCellUpdaterDecoratorWithToolTip<>//
-						(//
-								new FutureValueUpdater<>//
-								(//
-										new StringValueUpdater<ObservableBenchmarkJob>(), executorServiceFX//
-								), //
-								"Doubleclick to open Dashboard")));
+					new StringValueUpdater<ObservableBenchmarkJob>(), executorServiceFX//
+				), //
+				"Doubleclick to open Dashboard")));
 	}
 
 	private void openJobDetailsWindow(BenchmarkJob job) {
@@ -353,33 +384,41 @@ public class BenchmarkSPIMControl extends BorderPane implements CloseableControl
 		String openFile;
 		if (Files.exists(localPathToResultXML)) {
 			openFile = localPathToResultXML.toString();
-		} else {
+		}
+		else {
 			openFile = startBDSForData(job, resultXML);
 		}
 		try {
-			BigDataViewer.open(openFile, "Result of job " + job.getId(), new ProgressWriterConsole(),
-					ViewerOptions.options());
-		} catch (SpimDataException e) {
+			BigDataViewer.open(openFile, "Result of job " + job.getId(),
+				new ProgressWriterConsole(), ViewerOptions.options());
+		}
+		catch (SpimDataException e) {
 			log.error(e.getMessage(), e);
 		}
 	}
 
 	private String startBDSForData(BenchmarkJob job, Path resultXML) {
-		throw new UnsupportedOperationException("File " + resultXML + " was not found in " + job.getOutputDirectory()
-				+ " and remote BigDataServer is not implemented yet.");
+		throw new UnsupportedOperationException("File " + resultXML +
+			" was not found in " + job.getOutputDirectory() +
+			" and remote BigDataServer is not implemented yet.");
 	}
 
 	private interface P_JobAction {
+
 		public void doAction(Progress p) throws IOException;
 	}
 
-	private class P_TableCellUpdaterDecoratorWithToolTip<S, T> implements TableCellUpdater<S, T> {
+	private class P_TableCellUpdaterDecoratorWithToolTip<S, T> implements
+		TableCellUpdater<S, T>
+	{
 
 		private final TableCellUpdater<S, T> decorated;
 
 		private final String toolTipText;
 
-		public P_TableCellUpdaterDecoratorWithToolTip(TableCellUpdater<S, T> decorated, String toolTipText) {
+		public P_TableCellUpdaterDecoratorWithToolTip(
+			TableCellUpdater<S, T> decorated, String toolTipText)
+		{
 			this.decorated = decorated;
 			this.toolTipText = toolTipText;
 		}
