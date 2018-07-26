@@ -223,10 +223,10 @@
   </wsdl:binding>
   <wsdl:service name="UserAndLimitationManagementWs">
     <wsdl:port name="UserAndLimitationManagementWsSoap" binding="tns:UserAndLimitationManagementWsSoap">
-      <soap:address location="http://haas.vsb.cz/HaasWsFiji/UserAndLimitationManagementWs.asmx"/>
+      <soap:address location="https://haas.it4i.cz/HaasWsFiji/UserAndLimitationManagementWs.asmx"/>
     </wsdl:port>
     <wsdl:port name="UserAndLimitationManagementWsSoap12" binding="tns:UserAndLimitationManagementWsSoap12">
-      <soap12:address location="http://haas.vsb.cz/HaasWsFiji/UserAndLimitationManagementWs.asmx"/>
+      <soap12:address location="https://haas.it4i.cz/HaasWsFiji/UserAndLimitationManagementWs.asmx"/>
     </wsdl:port>
   </wsdl:service>
 </wsdl:definitions>

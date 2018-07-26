@@ -573,10 +573,10 @@
   </wsdl:binding>
   <wsdl:service name="JobManagementWs">
     <wsdl:port name="JobManagementWsSoap" binding="tns:JobManagementWsSoap">
-      <soap:address location="http://haas.vsb.cz/HaasWsFiji/JobManagementWs.asmx"/>
+      <soap:address location="https://haas.it4i.cz/HaasWsFiji/JobManagementWs.asmx"/>
     </wsdl:port>
     <wsdl:port name="JobManagementWsSoap12" binding="tns:JobManagementWsSoap12">
-      <soap12:address location="http://haas.vsb.cz/HaasWsFiji/JobManagementWs.asmx"/>
+      <soap12:address location="https://haas.it4i.cz/HaasWsFiji/JobManagementWs.asmx"/>
     </wsdl:port>
   </wsdl:service>
 </wsdl:definitions>
