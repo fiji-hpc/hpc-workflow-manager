@@ -195,10 +195,10 @@
   </wsdl:binding>
   <wsdl:service name="DataTransferWs">
     <wsdl:port name="DataTransferWsSoap" binding="tns:DataTransferWsSoap">
-      <soap:address location="http://haas.vsb.cz/HaasWsFiji/DataTransferWs.asmx"/>
+      <soap:address location="https://haas.it4i.cz/HaasWsFiji/DataTransferWs.asmx"/>
     </wsdl:port>
     <wsdl:port name="DataTransferWsSoap12" binding="tns:DataTransferWsSoap12">
-      <soap12:address location="http://haas.vsb.cz/HaasWsFiji/DataTransferWs.asmx"/>
+      <soap12:address location="https://haas.it4i.cz/HaasWsFiji/DataTransferWs.asmx"/>
     </wsdl:port>
   </wsdl:service>
 </wsdl:definitions>

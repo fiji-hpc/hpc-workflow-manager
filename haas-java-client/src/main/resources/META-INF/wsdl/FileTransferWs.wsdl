@@ -296,10 +296,10 @@
   </wsdl:binding>
   <wsdl:service name="FileTransferWs">
     <wsdl:port name="FileTransferWsSoap" binding="tns:FileTransferWsSoap">
-      <soap:address location="http://haas.vsb.cz/HaasWsFiji/FileTransferWs.asmx"/>
+      <soap:address location="https://haas.it4i.cz/HaasWsFiji/FileTransferWs.asmx"/>
     </wsdl:port>
     <wsdl:port name="FileTransferWsSoap12" binding="tns:FileTransferWsSoap12">
-      <soap12:address location="http://haas.vsb.cz/HaasWsFiji/FileTransferWs.asmx"/>
+      <soap12:address location="https://haas.it4i.cz/HaasWsFiji/FileTransferWs.asmx"/>
     </wsdl:port>
   </wsdl:service>
 </wsdl:definitions>
