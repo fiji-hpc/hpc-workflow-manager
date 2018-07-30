@@ -1,3 +1,4 @@
+
 package cz.it4i.fiji.haas.data_transfer;
 
 import java.io.Closeable;
@@ -10,6 +11,7 @@ import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -21,6 +23,8 @@ import java.util.stream.StreamSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import cz.it4i.fiji.haas_java_client.FileTransferInfo;
+import cz.it4i.fiji.haas_java_client.FileTransferState;
 import cz.it4i.fiji.haas_java_client.HaaSFileTransfer;
 import cz.it4i.fiji.haas_java_client.ProgressNotifier;
 import cz.it4i.fiji.haas_java_client.UploadingFile;
@@ -31,9 +35,9 @@ public class Synchronization implements Closeable {
 	public static final Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas.data_transfer.Synchronization.class);
 
 	private static final String FILE_INDEX_TO_UPLOAD_FILENAME = ".toUploadFiles";
-
-	private static final String FILE_INDEX_TO_DOWNLOAD_FILENAME = ".toDownloadFiles";
-
+	private static final String FILE_INDEX_UPLOADED_FILENAME = ".uploaded";
+	private static final String FILE_INDEX_TO_DOWNLOAD_FILENAME =
+		".toDownloadFiles";
 	private static final String FILE_INDEX_DOWNLOADED_FILENAME = ".downloaded";
 
 	private final Path workingDirectory;
@@ -43,6 +47,8 @@ public class Synchronization implements Closeable {
 	private final Path outputDirectory;
 
 	private final PersistentIndex<Path> filesDownloaded;
+
+	private final PersistentIndex<Path> filesUploaded;
 
 	private final PersistentSynchronizationProcess<Path> uploadProcess;
 
@@ -59,10 +65,14 @@ public class Synchronization implements Closeable {
 		this.inputDirectory = inputDirectory;
 		this.outputDirectory = outputDirectory;
 		this.service = Executors.newFixedThreadPool(2);
-		this.filesDownloaded = new PersistentIndex<>(workingDirectory.resolve(FILE_INDEX_DOWNLOADED_FILENAME),
-				name -> Paths.get(name));
-		this.uploadProcess = createUploadProcess(fileTransferSupplier, service, uploadFinishedNotifier);
-		this.downloadProcess = createDownloadProcess(fileTransferSupplier, service, downloadFinishedNotifier);
+		this.filesDownloaded = new PersistentIndex<>(workingDirectory.resolve(
+			FILE_INDEX_DOWNLOADED_FILENAME), name -> Paths.get(name));
+		this.filesUploaded = new PersistentIndex<>(workingDirectory.resolve(
+			FILE_INDEX_UPLOADED_FILENAME), name -> Paths.get(name));
+		this.uploadProcess = createUploadProcess(fileTransferSupplier, service,
+			uploadFinishedNotifier);
+		this.downloadProcess = createDownloadProcess(fileTransferSupplier, service,
+			downloadFinishedNotifier);
 		this.uploadFilter = uploadFilter;
 	}
 
@@ -100,6 +110,17 @@ public class Synchronization implements Closeable {
 		this.downloadProcess.resume();
 	}
 
+	public List<FileTransferInfo> getFileTransferInfo() {
+		final List<FileTransferInfo> list = new LinkedList<>();
+		filesUploaded.getIndexedItems().forEach(ii -> {
+			list.add(new FileTransferInfo(ii, FileTransferState.Finished));
+		});
+		uploadProcess.getIndexedItems().forEach(ii -> {
+			list.add(new FileTransferInfo(ii, FileTransferState.Queuing));
+		});
+		return list;
+	}
+
 	@Override
 	public void close() {
 		service.shutdown();
@@ -127,9 +148,18 @@ public class Synchronization implements Closeable {
 			}
 
 			@Override
-			protected void processItem(HaaSFileTransfer tr, Path p) throws InterruptedIOException {
-				UploadingFile uf = new UploadingFileImpl(p);
+			protected void processItem(final HaaSFileTransfer tr, final Path p)
+				throws InterruptedIOException
+			{
+				final UploadingFile uf = new UploadingFileImpl(p);
 				tr.upload(uf);
+				filesUploaded.insert(inputDirectory.resolve(p.toString()));
+				try {
+					filesUploaded.storeToWorkingFile();
+				}
+				catch (final IOException e) {
+					log.error(e.getMessage(), e);
+				}
 			}
 
 			@Override
@@ -172,14 +202,17 @@ public class Synchronization implements Closeable {
 		}
 
 		@Override
-		protected void processItem(HaaSFileTransfer tr, String file) throws InterruptedIOException {
+		protected void processItem(final HaaSFileTransfer tr, final String file)
+			throws InterruptedIOException
+		{
+			tr.download(file, outputDirectory);
 			filesDownloaded.insert(outputDirectory.resolve(file));
 			try {
 				filesDownloaded.storeToWorkingFile();
-			} catch (IOException e) {
+			}
+			catch (final IOException e) {
 				log.error(e.getMessage(), e);
 			}
-			tr.download(file, outputDirectory);
 		}
 
 		@Override

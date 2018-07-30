@@ -54,6 +54,7 @@ import cz.it4i.fiji.haas.HaaSOutputHolder;
 import cz.it4i.fiji.haas.HaaSOutputHolderImpl;
 import cz.it4i.fiji.haas.Job;
 import cz.it4i.fiji.haas.JobManager;
+import cz.it4i.fiji.haas_java_client.FileTransferInfo;
 import cz.it4i.fiji.haas_java_client.HaaSClientSettings;
 import cz.it4i.fiji.haas_java_client.JobSettings;
 import cz.it4i.fiji.haas_java_client.JobSettingsBuilder;
@@ -282,9 +283,13 @@ public class BenchmarkJobManager implements Closeable {
 		public Path getOutputDirectory() {
 			return job.getOutputDirectory();
 		}
-		
+
 		public Path getResultXML() {
 			return Paths.get(job.getProperty(SPIM_OUTPUT_FILENAME_PATTERN) + ".xml");
+		}
+
+		public List<FileTransferInfo> getFileTransferInfo() {
+			return job.getFileTransferInfo();
 		}
 
 		private ProgressNotifier convertTo(Progress progress) {

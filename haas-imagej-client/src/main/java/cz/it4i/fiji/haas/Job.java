@@ -1,3 +1,4 @@
+
 package cz.it4i.fiji.haas;
 
 import java.io.IOException;
@@ -24,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import cz.it4i.fiji.haas.JobManager.JobManager4Job;
 import cz.it4i.fiji.haas.JobManager.JobSynchronizableFile;
 import cz.it4i.fiji.haas.data_transfer.Synchronization;
+import cz.it4i.fiji.haas_java_client.FileTransferInfo;
 import cz.it4i.fiji.haas_java_client.HaaSClient;
 import cz.it4i.fiji.haas_java_client.HaaSFileTransfer;
 import cz.it4i.fiji.haas_java_client.JobInfo;
@@ -408,57 +410,72 @@ public class Job {
 		return outputDirectory;
 	}
 
+	public List<FileTransferInfo> getFileTransferInfo() {
+		return synchronization.getFileTransferInfo();
+	}
+
 	private void storeInputOutputDirectory() {
 		if (inputDirectory == null) {
 			useDemoData = true;
 			propertyHolder.setValue(JOB_USE_DEMO_DATA, "" + useDemoData);
-		} else {
+		}
+		else {
 			storeDataDirectory(JOB_INPUT_DIRECTORY_PATH, inputDirectory);
 		}
 		storeDataDirectory(JOB_OUTPUT_DIRECTORY_PATH, outputDirectory);
 	}
 
-	private void storeDataDirectory(String directoryPropertyName, Path directory) {
+	private void storeDataDirectory(final String directoryPropertyName,
+		final Path directory)
+	{
 		if (!jobDir.equals(directory)) {
 			propertyHolder.setValue(directoryPropertyName, directory.toString());
 		}
 	}
 
-	private Path getDataDirectory(String typeOfDirectory, Path jobDirectory) {
-		String directory = propertyHolder.getValue(typeOfDirectory);
+	private Path getDataDirectory(final String typeOfDirectory,
+		final Path jobDirectory)
+	{
+		final String directory = propertyHolder.getValue(typeOfDirectory);
 		return directory != null ? Paths.get(directory) : jobDirectory;
 	}
 
-	private boolean getSafeBoolean(String value) {
+	private boolean getSafeBoolean(final String value) {
 		return value != null ? Boolean.parseBoolean(value) : false;
 	}
 
-	private void setJobDirectory(Path jobDirectory, Function<Path, Path> inputDirectoryProvider,
-			Function<Path, Path> outputDirectoryProvider) {
+	private void setJobDirectory(final Path jobDirectory,
+		final Function<Path, Path> inputDirectoryProvider,
+		final Function<Path, Path> outputDirectoryProvider)
+	{
 		this.jobDir = jobDirectory;
 
 		try {
-			this.synchronization = new Synchronization(() -> startFileTransfer(HaaSClient.DUMMY_TRANSFER_FILE_PROGRESS),
-					jobDir, this.inputDirectory = inputDirectoryProvider.apply(jobDir),
-					this.outputDirectory = outputDirectoryProvider.apply(jobDir), () -> {
-						setProperty(JOB_NEEDS_UPLOAD, false);
-						setUploaded(true);
-					}, () -> {
-						setDownloaded(true);
-						setProperty(JOB_NEEDS_DOWNLOAD, false);
-						setCanBeDownloaded(false);
-					}, p -> jobManager.canUpload(Job.this, p));
-		} catch (IOException e) {
+			this.synchronization = new Synchronization(() -> startFileTransfer(
+				HaaSClient.DUMMY_TRANSFER_FILE_PROGRESS), jobDir, this.inputDirectory =
+					inputDirectoryProvider.apply(jobDir), this.outputDirectory =
+						outputDirectoryProvider.apply(jobDir), () -> {
+							setProperty(JOB_NEEDS_UPLOAD, false);
+							setUploaded(true);
+						}, () -> {
+							setDownloaded(true);
+							setProperty(JOB_NEEDS_DOWNLOAD, false);
+							setCanBeDownloaded(false);
+						}, p -> jobManager.canUpload(Job.this, p));
+		}
+		catch (final IOException e) {
 			log.error(e.getMessage(), e);
 			throw new RuntimeException(e);
 		}
 	}
 
-	private HaaSFileTransfer startFileTransfer(TransferFileProgress progress) {
+	private HaaSFileTransfer startFileTransfer(
+		final TransferFileProgress progress)
+	{
 		return haasClientSupplier.get().startFileTransfer(getId(), progress);
 	}
 
-	private void setName(String name) {
+	private void setName(final String name) {
 		setProperty(JOB_NAME, name);
 	}
 

@@ -1,3 +1,4 @@
+
 package cz.it4i.fiji.haas.data_transfer;
 
 import java.io.BufferedReader;
@@ -5,8 +6,8 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.LinkedHashSet;
-import java.util.Queue;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -45,10 +46,10 @@ public class PersistentIndex<T> {
 		indexedFiles.remove(p);
 	}
 
-	public synchronized void fillQueue(Queue<T> toUpload) {
-		toUpload.addAll(indexedFiles);
+	public synchronized Set<T> getIndexedItems() {
+		return Collections.unmodifiableSet(indexedFiles);
 	}
-	
+
 	public synchronized void clear() throws IOException {
 		indexedFiles.clear();
 		storeToWorkingFile();
@@ -60,7 +61,7 @@ public class PersistentIndex<T> {
 
 	private void loadFromWorkingFile() throws IOException {
 		indexedFiles.clear();
-		if(Files.exists(workingFile)) {
+		if (Files.exists(workingFile)) {
 			try (BufferedReader br = Files.newBufferedReader(workingFile)) {
 				String line;
 				while (null != (line = br.readLine())) {
@@ -74,5 +75,4 @@ public class PersistentIndex<T> {
 		indexedFiles.add(fromStringConvertor.apply(line));
 	}
 
-	
 }

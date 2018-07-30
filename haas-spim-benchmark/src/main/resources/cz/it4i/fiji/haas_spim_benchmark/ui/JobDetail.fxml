@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import cz.it4i.fiji.haas_spim_benchmark.ui.DataTransferController?>
 <?import cz.it4i.fiji.haas_spim_benchmark.ui.LogViewControl?>
 <?import cz.it4i.fiji.haas_spim_benchmark.ui.SPIMPipelineProgressViewController?>
 <?import javafx.scene.control.Tab?>
@@ -44,6 +45,13 @@
 				</HBox>
 			</content>
 
+		</Tab>
+		<Tab closable="false" text="Data upload" fx:id="dataUploadTab">
+			<content>
+				<HBox>
+					<DataTransferController fx:id="dataUpload" HBox.hgrow="ALWAYS" />
+				</HBox>
+			</content>
 		</Tab>
 	</tabs>
 </fx:root>

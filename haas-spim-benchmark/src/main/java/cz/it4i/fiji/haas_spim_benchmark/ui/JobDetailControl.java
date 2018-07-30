@@ -21,7 +21,6 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 	InitiableControl
 {
 
-	@SuppressWarnings("unused")
 	private static Logger log = LoggerFactory.getLogger(
 		cz.it4i.fiji.haas_spim_benchmark.ui.JobDetailControl.class);
 
@@ -40,11 +39,17 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 	@FXML
 	private Tab jobPropertiesTab;
 
+	@FXML
+	private DataTransferController dataUpload;
+
+	@FXML
+	private Tab dataUploadTab;
+
 	private final HaaSOutputObservableValueRegistry observableValueRegistry;
 
 	private final BenchmarkJob job;
 
-	public JobDetailControl(BenchmarkJob job) {
+	public JobDetailControl(final BenchmarkJob job) {
 		JavaFXRoutines.initRootAndController("JobDetail.fxml", this);
 		progressView.setJob(job);
 		observableValueRegistry = new HaaSOutputObservableValueRegistry(job,
@@ -55,34 +60,65 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 		standardOutput.setObservable(observableValueRegistry.createObservable(
 			SynchronizableFileType.StandardOutputFile));
 		jobProperties.setJob(job);
+		dataUpload.setJob(job);
 		observableValueRegistry.start();
 		this.job = job;
 	}
 
+	// -- InitiableControl methods --
+
 	@Override
-	public void init(Window parameter) {
-		if (!isExecutionDetailsAvailable(job)) {
-			enableOnlySpecificTab(jobPropertiesTab);
+	public void init(final Window parameter) {
+
+		if (job.getState() == JobState.Disposed) {
+			// TODO: Handle this?
+			log.debug("Job " + job.getId() + " state has been resolved as Disposed.");
+		}
+
+		disableNonPermanentTabs();
+
+		if (areExecutionDetailsAvailable()) {
+			enableAllTabs();
 		}
 	}
 
-	private void enableOnlySpecificTab(Tab tabToLeaveEnabled) {
-		getTabs().stream().filter(node -> node != tabToLeaveEnabled).forEach(
-			node -> node.setDisable(true));
-		getSelectionModel().select(jobPropertiesTab);
-	}
-
-	private boolean isExecutionDetailsAvailable(BenchmarkJob inspectedJob) {
-		return inspectedJob.getState() == JobState.Running || inspectedJob
-			.getState() == JobState.Finished || inspectedJob
-				.getState() == JobState.Failed || inspectedJob
-					.getState() == JobState.Canceled;
-	}
+	// -- CloseableControl methods --
 
 	@Override
 	public void close() {
 		observableValueRegistry.close();
+
+		// Close controllers
 		progressView.close();
 		jobProperties.close();
+		dataUpload.close();
 	}
+
+	// -- Helper methods --
+
+	/*
+	 * Checks whether execution details are available
+	 */
+	private boolean areExecutionDetailsAvailable() {
+		return job.getState() == JobState.Running || job
+			.getState() == JobState.Finished || job.getState() == JobState.Failed ||
+			job.getState() == JobState.Canceled;
+	}
+
+	/*
+	 * Disables all tabs except those which shall be always enabled, such as job properties tab
+	 */
+	private void disableNonPermanentTabs() {
+		getTabs().stream().filter(t -> t != jobPropertiesTab && t != dataUploadTab)
+			.forEach(t -> t.setDisable(true));
+		getSelectionModel().select(jobPropertiesTab);
+	}
+
+	/*
+	 * Enables all tabs
+	 */
+	private void enableAllTabs() {
+		getTabs().stream().forEach(t -> t.setDisable(false));
+	}
+
 }
