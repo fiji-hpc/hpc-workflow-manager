@@ -106,7 +106,6 @@ public class BenchmarkSPIMControl extends BorderPane implements
 		executorServiceShell = Executors.newSingleThreadExecutor();
 		timer = new Timer();
 		timer.scheduleAtFixedRate(new TimerTask() {
-
 			@Override
 			public void run() {
 				updateJobs(false);
@@ -114,9 +113,9 @@ public class BenchmarkSPIMControl extends BorderPane implements
 		}, Constants.HAAS_UPDATE_TIMEOUT, Constants.HAAS_UPDATE_TIMEOUT);
 		initTable();
 		initMenu();
-		executorServiceFX.execute(() -> updateJobs(true));
+		updateJobs(true);
 	}
-
+	
 	@Override
 	public void close() {
 		executorServiceShell.shutdown();

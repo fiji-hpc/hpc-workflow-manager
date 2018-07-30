@@ -1,6 +1,7 @@
 package cz.it4i.fiji.haas.ui;
 
 import java.awt.Dimension;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Supplier;
 
 import org.slf4j.Logger;
@@ -26,7 +27,12 @@ public class JFXPanel<T extends Parent> extends javafx.embed.swing.JFXPanel {
 		Platform.setImplicitExit(false);
 		control = fxSupplier.get();
 		// The call to runLater() avoid a mix between JavaFX thread and Swing thread.
-		JavaFXRoutines.runOnFxThread(() -> initFX());
+		try {
+			JavaFXRoutines.runOnFxThread(() -> initFX()).get();
+		}
+		catch (InterruptedException | ExecutionException exc) {
+			log.error(exc.getMessage(), exc);
+		}
 	}
 
 	private void initFX() {

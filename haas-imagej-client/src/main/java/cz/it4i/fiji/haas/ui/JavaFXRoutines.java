@@ -3,7 +3,6 @@ package cz.it4i.fiji.haas.ui;
 
 import java.io.IOException;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.FutureTask;
@@ -65,23 +64,17 @@ public interface JavaFXRoutines {
 
 	}
 
-	static public void runOnFxThread(Runnable runnable) {
+	static public RunnableFuture<Void> runOnFxThread(Runnable runnable) {
 
-		RunnableFuture<Void> task = new FutureTask<>(runnable, null);
+		RunnableFuture<Void> result = new FutureTask<>(runnable, null);
 
 		if (Platform.isFxApplicationThread()) {
-			task.run();
+			result.run();
 		}
 		else {
-			Platform.runLater(task);
+			Platform.runLater(result);
 		}
-
-		try {
-			task.get();
-		}
-		catch (InterruptedException | ExecutionException e) {
-			log.error(e.getMessage(), e);
-		}
+		return result;
 	}
 
 	// TODO move to own class in the future
@@ -118,5 +111,4 @@ public interface JavaFXRoutines {
 			return row;
 		});
 	}
-
 }

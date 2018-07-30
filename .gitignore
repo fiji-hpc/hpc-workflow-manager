@@ -6,3 +6,4 @@ target/
 *.bench
 
 benchmark-collector/build\.sh
+/.DS_Store

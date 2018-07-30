@@ -49,6 +49,7 @@ public abstract class FXFrame<T extends Parent & CloseableControl> extends
 			command.run();
 		});
 	}
+	
 
 	private void init() {
 		addWindowListener(new WindowAdapter() {
@@ -71,9 +72,7 @@ public abstract class FXFrame<T extends Parent & CloseableControl> extends
 		}
 		this.setLayout(new BorderLayout());
 		this.add(fxPanel, BorderLayout.CENTER);
-		JavaFXRoutines.runOnFxThread(() -> {
-			this.pack();
-			SwingRoutines.centerOnScreen(this);
-		});
+		this.pack();
+		SwingRoutines.centerOnScreen(this);
 	}
 }
