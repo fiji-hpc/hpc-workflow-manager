@@ -88,8 +88,12 @@ public abstract class PersistentSynchronizationProcess<T> {
 	}
 
 	public void resume() {
-		index.fillQueue(toProcessQueue);
+		toProcessQueue.addAll(index.getIndexedItems());
 		runner.runIfNotRunning(this::doProcess);
+	}
+
+	public Set<T> getIndexedItems() {
+		return index.getIndexedItems();
 	}
 
 	public void setNotifier(ProgressNotifier notifier) {

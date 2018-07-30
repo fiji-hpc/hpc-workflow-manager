@@ -1,4 +1,7 @@
+
 package cz.it4i.fiji.haas_java_client;
+
+import com.jcraft.jsch.JSchException;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -11,8 +14,6 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.jcraft.jsch.JSchException;
 
 import cz.it4i.fiji.haas_java_client.proxy.FileTransferMethodExt;
 import cz.it4i.fiji.scpclient.ScpClient;
@@ -39,34 +40,47 @@ class HaaSFileTransferImp implements HaaSFileTransfer {
 	}
 
 	@Override
-	public void upload(UploadingFile file) throws InterruptedIOException{
-		String destFile = "'" + ft.getSharedBasepath() + "/" + file.getName() + "'";
+	public void upload(final UploadingFile file) throws InterruptedIOException {
+		final String destFile = "'" + ft.getSharedBasepath() + "/" + file
+			.getName() + "'";
 		try (InputStream is = file.getInputStream()) {
-			boolean result = scpClient.upload(is, destFile, file.getLength(), file.getLastTime(), progress);
-			if (!result) {
-				throw new HaaSClientException("Uploading of " + file + " to " + destFile + " failed");
+			if (!scpClient.upload(is, destFile, file.getLength(), file.getLastTime(),
+				progress))
+			{
+				throw new HaaSClientException("Uploading of " + file + " to " +
+					destFile + " failed");
 			}
-		} catch(InterruptedIOException e) {
+		}
+		catch (final InterruptedIOException e) {
 			throw e;
-		} catch (JSchException | IOException e) {
+		}
+		catch (JSchException | IOException e) {
 			throw new HaaSClientException(e);
 		}
 	}
 
 	@Override
-	public void download(String fileName, Path workDirectory) throws InterruptedIOException{
+	public void download(String fileName, final Path workDirectory)
+		throws InterruptedIOException
+	{
 		try {
 			fileName = fileName.replaceFirst("/", "");
-			Path rFile = workDirectory.resolve(fileName);
-			String fileToDownload = "'" + ft.getSharedBasepath() + "/" + fileName + "'";
-			scpClient.download(fileToDownload, rFile, progress);
-		} catch(InterruptedIOException e) {
+			final Path rFile = workDirectory.resolve(fileName);
+			final String fileToDownload = "'" + ft.getSharedBasepath() + "/" +
+				fileName + "'";
+			if (!scpClient.download(fileToDownload, rFile, progress)) {
+				throw new HaaSClientException("Downloading of " + fileName + " to " +
+					workDirectory + " failed");
+			}
+		}
+		catch (final InterruptedIOException e) {
 			throw e;
-		} catch (JSchException | IOException e) {
+		}
+		catch (JSchException | IOException e) {
 			throw new HaaSClientException(e);
 		}
 	}
-	
+
 	@Override
 	public void setProgress(TransferFileProgress progress) {
 		this.progress = progress;

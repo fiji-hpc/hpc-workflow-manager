@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+
+<fx:root type="BorderPane" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="cz.it4i.fiji.haas_spim_benchmark.ui.DataTransferController">
+   <center>
+      <HBox>
+         <children>
+            <TableView fx:id="filesToUpload" prefHeight="400.0" prefWidth="500.0" HBox.hgrow="ALWAYS">
+				<columns>
+					<TableColumn prefWidth="400.0" text="File" />
+					<TableColumn prefWidth="100.0" text="Status" />
+				</columns>
+			</TableView>
+         </children>
+         <padding>
+            <Insets bottom="1.0" left="1.0" right="1.0" top="1.0" />
+         </padding>
+      </HBox>
+   </center>
+</fx:root>
