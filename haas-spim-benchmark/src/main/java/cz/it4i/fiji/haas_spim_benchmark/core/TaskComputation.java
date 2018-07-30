@@ -257,7 +257,7 @@ public class TaskComputation {
 		if (log.isDebugEnabled()) {
 			log.debug("Job parameters resolved id = {}, inputs = {}", id, inputs);
 		}
-		return id == null;
+		return id != null;
 	}
 
 	private String getSnakemakeOutput() {
