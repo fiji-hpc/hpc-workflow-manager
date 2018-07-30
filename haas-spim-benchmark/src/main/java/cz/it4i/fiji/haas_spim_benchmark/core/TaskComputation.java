@@ -1,5 +1,7 @@
 package cz.it4i.fiji.haas_spim_benchmark.core;
 
+import com.google.common.collect.Streams;
+
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -10,8 +12,8 @@ import java.util.Scanner;
 import java.util.stream.Collectors;
 
 import org.apache.commons.math3.util.Pair;
-
-import com.google.common.collect.Streams;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
@@ -19,6 +21,9 @@ import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
 
 public class TaskComputation {
 
+	public static final Logger log = LoggerFactory.getLogger(
+		cz.it4i.fiji.haas_spim_benchmark.core.TaskComputation.class);
+	
 	public static class Log {
 		final private String name;
 		final private String content;
@@ -249,8 +254,10 @@ public class TaskComputation {
 			}
 		}
 		scanner.close();
-
-		return !(inputs == null || id == null);
+		if (log.isDebugEnabled()) {
+			log.debug("Job parameters resolved id = {}, inputs = {}", id, inputs);
+		}
+		return id == null;
 	}
 
 	private String getSnakemakeOutput() {
