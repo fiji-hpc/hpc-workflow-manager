@@ -5,8 +5,13 @@ import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.CONFIG_YAML;
 
 import java.awt.Window;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -385,7 +390,7 @@ public class BenchmarkSPIMControl extends BorderPane implements
 			openFile = localPathToResultXML.toString();
 		}
 		else {
-			openFile = startBDSForData(job, resultXML);
+			openFile = startPathToBDSForData(job, resultXML);
 		}
 		try {
 			BigDataViewer.open(openFile, "Result of job " + job.getId(),
@@ -396,10 +401,23 @@ public class BenchmarkSPIMControl extends BorderPane implements
 		}
 	}
 
-	private String startBDSForData(BenchmarkJob job, Path resultXML) {
-		throw new UnsupportedOperationException("File " + resultXML +
-			" was not found in " + job.getOutputDirectory() +
-			" and remote BigDataServer is not implemented yet.");
+	private String startPathToBDSForData(BenchmarkJob job, Path resultXML) {
+		Path changed = Paths.get("/scratch/temp/HaasFiji", ""+job.getId() ).resolve(resultXML);
+		MessageDigest digest;
+		try {
+			digest = MessageDigest.getInstance("SHA-1");
+			digest.reset();
+			digest.update(changed.toAbsolutePath().toString().getBytes("utf8"));
+			String sha1 = String.format("%040x", new BigInteger(1, digest.digest()));
+			String result =  "http://julius1.it4i.cz/" + sha1 + "/";
+			if (log.isDebugEnabled()) {
+				log.debug("getBDSPathForData changed={} path={}",changed, result);
+			}
+			return result;
+		}
+		catch (NoSuchAlgorithmException | UnsupportedEncodingException exc) {
+			throw new RuntimeException(exc);
+		}
 	}
 
 	private interface P_JobAction {
