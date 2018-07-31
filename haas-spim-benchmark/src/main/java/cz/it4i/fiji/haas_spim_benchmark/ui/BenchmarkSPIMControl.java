@@ -390,7 +390,7 @@ public class BenchmarkSPIMControl extends BorderPane implements
 			openFile = localPathToResultXML.toString();
 		}
 		else {
-			openFile = startPathToBDSForData(job, resultXML);
+			openFile = getPathToBDSForData(job, resultXML);
 		}
 		try {
 			BigDataViewer.open(openFile, "Result of job " + job.getId(),
@@ -401,8 +401,8 @@ public class BenchmarkSPIMControl extends BorderPane implements
 		}
 	}
 
-	private String startPathToBDSForData(BenchmarkJob job, Path resultXML) {
-		Path changed = Paths.get("/scratch/temp/HaasFiji", ""+job.getId() ).resolve(resultXML);
+	private String getPathToBDSForData(BenchmarkJob job, Path resultXML) {
+		Path changed = Paths.get(""+job.getId() ).resolve(resultXML);
 		MessageDigest digest;
 		try {
 			digest = MessageDigest.getInstance("SHA-1");
