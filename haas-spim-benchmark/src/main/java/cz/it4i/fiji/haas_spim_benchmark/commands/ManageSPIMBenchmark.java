@@ -24,7 +24,9 @@ import org.scijava.widget.TextWidget;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import cz.it4i.fiji.haas_spim_benchmark.core.AuthFailExceptionHandler;
 import cz.it4i.fiji.haas_spim_benchmark.core.Constants;
+import cz.it4i.fiji.haas_spim_benchmark.core.UncaughtExceptionHandlerDecorator;
 import cz.it4i.fiji.haas_spim_benchmark.ui.BenchmarkSPIMWindow;
 
 /**
@@ -60,12 +62,18 @@ public class ManageSPIMBenchmark implements Command {
 
 	@Override
 	public void run() {
+		if (log.isDebugEnabled()) {
+			log.debug("DefaultUncaughtExceptionHandler() = {} ", Thread.getDefaultUncaughtExceptionHandler());
+		}
+		
+		final UncaughtExceptionHandlerDecorator uehd = UncaughtExceptionHandlerDecorator.setDefaultHandler();
+		uehd.registerHandler(new AuthFailExceptionHandler());
+		uehd.activate();
 		try {
 			final Path workingDirPath = Paths.get(workingDirectory.getPath());
 			if (!Files.isDirectory(workingDirPath)) {
 				Files.createDirectories(workingDirPath);
 			}
-			@SuppressWarnings("resource")
 			final FileLock fl = new FileLock(workingDirPath.resolve(LOCK_FILE_NAME));
 			if (!fl.tryLock()) {
 				uiService.showDialog(
@@ -85,6 +93,7 @@ public class ManageSPIMBenchmark implements Command {
 					public void windowClosing(final WindowEvent e) {
 						super.windowClosing(e);
 						fl.close();
+						uehd.close();
 					}
 				});
 				dialog.setVisible(true);

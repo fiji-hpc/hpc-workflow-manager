@@ -17,8 +17,10 @@ import cz.it4i.fiji.haas.ui.InitiableControl;
 import cz.it4i.fiji.haas.ui.JavaFXRoutines;
 import cz.it4i.fiji.haas.ui.ModalDialogs;
 import cz.it4i.fiji.haas.ui.ProgressDialog;
+import cz.it4i.fiji.haas_spim_benchmark.core.AuthFailExceptionHandler;
 import cz.it4i.fiji.haas_spim_benchmark.core.FXFrameExecutorService;
 import cz.it4i.fiji.haas_spim_benchmark.core.TaskComputation;
+import cz.it4i.fiji.haas_spim_benchmark.core.UncaughtExceptionHandlerDecorator;
 import cz.it4i.fiji.haas_spim_benchmark.ui.TaskComputationAdapter.ObservableLog;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
@@ -33,20 +35,27 @@ public class TaskComputationControl extends TabPane implements CloseableControl,
 	
 	private final Executor uiExecutor = new FXFrameExecutorService();
 	
-	private final ExecutorService wsExecutorService = Executors.newSingleThreadExecutor();
+	private ExecutorService wsExecutorService;
 	@FXML
 	private RemoteFilesInfoControl remoteFilesInfo;
 
 	private final TaskComputation computation;
+
+	private Window rootWindow;
 	
 	
 	public TaskComputationControl(TaskComputation computation) {
 		JavaFXRoutines.initRootAndController("TaskComputationView.fxml", this);
 		this.computation = computation;
 	}
-	
+
 	@Override
 	public void init(Window parameter) {
+		this.rootWindow = parameter;
+		wsExecutorService = Executors.newSingleThreadExecutor(
+			UncaughtExceptionHandlerDecorator.createThreadFactory(
+				new AuthFailExceptionHandler(rootWindow)));
+		
 		wsExecutorService.execute(() -> {
 			ProgressDialog dialog = ModalDialogs.doModal(new ProgressDialog(parameter, "Updating infos..."),
 					WindowConstants.DO_NOTHING_ON_CLOSE);

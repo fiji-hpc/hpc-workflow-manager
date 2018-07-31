@@ -1,3 +1,4 @@
+
 package cz.it4i.fiji.scpclient;
 
 import com.jcraft.jsch.Channel;
@@ -28,59 +29,72 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ScpClient implements Closeable {
-	
-	public static final Logger log = LoggerFactory.getLogger(cz.it4i.fiji.scpclient.ScpClient.class);
 
+	public static final Logger log = LoggerFactory.getLogger(
+		cz.it4i.fiji.scpclient.ScpClient.class);
 
-	private static final int MAX_NUMBER_OF_CONNECTION_ATTEMPTS = 3;
-
+	private static final int MAX_NUMBER_OF_CONNECTION_ATTEMPTS = 5;
 
 	private static final long TIMEOUT_BETWEEN_CONNECTION_ATTEMPTS = 500;
-	
-	
+
 	private String hostName;
 	private String username;
 	private final JSch jsch = new JSch();
 	private Session session;
-	private final TransferFileProgress dummyProgress = new TransferFileProgress() {
+	private final TransferFileProgress dummyProgress =
+		new TransferFileProgress()
+		{
 
-		@Override
-		public void dataTransfered(long bytesTransfered) {
+			@Override
+			public void dataTransfered(long bytesTransfered) {
 
 		}
-	};
+		};
 
-	public ScpClient(String hostName, String username, byte[] privateKeyFile) throws JSchException {
+	public ScpClient(String hostName, String username, byte[] privateKeyFile)
+		throws JSchException
+	{
 		init(hostName, username, new ByteIdentity(jsch, privateKeyFile));
 	}
 
-	public ScpClient(String hostName, String username, Identity privateKeyFile) throws JSchException {
+	public ScpClient(String hostName, String username, Identity privateKeyFile)
+		throws JSchException
+	{
 		init(hostName, username, privateKeyFile);
 	}
 
-	public ScpClient(String hostName, String userName, String keyFile, String pass) throws JSchException {
+	public ScpClient(String hostName, String userName, String keyFile,
+		String pass) throws JSchException
+	{
 		Identity id = IdentityFile.newInstance(keyFile, null, jsch);
 		try {
 			if (pass != null) {
 				id.setPassphrase(pass.getBytes("UTF-8"));
 			}
-		} catch (UnsupportedEncodingException e) {
+		}
+		catch (UnsupportedEncodingException e) {
 			throw new RuntimeException(e);
 		}
 		init(hostName, userName, id);
 	}
 
-	private void init(String initHostName, String initUsername, Identity privateKeyFile) throws JSchException {
+	private void init(String initHostName, String initUsername,
+		Identity privateKeyFile) throws JSchException
+	{
 		this.hostName = initHostName;
 		this.username = initUsername;
 		jsch.addIdentity(privateKeyFile, null);
 	}
 
-	public void download(String lfile, Path rFile) throws JSchException, IOException {
+	public void download(String lfile, Path rFile) throws JSchException,
+		IOException
+	{
 		download(lfile, rFile, dummyProgress);
 	}
 
-	public boolean download(String lfile, Path rfile, TransferFileProgress progress) throws JSchException, IOException {
+	public boolean download(String lfile, Path rfile,
+		TransferFileProgress progress) throws JSchException, IOException
+	{
 		if (!Files.exists(rfile.getParent())) {
 			Files.createDirectories(rfile.getParent());
 		}
@@ -89,9 +103,10 @@ public class ScpClient implements Closeable {
 		}
 	}
 
-	public boolean download(String lfile, OutputStream os, TransferFileProgress progress)
-			throws JSchException, IOException {
-				// exec 'scp -f rfile' remotely
+	public boolean download(String lfile, OutputStream os,
+		TransferFileProgress progress) throws JSchException, IOException
+	{
+		// exec 'scp -f rfile' remotely
 		String command = "scp -f " + lfile;
 		Channel channel = getConnectedSession().openChannel("exec");
 
@@ -99,7 +114,9 @@ public class ScpClient implements Closeable {
 			((ChannelExec) channel).setCommand(command);
 
 			// get I/O streams for remote scp
-			try (OutputStream out = channel.getOutputStream(); InputStream in = channel.getInputStream()) {
+			try (OutputStream out = channel.getOutputStream();
+					InputStream in = channel.getInputStream())
+			{
 
 				channel.connect();
 
@@ -125,8 +142,7 @@ public class ScpClient implements Closeable {
 							// error
 							break;
 						}
-						if (buf[0] == ' ')
-							break;
+						if (buf[0] == ' ') break;
 						filesize = filesize * 10L + buf[0] - '0';
 					}
 
@@ -150,10 +166,8 @@ public class ScpClient implements Closeable {
 					// read a content of lfile
 					int foo;
 					while (true) {
-						if (buf.length < filesize)
-							foo = buf.length;
-						else
-							foo = (int) filesize;
+						if (buf.length < filesize) foo = buf.length;
+						else foo = (int) filesize;
 						foo = in.read(buf, 0, foo);
 						if (foo < 0) {
 							// error
@@ -162,8 +176,7 @@ public class ScpClient implements Closeable {
 						os.write(buf, 0, foo);
 						progress.dataTransfered(foo);
 						filesize -= foo;
-						if (filesize == 0L)
-							break;
+						if (filesize == 0L) break;
 					}
 
 					if (checkAck(in) != 0) {
@@ -178,33 +191,44 @@ public class ScpClient implements Closeable {
 				}
 			}
 
-		} catch (ClosedByInterruptException e) {
+		}
+		catch (ClosedByInterruptException e) {
 			throw new InterruptedIOException();
-		} finally {
+		}
+		finally {
 			channel.disconnect();
 		}
 		return true;
 	}
 
-	public boolean upload(Path file, String rfile) throws JSchException, IOException {
+	public boolean upload(Path file, String rfile) throws JSchException,
+		IOException
+	{
 		return upload(file, rfile, dummyProgress);
 	}
 
-	public boolean upload(Path file, String rfile, TransferFileProgress progress) throws JSchException, IOException {
+	public boolean upload(Path file, String rfile, TransferFileProgress progress)
+		throws JSchException, IOException
+	{
 		try (InputStream is = Files.newInputStream(file)) {
-			return upload(is, rfile, file.toFile().length(), file.toFile().lastModified(), progress);
+			return upload(is, rfile, file.toFile().length(), file.toFile()
+				.lastModified(), progress);
 		}
 	}
 
-	public boolean upload(InputStream is, String fileName, long length, long lastModified,
-			TransferFileProgress progress) throws JSchException, IOException {
+	public boolean upload(InputStream is, String fileName, long length,
+		long lastModified, TransferFileProgress progress) throws JSchException,
+		IOException
+	{
 		boolean ptimestamp = true;
 		// exec 'scp -t rfile' remotely
 		String command = "scp " + (ptimestamp ? "-p" : "") + " -t " + fileName;
 		Channel channel = getConnectedSession().openChannel("exec");
 		((ChannelExec) channel).setCommand(command);
 		// get I/O streams for remote scp
-		try (OutputStream out = channel.getOutputStream(); InputStream in = channel.getInputStream()) {
+		try (OutputStream out = channel.getOutputStream();
+				InputStream in = channel.getInputStream())
+		{
 			channel.connect();
 			if (checkAck(in) != 0) {
 				return false;
@@ -236,8 +260,7 @@ public class ScpClient implements Closeable {
 			// send a content of lfile
 			while (true) {
 				int len = is.read(buf, 0, buf.length);
-				if (len <= 0)
-					break;
+				if (len <= 0) break;
 				out.write(buf, 0, len); // out.flush();
 				progress.dataTransfered(len);
 			}
@@ -250,10 +273,12 @@ public class ScpClient implements Closeable {
 			}
 			out.close();
 
-		} catch (ClosedByInterruptException e) {
+		}
+		catch (ClosedByInterruptException e) {
 			Thread.interrupted();
 			throw new InterruptedIOException();
-		} finally {
+		}
+		finally {
 			channel.disconnect();
 		}
 		return true;
@@ -268,7 +293,9 @@ public class ScpClient implements Closeable {
 			((ChannelExec) channel).setCommand(command);
 
 			// get I/O streams for remote scp
-			try (OutputStream out = channel.getOutputStream(); InputStream in = channel.getInputStream()) {
+			try (OutputStream out = channel.getOutputStream();
+					InputStream in = channel.getInputStream())
+			{
 
 				channel.connect();
 
@@ -294,8 +321,7 @@ public class ScpClient implements Closeable {
 							// error
 							break;
 						}
-						if (buf[0] == ' ')
-							break;
+						if (buf[0] == ' ') break;
 						filesize = filesize * 10L + buf[0] - '0';
 					}
 					return filesize;
@@ -303,26 +329,29 @@ public class ScpClient implements Closeable {
 				}
 			}
 
-		} finally {
+		}
+		finally {
 			channel.disconnect();
 		}
 		return -1;
 	}
 
 	@SuppressWarnings("unchecked")
-	public List<Long> sizeByLs(String lfile) throws JSchException{
-		
+	public List<Long> sizeByLs(String lfile) throws JSchException {
+
 		// exec 'scp -f rfile' remotely
 		Channel channel = getConnectedSession().openChannel("sftp");
 
 		try {
 			channel.connect();
-			return ((List<LsEntry>) ((ChannelSftp) channel).ls(lfile)).stream().map(atr -> atr.getAttrs().getSize())
-					.collect(Collectors.toList());
+			return ((List<LsEntry>) ((ChannelSftp) channel).ls(lfile)).stream().map(
+				atr -> atr.getAttrs().getSize()).collect(Collectors.toList());
 
-		} catch (SftpException e) {
+		}
+		catch (SftpException e) {
 			e.printStackTrace();
-		} finally {
+		}
+		finally {
 			channel.disconnect();
 		}
 		return null;
@@ -331,7 +360,7 @@ public class ScpClient implements Closeable {
 	@Override
 	public void close() {
 		if (session != null && session.isConnected()) {
-			//log.info("disconnect");
+			// log.info("disconnect");
 			session.disconnect();
 		}
 		session = null;
@@ -350,26 +379,29 @@ public class ScpClient implements Closeable {
 			session.setUserInfo(ui);
 		}
 		int connectRetry = 0;
+		long timoutBetweenRetry = TIMEOUT_BETWEEN_CONNECTION_ATTEMPTS;
 		while (!session.isConnected()) {
-			//log.info("connect");
 			try {
 				session.connect();
 			}
 			catch(JSchException e) {
-				if(e.getMessage().contains("Auth fail") && connectRetry < MAX_NUMBER_OF_CONNECTION_ATTEMPTS) {
-					connectRetry++;
-					try {
-						Thread.sleep(TIMEOUT_BETWEEN_CONNECTION_ATTEMPTS);
-					}
-					catch (InterruptedException exc) {
-						log.info("Interruption detected");
-						throw new JSchException(exc.getMessage(), exc);
-					}
-					continue;
+				if(e.getMessage().contains("Auth fail")) {
+					if(connectRetry < MAX_NUMBER_OF_CONNECTION_ATTEMPTS) {
+						connectRetry++;
+						try {
+							Thread.sleep(timoutBetweenRetry);
+							timoutBetweenRetry *= 2;
+						}
+						catch (InterruptedException exc) {
+							log.info("Interruption detected");
+							throw new JSchException(exc.getMessage(), exc);
+						}
+						continue;
+					} 
+					e = new AuthFailException(e.getMessage(), e); 
 				}
 				throw e;
 			}
-			
 		}
 		return session;
 	}
@@ -402,8 +434,7 @@ public class ScpClient implements Closeable {
 		}
 
 		@Override
-		public void showMessage(String message) {
-		}
+		public void showMessage(String message) {}
 
 	}
 
@@ -413,10 +444,8 @@ public class ScpClient implements Closeable {
 		// 1 for error,
 		// 2 for fatal error,
 		// -1
-		if (b == 0)
-			return b;
-		if (b == -1)
-			return b;
+		if (b == 0) return b;
+		if (b == -1) return b;
 
 		if (b == 1 || b == 2) {
 			StringBuffer sb = new StringBuffer();
@@ -424,7 +453,8 @@ public class ScpClient implements Closeable {
 			do {
 				c = in.read();
 				sb.append((char) c);
-			} while (c != '\n');
+			}
+			while (c != '\n');
 			if (b == 1) { // error
 				System.out.print(sb.toString());
 			}
