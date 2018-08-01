@@ -130,6 +130,7 @@ public class ObservableBenchmarkJob extends UpdatableObservableValue<BenchmarkJo
 
 		@Override
 		public void itemDone(Object item) {
+			fireValueChangedEvent();
 		}
 
 		@Override

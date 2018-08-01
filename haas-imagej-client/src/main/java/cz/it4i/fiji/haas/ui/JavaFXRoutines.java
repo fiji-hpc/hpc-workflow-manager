@@ -20,6 +20,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
+import javafx.scene.paint.Color;
 
 public interface JavaFXRoutines {
 
@@ -97,12 +98,15 @@ public interface JavaFXRoutines {
 		return pred.test(j.getValue());
 	}
 
-	static public<T,U extends ObservableValue<T>>void setOnDoubleClickAction(TableView<U> tableView ,ExecutorService executorService,Predicate<T> openAllowed, Consumer<T> r) {
+	static public <T, U extends ObservableValue<T>> void setOnDoubleClickAction(
+		TableView<U> tableView, ExecutorService executorService,
+		Predicate<U> openAllowed, Consumer<U> r)
+	{
 		tableView.setRowFactory(tv -> {
 			TableRow<U> row = new TableRow<>();
 			row.setOnMouseClicked(event -> {
 				if (event.getClickCount() == 2 && (!row.isEmpty())) {
-					T rowData = row.getItem().getValue();
+					U rowData = row.getItem();
 					if (openAllowed.test(rowData)) {
 						executorService.execute(() -> r.accept(rowData));
 					}
@@ -110,5 +114,10 @@ public interface JavaFXRoutines {
 			});
 			return row;
 		});
+	}
+
+	public static String toCss(Color color) {
+		return "rgb(" + Math.round(color.getRed() * 255.0) + "," + Math.round(color
+			.getGreen() * 255.0) + "," + Math.round(color.getBlue() * 255.0) + ")";
 	}
 }

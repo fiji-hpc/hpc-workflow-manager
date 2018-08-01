@@ -26,9 +26,9 @@ import cz.it4i.fiji.haas.ui.ModalDialogs;
 import cz.it4i.fiji.haas.ui.TableCellAdapter;
 import cz.it4i.fiji.haas.ui.TableViewContextMenu;
 import cz.it4i.fiji.haas_java_client.JobState;
-import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.BenchmarkJob;
 import cz.it4i.fiji.haas_spim_benchmark.core.Constants;
 import cz.it4i.fiji.haas_spim_benchmark.core.FXFrameExecutorService;
+import cz.it4i.fiji.haas_spim_benchmark.core.ObservableBenchmarkJob;
 import cz.it4i.fiji.haas_spim_benchmark.core.Task;
 import cz.it4i.fiji.haas_spim_benchmark.core.TaskComputation;
 import javafx.beans.value.ObservableValue;
@@ -64,18 +64,13 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 		} else {
 			result = taskExecutionState2Color.get(jobState);
 		}
-		return toCss(result != null ? result : Color.ORANGE);
-	}
-
-	private static String toCss(Color color) {
-		return "rgb(" + Math.round(color.getRed() * 255.0) + "," + Math.round(color.getGreen() * 255.0) + ","
-				+ Math.round(color.getBlue() * 255.0) + ")";
+		return JavaFXRoutines.toCss(result != null ? result : Color.ORANGE);
 	}
 
 	@FXML
 	private TableView<ObservableValue<Task>> tasks;
 
-	private BenchmarkJob job;
+	private ObservableBenchmarkJob job;
 	private Timer timer;
 	private ObservableTaskRegistry registry;
 	private final ExecutorService executorServiceWS;
@@ -87,13 +82,7 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 		init();
 	}
 
-	public SPIMPipelineProgressViewController(BenchmarkJob job) {
-		executorServiceWS = Executors.newSingleThreadExecutor();
-		init();
-		setJob(job);
-	}
-
-	public void setJob(BenchmarkJob job) {
+	public void setJob(final ObservableBenchmarkJob job) {
 		if (this.job != null) {
 			throw new IllegalStateException("Job already set");
 		}
@@ -160,9 +149,10 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 	}
 
 	private void fillTable() {
-		List<Task> processedTasks = job.getTasks();
+		List<Task> processedTasks = job.getValue().getTasks();
 		if (processedTasks == null) {
 			timer.schedule(new TimerTask() {
+
 				@Override
 				public void run() {
 					fillTable();
