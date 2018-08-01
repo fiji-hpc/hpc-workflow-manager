@@ -16,6 +16,7 @@ public interface Constants {
 	int HAAS_TEMPLATE_ID = 4;
 	String HAAS_PROJECT_ID = "OPEN-12-20";
 	int HAAS_TIMEOUT = 9600; //Walltime in seconds
+	String BDS_ADDRESS = "http://julius1.it4i.cz/";
 	
 	final String NEW_LINE_SEPARATOR = "\n";
 	final String DELIMITER = ";";
@@ -61,5 +62,6 @@ public interface Constants {
 	String DONE_TASK = "done";
 	int CORES_PER_NODE = 24;
 	String DEMO_DATA_SIGNAL_FILE_NAME = "demodata";
+	
 	
 }

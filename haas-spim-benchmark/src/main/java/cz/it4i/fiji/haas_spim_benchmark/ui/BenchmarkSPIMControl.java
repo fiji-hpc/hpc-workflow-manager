@@ -409,7 +409,7 @@ public class BenchmarkSPIMControl extends BorderPane implements
 			digest.reset();
 			digest.update(changed.toString().getBytes("utf8"));
 			String sha1 = String.format("%040x", new BigInteger(1, digest.digest()));
-			String result =  "http://julius1.it4i.cz/" + sha1 + "/";
+			String result =  Constants.BDS_ADDRESS + sha1 + "/";
 			if (log.isDebugEnabled()) {
 				log.debug("getBDSPathForData changed={} path={}",changed, result);
 			}
