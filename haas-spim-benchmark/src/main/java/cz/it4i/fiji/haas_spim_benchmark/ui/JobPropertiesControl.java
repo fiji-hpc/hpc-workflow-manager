@@ -15,13 +15,14 @@ import cz.it4i.fiji.haas.ui.JavaFXRoutines;
 import cz.it4i.fiji.haas.ui.ShellRoutines;
 import cz.it4i.fiji.haas.ui.UpdatableObservableValue;
 import cz.it4i.fiji.haas.ui.UpdatableObservableValue.UpdateStatus;
-import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.BenchmarkJob;
+import cz.it4i.fiji.haas_spim_benchmark.core.ObservableBenchmarkJob;
 import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
 import javafx.scene.control.TableView;
 import javafx.scene.layout.BorderPane;
 
 public class JobPropertiesControl extends BorderPane implements Closeable {
+
 	private static final String FXML_FILE_NAME = "JobProperties.fxml";
 	public static final Logger log = LoggerFactory
 			.getLogger(cz.it4i.fiji.haas_spim_benchmark.ui.JobPropertiesControl.class);
@@ -29,7 +30,7 @@ public class JobPropertiesControl extends BorderPane implements Closeable {
 	@FXML
 	private TableView<ObservableValue<P_Value>> properties;
 
-	private BenchmarkJob job;
+	private ObservableBenchmarkJob job;
 
 	private final ExecutorService executorServiceUI;
 
@@ -39,7 +40,7 @@ public class JobPropertiesControl extends BorderPane implements Closeable {
 		initTable();
 	}
 
-	public void setJob(BenchmarkJob job) {
+	public void setJob(ObservableBenchmarkJob job) {
 		this.job = job;
 		fillTable();
 	}
@@ -53,9 +54,9 @@ public class JobPropertiesControl extends BorderPane implements Closeable {
 		setCellValueFactory(0, s -> s.getName());
 		setCellValueFactory(1, s -> s.getValueAsString());
 		JavaFXRoutines.setOnDoubleClickAction(properties, executorServiceUI,
-			rowData -> rowData.isOpenAllowed(), rowData -> {
+			rowData -> rowData.getValue().isOpenAllowed(), rowData -> {
 				try {
-					ShellRoutines.openDirectoryInBrowser(rowData.getPath());
+					ShellRoutines.openDirectoryInBrowser(rowData.getValue().getPath());
 				}
 				catch (UnsupportedOperationException | IOException e) {
 					// TODO: Escalate an error to the end user
@@ -65,15 +66,17 @@ public class JobPropertiesControl extends BorderPane implements Closeable {
 	}
 
 	private void fillTable() {
-		properties.getItems()
-				.add(new UpdatableObservableValue<>(
-						new P_Value("Input", job.getInputDirectory(), "Demo data on the Salomon IT4I cluster"),
-						x -> UpdateStatus.NotUpdated, x -> x));
-		properties.getItems().add(new UpdatableObservableValue<>(
-				new P_Value("Output", job.getOutputDirectory(), "N/A"), x -> UpdateStatus.NotUpdated, x -> x));
+		properties.getItems().add(new UpdatableObservableValue<>(new P_Value(
+			"Input", job.getValue().getInputDirectory(),
+			"Demo data on the Salomon IT4I cluster"), x -> UpdateStatus.NotUpdated,
+			x -> x));
+		properties.getItems().add(new UpdatableObservableValue<>(new P_Value(
+			"Output", job.getValue().getOutputDirectory(), "N/A"),
+			x -> UpdateStatus.NotUpdated, x -> x));
 
-		properties.getItems().add(new UpdatableObservableValue<>(
-				new P_Value("Working", job.getDirectory(), "N/A"), x -> UpdateStatus.NotUpdated, x -> x));
+		properties.getItems().add(new UpdatableObservableValue<>(new P_Value(
+			"Working", job.getValue().getDirectory(), "N/A"),
+			x -> UpdateStatus.NotUpdated, x -> x));
 
 	}
 
@@ -82,6 +85,7 @@ public class JobPropertiesControl extends BorderPane implements Closeable {
 	}
 
 	private class P_Value {
+
 		private final String name;
 		private final Path path;
 		private final String textIfNull;

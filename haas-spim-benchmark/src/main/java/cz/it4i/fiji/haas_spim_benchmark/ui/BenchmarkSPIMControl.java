@@ -149,8 +149,8 @@ public class BenchmarkSPIMControl extends BorderPane implements
 		}), job -> JavaFXRoutines.notNullValue(job, j -> j
 			.getState() == JobState.Running || j.getState() == JobState.Queued));
 
-		menu.addItem("Job dashboard", job -> openJobDetailsWindow(job.getValue()),
-			job -> JavaFXRoutines.notNullValue(job, j -> true));
+		menu.addItem("Job dashboard", obsBenchmarkJob -> openJobDetailsWindow(
+			obsBenchmarkJob), job -> JavaFXRoutines.notNullValue(job, j -> true));
 		menu.addItem("Open job subdirectory", j -> openJobSubdirectory(j
 			.getValue()), x -> JavaFXRoutines.notNullValue(x, j -> true));
 		menu.addItem("Open in BigDataViewer", j -> openBigDataViewer(j.getValue()),
@@ -333,7 +333,8 @@ public class BenchmarkSPIMControl extends BorderPane implements
 		setCellValueFactory(6, j -> decorateTransfer(registry.get(j)
 			.getDownloadProgress()));
 		JavaFXRoutines.setOnDoubleClickAction(jobs, executorServiceJobState,
-			openJobDetailsWindow -> true, bj -> openJobDetailsWindow(bj));
+			openJobDetailsWindow -> true, obsBenchmarkJob -> openJobDetailsWindow(
+				obsBenchmarkJob));
 	}
 
 	private String decorateTransfer(TransferProgress progress) {
@@ -378,7 +379,7 @@ public class BenchmarkSPIMControl extends BorderPane implements
 				"Doubleclick to open Dashboard")));
 	}
 
-	private void openJobDetailsWindow(BenchmarkJob job) {
+	private void openJobDetailsWindow(ObservableBenchmarkJob job) {
 		new JobDetailWindow(root, job).setVisible(true);
 	}
 

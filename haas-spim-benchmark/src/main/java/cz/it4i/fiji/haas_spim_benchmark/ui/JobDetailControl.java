@@ -11,8 +11,8 @@ import cz.it4i.fiji.haas.ui.InitiableControl;
 import cz.it4i.fiji.haas.ui.JavaFXRoutines;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
-import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.BenchmarkJob;
 import cz.it4i.fiji.haas_spim_benchmark.core.Constants;
+import cz.it4i.fiji.haas_spim_benchmark.core.ObservableBenchmarkJob;
 import javafx.fxml.FXML;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
@@ -47,13 +47,13 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 
 	private final HaaSOutputObservableValueRegistry observableValueRegistry;
 
-	private final BenchmarkJob job;
+	private final ObservableBenchmarkJob job;
 
-	public JobDetailControl(final BenchmarkJob job) {
+	public JobDetailControl(final ObservableBenchmarkJob job) {
 		JavaFXRoutines.initRootAndController("JobDetail.fxml", this);
 		progressView.setJob(job);
-		observableValueRegistry = new HaaSOutputObservableValueRegistry(job,
-			Constants.HAAS_UPDATE_TIMEOUT /
+		observableValueRegistry = new HaaSOutputObservableValueRegistry(job
+			.getValue(), Constants.HAAS_UPDATE_TIMEOUT /
 				Constants.UI_TO_HAAS_FREQUENCY_UPDATE_RATIO);
 		errorOutput.setObservable(observableValueRegistry.createObservable(
 			SynchronizableFileType.StandardErrorFile));
@@ -70,9 +70,12 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 	@Override
 	public void init(final Window parameter) {
 
-		if (job.getState() == JobState.Disposed) {
+		if (job.getValue().getState() == JobState.Disposed) {
 			// TODO: Handle this?
-			log.debug("Job " + job.getId() + " state has been resolved as Disposed.");
+			if (log.isInfoEnabled()) {
+				log.info("Job " + job.getValue().getId() +
+						" state has been resolved as Disposed.");
+			}
 		}
 
 		disableNonPermanentTabs();
@@ -100,9 +103,10 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 	 * Checks whether execution details are available
 	 */
 	private boolean areExecutionDetailsAvailable() {
-		return job.getState() == JobState.Running || job
-			.getState() == JobState.Finished || job.getState() == JobState.Failed ||
-			job.getState() == JobState.Canceled;
+		return job.getValue().getState() == JobState.Running || job.getValue()
+			.getState() == JobState.Finished || job.getValue()
+				.getState() == JobState.Failed || job.getValue()
+					.getState() == JobState.Canceled;
 	}
 
 	/*

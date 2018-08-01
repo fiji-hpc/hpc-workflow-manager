@@ -92,11 +92,12 @@ public class BenchmarkJobManager implements Closeable {
 
 		public void setDownloadNotifier(Progress progress) {
 			job.setDownloadNotifier(downloadNotifier =
-				createDownloadNotifierProcessingResultCSV(convertTo(progress)));
+				createDownloadNotifierProcessingResultCSV(convertToProgressNotifier(
+					progress)));
 		}
 
 		public void setUploadNotifier(Progress progress) {
-			job.setUploadNotifier(convertTo(progress));
+			job.setUploadNotifier(convertToProgressNotifier(progress));
 		}
 
 		public synchronized void startJob(Progress progress) throws IOException {
@@ -292,7 +293,7 @@ public class BenchmarkJobManager implements Closeable {
 			return job.getFileTransferInfo();
 		}
 
-		private ProgressNotifier convertTo(Progress progress) {
+		private ProgressNotifier convertToProgressNotifier(Progress progress) {
 			return progress == null ? null : new ProgressNotifierAdapter(progress);
 		}
 

@@ -8,23 +8,27 @@ import cz.it4i.fiji.haas.ui.ObservableValueRegistry;
 import cz.it4i.fiji.haas.ui.UpdatableObservableValue;
 import cz.it4i.fiji.haas.ui.UpdatableObservableValue.UpdateStatus;
 import cz.it4i.fiji.haas_java_client.JobState;
-import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.BenchmarkJob;
+import cz.it4i.fiji.haas_spim_benchmark.core.ObservableBenchmarkJob;
 import cz.it4i.fiji.haas_spim_benchmark.core.Task;
 import cz.it4i.fiji.haas_spim_benchmark.core.TaskComputation;
 
-public class ObservableTaskRegistry extends ObservableValueRegistry<Task, UpdatableObservableValue<Task>> {
+public class ObservableTaskRegistry extends
+	ObservableValueRegistry<Task, UpdatableObservableValue<Task>>
+{
 
-	private final Supplier<BenchmarkJob> jobSupplier;
+	private final Supplier<ObservableBenchmarkJob> jobSupplier;
 
-	public ObservableTaskRegistry(Supplier<BenchmarkJob> jobSupplier,Consumer<Task> removeConsumer) {
-		super(t -> update(t), t -> t.getComputations().stream().map(tc -> tc.getState()).collect(Collectors.toList()),
-				removeConsumer);
+	public ObservableTaskRegistry(Supplier<ObservableBenchmarkJob> jobSupplier,
+		Consumer<Task> removeConsumer)
+	{
+		super(t -> update(t), t -> t.getComputations().stream().map(tc -> tc
+			.getState()).collect(Collectors.toList()), removeConsumer);
 		this.jobSupplier = jobSupplier;
 	}
 
 	@Override
 	public void update() {
-		jobSupplier.get().getTasks();
+		jobSupplier.get().getValue().getTasks();
 		super.update();
 	}
 	

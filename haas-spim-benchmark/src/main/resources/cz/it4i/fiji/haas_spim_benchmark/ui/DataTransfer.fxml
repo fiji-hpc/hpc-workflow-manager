@@ -10,7 +10,7 @@
    <center>
       <HBox>
          <children>
-            <TableView fx:id="filesToUpload" prefHeight="400.0" prefWidth="500.0" HBox.hgrow="ALWAYS">
+            <TableView fx:id="files" prefHeight="400.0" prefWidth="500.0" HBox.hgrow="ALWAYS">
 				<columns>
 					<TableColumn prefWidth="400.0" text="File" />
 					<TableColumn prefWidth="100.0" text="Status" />
