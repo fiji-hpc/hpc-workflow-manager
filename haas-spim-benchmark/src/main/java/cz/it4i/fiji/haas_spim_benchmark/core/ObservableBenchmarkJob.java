@@ -1,27 +1,41 @@
+
 package cz.it4i.fiji.haas_spim_benchmark.core;
 
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+
+import net.imagej.updater.util.Progress;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import cz.it4i.fiji.haas.ui.UpdatableObservableValue;
 import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.BenchmarkJob;
-import net.imagej.updater.util.Progress;
 
 public class ObservableBenchmarkJob extends UpdatableObservableValue<BenchmarkJob> {
 
-	public static final Logger log = LoggerFactory
-			.getLogger(cz.it4i.fiji.haas_spim_benchmark.core.ObservableBenchmarkJob.class);
+	public static final Logger log = LoggerFactory.getLogger(
+		cz.it4i.fiji.haas_spim_benchmark.core.ObservableBenchmarkJob.class);
 
-	private final P_TransferProgress downloadProgress = new P_TransferProgress(val -> getValue().setDownloaded(val),
-			() -> getValue().isDownloaded(), () -> getValue().needsDownload());
-	private final P_TransferProgress uploadProgress = new P_TransferProgress(val -> getValue().setUploaded(val),
-			() -> getValue().isUploaded(), () -> getValue().needsUpload());
+	private final P_TransferProgress downloadProgress = new P_TransferProgress(
+		val -> getValue().setDownloaded(val), () -> getValue().isDownloaded(),
+		() -> getValue().needsDownload());
+	private final P_TransferProgress uploadProgress = new P_TransferProgress(
+		val -> getValue().setUploaded(val), () -> getValue().isUploaded(),
+		() -> getValue().needsUpload());
 	private final Executor executor;
+
+	private final List<CustomEventObserver> fileTransferObservers =
+		new LinkedList<>();
+
+	public interface CustomEventObserver {
+
+		public void poke();
+	}
 
 	public interface TransferProgress {
 
@@ -56,11 +70,23 @@ public class ObservableBenchmarkJob extends UpdatableObservableValue<BenchmarkJo
 		getValue().setUploadNotifier(null);
 	}
 
+	public void startObservingFileTransfer(final CustomEventObserver observer) {
+		fileTransferObservers.add(observer);
+	}
+
+	public void stopObservingFileTransfer(final CustomEventObserver observer) {
+		fileTransferObservers.remove(observer);
+	}
+
 	@Override
 	protected void fireValueChangedEvent() {
 		executor.execute(() -> {
 			super.fireValueChangedEvent();
 		});
+	}
+
+	private void pokeFileTransferObservers() {
+		fileTransferObservers.forEach(o -> o.poke());
 	}
 
 	private class P_TransferProgress implements Progress, TransferProgress {
@@ -129,8 +155,8 @@ public class ObservableBenchmarkJob extends UpdatableObservableValue<BenchmarkJo
 		}
 
 		@Override
-		public void itemDone(Object item) {
-			fireValueChangedEvent();
+		public void itemDone(final Object item) {
+			pokeFileTransferObservers();
 		}
 
 		@Override

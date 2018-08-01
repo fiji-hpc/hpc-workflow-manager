@@ -13,8 +13,7 @@ import cz.it4i.fiji.haas.ui.TableCellAdapter;
 import cz.it4i.fiji.haas_java_client.FileTransferInfo;
 import cz.it4i.fiji.haas_java_client.FileTransferState;
 import cz.it4i.fiji.haas_spim_benchmark.core.ObservableBenchmarkJob;
-import javafx.beans.InvalidationListener;
-import javafx.beans.Observable;
+import cz.it4i.fiji.haas_spim_benchmark.core.ObservableBenchmarkJob.CustomEventObserver;
 import javafx.beans.value.ObservableValueBase;
 import javafx.fxml.FXML;
 import javafx.scene.control.TableColumn;
@@ -29,6 +28,7 @@ public class DataTransferController extends BorderPane implements
 
 	private static final String FXML_FILE_NAME = "DataTransfer.fxml";
 
+	@SuppressWarnings("unused")
 	private static Logger log = LoggerFactory.getLogger(
 		cz.it4i.fiji.haas_spim_benchmark.ui.DataTransferController.class);
 
@@ -37,32 +37,23 @@ public class DataTransferController extends BorderPane implements
 
 	private ObservableBenchmarkJob job;
 
-	private final InvalidationListener listener = new InvalidationListener() {
+	private final CustomEventObserver observer = new CustomEventObserver() {
 
 		@Override
-		public void invalidated(final Observable observable) {
-
-			if (!ObservableBenchmarkJob.class.isAssignableFrom(observable
-				.getClass()))
-			{
-				log.debug(
-					"Invalidated Observable is not of the ObservableBenchmarkJob type.");
-				return;
-			}
+		public void poke() {
 
 			files.getItems().clear();
 
 			final List<SimpleObservableValue<FileTransferInfo>> tempList =
 				new LinkedList<>();
 
-			((ObservableBenchmarkJob) observable).getValue().getFileTransferInfo()
-				.forEach(i -> {
-					tempList.add(new SimpleObservableValue<>(i));
-				});
+			job.getValue().getFileTransferInfo().forEach(i -> {
+				tempList.add(new SimpleObservableValue<>(i));
+			});
 
 			files.getItems().addAll(tempList);
-		}
 
+		}
 	};
 
 	public DataTransferController() {
@@ -72,15 +63,15 @@ public class DataTransferController extends BorderPane implements
 
 	public void setJob(final ObservableBenchmarkJob job) {
 		this.job = job;
-		this.job.addListener(listener);
-		listener.invalidated(job);
+		this.job.startObservingFileTransfer(observer);
+		observer.poke(); // Needs to be done in order to retrieve finished files
 	}
 
 	// -- CloseableControl methods --
 
 	@Override
 	public void close() {
-		job.removeListener(listener);
+		job.stopObservingFileTransfer(observer);
 	}
 
 	// -- Helper methods --
@@ -104,7 +95,7 @@ public class DataTransferController extends BorderPane implements
 			if (val == null || empty) {
 				return;
 			}
-			TableRow<SimpleObservableValue<FileTransferInfo>> currentRow = cell
+			final TableRow<SimpleObservableValue<FileTransferInfo>> currentRow = cell
 				.getTableRow();
 			cell.setText(val.toString());
 			if (val.equals(FileTransferState.Finished)) {
