@@ -1,8 +1,8 @@
 
 package cz.it4i.fiji.haas_spim_benchmark.core;
 
-import java.util.LinkedList;
-import java.util.List;
+import java.util.Observable;
+import java.util.Observer;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -16,7 +16,9 @@ import org.slf4j.LoggerFactory;
 import cz.it4i.fiji.haas.ui.UpdatableObservableValue;
 import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.BenchmarkJob;
 
-public class ObservableBenchmarkJob extends UpdatableObservableValue<BenchmarkJob> {
+public class ObservableBenchmarkJob extends
+	UpdatableObservableValue<BenchmarkJob>
+{
 
 	public static final Logger log = LoggerFactory.getLogger(
 		cz.it4i.fiji.haas_spim_benchmark.core.ObservableBenchmarkJob.class);
@@ -29,13 +31,7 @@ public class ObservableBenchmarkJob extends UpdatableObservableValue<BenchmarkJo
 		() -> getValue().needsUpload());
 	private final Executor executor;
 
-	private final List<CustomEventObserver> fileTransferObservers =
-		new LinkedList<>();
-
-	public interface CustomEventObserver {
-
-		public void poke();
-	}
+	private final P_Observable fileTransferObservervable = new P_Observable();
 
 	public interface TransferProgress {
 
@@ -48,8 +44,10 @@ public class ObservableBenchmarkJob extends UpdatableObservableValue<BenchmarkJo
 		public Float getRemainingPercents();
 	}
 
-	public ObservableBenchmarkJob(BenchmarkJob wrapped, Function<BenchmarkJob, UpdateStatus> updateFunction,
-			Function<BenchmarkJob, Object> stateProvider, Executor executorUI) {
+	public ObservableBenchmarkJob(BenchmarkJob wrapped,
+		Function<BenchmarkJob, UpdateStatus> updateFunction,
+		Function<BenchmarkJob, Object> stateProvider, Executor executorUI)
+	{
 		super(wrapped, updateFunction, stateProvider);
 		this.executor = executorUI;
 		wrapped.setDownloadNotifier(downloadProgress);
@@ -70,12 +68,12 @@ public class ObservableBenchmarkJob extends UpdatableObservableValue<BenchmarkJo
 		getValue().setUploadNotifier(null);
 	}
 
-	public void startObservingFileTransfer(final CustomEventObserver observer) {
-		fileTransferObservers.add(observer);
+	public void startObservingFileTransfer(final Observer observer) {
+		fileTransferObservervable.addObserver(observer);
 	}
 
-	public void stopObservingFileTransfer(final CustomEventObserver observer) {
-		fileTransferObservers.remove(observer);
+	public void stopObservingFileTransfer(final Observer observer) {
+		fileTransferObservervable.deleteObserver(observer);
 	}
 
 	@Override
@@ -85,8 +83,17 @@ public class ObservableBenchmarkJob extends UpdatableObservableValue<BenchmarkJo
 		});
 	}
 
-	private void pokeFileTransferObservers() {
-		fileTransferObservers.forEach(o -> o.poke());
+	private void notifyFileTransferObservers() {
+		fileTransferObservervable.setChanged();
+		fileTransferObservervable.notifyObservers();
+	}
+
+	private class P_Observable extends Observable {
+	
+		@Override
+		public synchronized void setChanged() {
+			super.setChanged();
+		}
 	}
 
 	private class P_TransferProgress implements Progress, TransferProgress {
@@ -97,9 +104,10 @@ public class ObservableBenchmarkJob extends UpdatableObservableValue<BenchmarkJo
 		private Long start;
 		private Long remainingMiliseconds;
 		private Float remainingPercents;
-		
-		public P_TransferProgress(Consumer<Boolean> doneStatusConsumer, Supplier<Boolean> doneStatusSupplier,
-				Supplier<Boolean> workingSupplier) {
+
+		public P_TransferProgress(Consumer<Boolean> doneStatusConsumer,
+			Supplier<Boolean> doneStatusSupplier, Supplier<Boolean> workingSupplier)
+		{
 			this.doneStatusConsumer = doneStatusConsumer;
 			this.doneStatusSupplier = doneStatusSupplier;
 			this.workingSupplier = workingSupplier;
@@ -109,9 +117,11 @@ public class ObservableBenchmarkJob extends UpdatableObservableValue<BenchmarkJo
 		public synchronized void setCount(int count, int total) {
 			if (total < -1) {
 				clearProgress();
-			} else if (start != null) {
+			}
+			else if (start != null) {
 				long delta = System.currentTimeMillis() - start;
-				remainingMiliseconds = (long) ((double) delta / count * (total - count));
+				remainingMiliseconds = (long) ((double) delta / count * (total -
+					count));
 				remainingPercents = (((float) total - count) / total * 100);
 			}
 			fireValueChangedEvent();
@@ -151,17 +161,15 @@ public class ObservableBenchmarkJob extends UpdatableObservableValue<BenchmarkJo
 		}
 
 		@Override
-		public void setItemCount(int count, int total) {
-		}
+		public void setItemCount(int count, int total) {}
 
 		@Override
 		public void itemDone(final Object item) {
-			pokeFileTransferObservers();
+			notifyFileTransferObservers();
 		}
 
 		@Override
-		public void setTitle(String title) {
-		}
+		public void setTitle(String title) {}
 
 		@Override
 		public boolean isDone() {

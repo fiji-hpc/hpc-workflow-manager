@@ -3,6 +3,8 @@ package cz.it4i.fiji.haas_spim_benchmark.ui;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Observable;
+import java.util.Observer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,7 +15,6 @@ import cz.it4i.fiji.haas.ui.TableCellAdapter;
 import cz.it4i.fiji.haas_java_client.FileTransferInfo;
 import cz.it4i.fiji.haas_java_client.FileTransferState;
 import cz.it4i.fiji.haas_spim_benchmark.core.ObservableBenchmarkJob;
-import cz.it4i.fiji.haas_spim_benchmark.core.ObservableBenchmarkJob.CustomEventObserver;
 import javafx.beans.value.ObservableValueBase;
 import javafx.fxml.FXML;
 import javafx.scene.control.TableColumn;
@@ -37,11 +38,10 @@ public class DataTransferController extends BorderPane implements
 
 	private ObservableBenchmarkJob job;
 
-	private final CustomEventObserver observer = new CustomEventObserver() {
+	private final Observer observer = new Observer() {
 
 		@Override
-		public void poke() {
-
+		public void update(Observable o, Object arg) {
 			files.getItems().clear();
 
 			final List<SimpleObservableValue<FileTransferInfo>> tempList =
@@ -54,6 +54,7 @@ public class DataTransferController extends BorderPane implements
 			files.getItems().addAll(tempList);
 
 		}
+
 	};
 
 	public DataTransferController() {
@@ -64,7 +65,7 @@ public class DataTransferController extends BorderPane implements
 	public void setJob(final ObservableBenchmarkJob job) {
 		this.job = job;
 		this.job.startObservingFileTransfer(observer);
-		observer.poke(); // Needs to be done in order to retrieve finished files
+		observer.update(null, null); // Needs to be done in order to retrieve finished files
 	}
 
 	// -- CloseableControl methods --
@@ -76,6 +77,8 @@ public class DataTransferController extends BorderPane implements
 
 	// -- Helper methods --
 
+	
+	@SuppressWarnings("unchecked")
 	private void initTable() {
 
 		final int columnIndexPath = 0;
@@ -95,6 +98,7 @@ public class DataTransferController extends BorderPane implements
 			if (val == null || empty) {
 				return;
 			}
+			
 			final TableRow<SimpleObservableValue<FileTransferInfo>> currentRow = cell
 				.getTableRow();
 			cell.setText(val.toString());
