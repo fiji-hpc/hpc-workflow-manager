@@ -55,9 +55,17 @@ public abstract class FXFrame<T extends Parent & CloseableControl> extends
 
 	private void init() {
 		addWindowListener(new WindowAdapter() {
-
 			@Override
 			public void windowClosing(WindowEvent e) {
+				closeControlIfNotClose();
+			}
+			
+			@Override
+			public void windowClosed(WindowEvent e) {
+				closeControlIfNotClose();
+			}
+
+			private void closeControlIfNotClose() {
 				synchronized (FXFrame.this) {
 					if(!controlClosed) {
 						getFxPanel().getControl().close();
@@ -66,7 +74,6 @@ public abstract class FXFrame<T extends Parent & CloseableControl> extends
 				}
 			}
 		});
-		
 		
 		if (fxPanel.getControl() instanceof ResizeableControl) {
 			ResizeableControl resizable = (ResizeableControl) fxPanel.getControl();

@@ -25,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import cz.it4i.fiji.haas_spim_benchmark.core.AuthFailExceptionHandler;
+import cz.it4i.fiji.haas_spim_benchmark.core.AuthenticationExceptionHandler;
 import cz.it4i.fiji.haas_spim_benchmark.core.Constants;
 import cz.it4i.fiji.haas_spim_benchmark.core.UncaughtExceptionHandlerDecorator;
 import cz.it4i.fiji.haas_spim_benchmark.ui.BenchmarkSPIMWindow;
@@ -68,7 +69,6 @@ public class ManageSPIMBenchmark implements Command {
 		
 		final UncaughtExceptionHandlerDecorator uehd = UncaughtExceptionHandlerDecorator.setDefaultHandler();
 		uehd.registerHandler(new AuthFailExceptionHandler());
-		uehd.activate();
 		try {
 			final Path workingDirPath = Paths.get(workingDirectory.getPath());
 			if (!Files.isDirectory(workingDirPath)) {
@@ -84,6 +84,8 @@ public class ManageSPIMBenchmark implements Command {
 			final BenchmarkSPIMWindow dialog = new BenchmarkSPIMWindow(null,
 				new BenchmarkSPIMParametersImpl(userName, password, Constants.PHONE,
 					email, workingDirPath));
+			uehd.registerHandler(new AuthenticationExceptionHandler(dialog));
+			uehd.activate();
 			dialog.executeAdjustment(() -> {
 				dialog.setTitle(Constants.SUBMENU_ITEM_NAME);
 				dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);

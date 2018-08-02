@@ -63,10 +63,7 @@ public class HaaSClient {
 		{
 
 			@Override
-			public void dataTransfered(final long bytesTransfered) {
-				// TODO Auto-generated method stub
-
-			}
+			public void dataTransfered(final long bytesTransfered) {}
 		};
 
 	public static ProgressNotifier DUMMY_PROGRESS_NOTIFIER =
@@ -521,10 +518,19 @@ public class HaaSClient {
 		return testTask;
 	}
 
+	@SuppressWarnings("restriction")
 	private String authenticate() {
+		try {
 		return getUserAndLimitationManagement().authenticateUserPassword(
 			createPasswordCredentialsExt(settings.getUserName(), settings
 				.getPassword()));
+		}
+		catch (com.sun.xml.internal.ws.client.ClientTransportException e) {
+			if(e.getMessage().contains("The server sent HTTP status code 500: Internal Server Error")) {
+				throw new AuthenticationException(e);
+			}
+			throw e;
+		}
 	}
 
 	synchronized private DataTransferWsSoap getDataTransfer() {
