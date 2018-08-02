@@ -543,7 +543,6 @@ public class HaaSClient {
 	}
 
 	private void tryNotConnected(RuntimeException e) {
-		log.info(e.getMessage());
 		if (e.getMessage().contains("HTTP transport error") && (e
 			.getCause() instanceof UnknownHostException || (e
 				.getCause() instanceof SocketException && e.getCause().getMessage()
