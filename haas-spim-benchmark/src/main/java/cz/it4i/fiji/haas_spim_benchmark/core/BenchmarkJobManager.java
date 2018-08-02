@@ -285,8 +285,8 @@ public class BenchmarkJobManager implements Closeable {
 			return job.getOutputDirectory();
 		}
 
-		public Path getResultXML() {
-			return Paths.get(job.getProperty(SPIM_OUTPUT_FILENAME_PATTERN) + ".xml");
+		public String getResultXML() {
+			return job.getProperty(SPIM_OUTPUT_FILENAME_PATTERN) + ".xml";
 		}
 
 		public List<FileTransferInfo> getFileTransferInfo() {

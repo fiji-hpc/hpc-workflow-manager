@@ -9,7 +9,6 @@ import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.EnumSet;
@@ -384,7 +383,7 @@ public class BenchmarkSPIMControl extends BorderPane implements
 	}
 
 	private void openBigDataViewer(BenchmarkJob job) {
-		Path resultXML = job.getResultXML();
+		String resultXML = job.getResultXML();
 		Path localPathToResultXML = job.getOutputDirectory().resolve(resultXML);
 		String openFile;
 		if (Files.exists(localPathToResultXML)) {
@@ -402,13 +401,13 @@ public class BenchmarkSPIMControl extends BorderPane implements
 		}
 	}
 
-	private String getPathToBDSForData(BenchmarkJob job, Path resultXML) {
-		Path changed = Paths.get(""+job.getId() ).resolve(resultXML);
+	private String getPathToBDSForData(BenchmarkJob job, String resultXML) {
+		String changed = job.getId() + "/" + resultXML;
 		MessageDigest digest;
 		try {
 			digest = MessageDigest.getInstance("SHA-1");
 			digest.reset();
-			digest.update(changed.toString().getBytes("utf8"));
+			digest.update(changed.getBytes("utf8"));
 			String sha1 = String.format("%040x", new BigInteger(1, digest.digest()));
 			String result =  Constants.BDS_ADDRESS + sha1 + "/";
 			if (log.isDebugEnabled()) {
