@@ -15,6 +15,16 @@ public class JobDetailWindow extends FXFrame<JobDetailControl> {
 			return new JobDetailControl(job);
 		});
 		setTitle("Job dashboard for job #" + job.getValue().getId());
+		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 	}
 
+	@Override
+	public void dispose() {
+		super.dispose();
+	}
+	
+	@Override
+	public void setVisible(boolean value) {
+		super.setVisible(value);
+	}
 }

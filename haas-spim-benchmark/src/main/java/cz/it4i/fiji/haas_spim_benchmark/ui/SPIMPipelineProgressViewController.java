@@ -77,6 +77,8 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 	private final Executor executorFx = new FXFrameExecutorService();
 	private Window root;
 
+	private boolean closed;
+
 	public SPIMPipelineProgressViewController() {
 		executorServiceWS = Executors.newSingleThreadExecutor();
 		init();
@@ -93,9 +95,10 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 	}
 
 	@Override
-	public void close() {
+	public synchronized void close() {
 		timer.cancel();
 		executorServiceWS.shutdown();
+		closed = true;
 	}
 
 	@Override
@@ -148,7 +151,10 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 		files.add(value);
 	}
 
-	private void fillTable() {
+	private synchronized void fillTable() {
+		if (closed) {
+			return;
+		}
 		List<Task> processedTasks = job.getValue().getTasks();
 		if (processedTasks == null) {
 			timer.schedule(new TimerTask() {
