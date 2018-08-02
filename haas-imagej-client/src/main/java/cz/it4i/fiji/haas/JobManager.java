@@ -78,13 +78,19 @@ public class JobManager implements Closeable {
 		return Collections.unmodifiableCollection(jobs);
 	}
 
-	@Override
-	public void close() {
-		jobs.forEach(job -> job.close());
+	public void checkConnection() {
+		getHaasClient().checkConnection();
 	}
 
 	public void setUploadFilter(BiPredicate<Job, Path> filter) {
 		uploadFilter = filter != null ? filter : DUMMY_UPLOAD_FILTER;
+	}
+
+	@Override
+	synchronized public void close() {
+		if(jobs != null) {
+			jobs.forEach(job -> job.close());
+		}
 	}
 
 	private HaaSClient getHaasClient() {
@@ -94,7 +100,7 @@ public class JobManager implements Closeable {
 		return haasClient;
 	}
 
-	private void initJobsIfNecessary() {
+	synchronized private void initJobsIfNecessary() {
 		if (jobs == null) {
 			jobs = new LinkedList<>();
 			try {

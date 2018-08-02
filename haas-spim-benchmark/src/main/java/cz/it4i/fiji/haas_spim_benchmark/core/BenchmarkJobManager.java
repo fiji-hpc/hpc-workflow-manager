@@ -604,6 +604,10 @@ public class BenchmarkJobManager implements Closeable {
 		return jobManager.getJobs().stream().map(this::convertJob).collect(Collectors.toList());
 	}
 
+	public void checkConnection() {
+		jobManager.checkConnection();
+	}
+	
 	public static void formatResultFile(Path filename) {
 
 		List<ResultFileTask> identifiedTasks = new LinkedList<>();
@@ -796,5 +800,4 @@ public class BenchmarkJobManager implements Closeable {
 
 		};
 	}
-
 }

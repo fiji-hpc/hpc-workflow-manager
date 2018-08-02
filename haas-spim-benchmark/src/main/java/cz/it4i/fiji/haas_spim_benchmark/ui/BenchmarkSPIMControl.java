@@ -20,6 +20,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -95,6 +96,8 @@ public class BenchmarkSPIMControl extends BorderPane implements
 
 	private final JobStateNameProvider provider = new JobStateNameProvider();
 
+	private boolean closed;
+	
 	private static Logger log = LoggerFactory.getLogger(
 		cz.it4i.fiji.haas_spim_benchmark.ui.BenchmarkSPIMControl.class);
 
@@ -109,24 +112,32 @@ public class BenchmarkSPIMControl extends BorderPane implements
 		executorServiceWS = Executors.newSingleThreadExecutor();
 		executorServiceShell = Executors.newSingleThreadExecutor();
 		timer = new Timer();
-		timer.scheduleAtFixedRate(new TimerTask() {
-			@Override
-			public void run() {
-				updateJobs(false);
-			}
-		}, Constants.HAAS_UPDATE_TIMEOUT, Constants.HAAS_UPDATE_TIMEOUT);
 		initTable();
 		initMenu();
-		updateJobs(true);
+		boolean result = checkConnection();
+		synchronized (this) {
+			if(result && !closed) {
+				timer.scheduleAtFixedRate(new TimerTask() {
+					@Override
+					public void run() {
+						updateJobs(false);
+					}
+				}, Constants.HAAS_UPDATE_TIMEOUT, Constants.HAAS_UPDATE_TIMEOUT);
+				updateJobs(true);
+			}
+		}
 	}
 	
 	@Override
-	public void close() {
-		executorServiceShell.shutdown();
-		executorServiceWS.shutdown();
-		executorServiceJobState.shutdown();
-		timer.cancel();
-		manager.close();
+	synchronized public void close() {
+		if(!closed) {
+			executorServiceShell.shutdown();
+			executorServiceWS.shutdown();
+			executorServiceJobState.shutdown();
+			timer.cancel();
+			manager.close();
+			closed = true;
+		}
 	}
 
 	private void initMenu() {
@@ -288,10 +299,30 @@ public class BenchmarkSPIMControl extends BorderPane implements
 		});
 	}
 
-	private void updateJobs(boolean showProgress) {
-		if (manager == null) {
-			return;
+	private boolean checkConnection() {
+		boolean [] result = {false}; 
+		Progress progress = ModalDialogs.doModal(new ProgressDialog(
+			root, "Connecting to HPC"), WindowConstants.DO_NOTHING_ON_CLOSE);
+		final CountDownLatch latch = new CountDownLatch(1);
+		executorServiceWS.execute(() -> {
+			try {
+				manager.checkConnection();
+				result[0] = true;
+			} finally {
+				progress.done();
+				latch.countDown();
+			}
+		});
+		try {
+			latch.await();
 		}
+		catch (InterruptedException exc) {
+			log.error(exc.getMessage(), exc);
+		}
+		return result[0];
+	}
+	
+	private void updateJobs(boolean showProgress) {
 		Progress progress = showProgress ? ModalDialogs.doModal(new ProgressDialog(
 			root, "Updating jobs"), WindowConstants.DO_NOTHING_ON_CLOSE)
 			: new DummyProgress();

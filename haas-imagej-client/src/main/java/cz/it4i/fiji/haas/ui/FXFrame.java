@@ -56,12 +56,10 @@ public abstract class FXFrame<T extends Parent & CloseableControl> extends
 		super.dispose();
 	}
 
-	private void closeControlIfNotClosed() {
-		synchronized (FXFrame.this) {
-			if(!controlClosed) {
-				getFxPanel().getControl().close();
-				controlClosed = true;
-			}
+	synchronized private void closeControlIfNotClosed() {
+	 if(!controlClosed) {
+			getFxPanel().getControl().close();
+			controlClosed = true;
 		}
 	}
 	

@@ -6,6 +6,7 @@ import com.jcraft.jsch.JSchException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -206,6 +207,10 @@ public class HaaSClient {
 	public HaaSClient(final HaaSClientSettings settings) {
 		this.settings = settings;
 		this.projectId = settings.getProjectId();
+	}
+
+	public void checkConnection() {
+		getSessionID();
 	}
 
 	public long createJob(final JobSettings jobSettings,
@@ -539,8 +544,10 @@ public class HaaSClient {
 
 	private void tryNotConnected(RuntimeException e) {
 		log.info(e.getMessage());
-		if (e.getMessage().contains("HTTP transport error") && e
-			.getCause() instanceof UnknownHostException)
+		if (e.getMessage().contains("HTTP transport error") && (e
+			.getCause() instanceof UnknownHostException || (e
+				.getCause() instanceof SocketException && e.getCause().getMessage()
+					.contains("Network is unreachable (connect failed)"))))
 		{
 			throw new NotConnectedException(e);
 		}
