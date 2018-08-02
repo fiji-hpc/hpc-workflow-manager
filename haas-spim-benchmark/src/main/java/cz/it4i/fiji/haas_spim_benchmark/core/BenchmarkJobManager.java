@@ -6,6 +6,7 @@ import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.HAAS_UPDATE_TIMEOU
 import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.HDF5_XML_FILENAME;
 import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.SPIM_OUTPUT_FILENAME_PATTERN;
 import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.UI_TO_HAAS_FREQUENCY_UPDATE_RATIO;
+import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.VERIFIED_STATE_OF_FINISHED_JOB;
 
 import java.io.BufferedReader;
 import java.io.Closeable;
@@ -89,40 +90,44 @@ public class BenchmarkJobManager implements Closeable {
 			nonTaskSpecificErrors = new LinkedList<>();
 			computationAccessor = getComputationAccessor();
 		}
-
-		public void setDownloadNotifier(Progress progress) {
-			job.setDownloadNotifier(downloadNotifier =
-				createDownloadNotifierProcessingResultCSV(convertToProgressNotifier(
-					progress)));
-		}
-
-		public void setUploadNotifier(Progress progress) {
-			job.setUploadNotifier(convertToProgressNotifier(progress));
-		}
-
+		
 		public synchronized void startJob(Progress progress) throws IOException {
 			job.uploadFile(Constants.CONFIG_YAML, new ProgressNotifierAdapter(progress));
 			LoadedYAML yaml = new LoadedYAML(job.openLocalFile(Constants.CONFIG_YAML));
-
-			verifiedState = null;
 			verifiedStateProcessed = false;
 			running = null;
+			String message = "Submitting job id #"+getId();
+			progress.addItem(message);
+			job.updateInfo();
+			JobState oldState = updateAndGetState();
 			job.submit();
+			setVerifiedState(null);
+			while(oldState == updateAndGetState()){
+				try {
+					Thread.sleep(Constants.WAIT_FOR_SUBMISSION_TIMEOUT);
+				}
+				catch (InterruptedException exc) {
+					log.error(exc.getMessage(), exc);
+				}
+			}
+			progress.itemDone(message);
 			job.setProperty(SPIM_OUTPUT_FILENAME_PATTERN,
 					yaml.getCommonProperty(FUSION_SWITCH) + "_" + yaml.getCommonProperty(HDF5_XML_FILENAME));
+		}
+		
+
+		public boolean delete() {
+			return job.delete();
+		}
+
+		public void cancelJob() {
+			job.cancelJob();
 		}
 
 		public JobState getState() {
 			return getStateAsync(r -> r.run()).getNow(JobState.Unknown);
 		}
 
-		public void startUpload() {
-			job.startUploadData();
-		}
-
-		public void stopUpload() {
-			job.stopUploadData();
-		}
 
 		public synchronized CompletableFuture<JobState> getStateAsync(Executor executor) {
 			if (running != null) {
@@ -133,6 +138,34 @@ public class BenchmarkJobManager implements Closeable {
 				running = result;
 			}
 			return result;
+		}
+
+		public void update() {
+			job.updateInfo();
+		}
+
+		public void startUpload() {
+			job.startUploadData();
+		}
+
+		public void stopUpload() {
+			job.stopUploadData();
+		}
+
+		public boolean needsUpload() {
+			return job.needsUpload();
+		}
+
+		public void setUploadNotifier(Progress progress) {
+			job.setUploadNotifier(convertToProgressNotifier(progress));
+		}
+
+		public void setUploaded(boolean b) {
+			job.setUploaded(b);
+		}
+
+		public boolean isUploaded() {
+			return job.isUploaded();
 		}
 
 		public CompletableFuture<?> startDownload() throws IOException {
@@ -147,8 +180,39 @@ public class BenchmarkJobManager implements Closeable {
 			}
 		}
 
+		public void stopDownload() {
+			job.stopDownloadData();
+		}
+
+		public boolean needsDownload() {
+			return job.needsDownload();
+		}
+
+		public void setDownloadNotifier(Progress progress) {
+			job.setDownloadNotifier(downloadNotifier =
+				createDownloadNotifierProcessingResultCSV(convertToProgressNotifier(
+					progress)));
+		}
+
 		public boolean canBeDownloaded() {
 			return job.canBeDownloaded();
+		}
+
+		public void setDownloaded(Boolean val) {
+			job.setDownloaded(val);
+		}
+
+		public boolean isDownloaded() {
+			return job.isDownloaded();
+		}
+
+		public void resumeTransfer() {
+			job.resumeDownload();
+			job.resumeUpload();
+		}
+
+		public boolean isUseDemoData() {
+			return job.isUseDemoData();
 		}
 
 		public long getId() {
@@ -165,27 +229,6 @@ public class BenchmarkJobManager implements Closeable {
 
 		public String getEndTime() {
 			return getStringFromTimeSafely(job.getEndTime());
-		}
-
-		public boolean isUseDemoData() {
-			return job.isUseDemoData();
-		}
-
-		@Override
-		public int hashCode() {
-			return Long.hashCode(job.getId());
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if (obj instanceof BenchmarkJob) {
-				return ((BenchmarkJob) obj).getId() == getId();
-			}
-			return false;
-		}
-
-		public void update() {
-			job.updateInfo();
 		}
 
 		public Path getDirectory() {
@@ -222,55 +265,9 @@ public class BenchmarkJobManager implements Closeable {
 			return computationAccessor.getActualOutput(Arrays.asList(SynchronizableFileType.StandardErrorFile)).get(0);
 		}
 
-		public boolean delete() {
-			return job.delete();
-		}
-
-		public void cancelJob() {
-			job.cancelJob();
-		}
-
 		@Override
 		public List<String> getActualOutput(List<SynchronizableFileType> content) {
 			return computationAccessor.getActualOutput(content);
-		}
-
-		public void resumeTransfer() {
-			job.resumeDownload();
-			job.resumeUpload();
-		}
-
-		public void setDownloaded(Boolean val) {
-			job.setDownloaded(val);
-		}
-
-		public void setUploaded(boolean b) {
-			job.setUploaded(b);
-		}
-
-		public boolean isDownloaded() {
-			return job.isDownloaded();
-		}
-
-		public boolean isUploaded() {
-			return job.isUploaded();
-		}
-
-		public void stopDownload() {
-			job.stopDownloadData();
-		}
-
-		public boolean needsDownload() {
-			return job.needsDownload();
-		}
-
-		public boolean needsUpload() {
-			return job.needsUpload();
-		}
-
-		@Override
-		public String toString() {
-			return "" + getId();
 		}
 
 		public void storeDataInWorkdirectory(UploadingFile file) throws IOException {
@@ -293,6 +290,24 @@ public class BenchmarkJobManager implements Closeable {
 			return job.getFileTransferInfo();
 		}
 
+		@Override
+		public String toString() {
+			return "" + getId();
+		}
+
+		@Override
+		public int hashCode() {
+			return Long.hashCode(job.getId());
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (obj instanceof BenchmarkJob) {
+				return ((BenchmarkJob) obj).getId() == getId();
+			}
+			return false;
+		}
+
 		private ProgressNotifier convertToProgressNotifier(Progress progress) {
 			return progress == null ? null : new ProgressNotifierAdapter(progress);
 		}
@@ -300,28 +315,34 @@ public class BenchmarkJobManager implements Closeable {
 		private synchronized CompletableFuture<JobState> doGetStateAsync(Executor executor) {
 			JobState state = job.getState();
 			if (state != JobState.Finished) {
+				setVerifiedState(null);
 				return CompletableFuture.completedFuture(state);
-			} else if (verifiedState != null) {
-				return CompletableFuture.completedFuture(verifiedState);
 			}
+			if (getVerifiedState() != null) {
+				return CompletableFuture.completedFuture(getVerifiedState());
+			}
+		
 			verifiedStateProcessed = true;
 			return CompletableFuture.supplyAsync(() -> {
 				try {
-					verifiedState = Stream.concat(Arrays.asList(state).stream(),
-							getTasks().stream().filter(task -> !task.getDescription().equals(Constants.DONE_TASK))
-									.flatMap(task -> task.getComputations().stream()).map(tc -> tc.getState()))
-							.max(new JobStateComparator()).get();
-					if (verifiedState != JobState.Finished && verifiedState != JobState.Canceled) {
-						verifiedState = JobState.Failed;
+					JobState workVerifiedState = Stream.concat(Arrays.asList(state).stream(),
+						getTasks().stream().filter(task -> !task.getDescription().equals(
+							Constants.DONE_TASK)).flatMap(task -> task.getComputations()
+								.stream()).map(tc -> tc.getState())).max(
+									new JobStateComparator()).get();
+					
+					if (workVerifiedState != JobState.Finished && workVerifiedState != JobState.Canceled) {
+						workVerifiedState = JobState.Failed;
 					}
 					synchronized (BenchmarkJob.this) {
 						// test whether job was restarted - it sets running to null
 						if (!verifiedStateProcessed) {
-							verifiedState = null;
+							workVerifiedState = null;
 							return doGetStateAsync(r -> r.run()).getNow(null);
 						}
 						running = null;
-						return verifiedState;
+						setVerifiedState(workVerifiedState);
+						return workVerifiedState;
 					}
 				} finally {
 					synchronized (BenchmarkJob.this) {
@@ -540,6 +561,28 @@ public class BenchmarkJobManager implements Closeable {
 		{
 			if (progressNotifier == null) return null;
 			return new DownloadNotifierProcessingResultCSV(progressNotifier, this);
+		}
+
+		private void setVerifiedState(JobState value) {
+			verifiedState = value;
+			job.setProperty(VERIFIED_STATE_OF_FINISHED_JOB, value != null ? value
+				.toString() : null);
+		}
+		
+		private JobState getVerifiedState() {
+			if(verifiedState == null) {
+				String storedVerifiedState = job.getProperty(VERIFIED_STATE_OF_FINISHED_JOB);
+				if(storedVerifiedState != null) {
+					verifiedState = JobState.valueOf(storedVerifiedState);
+				}
+			}
+			return verifiedState;
+		}
+		
+
+		private JobState updateAndGetState() {
+			job.updateInfo();
+			return job.getState();
 		}
 	}
 

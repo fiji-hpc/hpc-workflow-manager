@@ -23,7 +23,11 @@ public class PropertyHolder {
 
 	public void setValue(String key, String value) {
 		Properties prop = getProperties();
-		prop.setProperty(key, value);
+		if(value != null) {
+			prop.setProperty(key, value);
+		} else {
+			prop.remove(key);
+		}
 		try {
 			storeProperties(prop);
 		} catch (IOException e) {

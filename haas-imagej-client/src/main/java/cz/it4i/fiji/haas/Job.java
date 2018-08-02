@@ -330,8 +330,8 @@ public class Job {
 		propertyHolder.setValue(name, value);
 	}
 
-	public void setProperty(String jobNeedsUpload, boolean b) {
-		propertyHolder.setValue(jobNeedsUpload, "" + b);
+	public void setProperty(String name, boolean value) {
+		propertyHolder.setValue(name, "" + value);
 	}
 
 	public String getProperty(String name) {

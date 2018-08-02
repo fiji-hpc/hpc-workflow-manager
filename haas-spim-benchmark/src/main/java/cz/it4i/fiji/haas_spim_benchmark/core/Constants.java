@@ -16,6 +16,7 @@ public interface Constants {
 	int HAAS_TEMPLATE_ID = 4;
 	String HAAS_PROJECT_ID = "OPEN-12-20";
 	int HAAS_TIMEOUT = 9600; //Walltime in seconds
+	long WAIT_FOR_SUBMISSION_TIMEOUT = 100;
 	String BDS_ADDRESS = "http://julius2.it4i.cz/";
 	
 	final String NEW_LINE_SEPARATOR = "\n";
@@ -23,6 +24,7 @@ public interface Constants {
 	final String FORWARD_SLASH = "/";
 
 	String SPIM_OUTPUT_FILENAME_PATTERN = "spim.outputFilenamePattern";
+	String VERIFIED_STATE_OF_FINISHED_JOB = "job.verifiedStateOfFinished";
 	String CONFIG_YAML = "config.yaml";
 	String HDF5_XML_FILENAME = "hdf5_xml_filename";
 	String FUSION_SWITCH = "fusion_switch";
