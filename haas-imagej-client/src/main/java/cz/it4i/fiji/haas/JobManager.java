@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import cz.it4i.fiji.haas_java_client.HaaSClient;
 import cz.it4i.fiji.haas_java_client.HaaSClientSettings;
 import cz.it4i.fiji.haas_java_client.JobSettings;
+import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
 
 public class JobManager implements Closeable {
@@ -44,7 +45,11 @@ public class JobManager implements Closeable {
 
 		@Override
 		public boolean deleteJob(Job job) {
-			haasClient.deleteJob(job.getId());
+			//do not remove Job from server according to issue #1125
+			job.updateInfo();
+			if(job.getState() == JobState.Running) {
+				job.cancelJob();
+			}
 			return jobs.remove(job);
 		}
 
