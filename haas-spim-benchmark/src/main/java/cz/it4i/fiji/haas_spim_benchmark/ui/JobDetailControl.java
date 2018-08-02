@@ -51,17 +51,9 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 
 	public JobDetailControl(final ObservableBenchmarkJob job) {
 		JavaFXRoutines.initRootAndController("JobDetail.fxml", this);
-		progressView.setJob(job);
 		observableValueRegistry = new HaaSOutputObservableValueRegistry(job
 			.getValue(), Constants.HAAS_UPDATE_TIMEOUT /
 				Constants.UI_TO_HAAS_FREQUENCY_UPDATE_RATIO);
-		errorOutput.setObservable(observableValueRegistry.createObservable(
-			SynchronizableFileType.StandardErrorFile));
-		standardOutput.setObservable(observableValueRegistry.createObservable(
-			SynchronizableFileType.StandardOutputFile));
-		jobProperties.setJob(job);
-		dataUpload.setJob(job);
-		observableValueRegistry.start();
 		this.job = job;
 	}
 
@@ -69,7 +61,15 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 
 	@Override
 	public void init(final Window parameter) {
-
+		progressView.init(parameter);
+		progressView.setJob(job);
+		errorOutput.setObservable(observableValueRegistry.createObservable(
+			SynchronizableFileType.StandardErrorFile));
+		standardOutput.setObservable(observableValueRegistry.createObservable(
+			SynchronizableFileType.StandardOutputFile));
+		jobProperties.setJob(job);
+		dataUpload.setJob(job);
+		observableValueRegistry.start();
 		if (job.getValue().getState() == JobState.Disposed) {
 			// TODO: Handle this?
 			if (log.isInfoEnabled()) {

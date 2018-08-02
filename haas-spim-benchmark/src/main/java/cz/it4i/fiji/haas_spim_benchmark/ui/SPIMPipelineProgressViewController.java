@@ -16,6 +16,8 @@ import java.util.stream.Collectors;
 
 import javax.swing.WindowConstants;
 
+import net.imagej.updater.util.Progress;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,6 +25,7 @@ import cz.it4i.fiji.haas.ui.CloseableControl;
 import cz.it4i.fiji.haas.ui.InitiableControl;
 import cz.it4i.fiji.haas.ui.JavaFXRoutines;
 import cz.it4i.fiji.haas.ui.ModalDialogs;
+import cz.it4i.fiji.haas.ui.ProgressDialog;
 import cz.it4i.fiji.haas.ui.TableCellAdapter;
 import cz.it4i.fiji.haas.ui.TableViewContextMenu;
 import cz.it4i.fiji.haas_java_client.JobState;
@@ -89,8 +92,11 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 			throw new IllegalStateException("Job already set");
 		}
 		this.job = job;
+		Progress progress = ModalDialogs.doModal(new ProgressDialog(
+			root, "Downloading tasks"), WindowConstants.DO_NOTHING_ON_CLOSE);
 		executorServiceWS.execute(() -> {
 			fillTable();
+			progress.done();
 		});
 	}
 
@@ -156,43 +162,36 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 			return;
 		}
 		List<Task> processedTasks = job.getValue().getTasks();
-		if (processedTasks == null) {
-			timer.schedule(new TimerTask() {
-
-				@Override
-				public void run() {
-					fillTable();
-				}
-			}, Constants.HAAS_UPDATE_TIMEOUT / Constants.UI_TO_HAAS_FREQUENCY_UPDATE_RATIO);
-		} else {
-
-			Optional<List<TaskComputation>> optional = processedTasks.stream().map(task -> task.getComputations())
-					.collect(Collectors.<List<TaskComputation>>maxBy((a, b) -> a.size() - b.size()));
-			if (!optional.isPresent()) {
-				return;
-			}
-			List<TaskComputation> computations = optional.get();
-			List<ObservableValue<Task>> taskList = (processedTasks.stream().map(task -> registry.addIfAbsent(task))
-					.collect(Collectors.toList()));
-			executorFx.execute(() -> {
-				int i = 0;
-				JavaFXRoutines.setCellValueFactory(this.tasks, i++,
-						(Function<Task, String>) v -> Constants.BENCHMARK_TASK_NAME_MAP.get(v.getDescription()));
-				for (TaskComputation tc : computations) {
-					this.tasks.getColumns().add(new TableColumn<>(tc.getTimepoint() + ""));
-					int index = i++;
-					constructCellFactory(index);
-				}
-				fixNotVisibleColumn();
-				this.tasks.getItems().addAll(taskList);
-			});
-			timer.schedule(new TimerTask() {
-				@Override
-				public void run() {
-					updateTable();
-				}
-			}, Constants.HAAS_UPDATE_TIMEOUT, Constants.HAAS_UPDATE_TIMEOUT);
+		
+		Optional<List<TaskComputation>> optional = processedTasks.stream().map(
+			task -> task.getComputations()).collect(Collectors
+				.<List<TaskComputation>> maxBy((a, b) -> a.size() - b.size()));
+		if (!optional.isPresent()) {
+			return;
 		}
+		List<TaskComputation> computations = optional.get();
+		List<ObservableValue<Task>> taskList = (processedTasks.stream().map(
+			task -> registry.addIfAbsent(task)).collect(Collectors.toList()));
+		executorFx.execute(() -> {
+			int i = 0;
+			JavaFXRoutines.setCellValueFactory(this.tasks, i++,
+				(Function<Task, String>) v -> Constants.BENCHMARK_TASK_NAME_MAP.get(v
+					.getDescription()));
+			for (TaskComputation tc : computations) {
+				this.tasks.getColumns().add(new TableColumn<>(tc.getTimepoint() + ""));
+				int index = i++;
+				constructCellFactory(index);
+			}
+			fixNotVisibleColumn();
+			this.tasks.getItems().addAll(taskList);
+		});
+		timer.schedule(new TimerTask() {
+
+			@Override
+			public void run() {
+				updateTable();
+			}
+		}, Constants.HAAS_UPDATE_TIMEOUT, Constants.HAAS_UPDATE_TIMEOUT);
 	}
 
 	@SuppressWarnings("unchecked")
