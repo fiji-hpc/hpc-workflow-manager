@@ -21,6 +21,8 @@ abstract public class UncaughtExceptionHandlerDecorator implements
 	private final Collection<BiPredicate<Thread, Throwable>> handlers =
 		new LinkedList<>();
 
+	private boolean closed;
+
 	public static UncaughtExceptionHandlerDecorator setDefaultHandler() {
 		return setDefaultHandler(null);
 	}
@@ -60,7 +62,7 @@ abstract public class UncaughtExceptionHandlerDecorator implements
 				@Override
 				protected void setPreviousHandler(
 					final UncaughtExceptionHandler handler)
-				{
+			{
 					thread.setUncaughtExceptionHandler(handler);
 				}
 
@@ -136,9 +138,12 @@ abstract public class UncaughtExceptionHandlerDecorator implements
 	}
 
 	@Override
-	public void close() {
-		if (previousHandler != null) {
-			setPreviousHandler(previousHandler);
+	synchronized public void close() {
+		if (!closed) {
+			if (previousHandler != null) {
+				setPreviousHandler(previousHandler);
+			}
+			closed = true;
 		}
 	}
 

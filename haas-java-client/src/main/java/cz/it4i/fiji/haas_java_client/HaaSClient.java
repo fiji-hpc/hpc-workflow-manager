@@ -6,6 +6,7 @@ import com.jcraft.jsch.JSchException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.rmi.RemoteException;
@@ -526,10 +527,22 @@ public class HaaSClient {
 				.getPassword()));
 		}
 		catch (com.sun.xml.internal.ws.client.ClientTransportException e) {
-			if(e.getMessage().contains("The server sent HTTP status code 500: Internal Server Error")) {
+			if (e.getMessage().contains(
+				"The server sent HTTP status code 500: Internal Server Error"))
+			{
 				throw new AuthenticationException(e);
 			}
+			tryNotConnected(e);
 			throw e;
+		}
+	}
+
+	private void tryNotConnected(RuntimeException e) {
+		log.info(e.getMessage());
+		if (e.getMessage().contains("HTTP transport error") && e
+			.getCause() instanceof UnknownHostException)
+		{
+			throw new NotConnectedException(e);
 		}
 	}
 

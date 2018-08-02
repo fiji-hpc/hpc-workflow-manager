@@ -1,7 +1,8 @@
 
 package cz.it4i.fiji.haas_spim_benchmark.core;
 
-import java.awt.Window;
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.function.BiPredicate;
 
 import org.scijava.Context;
@@ -19,7 +20,7 @@ public class BaseExceptionHandler implements BiPredicate<Thread, Throwable> {
 	@Parameter
 	private final UIService uiService;
 
-	private final Window rootWindow;
+	private final Closeable closeable;
 
 	private final BiPredicate<Thread, Throwable> test;
 
@@ -29,11 +30,11 @@ public class BaseExceptionHandler implements BiPredicate<Thread, Throwable> {
 
 	private final MessageType messageType;
 
-	public BaseExceptionHandler(final Window rootWindow,
+	public BaseExceptionHandler(final Closeable closeable,
 		final BiPredicate<Thread, Throwable> test, final String title,
 		final String message, final MessageType type)
 	{
-		this.rootWindow = rootWindow;
+		this.closeable = closeable;
 		uiService = new Context().getService(UIService.class);
 		this.test = test;
 		this.title = title;
@@ -44,11 +45,21 @@ public class BaseExceptionHandler implements BiPredicate<Thread, Throwable> {
 	@Override
 	public boolean test(final Thread t, final Throwable exc) {
 		if (test.test(t, exc)) {
-			if (rootWindow != null) {
-				rootWindow.dispose();
+			if (closeable != null) {
+				if (log.isDebugEnabled()) {
+					log.debug("Dispose window " + closeable);
+				}
+				try {
+					closeable.close();
+				}
+				catch (IOException exc1) {
+					log.error(exc1.getMessage(), exc1);
+				}
 			}
 			uiService.showDialog(message, title, messageType);
-			log.info("Caught exception: " + exc.getMessage(), exc);
+			if (log.isDebugEnabled()) {
+				log.debug("Caught exception: " + exc.getMessage(), exc);
+			}
 			return true;
 		}
 		return false;

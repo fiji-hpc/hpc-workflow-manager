@@ -1,7 +1,7 @@
 
 package cz.it4i.fiji.haas_spim_benchmark.core;
 
-import java.awt.Window;
+import java.io.Closeable;
 
 import org.scijava.ui.DialogPrompt.MessageType;
 
@@ -13,8 +13,8 @@ public class AuthenticationExceptionHandler extends BaseExceptionHandler {
 		this(null);
 	}
 
-	public AuthenticationExceptionHandler(final Window rootWindow) {
-		super(rootWindow, (T, exc) -> exc instanceof AuthenticationException,
+	public AuthenticationExceptionHandler(final Closeable closeable) {
+		super(closeable, (T, exc) -> exc instanceof AuthenticationException,
 			"Authentication failed", "Invalid username or password provided",
 			MessageType.WARNING_MESSAGE);
 	}

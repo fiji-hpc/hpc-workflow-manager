@@ -1,7 +1,7 @@
 
 package cz.it4i.fiji.haas_spim_benchmark.core;
 
-import java.awt.Window;
+import java.io.Closeable;
 
 import org.scijava.ui.DialogPrompt.MessageType;
 
@@ -14,8 +14,8 @@ public class AuthFailExceptionHandler extends BaseExceptionHandler {
 		this(null);
 	}
 
-	public AuthFailExceptionHandler(final Window rootWindow) {
-		super(rootWindow, (T, exc) -> (exc instanceof HaaSClientException && exc
+	public AuthFailExceptionHandler(final Closeable closeable) {
+		super(closeable, (T, exc) -> (exc instanceof HaaSClientException && exc
 			.getCause() instanceof AuthFailException), null,
 			"Connection to HPC failed try again or contact software support.",
 			MessageType.ERROR_MESSAGE);

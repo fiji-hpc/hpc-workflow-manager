@@ -21,6 +21,7 @@ import cz.it4i.fiji.haas_spim_benchmark.core.AuthFailExceptionHandler;
 import cz.it4i.fiji.haas_spim_benchmark.core.FXFrameExecutorService;
 import cz.it4i.fiji.haas_spim_benchmark.core.TaskComputation;
 import cz.it4i.fiji.haas_spim_benchmark.core.UncaughtExceptionHandlerDecorator;
+import cz.it4i.fiji.haas_spim_benchmark.core.WindowCloseableAdapter;
 import cz.it4i.fiji.haas_spim_benchmark.ui.TaskComputationAdapter.ObservableLog;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
@@ -54,7 +55,7 @@ public class TaskComputationControl extends TabPane implements CloseableControl,
 		this.rootWindow = parameter;
 		wsExecutorService = Executors.newSingleThreadExecutor(
 			UncaughtExceptionHandlerDecorator.createThreadFactory(
-				new AuthFailExceptionHandler(rootWindow)));
+				new AuthFailExceptionHandler(new WindowCloseableAdapter(rootWindow))));
 		
 		wsExecutorService.execute(() -> {
 			ProgressDialog dialog = ModalDialogs.doModal(new ProgressDialog(parameter, "Updating infos..."),

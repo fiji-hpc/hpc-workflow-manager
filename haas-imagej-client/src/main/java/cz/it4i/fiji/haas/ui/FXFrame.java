@@ -5,8 +5,6 @@ import java.awt.BorderLayout;
 import java.awt.Window;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.util.function.Supplier;
 
 import javax.swing.JDialog;
@@ -52,29 +50,22 @@ public abstract class FXFrame<T extends Parent & CloseableControl> extends
 		});
 	}
 	
+	@Override
+	public void dispose() {
+		closeControlIfNotClosed();
+		super.dispose();
+	}
 
+	private void closeControlIfNotClosed() {
+		synchronized (FXFrame.this) {
+			if(!controlClosed) {
+				getFxPanel().getControl().close();
+				controlClosed = true;
+			}
+		}
+	}
+	
 	private void init() {
-		addWindowListener(new WindowAdapter() {
-			@Override
-			public void windowClosing(WindowEvent e) {
-				closeControlIfNotClose();
-			}
-			
-			@Override
-			public void windowClosed(WindowEvent e) {
-				closeControlIfNotClose();
-			}
-
-			private void closeControlIfNotClose() {
-				synchronized (FXFrame.this) {
-					if(!controlClosed) {
-						getFxPanel().getControl().close();
-						controlClosed = true;
-					}
-				}
-			}
-		});
-		
 		if (fxPanel.getControl() instanceof ResizeableControl) {
 			ResizeableControl resizable = (ResizeableControl) fxPanel.getControl();
 			addComponentListener(new ComponentAdapter() {

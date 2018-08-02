@@ -1,8 +1,6 @@
 
 package cz.it4i.fiji.haas_spim_benchmark.commands;
 
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -27,7 +25,9 @@ import org.slf4j.LoggerFactory;
 import cz.it4i.fiji.haas_spim_benchmark.core.AuthFailExceptionHandler;
 import cz.it4i.fiji.haas_spim_benchmark.core.AuthenticationExceptionHandler;
 import cz.it4i.fiji.haas_spim_benchmark.core.Constants;
+import cz.it4i.fiji.haas_spim_benchmark.core.NotConnectedExceptionHandler;
 import cz.it4i.fiji.haas_spim_benchmark.core.UncaughtExceptionHandlerDecorator;
+import cz.it4i.fiji.haas_spim_benchmark.core.WindowCloseableAdapter;
 import cz.it4i.fiji.haas_spim_benchmark.ui.BenchmarkSPIMWindow;
 
 /**
@@ -68,7 +68,11 @@ public class ManageSPIMBenchmark implements Command {
 		}
 		
 		final UncaughtExceptionHandlerDecorator uehd = UncaughtExceptionHandlerDecorator.setDefaultHandler();
+		final WindowCloseableAdapter wca = new WindowCloseableAdapter();
+		uehd.registerHandler(new AuthenticationExceptionHandler(wca));
+		uehd.registerHandler(new NotConnectedExceptionHandler(wca));
 		uehd.registerHandler(new AuthFailExceptionHandler());
+		uehd.activate();
 		try {
 			final Path workingDirPath = Paths.get(workingDirectory.getPath());
 			if (!Files.isDirectory(workingDirPath)) {
@@ -81,28 +85,22 @@ public class ManageSPIMBenchmark implements Command {
 					MessageType.ERROR_MESSAGE);
 				return;
 			}
+			
 			final BenchmarkSPIMWindow dialog = new BenchmarkSPIMWindow(null,
 				new BenchmarkSPIMParametersImpl(userName, password, Constants.PHONE,
-					email, workingDirPath));
-			uehd.registerHandler(new AuthenticationExceptionHandler(dialog));
-			uehd.activate();
+					email, workingDirPath)) {
+				@Override
+				public void dispose() {
+					super.dispose();
+					fl.close();
+					uehd.close();
+				}
+			};
+			
 			dialog.executeAdjustment(() -> {
 				dialog.setTitle(Constants.SUBMENU_ITEM_NAME);
 				dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-				dialog.addWindowListener(new WindowAdapter() {
-
-					
-					@Override
-					public void windowClosed(WindowEvent e) {
-						if (log.isDebugEnabled()) {
-							log.debug("windowClosed");
-						}
-						super.windowClosed(e);
-						fl.close();
-						uehd.close();
-					}
-				});
-				dialog.setVisible(true);
+				wca.setWindowAndShowIt(dialog);
 			});
 		}
 		catch (final IOException e) {
