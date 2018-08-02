@@ -83,6 +83,8 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 		if (areExecutionDetailsAvailable()) {
 			enableAllTabs();
 		}
+		
+		setActiveFirstVisibleTab();
 	}
 
 	// -- CloseableControl methods --
@@ -125,4 +127,12 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 		getTabs().stream().forEach(t -> t.setDisable(false));
 	}
 
+	private void setActiveFirstVisibleTab() {
+		for(Tab t: getTabs()) {
+			if(!t.isDisable()) {
+				t.getTabPane().getSelectionModel().select(t);
+				break;
+			}
+		}
+	}
 }
