@@ -25,6 +25,8 @@ public abstract class FXFrame<T extends Parent & CloseableControl> extends
 		cz.it4i.fiji.haas.ui.FXFrame.class);
 	private static final long serialVersionUID = 1L;
 	private final JFXPanel<T> fxPanel;
+	
+	private boolean controlClosed;
 
 	public FXFrame(Supplier<T> fxSupplier) {
 		this(null, fxSupplier);
@@ -56,9 +58,16 @@ public abstract class FXFrame<T extends Parent & CloseableControl> extends
 
 			@Override
 			public void windowClosing(WindowEvent e) {
-				getFxPanel().getControl().close();
+				synchronized (FXFrame.this) {
+					if(!controlClosed) {
+						getFxPanel().getControl().close();
+						controlClosed = true;
+					}
+				}
 			}
 		});
+		
+		
 		if (fxPanel.getControl() instanceof ResizeableControl) {
 			ResizeableControl resizable = (ResizeableControl) fxPanel.getControl();
 			addComponentListener(new ComponentAdapter() {

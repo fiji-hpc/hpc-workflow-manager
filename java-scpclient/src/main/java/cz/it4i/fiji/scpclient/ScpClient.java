@@ -18,6 +18,7 @@ import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Field;
 import java.nio.channels.ClosedByInterruptException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -27,6 +28,8 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import cz.it4i.fiji.commons.DoActionEventualy;
 
 public class ScpClient implements Closeable {
 
@@ -361,9 +364,27 @@ public class ScpClient implements Closeable {
 	public void close() {
 		if (session != null && session.isConnected()) {
 			// log.info("disconnect");
-			session.disconnect();
+			try(DoActionEventualy actionEventualy = new DoActionEventualy(TIMEOUT_BETWEEN_CONNECTION_ATTEMPTS, this::interruptSessionThread)){
+				session.disconnect();
+			}
 		}
 		session = null;
+	}
+
+	private void interruptSessionThread() {
+		try {
+			Field f=  session.getClass().getDeclaredField("connectThread");
+			if(!f.isAccessible()) {
+				f.setAccessible(true);
+				Thread thread = (Thread) f.get(session);
+				thread.interrupt();
+			}
+		}
+		catch (NoSuchFieldException | SecurityException | IllegalArgumentException
+				| IllegalAccessException exc)
+		{
+			log.error(exc.getMessage(), exc);
+		}
 	}
 
 	private int getBufferSize() {

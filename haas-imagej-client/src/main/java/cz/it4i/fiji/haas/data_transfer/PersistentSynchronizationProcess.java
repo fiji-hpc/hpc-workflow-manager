@@ -1,10 +1,13 @@
 package cz.it4i.fiji.haas.data_transfer;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -18,7 +21,9 @@ import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import cz.it4i.fiji.commons.DoActionEventualy;
 import cz.it4i.fiji.haas_java_client.HaaSClient;
+import cz.it4i.fiji.haas_java_client.HaaSClientException;
 import cz.it4i.fiji.haas_java_client.HaaSFileTransfer;
 import cz.it4i.fiji.haas_java_client.ProgressNotifier;
 import cz.it4i.fiji.haas_java_client.TransferFileProgressForHaaSClient;
@@ -35,6 +40,8 @@ public abstract class PersistentSynchronizationProcess<T> {
 
 	private final static String INIT_TRANSFER_ITEM = "init transfer";
 
+	private static final long WAIT_FOR_CLOSE_SEESION_TIMEOUT = 500;
+
 	private final PersistentIndex<T> index;
 
 	private final Queue<T> toProcessQueue = new LinkedBlockingQueue<>();
@@ -50,6 +57,8 @@ public abstract class PersistentSynchronizationProcess<T> {
 	private ProgressNotifier notifier;
 
 	private final AtomicInteger runningProcessCounter = new AtomicInteger();
+	
+	private final Collection<P_HolderOfOpenClosables> openedClosables = new LinkedList<>();
 
 	public PersistentSynchronizationProcess(ExecutorService service, Supplier<HaaSFileTransfer> fileTransferSupplier,
 			Runnable processFinishedNotifier, Path indexFile, Function<String, T> convertor) throws IOException {
@@ -82,9 +91,13 @@ public abstract class PersistentSynchronizationProcess<T> {
 	}
 
 	public void shutdown() {
-		toProcessQueue.clear();
-		runningTransferThreads.forEach(t -> t.interrupt());
-		waitForFinishAllProcesses();
+		synchronized (this) {
+			toProcessQueue.clear();
+			runningTransferThreads.forEach(t -> t.interrupt());
+		}
+		try(DoActionEventualy action = new DoActionEventualy(WAIT_FOR_CLOSE_SEESION_TIMEOUT, this::closeOpennedClosables)) {
+			waitForFinishAllProcesses();
+		}
 	}
 
 	public void resume() {
@@ -112,7 +125,8 @@ public abstract class PersistentSynchronizationProcess<T> {
 		this.notifier.addItem(INIT_TRANSFER_ITEM);
 		runningTransferThreads.add(Thread.currentThread());
 		TransferFileProgressForHaaSClient actualnotifier = DUMMY_FILE_PROGRESS;
-		try (HaaSFileTransfer tr = fileTransferSupplier.get()) {
+		try (P_HolderOfOpenClosables transferHolder = new P_HolderOfOpenClosables(fileTransferSupplier.get())) {
+			HaaSFileTransfer tr = transferHolder.getTransfer();
 			try {
 				tr.setProgress(actualnotifier = getTransferFileProgress(tr));
 			} catch (InterruptedIOException e1) {
@@ -121,10 +135,13 @@ public abstract class PersistentSynchronizationProcess<T> {
 			this.notifier.itemDone(INIT_TRANSFER_ITEM);
 			this.notifier.done();
 			do {
-				synchronized (reRun) {
-					if(interrupted || toProcessQueue.isEmpty()) {
-						reRun.set(false);
-						break;
+				synchronized (this) {
+					synchronized (reRun) {
+						interrupted |= Thread.interrupted();
+						if (interrupted || toProcessQueue.isEmpty()) {
+							reRun.set(false);
+							break;
+						}
 					}
 				}
 				T p = toProcessQueue.poll();
@@ -133,7 +150,8 @@ public abstract class PersistentSynchronizationProcess<T> {
 				try {
 					processItem(tr, p);
 					fileTransfered(p);
-				} catch (InterruptedIOException e) {
+				}
+				catch (InterruptedIOException | HaaSClientException e) {
 					toProcessQueue.clear();
 					interrupted = true;
 				}
@@ -192,4 +210,37 @@ public abstract class PersistentSynchronizationProcess<T> {
 		}
 	}
 
+	protected void closeOpennedClosables() {
+		synchronized(openedClosables) {
+			for(P_HolderOfOpenClosables closeable: openedClosables) {
+				closeable.close();
+			}
+		}
+	}
+	
+	private class P_HolderOfOpenClosables implements Closeable{
+		final private HaaSFileTransfer transfer;
+
+		public P_HolderOfOpenClosables(HaaSFileTransfer transfer) {
+			this.transfer = transfer;
+			synchronized(openedClosables) {
+				openedClosables.add(this);
+			}
+		}
+		
+		public HaaSFileTransfer getTransfer() {
+			return transfer;
+		}
+
+		@Override
+		public void close() {
+			synchronized(openedClosables) {
+				try {
+					transfer.close();
+				} finally {
+					openedClosables.remove(this);
+				}
+			}
+		}
+	}
 }

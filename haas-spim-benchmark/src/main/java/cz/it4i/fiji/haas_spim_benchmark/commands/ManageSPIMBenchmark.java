@@ -89,9 +89,13 @@ public class ManageSPIMBenchmark implements Command {
 				dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 				dialog.addWindowListener(new WindowAdapter() {
 
+					
 					@Override
-					public void windowClosing(final WindowEvent e) {
-						super.windowClosing(e);
+					public void windowClosed(WindowEvent e) {
+						if (log.isDebugEnabled()) {
+							log.debug("windowClosed");
+						}
+						super.windowClosed(e);
 						fl.close();
 						uehd.close();
 					}

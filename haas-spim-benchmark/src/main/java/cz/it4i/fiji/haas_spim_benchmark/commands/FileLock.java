@@ -42,24 +42,31 @@ public class FileLock implements Closeable {
 	}
 
 	@Override
-	public void close() {
+	synchronized public void close() {
 		if (lock != null) {
 			try {
 				lock.release();
-			} catch (IOException e) {
+				lock = null;
+			}
+			catch (IOException e) {
 				log.error(e.getMessage(), e);
 			}
 		}
 		if (fileChannel != null) {
 			try {
 				fileChannel.close();
-			} catch (IOException e) {
+				fileChannel = null;
+			}
+			catch (IOException e) {
 				log.error(e.getMessage(), e);
 			}
 		}
 		try {
-			Files.delete(localPath);
-		} catch (IOException e) {
+			if (Files.exists(localPath)) {
+				Files.delete(localPath);
+			}
+		}
+		catch (IOException e) {
 			log.error(e.getMessage(), e);
 		}
 	}

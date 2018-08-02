@@ -142,7 +142,8 @@ public class Synchronization implements Closeable {
 			protected Collection<Path> getItems() throws IOException {
 				try (DirectoryStream<Path> ds = Files.newDirectoryStream(inputDirectory,
 						Synchronization.this::canUpload)) {
-					return StreamSupport.stream(ds.spliterator(), false).collect(Collectors.toList());
+					return StreamSupport.stream(ds.spliterator(), false).filter(
+						p -> !filesUploaded.contains(p)).collect(Collectors.toList());
 				}
 
 			}
