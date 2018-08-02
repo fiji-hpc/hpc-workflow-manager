@@ -14,8 +14,8 @@ public class FileTransferInfo {
 		this.state = state;
 	}
 
-	public String getPathAsString() {
-		return path.toString();
+	public String getFileNameAsString() {
+		return path.getFileName().toString();
 	}
 
 	public FileTransferState getState() {

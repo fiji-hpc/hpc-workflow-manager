@@ -85,7 +85,7 @@ public class DataTransferController extends BorderPane implements
 		final int columnIndexState = 1;
 
 		JavaFXRoutines.setCellValueFactory(files, columnIndexPath, f -> f
-			.getPathAsString());
+			.getFileNameAsString());
 		JavaFXRoutines.setCellValueFactory(files, columnIndexState, f -> f
 			.getState());
 
