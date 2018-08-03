@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
 
 import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.rpc.ServiceException;
+import javax.xml.ws.WebServiceException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -524,14 +525,13 @@ public class HaaSClient {
 		return testTask;
 	}
 
-	@SuppressWarnings("restriction")
 	private String authenticate() {
 		try {
 		return getUserAndLimitationManagement().authenticateUserPassword(
 			createPasswordCredentialsExt(settings.getUserName(), settings
 				.getPassword()));
 		}
-		catch (com.sun.xml.internal.ws.client.ClientTransportException e) {
+		catch (WebServiceException e) {
 			if (e.getMessage().contains(
 				"The server sent HTTP status code 500: Internal Server Error"))
 			{
