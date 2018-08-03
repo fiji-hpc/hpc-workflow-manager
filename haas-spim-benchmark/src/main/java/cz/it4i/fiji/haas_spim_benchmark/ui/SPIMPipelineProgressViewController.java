@@ -215,8 +215,8 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 	private int computeMaxColumnHeaderTextLenght(
 		List<TaskComputation> computations)
 	{
-		return columnHeader(
-			computations.get(computations.size() - 1)).length();
+		return computations != null && computations.size() > 0 ? columnHeader(
+			computations.get(computations.size() - 1)).length() : 1;
 	}
 
 	private String columnHeader(TaskComputation taskComputation) {
