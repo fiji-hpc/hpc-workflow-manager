@@ -44,14 +44,17 @@ import javafx.scene.paint.Color;
 
 public class SPIMPipelineProgressViewController extends BorderPane implements CloseableControl, InitiableControl {
 
+
 	public final static Logger log = LoggerFactory
 			.getLogger(cz.it4i.fiji.haas_spim_benchmark.ui.SPIMPipelineProgressViewController.class);
 	
-	private static final String EMPTY_VALUE = "\u2007\u2007\u2007";
+	private static final String EMPTY_VALUE = "";
 
 	private static final int PREFERRED_WIDTH = 900;
 
 	private static final Map<JobState, Color> taskExecutionState2Color = new HashMap<>();
+
+	private static final double TIMEPOINT_TABLE_COLUMN_WIDTH_RATIO = 6;
 	static {
 		taskExecutionState2Color.put(JobState.Running, Color.rgb(0xF2, 0xD5, 0x39));
 		taskExecutionState2Color.put(JobState.Finished, Color.rgb(0x41, 0xB2, 0x80));
@@ -180,12 +183,18 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 			JavaFXRoutines.setCellValueFactory(this.tasks, i++,
 				(Function<Task, String>) v -> Constants.BENCHMARK_TASK_NAME_MAP.get(v
 					.getDescription()));
+			double tableColumnWidth = computeTableColumnWidth(computations);
+
+			log.info("table column width " + tableColumnWidth);
 			for (TaskComputation tc : computations) {
-				this.tasks.getColumns().add(new TableColumn<>(tc.getTimepoint() + ""));
+				TableColumn<ObservableValue<Task>, String> tableCol;
+				this.tasks.getColumns().add(tableCol = new TableColumn<>(columnHeader(
+					tc)));
 				int index = i++;
+				tableCol.setPrefWidth(tableColumnWidth);
 				constructCellFactory(index);
 			}
-			fixNotVisibleColumn();
+			
 			this.tasks.getItems().addAll(taskList);
 		});
 		timer.schedule(new TimerTask() {
@@ -195,6 +204,23 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 				updateTable();
 			}
 		}, Constants.HAAS_UPDATE_TIMEOUT, Constants.HAAS_UPDATE_TIMEOUT);
+	}
+
+	private long computeTableColumnWidth(List<TaskComputation> computations) {
+		return Math.round(this.tasks.getColumns().get(0)
+			.getWidth() / TIMEPOINT_TABLE_COLUMN_WIDTH_RATIO * (1 + Math.max(0,
+				computeMaxColumnHeaderTextLenght(computations) - 1) / 2));
+	}
+
+	private int computeMaxColumnHeaderTextLenght(
+		List<TaskComputation> computations)
+	{
+		return columnHeader(
+			computations.get(computations.size() - 1)).length();
+	}
+
+	private String columnHeader(TaskComputation taskComputation) {
+		return taskComputation.getTimepoint() + "";
 	}
 
 	@SuppressWarnings("unchecked")
@@ -220,9 +246,5 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 
 	private void updateTable() {
 		registry.update();
-	}
-
-	private void fixNotVisibleColumn() {
-		// this.tasks.getColumns().add(new TableColumn<>(" "));
 	}
 }
