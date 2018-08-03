@@ -13,10 +13,16 @@ import java.io.Closeable;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.math.BigInteger;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
@@ -51,6 +57,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import cz.it4i.fiji.commons.WebRoutines;
 import cz.it4i.fiji.haas.HaaSOutputHolder;
 import cz.it4i.fiji.haas.HaaSOutputHolderImpl;
 import cz.it4i.fiji.haas.Job;
@@ -83,6 +90,8 @@ public class BenchmarkJobManager implements Closeable {
 		private boolean verifiedStateProcessed;
 		private CompletableFuture<JobState> running;
 		private ProgressNotifier downloadNotifier;
+
+		private boolean visibleInBDV;
 
 		public BenchmarkJob(Job job) {
 			this.job = job;
@@ -142,8 +151,46 @@ public class BenchmarkJobManager implements Closeable {
 
 		public void update() {
 			job.updateInfo();
+			try {
+				visibleInBDV = Files.exists(getLocalPathToResultXML()) || WebRoutines
+					.doesURLExist(new URL(getPathToToResultXMLOnBDS()));
+				if (log.isDebugEnabled()) {
+					log.debug("job #" + getId() + " is visible in BDV " + visibleInBDV);
+				}
+			}
+			catch (MalformedURLException exc) {
+				log.info(exc.getMessage(), exc);
+				visibleInBDV = false;
+			}
 		}
 
+		public Path getLocalPathToResultXML() {
+			return getOutputDirectory().resolve(getResultXML());
+		}
+
+		public String getPathToToResultXMLOnBDS() {
+			String changed = job.getId() + "/" + getResultXML();
+			MessageDigest digest;
+			try {
+				digest = MessageDigest.getInstance("SHA-1");
+				digest.reset();
+				digest.update(changed.getBytes("utf8"));
+				String sha1 = String.format("%040x", new BigInteger(1, digest.digest()));
+				String result =  Constants.BDS_ADDRESS + sha1 + "/";
+				if (log.isDebugEnabled()) {
+					log.debug("getBDSPathForData changed={} path={}",result, result);
+				}
+				return result;
+			}
+			catch (NoSuchAlgorithmException | UnsupportedEncodingException exc) {
+				throw new RuntimeException(exc);
+			}
+		}
+		
+		public boolean isVisibleInBDV() {
+			return visibleInBDV;
+		}
+		
 		public void startUpload() {
 			job.startUploadData();
 		}

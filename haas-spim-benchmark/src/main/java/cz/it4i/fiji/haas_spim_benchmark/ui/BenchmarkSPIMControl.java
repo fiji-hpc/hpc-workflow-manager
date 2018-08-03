@@ -5,12 +5,8 @@ import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.CONFIG_YAML;
 
 import java.awt.Window;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -164,7 +160,8 @@ public class BenchmarkSPIMControl extends BorderPane implements
 		menu.addItem("Open job subdirectory", j -> openJobSubdirectory(j
 			.getValue()), x -> JavaFXRoutines.notNullValue(x, j -> true));
 		menu.addItem("Open in BigDataViewer", j -> openBigDataViewer(j.getValue()),
-			x -> JavaFXRoutines.notNullValue(x, j -> true));
+			x -> JavaFXRoutines.notNullValue(x, j -> j
+				.getState() == JobState.Finished && j.isVisibleInBDV()));
 		menu.addSeparator();
 
 		menu.addItem("Upload data", job -> executeWSCallAsync("Uploading data",
@@ -414,14 +411,13 @@ public class BenchmarkSPIMControl extends BorderPane implements
 	}
 
 	private void openBigDataViewer(BenchmarkJob job) {
-		String resultXML = job.getResultXML();
-		Path localPathToResultXML = job.getOutputDirectory().resolve(resultXML);
+		Path localPathToResultXML = job.getLocalPathToResultXML();
 		String openFile;
 		if (Files.exists(localPathToResultXML)) {
 			openFile = localPathToResultXML.toString();
 		}
 		else {
-			openFile = getPathToBDSForData(job, resultXML);
+			openFile = job.getPathToToResultXMLOnBDS();
 		}
 		try {
 			BigDataViewer.open(openFile, "Result of job " + job.getId(),
@@ -432,24 +428,7 @@ public class BenchmarkSPIMControl extends BorderPane implements
 		}
 	}
 
-	private String getPathToBDSForData(BenchmarkJob job, String resultXML) {
-		String changed = job.getId() + "/" + resultXML;
-		MessageDigest digest;
-		try {
-			digest = MessageDigest.getInstance("SHA-1");
-			digest.reset();
-			digest.update(changed.getBytes("utf8"));
-			String sha1 = String.format("%040x", new BigInteger(1, digest.digest()));
-			String result =  Constants.BDS_ADDRESS + sha1 + "/";
-			if (log.isDebugEnabled()) {
-				log.debug("getBDSPathForData changed={} path={}",changed, result);
-			}
-			return result;
-		}
-		catch (NoSuchAlgorithmException | UnsupportedEncodingException exc) {
-			throw new RuntimeException(exc);
-		}
-	}
+	
 
 	private interface P_JobAction {
 
