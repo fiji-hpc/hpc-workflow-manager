@@ -1,3 +1,4 @@
+
 package cz.it4i.fiji.haas_spim_benchmark.ui;
 
 import java.awt.Window;
@@ -12,6 +13,7 @@ import javax.swing.WindowConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import cz.it4i.fiji.commons.UncaughtExceptionHandlerDecorator;
 import cz.it4i.fiji.haas.ui.CloseableControl;
 import cz.it4i.fiji.haas.ui.InitiableControl;
 import cz.it4i.fiji.haas.ui.JavaFXRoutines;
@@ -20,7 +22,6 @@ import cz.it4i.fiji.haas.ui.ProgressDialog;
 import cz.it4i.fiji.haas_spim_benchmark.core.AuthFailExceptionHandler;
 import cz.it4i.fiji.haas_spim_benchmark.core.FXFrameExecutorService;
 import cz.it4i.fiji.haas_spim_benchmark.core.TaskComputation;
-import cz.it4i.fiji.haas_spim_benchmark.core.UncaughtExceptionHandlerDecorator;
 import cz.it4i.fiji.haas_spim_benchmark.core.WindowCloseableAdapter;
 import cz.it4i.fiji.haas_spim_benchmark.ui.TaskComputationAdapter.ObservableLog;
 import javafx.fxml.FXML;
@@ -29,13 +30,18 @@ import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
-public class TaskComputationControl extends TabPane implements CloseableControl, InitiableControl {
-	public final static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas_spim_benchmark.ui.TaskComputationControl.class);
+
+public class TaskComputationControl extends TabPane implements CloseableControl,
+	InitiableControl
+{
+
+	public final static Logger log = LoggerFactory.getLogger(
+		cz.it4i.fiji.haas_spim_benchmark.ui.TaskComputationControl.class);
 
 	private TaskComputationAdapter adapter;
-	
+
 	private final Executor uiExecutor = new FXFrameExecutorService();
-	
+
 	private ExecutorService wsExecutorService;
 	@FXML
 	private RemoteFilesInfoControl remoteFilesInfo;
@@ -43,34 +49,34 @@ public class TaskComputationControl extends TabPane implements CloseableControl,
 	private final TaskComputation computation;
 
 	private Window rootWindow;
-	
-	
-	public TaskComputationControl(TaskComputation computation) {
+
+	public TaskComputationControl(final TaskComputation computation) {
 		JavaFXRoutines.initRootAndController("TaskComputationView.fxml", this);
 		this.computation = computation;
 	}
 
 	@Override
-	public void init(Window parameter) {
+	public void init(final Window parameter) {
 		this.rootWindow = parameter;
 		wsExecutorService = Executors.newSingleThreadExecutor(
 			UncaughtExceptionHandlerDecorator.createThreadFactory(
 				new AuthFailExceptionHandler(new WindowCloseableAdapter(rootWindow))));
-		
+
 		wsExecutorService.execute(() -> {
-			ProgressDialog dialog = ModalDialogs.doModal(new ProgressDialog(parameter, "Updating infos..."),
-					WindowConstants.DO_NOTHING_ON_CLOSE);
+			final ProgressDialog dialog = ModalDialogs.doModal(new ProgressDialog(
+				parameter, "Updating infos..."), WindowConstants.DO_NOTHING_ON_CLOSE);
 			try {
 				adapter = new TaskComputationAdapter(computation);
 				adapter.init();
-			} finally {
+			}
+			finally {
 				dialog.done();
 			}
 			remoteFilesInfo.setFiles(adapter.getOutputs());
 			remoteFilesInfo.init(parameter);
-			Collection<Runnable> runs = new LinkedList<>();
-			for (ObservableLog observableLog : adapter.getLogs()) {
-				LogViewControl logViewControl = new LogViewControl();
+			final Collection<Runnable> runs = new LinkedList<>();
+			for (final ObservableLog observableLog : adapter.getLogs()) {
+				final LogViewControl logViewControl = new LogViewControl();
 				logViewControl.setObservable(observableLog.getContent());
 				runs.add(() -> addTab(observableLog.getName(), logViewControl));
 			}
@@ -78,20 +84,20 @@ public class TaskComputationControl extends TabPane implements CloseableControl,
 		});
 	}
 
-	private void addTab(String title, Node control) {
-		Tab t = new Tab(title);
+	private void addTab(final String title, final Node control) {
+		final Tab t = new Tab(title);
 		t.setClosable(false);
-		HBox hbox = new HBox();
+		final HBox hbox = new HBox();
 		HBox.setHgrow(control, Priority.ALWAYS);
 		hbox.getChildren().add(control);
 		t.setContent(hbox);
 		getTabs().add(t);
 	}
+
 	@Override
 	public void close() {
 		adapter.close();
 		wsExecutorService.shutdown();
 	}
 
-	
 }

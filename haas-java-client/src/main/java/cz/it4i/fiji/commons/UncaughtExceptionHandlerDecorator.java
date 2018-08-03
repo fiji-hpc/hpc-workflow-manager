@@ -1,5 +1,5 @@
 
-package cz.it4i.fiji.haas_spim_benchmark.core;
+package cz.it4i.fiji.commons;
 
 import java.io.Closeable;
 import java.lang.Thread.UncaughtExceptionHandler;
@@ -38,7 +38,7 @@ abstract public class UncaughtExceptionHandlerDecorator implements
 				@Override
 				protected void setPreviousHandler(
 					final UncaughtExceptionHandler handler)
-				{
+			{
 					Thread.setDefaultUncaughtExceptionHandler(handler);
 				}
 

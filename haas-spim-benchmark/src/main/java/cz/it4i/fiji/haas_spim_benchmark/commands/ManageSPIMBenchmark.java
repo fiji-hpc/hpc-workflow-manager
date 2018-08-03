@@ -22,11 +22,11 @@ import org.scijava.widget.TextWidget;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import cz.it4i.fiji.commons.UncaughtExceptionHandlerDecorator;
 import cz.it4i.fiji.haas_spim_benchmark.core.AuthFailExceptionHandler;
 import cz.it4i.fiji.haas_spim_benchmark.core.AuthenticationExceptionHandler;
 import cz.it4i.fiji.haas_spim_benchmark.core.Constants;
 import cz.it4i.fiji.haas_spim_benchmark.core.NotConnectedExceptionHandler;
-import cz.it4i.fiji.haas_spim_benchmark.core.UncaughtExceptionHandlerDecorator;
 import cz.it4i.fiji.haas_spim_benchmark.core.WindowCloseableAdapter;
 import cz.it4i.fiji.haas_spim_benchmark.ui.BenchmarkSPIMWindow;
 
@@ -64,10 +64,12 @@ public class ManageSPIMBenchmark implements Command {
 	@Override
 	public void run() {
 		if (log.isDebugEnabled()) {
-			log.debug("DefaultUncaughtExceptionHandler() = {} ", Thread.getDefaultUncaughtExceptionHandler());
+			log.debug("DefaultUncaughtExceptionHandler() = {} ", Thread
+				.getDefaultUncaughtExceptionHandler());
 		}
-		
-		final UncaughtExceptionHandlerDecorator uehd = UncaughtExceptionHandlerDecorator.setDefaultHandler();
+
+		final UncaughtExceptionHandlerDecorator uehd =
+			UncaughtExceptionHandlerDecorator.setDefaultHandler();
 		final WindowCloseableAdapter wca = new WindowCloseableAdapter();
 		uehd.registerHandler(new AuthenticationExceptionHandler(wca));
 		uehd.registerHandler(new NotConnectedExceptionHandler(wca));
@@ -85,10 +87,12 @@ public class ManageSPIMBenchmark implements Command {
 					MessageType.ERROR_MESSAGE);
 				return;
 			}
-			
+
 			final BenchmarkSPIMWindow dialog = new BenchmarkSPIMWindow(null,
 				new BenchmarkSPIMParametersImpl(userName, password, Constants.PHONE,
-					email, workingDirPath)) {
+					email, workingDirPath))
+			{
+
 				@Override
 				public void dispose() {
 					super.dispose();
@@ -96,7 +100,7 @@ public class ManageSPIMBenchmark implements Command {
 					uehd.close();
 				}
 			};
-			
+
 			dialog.executeAdjustment(() -> {
 				dialog.setTitle(Constants.SUBMENU_ITEM_NAME);
 				dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
