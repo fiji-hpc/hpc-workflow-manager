@@ -195,7 +195,7 @@ public class BenchmarkSPIMControl extends BorderPane implements
 
 	private void deleteJob(BenchmarkJob bj) {
 		bj.delete();
-		registry.update();
+		jobs.getItems().remove(registry.remove(bj));
 	}
 
 	private void askForCreateJob() {

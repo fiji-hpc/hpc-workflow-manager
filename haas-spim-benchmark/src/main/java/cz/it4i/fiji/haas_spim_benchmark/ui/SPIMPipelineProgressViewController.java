@@ -95,8 +95,11 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 		Progress progress = ModalDialogs.doModal(new ProgressDialog(
 			root, "Downloading tasks"), WindowConstants.DO_NOTHING_ON_CLOSE);
 		executorServiceWS.execute(() -> {
+			try {
 			fillTable();
-			progress.done();
+			} finally {
+				progress.done();
+			}
 		});
 	}
 
