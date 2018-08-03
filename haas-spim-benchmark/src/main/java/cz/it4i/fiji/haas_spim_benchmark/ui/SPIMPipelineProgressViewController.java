@@ -183,9 +183,8 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 			JavaFXRoutines.setCellValueFactory(this.tasks, i++,
 				(Function<Task, String>) v -> Constants.BENCHMARK_TASK_NAME_MAP.get(v
 					.getDescription()));
-			double tableColumnWidth = computeTableColumnWidth(computations);
 
-			log.info("table column width " + tableColumnWidth);
+			double tableColumnWidth = computeTableColumnWidth(computations);
 			for (TaskComputation tc : computations) {
 				TableColumn<ObservableValue<Task>, String> tableCol;
 				this.tasks.getColumns().add(tableCol = new TableColumn<>(columnHeader(
