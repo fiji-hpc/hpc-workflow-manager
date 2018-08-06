@@ -206,12 +206,12 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 	}
 
 	private long computeTableColumnWidth(List<TaskComputation> computations) {
-		return Math.round(this.tasks.getColumns().get(0)
-			.getWidth() / TIMEPOINT_TABLE_COLUMN_WIDTH_RATIO * (1 + Math.max(0,
-				computeMaxColumnHeaderTextLenght(computations) - 1) / 2));
+		return Math.round(this.tasks.getColumns().get(0).getWidth() /
+			TIMEPOINT_TABLE_COLUMN_WIDTH_RATIO * (1 + Math.max(0,
+				computeMaxColumnHeaderTextLength(computations) - 1) / 2));
 	}
 
-	private int computeMaxColumnHeaderTextLenght(
+	private int computeMaxColumnHeaderTextLength(
 		List<TaskComputation> computations)
 	{
 		return computations != null && computations.size() > 0 ? columnHeader(
