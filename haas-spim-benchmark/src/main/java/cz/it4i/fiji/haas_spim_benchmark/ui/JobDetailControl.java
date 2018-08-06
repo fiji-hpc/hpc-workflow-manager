@@ -74,16 +74,17 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 			// TODO: Handle this?
 			if (log.isInfoEnabled()) {
 				log.info("Job " + job.getValue().getId() +
-						" state has been resolved as Disposed.");
+					" state has been resolved as Disposed.");
 			}
 		}
-
-		disableNonPermanentTabs();
 
 		if (areExecutionDetailsAvailable()) {
 			enableAllTabs();
 		}
-		
+		else {
+			disableNonPermanentTabs();
+		}
+
 		setActiveFirstVisibleTab();
 	}
 
@@ -117,7 +118,6 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 	private void disableNonPermanentTabs() {
 		getTabs().stream().filter(t -> t != jobPropertiesTab && t != dataUploadTab)
 			.forEach(t -> t.setDisable(true));
-		getSelectionModel().select(jobPropertiesTab);
 	}
 
 	/*
@@ -128,8 +128,8 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 	}
 
 	private void setActiveFirstVisibleTab() {
-		for(Tab t: getTabs()) {
-			if(!t.isDisable()) {
+		for (Tab t : getTabs()) {
+			if (!t.isDisable()) {
 				t.getTabPane().getSelectionModel().select(t);
 				break;
 			}
