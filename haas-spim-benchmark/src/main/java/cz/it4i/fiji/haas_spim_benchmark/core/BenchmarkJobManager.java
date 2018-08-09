@@ -1,3 +1,4 @@
+
 package cz.it4i.fiji.haas_spim_benchmark.core;
 
 import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.BENCHMARK_TASK_NAME_MAP;
@@ -31,7 +32,6 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Scanner;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -81,11 +81,8 @@ public class BenchmarkJobManager implements Closeable {
 	public final class BenchmarkJob implements HaaSOutputHolder {
 
 		private final Job job;
-
-		private final List<Task> tasks;
-		private final List<BenchmarkError> nonTaskSpecificErrors;
 		private final SPIMComputationAccessor computationAccessor;
-		private int processedOutputLength;
+		private final SnakemakeOutputHelper snakemakeOutputProcessor;
 		private JobState verifiedState;
 		private boolean verifiedStateProcessed;
 		private CompletableFuture<JobState> running;
@@ -95,11 +92,12 @@ public class BenchmarkJobManager implements Closeable {
 
 		public BenchmarkJob(Job job) {
 			this.job = job;
-			tasks = new LinkedList<>();
-			nonTaskSpecificErrors = new LinkedList<>();
 			computationAccessor = getComputationAccessor();
+			snakemakeOutputProcessor = new SnakemakeOutputHelper(
+				computationAccessor, new LinkedList<Task>(),
+				new LinkedList<BenchmarkError>());
 		}
-		
+
 		public synchronized void startJob(Progress progress) throws IOException {
 			job.uploadFile(Constants.CONFIG_YAML, new ProgressNotifierAdapter(progress));
 			LoadedYAML yaml = new LoadedYAML(job.openLocalFile(Constants.CONFIG_YAML));
@@ -283,23 +281,11 @@ public class BenchmarkJobManager implements Closeable {
 		}
 
 		public List<Task> getTasks() {
-
-			// If no tasks have been identified, try to search through the output
-			if (tasks.isEmpty()) {
-				fillTasks();
-			}
-
-			// Should you (finally) have some, try to parse the output further, otherwise
-			// just give up
-			if (!tasks.isEmpty()) {
-				processOutput();
-			}
-
-			return tasks;
+			return snakemakeOutputProcessor.getTasks();
 		}
 
 		public void exploreErrors() {
-			for (BenchmarkError error : getErrors()) {
+			for (BenchmarkError error : snakemakeOutputProcessor.getErrors()) {
 				System.out.println(error.getPlainDescription());
 			}
 		}
@@ -405,109 +391,33 @@ public class BenchmarkJobManager implements Closeable {
 			return time != null ? time.getTime().toString() : "N/A";
 		}
 
-		private void fillTasks() {
-
-			final String OUTPUT_PARSING_JOB_COUNTS = "Job counts:";
-			final String OUTPUT_PARSING_TAB_DELIMITER = "\\t";
-			final int OUTPUT_PARSING_EXPECTED_NUMBER_OF_WORDS_PER_LINE = 2;
-			final String OUTPUT_PARSING_WORKFLOW_ERROR = "WorkflowError";
-			final String OUTPUT_PARSING_VALUE_ERROR = "ValueError";
-
-			processedOutputLength = -1;
-			int readJobCountIndex = -1;
-			boolean found = false;
-			String output = getSnakemakeOutput();
-
-			// Found last job count definition
-			while (true) {
-				readJobCountIndex = output.indexOf(OUTPUT_PARSING_JOB_COUNTS, processedOutputLength + 1);
-
-				if (readJobCountIndex < 0) {
-					break;
-				}
-
-				found = true;
-				processedOutputLength = readJobCountIndex;
-			}
-
-			// If no job count definition has been found, search through the output and list
-			// all errors
-			if (!found) {
-				@SuppressWarnings("resource")
-				Scanner scanner = new Scanner(getSnakemakeOutput());
-				String currentLine;
-				while (scanner.hasNextLine()) {
-					currentLine = scanner.nextLine().trim();
-					if (currentLine.contains(OUTPUT_PARSING_WORKFLOW_ERROR) //
-							|| currentLine.contains(OUTPUT_PARSING_VALUE_ERROR)) {
-						String errorMessage = "";
-						while (!currentLine.isEmpty()) {
-							errorMessage += currentLine;
-							if (!scanner.hasNextLine()) {
-								break;
-							}
-							currentLine = scanner.nextLine().trim();
-						}
-						nonTaskSpecificErrors.add(new BenchmarkError(errorMessage));
-					}
-				}
-				scanner.close();
-				return;
-			}
-
-			// After the job count definition, task specification is expected
-			@SuppressWarnings("resource")
-			Scanner scanner = new Scanner(output.substring(processedOutputLength));
-			scanner.nextLine(); // Immediately after job count definition, task specification table header is
-								// expected
-			while (scanner.hasNextLine()) {
-				if (scanner.nextLine().trim().isEmpty()) {
-					continue;
-				}
-
-				while (true) {
-					List<String> lineWords = Arrays.stream(scanner.nextLine().split(OUTPUT_PARSING_TAB_DELIMITER))
-							.filter(word -> word.length() > 0).collect(Collectors.toList());
-					if (lineWords.size() != OUTPUT_PARSING_EXPECTED_NUMBER_OF_WORDS_PER_LINE) {
-						break;
-					}
-					tasks.add(new Task(computationAccessor, lineWords.get(1), Integer.parseInt(lineWords.get(0))));
-				}
-				break;
-			}
-			scanner.close();
-
-			// Order tasks chronologically
-			if (!tasks.isEmpty()) {
-				List<String> chronologicList = BENCHMARK_TASK_NAME_MAP.keySet().stream().collect(Collectors.toList());
-				Collections.sort(tasks,
-						Comparator.comparingInt(task -> chronologicList.indexOf(task.getDescription())));
-			}
-		}
-
-		private void startDownloadResults(CompletableFuture<?> result) throws IOException {
+		private void startDownloadResults(CompletableFuture<?> result)
+			throws IOException
+		{
 			String mainFile = job.getProperty(SPIM_OUTPUT_FILENAME_PATTERN) + ".xml";
-			final ProgressNotifierTemporarySwitchOff notifierSwitch = new ProgressNotifierTemporarySwitchOff(
-					downloadNotifier, job);
+			final ProgressNotifierTemporarySwitchOff notifierSwitch =
+				new ProgressNotifierTemporarySwitchOff(downloadNotifier, job);
 
-			job.startDownload(downloadFileNameExtractDecorator(fileName -> fileName.equals(mainFile)))
-					.whenComplete((X, E) -> {
-						notifierSwitch.switchOn();
-					}).thenCompose(X -> {
-						Set<String> otherFiles = extractNames(getOutputDirectory().resolve(mainFile));
-						try {
-							return job
-									.startDownload(downloadFileNameExtractDecorator( downloadCSVDecorator( name -> otherFiles.contains(name))));
-						} catch (IOException e) {
-							throw new RuntimeException(e);
-						}
+			job.startDownload(downloadFileNameExtractDecorator(fileName -> fileName
+				.equals(mainFile))).whenComplete((X, E) -> {
+					notifierSwitch.switchOn();
+				}).thenCompose(X -> {
+					Set<String> otherFiles = extractNames(getOutputDirectory().resolve(
+						mainFile));
+					try {
+						return job.startDownload(downloadFileNameExtractDecorator(
+							downloadCSVDecorator(name -> otherFiles.contains(name))));
+					}
+					catch (IOException e) {
+						throw new RuntimeException(e);
+					}
 
-					}).whenComplete((X, e) -> {
-						if (e != null) {
-							log.error(e.getMessage(), e);
-						}
-						result.complete(null);
-					});
+				}).whenComplete((X, e) -> {
+					if (e != null) {
+						log.error(e.getMessage(), e);
+					}
+					result.complete(null);
+				});
 		}
 
 		private Set<String> extractNames(Path resolve) {
@@ -529,38 +439,6 @@ public class BenchmarkJobManager implements Closeable {
 				log.error(e.getMessage(), e);
 			}
 			return result;
-		}
-
-		private void processOutput() {
-
-			final String OUTPUT_PARSING_RULE = "rule ";
-			final String OUTPUT_PARSING_COLON = ":";
-
-			String output = getSnakemakeOutput().substring(processedOutputLength);
-			int outputLengthToBeProcessed = output.length();
-
-			int ruleRelativeIndex = -1;
-			int colonRelativeIndex = -1;
-			while (true) {
-
-				ruleRelativeIndex = output.indexOf(OUTPUT_PARSING_RULE, colonRelativeIndex);
-				colonRelativeIndex = output.indexOf(OUTPUT_PARSING_COLON, ruleRelativeIndex);
-
-				if (ruleRelativeIndex == -1 || colonRelativeIndex == -1) {
-					break;
-				}
-
-				String taskDescription = output.substring(ruleRelativeIndex + OUTPUT_PARSING_RULE.length(),
-						colonRelativeIndex);
-				List<Task> task = tasks.stream().filter(t -> t.getDescription().equals(taskDescription))
-						.collect(Collectors.toList());
-				if (1 == task.size()) {
-					// TODO: Consider throwing an exception
-					task.get(0).populateTaskComputationParameters(processedOutputLength + ruleRelativeIndex);
-				}
-			}
-
-			processedOutputLength = processedOutputLength + outputLengthToBeProcessed;
 		}
 
 		private SPIMComputationAccessor getComputationAccessor() {
@@ -595,12 +473,6 @@ public class BenchmarkJobManager implements Closeable {
 							SynchronizableFileType.StandardErrorFile)),
 					HAAS_UPDATE_TIMEOUT / UI_TO_HAAS_FREQUENCY_UPDATE_RATIO);
 			return result;
-		}
-
-		private List<BenchmarkError> getErrors() {
-			getTasks();
-			Stream<BenchmarkError> taskSpecificErrors = tasks.stream().flatMap(s -> s.getErrors().stream());
-			return Stream.concat(nonTaskSpecificErrors.stream(), taskSpecificErrors).collect(Collectors.toList());
 		}
 
 		private ProgressNotifier createDownloadNotifierProcessingResultCSV(
