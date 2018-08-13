@@ -8,6 +8,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Scanner;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -55,27 +57,23 @@ class SnakemakeOutputHelper {
 	private void resolveTasksAndNonTaskSpecificErrors() {
 
 		final String OUTPUT_PARSING_JOB_COUNTS = "Job counts:";
+		final String NOTHING_TO_BE_DONE = "Nothing to be done.";
 		final String OUTPUT_PARSING_TAB_DELIMITER = "\\t";
 		final int OUTPUT_PARSING_EXPECTED_NUMBER_OF_WORDS_PER_LINE = 2;
 		final String OUTPUT_PARSING_WORKFLOW_ERROR = "WorkflowError";
 		final String OUTPUT_PARSING_VALUE_ERROR = "ValueError";
 
 		processedOutputLength = -1;
-		int readJobCountIndex = -1;
 		boolean found = false;
 		final String output = getSnakemakeOutput();
 
 		// Found last job count definition
-		while (true) {
-			readJobCountIndex = output.indexOf(OUTPUT_PARSING_JOB_COUNTS,
-				processedOutputLength + 1);
-
-			if (readJobCountIndex < 0) {
-				break;
-			}
-
+		final Pattern p = Pattern.compile(OUTPUT_PARSING_JOB_COUNTS + "|" +
+			NOTHING_TO_BE_DONE);
+		final Matcher m = p.matcher(output);
+		while (m.find()) {
+			processedOutputLength = m.start();
 			found = true;
-			processedOutputLength = readJobCountIndex;
 		}
 
 		// If no job count definition has been found, search through the output and
