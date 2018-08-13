@@ -2,10 +2,13 @@
 package cz.it4i.fiji.haas_spim_benchmark.core;
 
 import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.BENCHMARK_TASK_NAME_MAP;
+import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.HAAS_UPDATE_TIMEOUT;
+import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.UI_TO_HAAS_FREQUENCY_UPDATE_RATIO;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Scanner;
 import java.util.regex.Matcher;
@@ -13,22 +16,37 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import cz.it4i.fiji.haas.HaaSOutputHolder;
+import cz.it4i.fiji.haas.HaaSOutputHolderImpl;
+import cz.it4i.fiji.haas.Job;
 import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
 
-class SnakemakeOutputHelper {
+class SnakemakeOutputHelper implements HaaSOutputHolder {
 
+	private final Job job;
 	private final SPIMComputationAccessor computationAccessor;
 	private final List<Task> tasks;
 	private final List<BenchmarkError> nonTaskSpecificErrors;
 	private int processedOutputLength;
 
-	public SnakemakeOutputHelper(
-		final SPIMComputationAccessor computationAccessor, final List<Task> tasks,
+	public SnakemakeOutputHelper(final Job benchmarkJob, final List<Task> tasks,
 		final List<BenchmarkError> nonTaskSpecificErrors)
 	{
-		this.computationAccessor = computationAccessor;
+		this.job = benchmarkJob;
+		this.computationAccessor = createComputationAccessor();
 		this.tasks = tasks;
 		this.nonTaskSpecificErrors = nonTaskSpecificErrors;
+	}
+
+	@Override
+	public List<String> getActualOutput(
+		final List<SynchronizableFileType> content)
+	{
+		return computationAccessor.getActualOutput(content);
+	}
+
+	SPIMComputationAccessor getComputationAccessor() {
+		return computationAccessor;
 	}
 
 	List<Task> getTasks() {
@@ -52,6 +70,42 @@ class SnakemakeOutputHelper {
 			s -> s.getErrors().stream());
 		return Stream.concat(nonTaskSpecificErrors.stream(), taskSpecificErrors)
 			.collect(Collectors.toList());
+	}
+
+	private SPIMComputationAccessor createComputationAccessor() {
+		SPIMComputationAccessor result = new SPIMComputationAccessor() {
+
+			private final HaaSOutputHolder outputOfSnakemake =
+				new HaaSOutputHolderImpl(list -> job.getOutput(list));
+
+			@Override
+			public List<String> getActualOutput(
+				final List<SynchronizableFileType> content)
+			{
+				return outputOfSnakemake.getActualOutput(content);
+			}
+
+			@Override
+			public java.util.Collection<String> getChangedFiles() {
+				return job.getChangedFiles();
+			}
+
+			@Override
+			public List<Long> getFileSizes(final List<String> names) {
+				return job.getFileSizes(names);
+			}
+
+			@Override
+			public List<String> getFileContents(final List<String> logs) {
+				return job.getFileContents(logs);
+			}
+		};
+
+		result = new SPIMComputationAccessorDecoratorWithTimeout(result,
+			new HashSet<>(Arrays.asList(SynchronizableFileType.StandardOutputFile,
+				SynchronizableFileType.StandardErrorFile)), HAAS_UPDATE_TIMEOUT /
+					UI_TO_HAAS_FREQUENCY_UPDATE_RATIO);
+		return result;
 	}
 
 	private void resolveTasksAndNonTaskSpecificErrors() {

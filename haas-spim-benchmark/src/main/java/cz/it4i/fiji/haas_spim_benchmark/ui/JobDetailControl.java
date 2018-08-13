@@ -52,7 +52,7 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 	public JobDetailControl(final ObservableBenchmarkJob job) {
 		JavaFXRoutines.initRootAndController("JobDetail.fxml", this);
 		observableValueRegistry = new HaaSOutputObservableValueRegistry(job
-			.getValue(), Constants.HAAS_UPDATE_TIMEOUT /
+			.getValue().getComputationAccessor(), Constants.HAAS_UPDATE_TIMEOUT /
 				Constants.UI_TO_HAAS_FREQUENCY_UPDATE_RATIO);
 		this.job = job;
 	}
@@ -83,7 +83,7 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 		if (areExecutionDetailsAvailable()) {
 			enableAllTabs();
 		}
-		
+
 		setActiveFirstVisibleTab();
 	}
 
