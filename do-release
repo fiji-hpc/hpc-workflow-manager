@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 #this script build required libraries and copies into Fiji installation directory
-
+FIJI_APP=ImageJ-linux64
+UPDATE_SITE=Kozusznik
 mvn clean install dependency:copy-dependencies
 
 DIR=`readlink -f $1`
@@ -9,3 +10,4 @@ cp java-scpclient-*.jar jaxrpc-api-*.jar haas-imagej-client-*.jar haas-java-clie
 
 cd ../../../haas-spim-benchmark/target/
 cp haas-spim-benchmark-*[0-9T].jar $DIR/plugins
+$DIR/$FIJI_APP --update upload-complete-site $UPDATE_SITE
