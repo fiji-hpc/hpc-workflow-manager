@@ -1,5 +1,7 @@
+
 package cz.it4i.fiji.haas_spim_benchmark.ui;
 
+import java.io.IOException;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -46,6 +48,12 @@ public class ObservableTaskRegistry extends
 			updated |= oldState != tc.getState();
 		}
 		return updated ? UpdateStatus.Updated : UpdateStatus.NotUpdated;
+	}
+
+	@Override
+	public void close() throws IOException {
+		// TODO Auto-generated method stub
+
 	}
 
 }

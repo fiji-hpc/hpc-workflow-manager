@@ -1,8 +1,17 @@
 
 package cz.it4i.fiji.haas_spim_benchmark.core;
 
+import com.google.common.collect.Streams;
+
+import java.io.Closeable;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -13,11 +22,15 @@ import net.imagej.updater.util.Progress;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import cz.it4i.fiji.haas.HaaSOutputHolder;
 import cz.it4i.fiji.haas.ui.UpdatableObservableValue;
+import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
 import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.BenchmarkJob;
+import javafx.beans.value.ObservableValue;
+import javafx.beans.value.ObservableValueBase;
 
 public class ObservableBenchmarkJob extends
-	UpdatableObservableValue<BenchmarkJob>
+	UpdatableObservableValue<BenchmarkJob> implements Closeable
 {
 
 	public static final Logger log = LoggerFactory.getLogger(
@@ -31,7 +44,9 @@ public class ObservableBenchmarkJob extends
 		() -> getValue().needsUpload());
 	private final Executor executor;
 
-	private final P_Observable fileTransferObservervable = new P_Observable();
+	private final P_Observable fileTransferObservable = new P_Observable();
+
+	private final HaaSOutputObservableValueRegistry observableValueRegistry;
 
 	public interface TransferProgress {
 
@@ -53,6 +68,10 @@ public class ObservableBenchmarkJob extends
 		wrapped.setDownloadNotifier(downloadProgress);
 		wrapped.setUploadNotifier(uploadProgress);
 		wrapped.resumeTransfer();
+
+		observableValueRegistry = new HaaSOutputObservableValueRegistry(this
+			.getValue().getComputationAccessor(), Constants.HAAS_UPDATE_TIMEOUT /
+				Constants.UI_TO_HAAS_FREQUENCY_UPDATE_RATIO);
 	}
 
 	public TransferProgress getDownloadProgress() {
@@ -69,11 +88,22 @@ public class ObservableBenchmarkJob extends
 	}
 
 	public void startObservingFileTransfer(final Observer observer) {
-		fileTransferObservervable.addObserver(observer);
+		fileTransferObservable.addObserver(observer);
 	}
 
 	public void stopObservingFileTransfer(final Observer observer) {
-		fileTransferObservervable.deleteObserver(observer);
+		fileTransferObservable.deleteObserver(observer);
+	}
+
+	public ObservableValue<String> getObservableSnakemakeOutput(
+		SynchronizableFileType type)
+	{
+		return observableValueRegistry.observableValues.get(type);
+	}
+
+	@Override
+	public void close() {
+		observableValueRegistry.close();
 	}
 
 	@Override
@@ -84,12 +114,14 @@ public class ObservableBenchmarkJob extends
 	}
 
 	private void notifyFileTransferObservers() {
-		fileTransferObservervable.setChanged();
-		fileTransferObservervable.notifyObservers();
+		fileTransferObservable.setChanged();
+		fileTransferObservable.notifyObservers();
 	}
 
+	// -- Private classes --
+
 	private class P_Observable extends Observable {
-	
+
 		@Override
 		public synchronized void setChanged() {
 			super.setChanged();
@@ -184,6 +216,73 @@ public class ObservableBenchmarkJob extends
 		private void setDone(boolean val) {
 			doneStatusConsumer.accept(val);
 		}
+	}
+
+	private class HaasOutputObservableValue extends ObservableValueBase<String> {
+
+		private String wrappedValue;
+
+		private synchronized void update(String newValue) {
+			String oldValue = this.wrappedValue;
+			this.wrappedValue = newValue;
+			if (newValue != null && oldValue == null || newValue == null &&
+				oldValue != null || newValue != null && !newValue.equals(oldValue))
+			{
+				fireValueChangedEvent();
+			}
+		}
+
+		@Override
+		public String getValue() {
+			return wrappedValue;
+		}
+
+	}
+
+	private class HaaSOutputObservableValueRegistry implements Closeable {
+
+		private final Map<SynchronizableFileType, HaasOutputObservableValue> observableValues =
+			new HashMap<>();
+		private final HaaSOutputHolder holder;
+		private final Timer timer;
+		private final List<SynchronizableFileType> types = new LinkedList<>();
+
+		public HaaSOutputObservableValueRegistry(HaaSOutputHolder holder,
+			long timeout)
+		{
+			this.holder = holder;
+			this.timer = new Timer();
+			this.timer.schedule(createTask(), 0, timeout);
+			this.types.add(SynchronizableFileType.StandardOutputFile);
+			this.observableValues.put(SynchronizableFileType.StandardOutputFile,
+				new HaasOutputObservableValue());
+			this.types.add(SynchronizableFileType.StandardErrorFile);
+			this.observableValues.put(SynchronizableFileType.StandardErrorFile,
+				new HaasOutputObservableValue());
+		}
+
+		private TimerTask createTask() {
+			return new TimerTask() {
+
+				@Override
+				public void run() {
+					update();
+				}
+			};
+		}
+
+		@Override
+		public synchronized void close() {
+			timer.cancel();
+		}
+
+		private void update() {
+			List<String> values = holder.getActualOutput(types);
+			Streams.zip(types.stream(), values.stream(), (type,
+				value) -> (Runnable) (() -> observableValues.get(type).update(value)))
+				.forEach(r -> r.run());
+		}
+
 	}
 
 }

@@ -1,5 +1,7 @@
+
 package cz.it4i.fiji.haas.ui;
 
+import java.io.Closeable;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -10,7 +12,9 @@ import java.util.stream.Collectors;
 
 import cz.it4i.fiji.haas.ui.UpdatableObservableValue.UpdateStatus;
 
-public abstract class ObservableValueRegistry<K, V extends UpdatableObservableValue<K>> {
+public abstract class ObservableValueRegistry<K, V extends UpdatableObservableValue<K>>
+	implements Closeable
+{
 
 	private Function<K, UpdateStatus> updateFunction;
 
