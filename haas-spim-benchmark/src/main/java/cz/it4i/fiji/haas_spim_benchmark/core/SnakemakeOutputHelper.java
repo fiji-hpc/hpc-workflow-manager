@@ -29,10 +29,10 @@ class SnakemakeOutputHelper implements HaaSOutputHolder {
 	private final List<BenchmarkError> nonTaskSpecificErrors;
 	private int processedOutputLength;
 
-	public SnakemakeOutputHelper(final Job benchmarkJob, final List<Task> tasks,
+	public SnakemakeOutputHelper(final Job job, final List<Task> tasks,
 		final List<BenchmarkError> nonTaskSpecificErrors)
 	{
-		this.job = benchmarkJob;
+		this.job = job;
 		this.computationAccessor = createComputationAccessor();
 		this.tasks = tasks;
 		this.nonTaskSpecificErrors = nonTaskSpecificErrors;
@@ -45,7 +45,7 @@ class SnakemakeOutputHelper implements HaaSOutputHolder {
 		return computationAccessor.getActualOutput(content);
 	}
 
-	SPIMComputationAccessor getComputationAccessor() {
+	public SPIMComputationAccessor getComputationAccessor() {
 		return computationAccessor;
 	}
 
