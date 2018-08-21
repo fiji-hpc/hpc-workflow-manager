@@ -223,7 +223,8 @@ public class ObservableBenchmarkJob extends
 		private final Timer timer;
 		private final TimerTask updateTask;
 		private boolean isRunning = false;
-
+		private int numberOfListeners = 0;
+		
 		public HaaSOutputObservableValueRegistry() {
 			this.observableValues.put(SynchronizableFileType.StandardOutputFile,
 				new HaasOutputObservableValue());
@@ -249,11 +250,20 @@ public class ObservableBenchmarkJob extends
 		public synchronized void close() {
 			timer.cancel();
 		}
+		
+		private synchronized void increaseNumberOfObservers() {
+			numberOfListeners++;
+			evaluateTimer();
+		}
+		
+		private synchronized void decreaseNumberOfObservers() {
+			numberOfListeners--;
+			evaluateTimer();
+		}
 
 		private void evaluateTimer() {
 
-			final boolean anyListeners = observableValues.values().stream().anyMatch(
-				ov -> ov.getNumberOfListeners() > 0);
+			final boolean anyListeners = numberOfListeners > 0;
 
 			if (!isRunning && anyListeners) {
 				timer.schedule(updateTask, 0, Constants.HAAS_UPDATE_TIMEOUT /
@@ -272,13 +282,12 @@ public class ObservableBenchmarkJob extends
 		{
 
 			private String wrappedValue;
-			private int numberOfListeners = 0;
+		
 
 			@Override
 			public void addListener(final ChangeListener<? super String> listener) {
 				super.addListener(listener);
-				numberOfListeners++;
-				evaluateTimer();
+				increaseNumberOfObservers();
 			}
 
 			@Override
@@ -286,8 +295,7 @@ public class ObservableBenchmarkJob extends
 				final ChangeListener<? super String> listener)
 			{
 				super.removeListener(listener);
-				numberOfListeners--;
-				evaluateTimer();
+				decreaseNumberOfObservers();
 			}
 
 			@Override
@@ -303,10 +311,6 @@ public class ObservableBenchmarkJob extends
 				{
 					fireValueChangedEvent();
 				}
-			}
-
-			private int getNumberOfListeners() {
-				return numberOfListeners;
 			}
 
 		}
