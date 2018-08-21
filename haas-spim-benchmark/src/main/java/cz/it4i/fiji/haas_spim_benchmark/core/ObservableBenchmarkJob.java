@@ -22,7 +22,6 @@ import net.imagej.updater.util.Progress;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import cz.it4i.fiji.haas.HaaSOutputHolder;
 import cz.it4i.fiji.haas.ui.UpdatableObservableValue;
 import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
 import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.BenchmarkJob;
@@ -69,9 +68,7 @@ public class ObservableBenchmarkJob extends
 		wrapped.setUploadNotifier(uploadProgress);
 		wrapped.resumeTransfer();
 
-		observableValueRegistry = new HaaSOutputObservableValueRegistry(this
-			.getValue().getComputationAccessor(), Constants.HAAS_UPDATE_TIMEOUT /
-				Constants.UI_TO_HAAS_FREQUENCY_UPDATE_RATIO);
+		observableValueRegistry = new HaaSOutputObservableValueRegistry();
 	}
 
 	public TransferProgress getDownloadProgress() {
@@ -243,46 +240,35 @@ public class ObservableBenchmarkJob extends
 
 		private final Map<SynchronizableFileType, HaasOutputObservableValue> observableValues =
 			new HashMap<>();
-		private final HaaSOutputHolder holder;
 		private final Timer timer;
-		private final List<SynchronizableFileType> types = new LinkedList<>();
 
-		public HaaSOutputObservableValueRegistry(HaaSOutputHolder holder,
-			long timeout)
-		{
-			this.holder = holder;
-			this.timer = new Timer();
-			this.timer.schedule(createTask(), 0, timeout);
-			this.types.add(SynchronizableFileType.StandardOutputFile);
+		public HaaSOutputObservableValueRegistry() {
 			this.observableValues.put(SynchronizableFileType.StandardOutputFile,
 				new HaasOutputObservableValue());
-			this.types.add(SynchronizableFileType.StandardErrorFile);
 			this.observableValues.put(SynchronizableFileType.StandardErrorFile,
 				new HaasOutputObservableValue());
-		}
-
-		private TimerTask createTask() {
-			return new TimerTask() {
+			this.timer = new Timer();
+			this.timer.schedule(new TimerTask() {
 
 				@Override
 				public void run() {
-					update();
+
+					final List<SynchronizableFileType> types = new LinkedList<>(
+						observableValues.keySet());
+
+					Streams.zip(types.stream(), getValue().getComputationAccessor()
+						.getActualOutput(types).stream(), (type,
+							value) -> (Runnable) (() -> observableValues.get(type).update(
+								value))).forEach(r -> r.run());
 				}
-			};
+			}, 0, Constants.HAAS_UPDATE_TIMEOUT /
+				Constants.UI_TO_HAAS_FREQUENCY_UPDATE_RATIO);
 		}
 
 		@Override
 		public synchronized void close() {
 			timer.cancel();
 		}
-
-		private void update() {
-			List<String> values = holder.getActualOutput(types);
-			Streams.zip(types.stream(), values.stream(), (type,
-				value) -> (Runnable) (() -> observableValues.get(type).update(value)))
-				.forEach(r -> r.run());
-		}
-
 	}
 
 }
