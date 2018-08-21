@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import cz.it4i.fiji.haas.ui.UpdatableObservableValue;
 import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
 import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.BenchmarkJob;
+import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.beans.value.ObservableValueBase;
 
@@ -215,32 +216,13 @@ public class ObservableBenchmarkJob extends
 		}
 	}
 
-	private class HaasOutputObservableValue extends ObservableValueBase<String> {
-
-		private String wrappedValue;
-
-		private synchronized void update(String newValue) {
-			String oldValue = this.wrappedValue;
-			this.wrappedValue = newValue;
-			if (newValue != null && oldValue == null || newValue == null &&
-				oldValue != null || newValue != null && !newValue.equals(oldValue))
-			{
-				fireValueChangedEvent();
-			}
-		}
-
-		@Override
-		public String getValue() {
-			return wrappedValue;
-		}
-
-	}
-
 	private class HaaSOutputObservableValueRegistry implements Closeable {
 
 		private final Map<SynchronizableFileType, HaasOutputObservableValue> observableValues =
 			new HashMap<>();
 		private final Timer timer;
+		private final TimerTask updateTask;
+		private boolean isRunning = false;
 
 		public HaaSOutputObservableValueRegistry() {
 			this.observableValues.put(SynchronizableFileType.StandardOutputFile,
@@ -248,7 +230,7 @@ public class ObservableBenchmarkJob extends
 			this.observableValues.put(SynchronizableFileType.StandardErrorFile,
 				new HaasOutputObservableValue());
 			this.timer = new Timer();
-			this.timer.schedule(new TimerTask() {
+			this.updateTask = new TimerTask() {
 
 				@Override
 				public void run() {
@@ -261,13 +243,73 @@ public class ObservableBenchmarkJob extends
 							value) -> (Runnable) (() -> observableValues.get(type).update(
 								value))).forEach(r -> r.run());
 				}
-			}, 0, Constants.HAAS_UPDATE_TIMEOUT /
-				Constants.UI_TO_HAAS_FREQUENCY_UPDATE_RATIO);
+			};
 		}
 
 		@Override
 		public synchronized void close() {
 			timer.cancel();
+		}
+
+		private void evaluateTimer() {
+
+			final boolean anyListeners = observableValues.values().stream().anyMatch(
+				ov -> ov.getNumberOfListeners() > 0);
+
+			if (!isRunning && anyListeners) {
+				timer.schedule(updateTask, 0, Constants.HAAS_UPDATE_TIMEOUT /
+					Constants.UI_TO_HAAS_FREQUENCY_UPDATE_RATIO);
+				isRunning = true;
+			}
+			else if (isRunning && !anyListeners) {
+				timer.cancel();
+				isRunning = false;
+			}
+
+		}
+
+		private class HaasOutputObservableValue extends
+			ObservableValueBase<String>
+		{
+
+			private String wrappedValue;
+			private int numberOfListeners = 0;
+
+			private synchronized void update(String newValue) {
+				String oldValue = this.wrappedValue;
+				this.wrappedValue = newValue;
+				if (newValue != null && oldValue == null || newValue == null &&
+					oldValue != null || newValue != null && !newValue.equals(oldValue))
+				{
+					fireValueChangedEvent();
+				}
+			}
+
+			@Override
+			public void addListener(final ChangeListener<? super String> listener) {
+				super.addListener(listener);
+				numberOfListeners++;
+				evaluateTimer();
+			}
+
+			@Override
+			public void removeListener(
+				final ChangeListener<? super String> listener)
+			{
+				super.removeListener(listener);
+				numberOfListeners--;
+				evaluateTimer();
+			}
+
+			private int getNumberOfListeners() {
+				return numberOfListeners;
+			}
+
+			@Override
+			public String getValue() {
+				return wrappedValue;
+			}
+
 		}
 	}
 
