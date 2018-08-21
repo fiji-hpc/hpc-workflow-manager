@@ -45,10 +45,6 @@ class SnakemakeOutputHelper implements HaaSOutputHolder {
 		return computationAccessor.getActualOutput(content);
 	}
 
-	public SPIMComputationAccessor getComputationAccessor() {
-		return computationAccessor;
-	}
-
 	List<Task> getTasks() {
 
 		// If no tasks have been identified, try to search through the output

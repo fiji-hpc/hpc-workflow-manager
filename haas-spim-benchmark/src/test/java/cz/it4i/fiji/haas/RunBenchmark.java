@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import cz.it4i.fiji.haas.ui.DummyProgress;
 import cz.it4i.fiji.haas_java_client.JobState;
+import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
 import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager;
 import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.BenchmarkJob;
 import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkSPIMParameters;
@@ -36,8 +37,10 @@ public class RunBenchmark {
 						job.startJob(new DummyProgress());
 					} else if (state != JobState.Running && state != JobState.Queued) {
 						job.startDownload();
-					} else if (state == JobState.Running) {
-						log.info(job.getSnakemakeOutput());
+					}
+					else if (state == JobState.Running) {
+						log.info(job.getComputationOutput(
+							SynchronizableFileType.StandardErrorFile));
 					}
 				}
 			}

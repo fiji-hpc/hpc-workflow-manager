@@ -282,18 +282,14 @@ public class BenchmarkJobManager implements Closeable {
 			}
 		}
 
-		public SPIMComputationAccessor getComputationAccessor() {
-			return snakemakeOutputHelper.getComputationAccessor();
+		public String getComputationOutput(final SynchronizableFileType type) {
+			return getComputationOutput(Arrays.asList(type)).get(0);
 		}
 
-		public String getAnotherOutput() {
-			return snakemakeOutputHelper.getActualOutput(Arrays.asList(
-				SynchronizableFileType.StandardOutputFile)).get(0);
-		}
-
-		public String getSnakemakeOutput() {
-			return snakemakeOutputHelper.getActualOutput(Arrays.asList(
-				SynchronizableFileType.StandardErrorFile)).get(0);
+		public List<String> getComputationOutput(
+			final List<SynchronizableFileType> types)
+		{
+			return snakemakeOutputHelper.getActualOutput(types);
 		}
 
 		public void storeDataInWorkdirectory(UploadingFile file) throws IOException {

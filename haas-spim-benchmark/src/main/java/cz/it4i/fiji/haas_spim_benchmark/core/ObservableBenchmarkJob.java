@@ -238,10 +238,9 @@ public class ObservableBenchmarkJob extends
 					final List<SynchronizableFileType> types = new LinkedList<>(
 						observableValues.keySet());
 
-					Streams.zip(types.stream(), getValue().getComputationAccessor()
-						.getActualOutput(types).stream(), (type,
-							value) -> (Runnable) (() -> observableValues.get(type).update(
-								value))).forEach(r -> r.run());
+					Streams.zip(types.stream(), getValue().getComputationOutput(types)
+						.stream(), (type, value) -> (Runnable) (() -> observableValues.get(
+							type).update(value))).forEach(r -> r.run());
 				}
 			};
 		}
@@ -275,16 +274,6 @@ public class ObservableBenchmarkJob extends
 			private String wrappedValue;
 			private int numberOfListeners = 0;
 
-			private synchronized void update(String newValue) {
-				String oldValue = this.wrappedValue;
-				this.wrappedValue = newValue;
-				if (newValue != null && oldValue == null || newValue == null &&
-					oldValue != null || newValue != null && !newValue.equals(oldValue))
-				{
-					fireValueChangedEvent();
-				}
-			}
-
 			@Override
 			public void addListener(final ChangeListener<? super String> listener) {
 				super.addListener(listener);
@@ -301,13 +290,23 @@ public class ObservableBenchmarkJob extends
 				evaluateTimer();
 			}
 
-			private int getNumberOfListeners() {
-				return numberOfListeners;
-			}
-
 			@Override
 			public String getValue() {
 				return wrappedValue;
+			}
+
+			private synchronized void update(String newValue) {
+				String oldValue = this.wrappedValue;
+				this.wrappedValue = newValue;
+				if (newValue != null && oldValue == null || newValue == null &&
+					oldValue != null || newValue != null && !newValue.equals(oldValue))
+				{
+					fireValueChangedEvent();
+				}
+			}
+
+			private int getNumberOfListeners() {
+				return numberOfListeners;
 			}
 
 		}
