@@ -13,13 +13,11 @@ import java.util.TimerTask;
 
 import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
 import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.BenchmarkJob;
-import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
-import javafx.beans.value.ObservableValueBase;
 
 class HaasOutputObservableValueRegistry implements Closeable {
 
-	private final Map<SynchronizableFileType, HaasOutputObservableValue> observableValues =
+	private final Map<SynchronizableFileType, SimpleObservableValue<String>> observableValues =
 		new HashMap<>();
 	private final Timer timer;
 	private final TimerTask updateTask;
@@ -28,9 +26,9 @@ class HaasOutputObservableValueRegistry implements Closeable {
 
 	public HaasOutputObservableValueRegistry(final BenchmarkJob job) {
 		this.observableValues.put(SynchronizableFileType.StandardOutputFile,
-			new HaasOutputObservableValue());
+			createObservableValue());
 		this.observableValues.put(SynchronizableFileType.StandardErrorFile,
-			new HaasOutputObservableValue());
+			createObservableValue());
 		this.timer = new Timer();
 		this.updateTask = new TimerTask() {
 
@@ -56,6 +54,11 @@ class HaasOutputObservableValueRegistry implements Closeable {
 		final SynchronizableFileType type)
 	{
 		return observableValues.get(type);
+	}
+
+	private SimpleObservableValue<String> createObservableValue() {
+		return new SimpleObservableValue<>(null, this::increaseNumberOfObservers,
+			this::decreaseNumberOfObservers);
 	}
 
 	private synchronized void increaseNumberOfObservers() {
@@ -84,36 +87,4 @@ class HaasOutputObservableValueRegistry implements Closeable {
 
 	}
 
-	private class HaasOutputObservableValue extends ObservableValueBase<String> {
-
-		private String wrappedValue;
-
-		@Override
-		public void addListener(final ChangeListener<? super String> listener) {
-			super.addListener(listener);
-			increaseNumberOfObservers();
-		}
-
-		@Override
-		public void removeListener(final ChangeListener<? super String> listener) {
-			super.removeListener(listener);
-			decreaseNumberOfObservers();
-		}
-
-		@Override
-		public String getValue() {
-			return wrappedValue;
-		}
-
-		private synchronized void update(String newValue) {
-			String oldValue = this.wrappedValue;
-			this.wrappedValue = newValue;
-			if (newValue != null && oldValue == null || newValue == null &&
-				oldValue != null || newValue != null && !newValue.equals(oldValue))
-			{
-				fireValueChangedEvent();
-			}
-		}
-
-	}
 }

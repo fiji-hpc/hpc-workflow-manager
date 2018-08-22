@@ -15,7 +15,7 @@ import cz.it4i.fiji.haas.ui.TableCellAdapter;
 import cz.it4i.fiji.haas_java_client.FileTransferInfo;
 import cz.it4i.fiji.haas_java_client.FileTransferState;
 import cz.it4i.fiji.haas_spim_benchmark.core.ObservableBenchmarkJob;
-import javafx.beans.value.ObservableValueBase;
+import cz.it4i.fiji.haas_spim_benchmark.core.SimpleObservableValue;
 import javafx.fxml.FXML;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableRow;
@@ -77,7 +77,6 @@ public class DataTransferController extends BorderPane implements
 
 	// -- Helper methods --
 
-	
 	@SuppressWarnings("unchecked")
 	private void initTable() {
 
@@ -111,23 +110,6 @@ public class DataTransferController extends BorderPane implements
 					.toCss(Color.rgb(0x30, 0xA2, 0xCC)));
 			}
 		}));
-	}
-
-	// -- Private classes --
-
-	private class SimpleObservableValue<T> extends ObservableValueBase<T> {
-
-		private final T wrappedObject;
-
-		public SimpleObservableValue(final T wrappedObject) {
-			this.wrappedObject = wrappedObject;
-		}
-
-		@Override
-		public T getValue() {
-			return wrappedObject;
-		}
-
 	}
 
 }

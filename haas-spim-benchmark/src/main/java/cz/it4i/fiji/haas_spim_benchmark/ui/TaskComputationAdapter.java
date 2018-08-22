@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import cz.it4i.fiji.haas_spim_benchmark.core.Constants;
+import cz.it4i.fiji.haas_spim_benchmark.core.SimpleObservableValue;
 import cz.it4i.fiji.haas_spim_benchmark.core.TaskComputation;
 import cz.it4i.fiji.haas_spim_benchmark.core.TaskComputation.Log;
 import javafx.beans.value.ObservableValue;
@@ -69,10 +70,10 @@ public class TaskComputationAdapter implements Closeable {
 	
 		private final String name;
 		
-		private  final P_ObservableString value;
-	
-		public ObservableLog(Log content) {
-			this.value = new P_ObservableString(content.getContent());
+		private final SimpleObservableValue<String> value;
+
+		public ObservableLog(final Log content) {
+			this.value = new SimpleObservableValue<>(content.getContent());
 			this.name = content.getName();
 		}
 	
@@ -89,34 +90,14 @@ public class TaskComputationAdapter implements Closeable {
 				throw new IllegalArgumentException(
 						"this.name=" + getName() + ", log.name=" + log.getName());
 			}
-			value.setValue(log.getContent());
+			value.update(log.getContent());
 		}
-	
-		private class P_ObservableString extends ObservableValueBase<String> {
-	
-			private String innerValue;
-	
-			public P_ObservableString(String value) {
-				this.innerValue = value;
-			}
-	
-			@Override
-			public String getValue() {
-				return innerValue;
-			}
-			
-			public void setValue(String value) {
-				if(this.innerValue != null && !this.innerValue.equals(value) ||
-					value != null && !value.equals(this.innerValue)) {
-					this.innerValue = value;
-					fireValueChangedEvent();
-				}
-			}
-		}
-		
+
 	}
 
-	private class ObservableOutputFile extends ObservableValueBase<RemoteFileInfo> {
+	private class ObservableOutputFile extends
+		ObservableValueBase<RemoteFileInfo>
+	{
 
 		private final String name;
 
