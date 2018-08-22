@@ -52,8 +52,7 @@ public class ObservableTaskRegistry extends
 
 	@Override
 	public void close() throws IOException {
-		// TODO Auto-generated method stub
-
+		//DO NOTHING
 	}
 
 }
