@@ -1,3 +1,4 @@
+
 package cz.it4i.fiji.haas_spim_benchmark.ui;
 
 import org.slf4j.Logger;
@@ -12,28 +13,40 @@ import javafx.scene.control.TextArea;
 import javafx.scene.layout.BorderPane;
 
 public class LogViewControl extends BorderPane implements CloseableControl {
+
 	@SuppressWarnings("unused")
-	private static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas_spim_benchmark.ui.LogViewControl.class);
+	private static Logger log = LoggerFactory.getLogger(
+		cz.it4i.fiji.haas_spim_benchmark.ui.LogViewControl.class);
+
+	private ObservableValue<String> observedValue;
+
+	private final ChangeListener<String> outputChangeListener;
 
 	public LogViewControl() {
 		JavaFXRoutines.initRootAndController("LogView.fxml", this);
+		outputChangeListener = new ChangeListener<String>() {
+
+			@Override
+			public void changed(ObservableValue<? extends String> observable,
+				String oldValue, String newValue)
+			{
+				JavaFXRoutines.runOnFxThread(() -> ta.setText(observedValue
+					.getValue()));
+			}
+		};
 	}
 
 	@FXML
 	private TextArea ta;
 
 	public void setObservable(ObservableValue<String> value) {
-		JavaFXRoutines.runOnFxThread(()->ta.setText(value.getValue()));
-		value.addListener(new ChangeListener<String>() {
-			@Override
-			public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
-				JavaFXRoutines.runOnFxThread(()->ta.setText(value.getValue()));
-			}
-		});
+		observedValue = value;
+		JavaFXRoutines.runOnFxThread(() -> ta.setText(observedValue.getValue()));
+		observedValue.addListener(outputChangeListener);
 	}
-	
+
 	@Override
 	public void close() {
-		//DO NOTHING
+		observedValue.removeListener(outputChangeListener);
 	}
 }

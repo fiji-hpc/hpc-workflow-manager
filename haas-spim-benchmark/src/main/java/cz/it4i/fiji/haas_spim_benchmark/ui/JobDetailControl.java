@@ -11,7 +11,6 @@ import cz.it4i.fiji.haas.ui.InitiableControl;
 import cz.it4i.fiji.haas.ui.JavaFXRoutines;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
-import cz.it4i.fiji.haas_spim_benchmark.core.Constants;
 import cz.it4i.fiji.haas_spim_benchmark.core.ObservableBenchmarkJob;
 import javafx.fxml.FXML;
 import javafx.scene.control.Tab;
@@ -45,15 +44,10 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 	@FXML
 	private Tab dataUploadTab;
 
-	private final HaaSOutputObservableValueRegistry observableValueRegistry;
-
 	private final ObservableBenchmarkJob job;
 
 	public JobDetailControl(final ObservableBenchmarkJob job) {
 		JavaFXRoutines.initRootAndController("JobDetail.fxml", this);
-		observableValueRegistry = new HaaSOutputObservableValueRegistry(job
-			.getValue().getComputationAccessor(), Constants.HAAS_UPDATE_TIMEOUT /
-				Constants.UI_TO_HAAS_FREQUENCY_UPDATE_RATIO);
 		this.job = job;
 	}
 
@@ -63,13 +57,13 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 	public void init(final Window parameter) {
 		progressView.init(parameter);
 		progressView.setJob(job);
-		errorOutput.setObservable(observableValueRegistry.createObservable(
+		errorOutput.setObservable(job.getObservableSnakemakeOutput(
 			SynchronizableFileType.StandardErrorFile));
-		standardOutput.setObservable(observableValueRegistry.createObservable(
+		standardOutput.setObservable(job.getObservableSnakemakeOutput(
 			SynchronizableFileType.StandardOutputFile));
 		jobProperties.setJob(job);
 		dataUpload.setJob(job);
-		observableValueRegistry.start();
+
 		if (job.getValue().getState() == JobState.Disposed) {
 			// TODO: Handle this?
 			if (log.isInfoEnabled()) {
@@ -92,7 +86,6 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 
 	@Override
 	public void close() {
-		observableValueRegistry.close();
 
 		// Close controllers
 		progressView.close();
@@ -128,7 +121,7 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 	}
 
 	private void setActiveFirstVisibleTab() {
-		for (Tab t : getTabs()) {
+		for (final Tab t : getTabs()) {
 			if (!t.isDisable()) {
 				t.getTabPane().getSelectionModel().select(t);
 				break;

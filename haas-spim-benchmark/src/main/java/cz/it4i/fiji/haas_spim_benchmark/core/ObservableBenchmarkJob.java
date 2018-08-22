@@ -1,6 +1,7 @@
 
 package cz.it4i.fiji.haas_spim_benchmark.core;
 
+import java.io.Closeable;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.concurrent.Executor;
@@ -14,10 +15,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import cz.it4i.fiji.haas.ui.UpdatableObservableValue;
+import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
 import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.BenchmarkJob;
+import javafx.beans.value.ObservableValue;
 
 public class ObservableBenchmarkJob extends
-	UpdatableObservableValue<BenchmarkJob>
+	UpdatableObservableValue<BenchmarkJob> implements Closeable
 {
 
 	public static final Logger log = LoggerFactory.getLogger(
@@ -31,7 +34,9 @@ public class ObservableBenchmarkJob extends
 		() -> getValue().needsUpload());
 	private final Executor executor;
 
-	private final P_Observable fileTransferObservervable = new P_Observable();
+	private final P_Observable fileTransferObservable = new P_Observable();
+
+	private final HaasOutputObservableValueRegistry observableValueRegistry;
 
 	public interface TransferProgress {
 
@@ -53,6 +58,8 @@ public class ObservableBenchmarkJob extends
 		wrapped.setDownloadNotifier(downloadProgress);
 		wrapped.setUploadNotifier(uploadProgress);
 		wrapped.resumeTransfer();
+
+		observableValueRegistry = new HaasOutputObservableValueRegistry(getValue());
 	}
 
 	public TransferProgress getDownloadProgress() {
@@ -69,11 +76,22 @@ public class ObservableBenchmarkJob extends
 	}
 
 	public void startObservingFileTransfer(final Observer observer) {
-		fileTransferObservervable.addObserver(observer);
+		fileTransferObservable.addObserver(observer);
 	}
 
 	public void stopObservingFileTransfer(final Observer observer) {
-		fileTransferObservervable.deleteObserver(observer);
+		fileTransferObservable.deleteObserver(observer);
+	}
+
+	public ObservableValue<String> getObservableSnakemakeOutput(
+		SynchronizableFileType type)
+	{
+		return observableValueRegistry.getObservableOutput(type);
+	}
+
+	@Override
+	public void close() {
+		observableValueRegistry.close();
 	}
 
 	@Override
@@ -84,12 +102,14 @@ public class ObservableBenchmarkJob extends
 	}
 
 	private void notifyFileTransferObservers() {
-		fileTransferObservervable.setChanged();
-		fileTransferObservervable.notifyObservers();
+		fileTransferObservable.setChanged();
+		fileTransferObservable.notifyObservers();
 	}
 
+	// -- Private classes --
+
 	private class P_Observable extends Observable {
-	
+
 		@Override
 		public synchronized void setChanged() {
 			super.setChanged();

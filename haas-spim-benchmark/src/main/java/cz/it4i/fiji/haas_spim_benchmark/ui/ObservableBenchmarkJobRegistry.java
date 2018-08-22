@@ -26,7 +26,12 @@ public class ObservableBenchmarkJobRegistry extends ObservableValueRegistry<Benc
 		}, removeConsumer);
 		executorUI = executorServiceFX;
 	}
-	
+
+	@Override
+	public void close() {
+		super.getAllItems().forEach(obj -> obj.close());
+	}
+
 	@Override
 	protected ObservableBenchmarkJob remove(BenchmarkJob value) {
 		ObservableBenchmarkJob result = super.remove(value);
