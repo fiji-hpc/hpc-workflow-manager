@@ -43,28 +43,30 @@ public class TaskComputationControl extends TabPane implements CloseableControl,
 	private final Executor uiExecutor = new FXFrameExecutorService();
 
 	private ExecutorService wsExecutorService;
+
 	@FXML
 	private RemoteFilesInfoControl remoteFilesInfo;
 
 	private final TaskComputation computation;
-
-	private Window rootWindow;
 
 	public TaskComputationControl(final TaskComputation computation) {
 		JavaFXRoutines.initRootAndController("TaskComputationView.fxml", this);
 		this.computation = computation;
 	}
 
+	// -- InitiableControl methods --
+
 	@Override
-	public void init(final Window parameter) {
-		this.rootWindow = parameter;
+	public void init(final Window rootWindow) {
+
 		wsExecutorService = Executors.newSingleThreadExecutor(
 			UncaughtExceptionHandlerDecorator.createThreadFactory(
 				new AuthFailExceptionHandler(new WindowCloseableAdapter(rootWindow))));
 
 		wsExecutorService.execute(() -> {
 			final ProgressDialog dialog = ModalDialogs.doModal(new ProgressDialog(
-				parameter, "Updating infos..."), WindowConstants.DO_NOTHING_ON_CLOSE);
+				rootWindow, "Updating information..."),
+				WindowConstants.DO_NOTHING_ON_CLOSE);
 			try {
 				adapter = new TaskComputationAdapter(computation);
 				adapter.init();
@@ -73,16 +75,26 @@ public class TaskComputationControl extends TabPane implements CloseableControl,
 				dialog.done();
 			}
 			remoteFilesInfo.setFiles(adapter.getOutputs());
-			remoteFilesInfo.init(parameter);
-			final Collection<Runnable> runs = new LinkedList<>();
+			remoteFilesInfo.init(rootWindow);
+			final Collection<Runnable> runnables = new LinkedList<>();
 			for (final ObservableLog observableLog : adapter.getLogs()) {
 				final LogViewControl logViewControl = new LogViewControl();
 				logViewControl.setObservable(observableLog.getContent());
-				runs.add(() -> addTab(observableLog.getName(), logViewControl));
+				runnables.add(() -> addTab(observableLog.getName(), logViewControl));
 			}
-			uiExecutor.execute(() -> runs.forEach(r -> r.run()));
+			uiExecutor.execute(() -> runnables.forEach(r -> r.run()));
 		});
 	}
+
+	// -- CloseableControl methods --
+
+	@Override
+	public void close() {
+		adapter.close();
+		wsExecutorService.shutdown();
+	}
+
+	// -- Helper methods --
 
 	private void addTab(final String title, final Node control) {
 		final Tab t = new Tab(title);
@@ -92,12 +104,6 @@ public class TaskComputationControl extends TabPane implements CloseableControl,
 		hbox.getChildren().add(control);
 		t.setContent(hbox);
 		getTabs().add(t);
-	}
-
-	@Override
-	public void close() {
-		adapter.close();
-		wsExecutorService.shutdown();
 	}
 
 }

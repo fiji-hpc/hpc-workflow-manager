@@ -1,36 +1,34 @@
+
 package cz.it4i.fiji.haas_spim_benchmark.core;
 
 import java.awt.Window;
 import java.io.Closeable;
 
-public class WindowCloseableAdapter implements Closeable{
+public class WindowCloseableAdapter implements Closeable {
 
 	private Window window;
 	private boolean closed;
-	
-	
-	public WindowCloseableAdapter() {
-	}
-	
-	public WindowCloseableAdapter(Window window) {
+
+	public WindowCloseableAdapter() {}
+
+	public WindowCloseableAdapter(final Window window) {
 		this.window = window;
 	}
 
-
-	synchronized public void setWindowAndShowIt(Window window) {
-		if(!closed) {
+	synchronized public void setWindowAndShowIt(final Window window) {
+		if (!closed) {
 			this.window = window;
 			this.window.setVisible(true);
-		} else {
+		}
+		else {
 			window.dispose();
 		}
 	}
 
-
 	@Override
 	synchronized public void close() {
-		if(!closed) {
-			if(window != null) {
+		if (!closed) {
+			if (window != null) {
 				window.dispose();
 			}
 			closed = true;

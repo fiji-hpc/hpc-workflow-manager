@@ -17,7 +17,7 @@ public class AuthFailExceptionHandler extends BaseExceptionHandler {
 	public AuthFailExceptionHandler(final Closeable closeable) {
 		super(closeable, (T, exc) -> (exc instanceof HaaSClientException && exc
 			.getCause() instanceof AuthFailException), null,
-			"Connection to HPC failed try again or contact software support.",
+			"Connection to the HPC cluster failed. Try again or contact the software support.",
 			MessageType.ERROR_MESSAGE);
 	}
 }
