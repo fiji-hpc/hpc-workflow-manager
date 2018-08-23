@@ -1,7 +1,7 @@
+
 package cz.it4i.fiji.haas_spim_benchmark.ui;
 
 import java.awt.Window;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,7 +35,6 @@ import cz.it4i.fiji.haas_spim_benchmark.core.ObservableBenchmarkJob;
 import cz.it4i.fiji.haas_spim_benchmark.core.Task;
 import cz.it4i.fiji.haas_spim_benchmark.core.TaskComputation;
 import javafx.beans.value.ObservableValue;
-import javafx.beans.value.ObservableValueBase;
 import javafx.fxml.FXML;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -136,31 +135,6 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 	private void proof(ObservableValue<Task> task, int columnIndex) {
 		ModalDialogs.doModal(new TaskComputationWindow(root, task.getValue().getComputations().get(columnIndex - 1)),
 				WindowConstants.DISPOSE_ON_CLOSE);
-	}
-
-	static void add(Collection<ObservableValue<RemoteFileInfo>> files, String name, long size) {
-		RemoteFileInfo file = new RemoteFileInfo() {
-
-			@Override
-			public Long getSize() {
-				return size;
-			}
-
-			@Override
-			public String getName() {
-				return name;
-			}
-
-		};
-		ObservableValue<RemoteFileInfo> value = new ObservableValueBase<RemoteFileInfo>() {
-
-			@Override
-			public RemoteFileInfo getValue() {
-				return file;
-			}
-		};
-
-		files.add(value);
 	}
 
 	private synchronized void fillTable() {
