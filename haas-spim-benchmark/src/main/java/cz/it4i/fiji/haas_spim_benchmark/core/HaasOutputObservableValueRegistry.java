@@ -17,37 +17,27 @@ import javafx.beans.value.ObservableValue;
 
 class HaasOutputObservableValueRegistry implements Closeable {
 
+	private final BenchmarkJob job;
 	private final Map<SynchronizableFileType, SimpleObservableValue<String>> observableValues =
 		new HashMap<>();
-	private final Timer timer;
-	private final TimerTask updateTask;
+	private Timer timer;
 	private boolean isRunning = false;
 	private int numberOfListeners = 0;
 
 	public HaasOutputObservableValueRegistry(final BenchmarkJob job) {
+		this.job = job;
 		this.observableValues.put(SynchronizableFileType.StandardOutputFile,
 			createObservableValue());
 		this.observableValues.put(SynchronizableFileType.StandardErrorFile,
 			createObservableValue());
-		this.timer = new Timer();
-		this.updateTask = new TimerTask() {
-
-			@Override
-			public void run() {
-
-				final List<SynchronizableFileType> types = new LinkedList<>(
-					observableValues.keySet());
-
-				Streams.zip(types.stream(), job.getComputationOutput(types).stream(), (
-					type, value) -> (Runnable) (() -> observableValues.get(type).update(
-						value))).forEach(r -> r.run());
-			}
-		};
 	}
 
 	@Override
 	public synchronized void close() {
-		timer.cancel();
+		if (timer != null) {
+			timer.cancel();
+			timer.purge();
+		}
 	}
 
 	public ObservableValue<String> getObservableOutput(
@@ -76,12 +66,26 @@ class HaasOutputObservableValueRegistry implements Closeable {
 		final boolean anyListeners = numberOfListeners > 0;
 
 		if (!isRunning && anyListeners) {
-			timer.schedule(updateTask, 0, Constants.HAAS_UPDATE_TIMEOUT /
+			timer = new Timer();
+			timer.schedule(new TimerTask() {
+
+				@Override
+				public void run() {
+
+					final List<SynchronizableFileType> types = new LinkedList<>(
+						observableValues.keySet());
+
+					Streams.zip(types.stream(), job.getComputationOutput(types).stream(),
+						(type, value) -> (Runnable) (() -> observableValues.get(type)
+							.update(value))).forEach(r -> r.run());
+				}
+			}, 0, Constants.HAAS_UPDATE_TIMEOUT /
 				Constants.UI_TO_HAAS_FREQUENCY_UPDATE_RATIO);
 			isRunning = true;
 		}
 		else if (isRunning && !anyListeners) {
 			timer.cancel();
+			timer.purge();
 			isRunning = false;
 		}
 

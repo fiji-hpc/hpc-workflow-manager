@@ -89,6 +89,8 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 
 		// Close controllers
 		progressView.close();
+		errorOutput.close();
+		standardOutput.close();
 		jobProperties.close();
 		dataUpload.close();
 	}
