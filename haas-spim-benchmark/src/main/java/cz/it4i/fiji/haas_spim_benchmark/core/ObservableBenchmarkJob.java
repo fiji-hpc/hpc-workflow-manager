@@ -2,6 +2,7 @@
 package cz.it4i.fiji.haas_spim_benchmark.core;
 
 import java.io.Closeable;
+import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.concurrent.Executor;
@@ -36,7 +37,9 @@ public class ObservableBenchmarkJob extends
 
 	private final P_Observable fileTransferObservable = new P_Observable();
 
-	private final HaasOutputObservableValueRegistry observableValueRegistry;
+	private final HaasOutputObservableValueRegistry haasOutputRegistry;
+
+	private final TaskObservableValueRegistry taskRegistry;
 
 	public interface TransferProgress {
 
@@ -59,7 +62,8 @@ public class ObservableBenchmarkJob extends
 		wrapped.setUploadNotifier(uploadProgress);
 		wrapped.resumeTransfer();
 
-		observableValueRegistry = new HaasOutputObservableValueRegistry(getValue());
+		haasOutputRegistry = new HaasOutputObservableValueRegistry(getValue());
+		taskRegistry = new TaskObservableValueRegistry(getValue());
 	}
 
 	public TransferProgress getDownloadProgress() {
@@ -86,12 +90,17 @@ public class ObservableBenchmarkJob extends
 	public ObservableValue<String> getObservableSnakemakeOutput(
 		SynchronizableFileType type)
 	{
-		return observableValueRegistry.getObservableOutput(type);
+		return haasOutputRegistry.getObservableOutput(type);
+	}
+
+	public ObservableValue<List<Task>> getObservableTaskList() {
+		return taskRegistry.getTaskList();
 	}
 
 	@Override
 	public void close() {
-		observableValueRegistry.close();
+		haasOutputRegistry.close();
+		taskRegistry.close();
 	}
 
 	@Override

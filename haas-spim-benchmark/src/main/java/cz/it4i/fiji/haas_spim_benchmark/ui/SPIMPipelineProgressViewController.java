@@ -6,8 +6,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -32,8 +30,10 @@ import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_spim_benchmark.core.Constants;
 import cz.it4i.fiji.haas_spim_benchmark.core.FXFrameExecutorService;
 import cz.it4i.fiji.haas_spim_benchmark.core.ObservableBenchmarkJob;
+import cz.it4i.fiji.haas_spim_benchmark.core.SimpleObservableValue;
 import cz.it4i.fiji.haas_spim_benchmark.core.Task;
 import cz.it4i.fiji.haas_spim_benchmark.core.TaskComputation;
+import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
 import javafx.scene.control.TableColumn;
@@ -75,39 +75,36 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 	@FXML
 	private TableView<ObservableValue<Task>> tasks;
 
-	private ObservableBenchmarkJob job;
-	private Timer timer;
-	private ObservableTaskRegistry registry;
+	private ObservableValue<List<Task>> observedValue;
+
 	private final ExecutorService executorServiceWS;
 	private final Executor executorFx = new FXFrameExecutorService();
 	private Window root;
 
 	private boolean closed;
 
+	private final ChangeListener<List<Task>> taskChangeListener =
+		new ChangeListener<List<Task>>()
+		{
+
+			@Override
+			public void changed(
+				final ObservableValue<? extends List<Task>> observable,
+				final List<Task> oldValue, final List<Task> newValue)
+		{
+				fillTable();
+			}
+
+		};
+
 	public SPIMPipelineProgressViewController() {
 		executorServiceWS = Executors.newSingleThreadExecutor();
 		init();
 	}
 
-	public void setJob(final ObservableBenchmarkJob job) {
-		if (this.job != null) {
-			throw new IllegalStateException("Job already set");
-		}
-		this.job = job;
-		Progress progress = ModalDialogs.doModal(new ProgressDialog(
-			root, "Downloading tasks"), WindowConstants.DO_NOTHING_ON_CLOSE);
-		executorServiceWS.execute(() -> {
-			try {
-			fillTable();
-			} finally {
-				progress.done();
-			}
-		});
-	}
-
 	@Override
 	public synchronized void close() {
-		timer.cancel();
+		observedValue.removeListener(taskChangeListener);
 		executorServiceWS.shutdown();
 		closed = true;
 	}
@@ -117,14 +114,32 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 		this.root = parameter;
 	}
 
+	public void setJob(final ObservableBenchmarkJob job) {
+
+		observedValue = job.getObservableTaskList();
+		observedValue.addListener(taskChangeListener);
+
+		Progress progress = ModalDialogs.doModal(new ProgressDialog(root,
+			"Downloading tasks"), WindowConstants.DO_NOTHING_ON_CLOSE);
+
+		executorServiceWS.execute(() -> {
+			try {
+				fillTable();
+			}
+			finally {
+				progress.done();
+			}
+		});
+	}
+
 	private void init() {
 		JavaFXRoutines.initRootAndController("SPIMPipelineProgressView.fxml", this);
 		tasks.setPrefWidth(PREFERRED_WIDTH);
-		timer = new Timer();
-		registry = new ObservableTaskRegistry(()-> job, task -> tasks.getItems().remove(registry.get(task)));
-		TableViewContextMenu<ObservableValue<Task>> menu = new TableViewContextMenu<>(this.tasks);
-		menu.addItem("Open view", (task, columnIndex) -> proof(task, columnIndex),
-				(x, columnIndex) -> check(x, columnIndex));
+
+		TableViewContextMenu<ObservableValue<Task>> menu =
+			new TableViewContextMenu<>(this.tasks);
+		menu.addItem("Open view", (task, columnIndex) -> proof(task, columnIndex), (
+			x, columnIndex) -> check(x, columnIndex));
 	}
 
 	private boolean check(ObservableValue<Task> x, Integer columnIndex) {
@@ -141,17 +156,17 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 		if (closed) {
 			return;
 		}
-		List<Task> processedTasks = job.getValue().getTasks();
-		
-		Optional<List<TaskComputation>> optional = processedTasks.stream().map(
-			task -> task.getComputations()).collect(Collectors
+		final List<Task> processedTasks = observedValue.getValue();
+
+		final Optional<List<TaskComputation>> optional = processedTasks.stream()
+			.map(task -> task.getComputations()).collect(Collectors
 				.<List<TaskComputation>> maxBy((a, b) -> a.size() - b.size()));
 		if (!optional.isPresent()) {
 			return;
 		}
-		List<TaskComputation> computations = optional.get();
-		List<ObservableValue<Task>> taskList = (processedTasks.stream().map(
-			task -> registry.addIfAbsent(task)).collect(Collectors.toList()));
+		final List<TaskComputation> computations = optional.get();
+		final List<ObservableValue<Task>> taskList = (processedTasks.stream().map(
+			task -> new SimpleObservableValue<>(task)).collect(Collectors.toList()));
 		executorFx.execute(() -> {
 			int i = 0;
 			JavaFXRoutines.setCellValueFactory(this.tasks, i++,
@@ -170,13 +185,6 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 			
 			this.tasks.getItems().addAll(taskList);
 		});
-		timer.schedule(new TimerTask() {
-
-			@Override
-			public void run() {
-				updateTable();
-			}
-		}, Constants.HAAS_UPDATE_TIMEOUT, Constants.HAAS_UPDATE_TIMEOUT);
 	}
 
 	private long computeTableColumnWidth(List<TaskComputation> computations) {
@@ -217,7 +225,4 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 				}));
 	}
 
-	private void updateTable() {
-		registry.update();
-	}
 }
