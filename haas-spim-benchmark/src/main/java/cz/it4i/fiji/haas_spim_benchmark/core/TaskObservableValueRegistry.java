@@ -2,24 +2,23 @@
 package cz.it4i.fiji.haas_spim_benchmark.core;
 
 import java.io.Closeable;
-import java.util.List;
+import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.BenchmarkJob;
-import javafx.beans.value.ObservableValue;
 
 class TaskObservableValueRegistry implements Closeable {
 
 	private final BenchmarkJob job;
-	private final SimpleObservableValue<List<Task>> observableTaskList;
+	private final SimpleObservableList<Task> observableTaskList;
 	private Timer timer;
 	private boolean isRunning = false;
 	private int numberOfListeners = 0;
 
 	public TaskObservableValueRegistry(final BenchmarkJob job) {
 		this.job = job;
-		this.observableTaskList = new SimpleObservableValue<>(null,
+		this.observableTaskList = new SimpleObservableList<>(new ArrayList<Task>(),
 			this::increaseNumberOfObservers, this::decreaseNumberOfObservers);
 	}
 
@@ -31,7 +30,7 @@ class TaskObservableValueRegistry implements Closeable {
 		}
 	}
 
-	public ObservableValue<List<Task>> getTaskList() {
+	public SimpleObservableList<Task> getTaskList() {
 		return observableTaskList;
 	}
 
@@ -55,7 +54,7 @@ class TaskObservableValueRegistry implements Closeable {
 
 				@Override
 				public void run() {
-					observableTaskList.update(job.getTasks());
+					observableTaskList.setAll(job.getTasks());
 				}
 			}, 0, Constants.HAAS_UPDATE_TIMEOUT /
 				Constants.UI_TO_HAAS_FREQUENCY_UPDATE_RATIO);

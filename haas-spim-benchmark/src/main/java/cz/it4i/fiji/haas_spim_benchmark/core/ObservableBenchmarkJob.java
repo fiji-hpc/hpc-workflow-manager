@@ -2,7 +2,6 @@
 package cz.it4i.fiji.haas_spim_benchmark.core;
 
 import java.io.Closeable;
-import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.concurrent.Executor;
@@ -93,7 +92,7 @@ public class ObservableBenchmarkJob extends
 		return haasOutputRegistry.getObservableOutput(type);
 	}
 
-	public ObservableValue<List<Task>> getObservableTaskList() {
+	public SimpleObservableList<Task> getObservableTaskList() {
 		return taskRegistry.getTaskList();
 	}
 

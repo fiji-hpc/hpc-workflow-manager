@@ -30,11 +30,12 @@ import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_spim_benchmark.core.Constants;
 import cz.it4i.fiji.haas_spim_benchmark.core.FXFrameExecutorService;
 import cz.it4i.fiji.haas_spim_benchmark.core.ObservableBenchmarkJob;
+import cz.it4i.fiji.haas_spim_benchmark.core.SimpleObservableList;
 import cz.it4i.fiji.haas_spim_benchmark.core.SimpleObservableValue;
 import cz.it4i.fiji.haas_spim_benchmark.core.Task;
 import cz.it4i.fiji.haas_spim_benchmark.core.TaskComputation;
-import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.ListChangeListener;
 import javafx.fxml.FXML;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -75,7 +76,7 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 	@FXML
 	private TableView<ObservableValue<Task>> tasks;
 
-	private ObservableValue<List<Task>> observedValue;
+	private SimpleObservableList<Task> observedValue;
 
 	private final ExecutorService executorServiceWS;
 	private final Executor executorFx = new FXFrameExecutorService();
@@ -83,15 +84,12 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 
 	private boolean closed;
 
-	private final ChangeListener<List<Task>> taskChangeListener =
-		new ChangeListener<List<Task>>()
+	private final ListChangeListener<Task> taskChangeListener =
+		new ListChangeListener<Task>()
 		{
 
 			@Override
-			public void changed(
-				final ObservableValue<? extends List<Task>> observable,
-				final List<Task> oldValue, final List<Task> newValue)
-		{
+			public void onChanged(Change<? extends Task> c) {
 				fillTable();
 			}
 
@@ -104,7 +102,7 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 
 	@Override
 	public synchronized void close() {
-		observedValue.removeListener(taskChangeListener);
+		observedValue.removeListenerWithCallback(taskChangeListener);
 		executorServiceWS.shutdown();
 		closed = true;
 	}
@@ -117,7 +115,7 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 	public void setJob(final ObservableBenchmarkJob job) {
 
 		observedValue = job.getObservableTaskList();
-		observedValue.addListener(taskChangeListener);
+		observedValue.addListenerWithCallback(taskChangeListener);
 
 		Progress progress = ModalDialogs.doModal(new ProgressDialog(root,
 			"Downloading tasks"), WindowConstants.DO_NOTHING_ON_CLOSE);
@@ -156,7 +154,7 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 		if (closed) {
 			return;
 		}
-		final List<Task> processedTasks = observedValue.getValue();
+		final List<Task> processedTasks = observedValue;
 
 		final Optional<List<TaskComputation>> optional = processedTasks.stream()
 			.map(task -> task.getComputations()).collect(Collectors
