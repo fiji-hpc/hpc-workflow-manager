@@ -9,7 +9,6 @@ import java.util.Optional;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import javax.swing.WindowConstants;
@@ -34,7 +33,6 @@ import cz.it4i.fiji.haas_spim_benchmark.core.SimpleObservableList;
 import cz.it4i.fiji.haas_spim_benchmark.core.SimpleObservableValue;
 import cz.it4i.fiji.haas_spim_benchmark.core.Task;
 import cz.it4i.fiji.haas_spim_benchmark.core.TaskComputation;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
 import javafx.fxml.FXML;
 import javafx.scene.control.TableColumn;
@@ -74,7 +72,7 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 	}
 
 	@FXML
-	private TableView<ObservableValue<Task>> tasks;
+	private TableView<Task> tasks;
 
 	private SimpleObservableList<Task> observedValue;
 
@@ -134,54 +132,52 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 		JavaFXRoutines.initRootAndController("SPIMPipelineProgressView.fxml", this);
 		tasks.setPrefWidth(PREFERRED_WIDTH);
 
-		TableViewContextMenu<ObservableValue<Task>> menu =
-			new TableViewContextMenu<>(this.tasks);
+		TableViewContextMenu<Task> menu = new TableViewContextMenu<>(this.tasks);
 		menu.addItem("Open view", (task, columnIndex) -> proof(task, columnIndex), (
 			x, columnIndex) -> check(x, columnIndex));
 	}
 
-	private boolean check(ObservableValue<Task> x, Integer columnIndex) {
-		boolean result = x != null && 0 < columnIndex &&columnIndex - 1 < x.getValue().getComputations().size();
+	private boolean check(Task x, Integer columnIndex) {
+		boolean result = x != null && 0 < columnIndex && columnIndex - 1 < x
+			.getComputations().size();
 		return result;
 	}
 
-	private void proof(ObservableValue<Task> task, int columnIndex) {
-		ModalDialogs.doModal(new TaskComputationWindow(root, task.getValue().getComputations().get(columnIndex - 1)),
-				WindowConstants.DISPOSE_ON_CLOSE);
+	private void proof(Task task, int columnIndex) {
+		ModalDialogs.doModal(new TaskComputationWindow(root, task.getComputations()
+			.get(columnIndex - 1)), WindowConstants.DISPOSE_ON_CLOSE);
 	}
 
 	private synchronized void fillTable() {
 		if (closed) {
 			return;
 		}
-		final List<Task> processedTasks = observedValue;
 
-		final Optional<List<TaskComputation>> optional = processedTasks.stream()
-			.map(task -> task.getComputations()).collect(Collectors
+		final Optional<List<TaskComputation>> optional = observedValue.stream().map(
+			task -> task.getComputations()).collect(Collectors
 				.<List<TaskComputation>> maxBy((a, b) -> a.size() - b.size()));
 		if (!optional.isPresent()) {
 			return;
 		}
 		final List<TaskComputation> computations = optional.get();
-		final List<ObservableValue<Task>> taskList = (processedTasks.stream().map(
-			task -> new SimpleObservableValue<>(task)).collect(Collectors.toList()));
+
 		executorFx.execute(() -> {
 			int i = 0;
-			JavaFXRoutines.setCellValueFactory(this.tasks, i++,
-				(Function<Task, String>) v -> Constants.BENCHMARK_TASK_NAME_MAP.get(v
-					.getDescription()));
+			JavaFXRoutines.setCellValueFactoryForList(this.tasks, i++,
+				f -> new SimpleObservableValue<>(Constants.BENCHMARK_TASK_NAME_MAP.get(f
+					.getValue().getDescription())));
 
 			double tableColumnWidth = computeTableColumnWidth(computations);
 			for (TaskComputation tc : computations) {
-				TableColumn<ObservableValue<Task>, String> tableCol;
+				TableColumn<Task, String> tableCol;
 				this.tasks.getColumns().add(tableCol = new TableColumn<>(columnHeader(
 					tc)));
 				int index = i++;
 				tableCol.setPrefWidth(tableColumnWidth);
 				constructCellFactory(index);
 			}
-			
-			this.tasks.getItems().addAll(taskList);
+
+			this.tasks.setItems(observedValue);
 		});
 	}
 
@@ -204,13 +200,14 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 
 	@SuppressWarnings("unchecked")
 	private void constructCellFactory(int index) {
-		JavaFXRoutines.setCellValueFactory(this.tasks, index, (Function<Task, TaskComputation>) v -> {
-			if (v.getComputations().size() >= index) {
-				return v.getComputations().get(index - 1);
-			} 
+		JavaFXRoutines.setCellValueFactoryForList(this.tasks, index, f -> {
+			if (f.getValue().getComputations().size() >= index) {
+				return new SimpleObservableValue<>(f.getValue().getComputations().get(
+					index - 1));
+			}
 			return null;
 		});
-		((TableColumn<ObservableValue<Task>, TaskComputation>) this.tasks.getColumns().get(index))
+		((TableColumn<Task, TaskComputation>) this.tasks.getColumns().get(index))
 				.setCellFactory(column -> new TableCellAdapter<>((cell, val, empty) -> {
 					if (val == null || empty) {
 						cell.setText(EMPTY_VALUE);
