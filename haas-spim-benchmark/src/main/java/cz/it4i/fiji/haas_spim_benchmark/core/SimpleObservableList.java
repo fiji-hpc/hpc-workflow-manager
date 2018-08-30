@@ -9,19 +9,17 @@ import javafx.collections.ModifiableObservableListBase;
 public class SimpleObservableList<T> extends ModifiableObservableListBase<T> {
 
 	private final List<T> innerList;
-	private final Runnable addListenerCallback;
-	private final Runnable removeListenerCallback;
+	private final Runnable numberOfListenersChangedCallback;
 
 	public SimpleObservableList(final List<T> list) {
-		this(list, null, null);
+		this(list, null);
 	}
 
-	public SimpleObservableList(final List<T> list, Runnable addListenerCallback,
-		Runnable removeListenerCallback)
+	public SimpleObservableList(final List<T> list,
+		Runnable numberOfListenersCallback)
 	{
 		this.innerList = list;
-		this.addListenerCallback = addListenerCallback;
-		this.removeListenerCallback = removeListenerCallback;
+		this.numberOfListenersChangedCallback = numberOfListenersCallback;
 	}
 
 	@Override
@@ -49,19 +47,21 @@ public class SimpleObservableList<T> extends ModifiableObservableListBase<T> {
 		return innerList.remove(index);
 	}
 
-	public void addListenerWithCallback(ListChangeListener<? super T> listener) {
+	public boolean hasAnyListeners() {
+		return hasListeners();
+	}
+
+	public void subscribe(ListChangeListener<? super T> listener) {
 		super.addListener(listener);
-		if (addListenerCallback != null) {
-			addListenerCallback.run();
+		if (numberOfListenersChangedCallback != null) {
+			numberOfListenersChangedCallback.run();
 		}
 	}
 
-	public void removeListenerWithCallback(
-		ListChangeListener<? super T> listener)
-	{
+	public void unsubscribe(ListChangeListener<? super T> listener) {
 		super.removeListener(listener);
-		if (removeListenerCallback != null) {
-			removeListenerCallback.run();
+		if (numberOfListenersChangedCallback != null) {
+			numberOfListenersChangedCallback.run();
 		}
 	}
 

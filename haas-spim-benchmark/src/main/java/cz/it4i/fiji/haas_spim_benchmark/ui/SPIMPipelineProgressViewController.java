@@ -80,6 +80,8 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 	private final Executor executorFx = new FXFrameExecutorService();
 	private Window root;
 
+	private boolean filled = false;
+
 	private boolean closed;
 
 	private final ListChangeListener<Task> taskChangeListener =
@@ -88,9 +90,23 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 
 			@Override
 			public void onChanged(Change<? extends Task> c) {
-				fillTable();
-			}
 
+				if (!filled) {
+
+					Progress progress = ModalDialogs.doModal(new ProgressDialog(root,
+						"Downloading tasks"), WindowConstants.DO_NOTHING_ON_CLOSE);
+
+					executorServiceWS.execute(() -> {
+						try {
+							fillTable();
+						}
+						finally {
+							filled = true;
+							progress.done();
+						}
+					});
+				}
+			}
 		};
 
 	public SPIMPipelineProgressViewController() {
@@ -100,7 +116,7 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 
 	@Override
 	public synchronized void close() {
-		observedValue.removeListenerWithCallback(taskChangeListener);
+		observedValue.unsubscribe(taskChangeListener);
 		executorServiceWS.shutdown();
 		closed = true;
 	}
@@ -111,21 +127,8 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 	}
 
 	public void setJob(final ObservableBenchmarkJob job) {
-
 		observedValue = job.getObservableTaskList();
-		observedValue.addListenerWithCallback(taskChangeListener);
-
-		Progress progress = ModalDialogs.doModal(new ProgressDialog(root,
-			"Downloading tasks"), WindowConstants.DO_NOTHING_ON_CLOSE);
-
-		executorServiceWS.execute(() -> {
-			try {
-				fillTable();
-			}
-			finally {
-				progress.done();
-			}
-		});
+		observedValue.subscribe(taskChangeListener);
 	}
 
 	private void init() {

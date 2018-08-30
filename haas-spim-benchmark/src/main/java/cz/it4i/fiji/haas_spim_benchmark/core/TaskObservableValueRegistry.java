@@ -14,12 +14,11 @@ class TaskObservableValueRegistry implements Closeable {
 	private final SimpleObservableList<Task> observableTaskList;
 	private Timer timer;
 	private boolean isRunning = false;
-	private int numberOfListeners = 0;
 
 	public TaskObservableValueRegistry(final BenchmarkJob job) {
 		this.job = job;
 		this.observableTaskList = new SimpleObservableList<>(new ArrayList<Task>(),
-			this::increaseNumberOfObservers, this::decreaseNumberOfObservers);
+			this::evaluateTimer);
 	}
 
 	@Override
@@ -34,19 +33,9 @@ class TaskObservableValueRegistry implements Closeable {
 		return observableTaskList;
 	}
 
-	private synchronized void increaseNumberOfObservers() {
-		numberOfListeners++;
-		evaluateTimer();
-	}
-
-	private synchronized void decreaseNumberOfObservers() {
-		numberOfListeners--;
-		evaluateTimer();
-	}
-
 	private void evaluateTimer() {
 
-		final boolean anyListeners = numberOfListeners > 0;
+		final boolean anyListeners = observableTaskList.hasAnyListeners();
 
 		if (!isRunning && anyListeners) {
 			timer = new Timer();
