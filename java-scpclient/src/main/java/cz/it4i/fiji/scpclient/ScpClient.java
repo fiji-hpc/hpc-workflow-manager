@@ -406,7 +406,7 @@ public class ScpClient implements Closeable {
 				session.connect();
 			}
 			catch(JSchException e) {
-				if(e.getMessage().contains("Auth fail")) {
+				if(e.getMessage().contains("Auth fail") || e.getMessage().contains("Packet corrupted")) {
 					if(connectRetry < MAX_NUMBER_OF_CONNECTION_ATTEMPTS) {
 						connectRetry++;
 						try {
