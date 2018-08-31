@@ -122,7 +122,7 @@
 		<dependency>
 			<groupId>cz.it4i.fiji</groupId>
 			<artifactId>java-scpclient</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
+			<version>0.0.2-SNAPSHOT</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/javax.xml/jaxrpc-api -->
 		<dependency>
