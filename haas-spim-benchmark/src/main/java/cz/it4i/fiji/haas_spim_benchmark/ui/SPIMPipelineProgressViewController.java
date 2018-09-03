@@ -6,9 +6,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import javax.swing.WindowConstants;
 
@@ -79,7 +81,7 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 	private final Executor executorFx = new FXFrameExecutorService();
 	private Window root;
 
-	private boolean filled = false;
+	private CountDownLatch fillingLatch = new CountDownLatch(1);
 
 	private boolean closed;
 
@@ -89,22 +91,7 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 
 			@Override
 			public void onChanged(Change<? extends Task> c) {
-
-				if (!filled) {
-
-					Progress progress = ModalDialogs.doModal(new ProgressDialog(root,
-						"Downloading tasks"), WindowConstants.DO_NOTHING_ON_CLOSE);
-
-					executorServiceWS.execute(() -> {
-						try {
-							fillTable();
-						}
-						finally {
-							filled = true;
-							progress.done();
-						}
-					});
-				}
+				fillingLatch.countDown();
 			}
 		};
 
@@ -128,6 +115,18 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 	public void setJob(final ObservableBenchmarkJob job) {
 		observedValue = job.getObservableTaskList();
 		observedValue.subscribe(taskChangeListener);
+
+		Progress progress = ModalDialogs.doModal(new ProgressDialog(root,
+			"Downloading tasks"), WindowConstants.DO_NOTHING_ON_CLOSE);
+
+		executorServiceWS.execute(() -> {
+			try {
+				fillTable();
+			}
+			finally {
+				progress.done();
+			}
+		});
 	}
 
 	private void init() {
@@ -153,6 +152,13 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 	private synchronized void fillTable() {
 		if (closed) {
 			return;
+		}
+
+		try {
+			fillingLatch.await(10, TimeUnit.SECONDS);
+		}
+		catch (InterruptedException exc) {
+			// Handle time out properly
 		}
 
 		final Optional<Integer> optional = getNumberOfTimepoints(observedValue);
