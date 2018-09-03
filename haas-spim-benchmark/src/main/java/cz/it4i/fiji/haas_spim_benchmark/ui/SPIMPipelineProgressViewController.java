@@ -75,7 +75,7 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 	@FXML
 	private TableView<Task> tasks;
 
-	private SimpleObservableList<Task> observedValue;
+	private SimpleObservableList<Task> observedList;
 
 	private final ExecutorService executorServiceWS;
 	private final Executor executorFx = new FXFrameExecutorService();
@@ -102,7 +102,7 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 
 	@Override
 	public synchronized void close() {
-		observedValue.unsubscribe(taskChangeListener);
+		observedList.unsubscribe(taskChangeListener);
 		executorServiceWS.shutdown();
 		closed = true;
 	}
@@ -113,8 +113,8 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 	}
 
 	public void setJob(final ObservableBenchmarkJob job) {
-		observedValue = job.getObservableTaskList();
-		observedValue.subscribe(taskChangeListener);
+		observedList = job.getObservableTaskList();
+		observedList.subscribe(taskChangeListener);
 
 		Progress progress = ModalDialogs.doModal(new ProgressDialog(root,
 			"Downloading tasks"), WindowConstants.DO_NOTHING_ON_CLOSE);
@@ -161,7 +161,7 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 			// Handle time out properly
 		}
 
-		final Optional<Integer> optional = getNumberOfTimepoints(observedValue);
+		final Optional<Integer> optional = getNumberOfTimepoints(observedList);
 
 		if (!optional.isPresent()) {
 			return;
@@ -183,7 +183,7 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 				constructCellFactory(i);
 			}
 
-			this.tasks.setItems(observedValue);
+			this.tasks.setItems(observedList);
 		});
 	}
 
