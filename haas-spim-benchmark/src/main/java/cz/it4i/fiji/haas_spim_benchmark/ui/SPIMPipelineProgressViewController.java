@@ -9,7 +9,6 @@ import java.util.Optional;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.stream.Collectors;
 
 import javax.swing.WindowConstants;
 
@@ -156,49 +155,50 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 			return;
 		}
 
-		final Optional<List<TaskComputation>> optional = observedValue.stream().map(
-			task -> task.getComputations()).collect(Collectors
-				.<List<TaskComputation>> maxBy((a, b) -> a.size() - b.size()));
+		final Optional<Integer> optional = getNumberOfTimepoints(observedValue);
+
 		if (!optional.isPresent()) {
 			return;
 		}
-		final List<TaskComputation> computations = optional.get();
+		final Integer numberOfComputations = optional.get();
 
 		executorFx.execute(() -> {
-			int i = 0;
-			JavaFXRoutines.setCellValueFactoryForList(this.tasks, i++,
+			JavaFXRoutines.setCellValueFactoryForList(this.tasks, 0,
 				f -> new SimpleObservableValue<>(Constants.BENCHMARK_TASK_NAME_MAP.get(f
 					.getValue().getDescription())));
 
-			double tableColumnWidth = computeTableColumnWidth(computations);
-			for (TaskComputation tc : computations) {
+			final double tableColumnWidth = computeTableColumnWidth(
+				numberOfComputations);
+			for (Integer i = 1; i <= numberOfComputations; i++) {
 				TableColumn<Task, String> tableCol;
 				this.tasks.getColumns().add(tableCol = new TableColumn<>(columnHeader(
-					tc)));
-				int index = i++;
+					i)));
 				tableCol.setPrefWidth(tableColumnWidth);
-				constructCellFactory(index);
+				constructCellFactory(i);
 			}
 
 			this.tasks.setItems(observedValue);
 		});
 	}
 
-	private long computeTableColumnWidth(List<TaskComputation> computations) {
+	private long computeTableColumnWidth(Integer numberOfComputations) {
 		return Math.round(this.tasks.getColumns().get(0).getWidth() /
 			TIMEPOINT_TABLE_COLUMN_WIDTH_RATIO * (1 + Math.max(0,
-				computeMaxColumnHeaderTextLength(computations) - 1) / 2));
+				computeMaxColumnHeaderTextLength(numberOfComputations) - 1) / 2));
 	}
 
-	private int computeMaxColumnHeaderTextLength(
-		List<TaskComputation> computations)
-	{
-		return computations != null && computations.size() > 0 ? columnHeader(
-			computations.get(computations.size() - 1)).length() : 1;
+	private int computeMaxColumnHeaderTextLength(Integer numberOfComputations) {
+		return numberOfComputations != null && numberOfComputations > 0
+			? columnHeader(numberOfComputations).length() : 1;
 	}
 
-	private String columnHeader(TaskComputation taskComputation) {
-		return taskComputation.getTimepoint() + "";
+	private String columnHeader(Integer numberOfComputations) {
+		return numberOfComputations + "";
+	}
+
+	private Optional<Integer> getNumberOfTimepoints(List<Task> taskList) {
+		return taskList.stream().map(task -> task.getComputations().size()).max(
+			Integer::compare);
 	}
 
 	@SuppressWarnings("unchecked")
