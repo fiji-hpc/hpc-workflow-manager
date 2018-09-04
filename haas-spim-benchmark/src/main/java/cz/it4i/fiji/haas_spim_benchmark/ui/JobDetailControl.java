@@ -27,7 +27,10 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 		cz.it4i.fiji.haas_spim_benchmark.ui.JobDetailControl.class);
 
 	@FXML
-	private SPIMPipelineProgressViewController progressView;
+	private SPIMPipelineProgressViewController progressControl;
+
+	@FXML
+	private Tab progressTab;
 
 	@FXML
 	private LogViewControl snakemakeOutputControl;
@@ -65,7 +68,16 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 			public void changed(ObservableValue<? extends String> observable,
 				String oldValue, String newValue)
 		{
-				snakemakeOutputTab.setDisable(newValue.isEmpty());
+				if (newValue != null) {
+
+					snakemakeOutputTab.setDisable(newValue.isEmpty());
+					// Although we're bringing some bits of business logic here
+					// (the fact that task info is parsed from Snakemake output),
+					// it is way easier than adding a dedicated ListChangeListener.
+					progressTab.setDisable(newValue.isEmpty());
+
+					setActiveFirstVisibleTab(false);
+				}
 			}
 
 		};
@@ -80,7 +92,11 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 			public void changed(ObservableValue<? extends String> observable,
 				String oldValue, String newValue)
 		{
-				otherOutputTab.setDisable(newValue.isEmpty());
+				if (newValue != null) {
+					otherOutputTab.setDisable(newValue.isEmpty());
+
+					setActiveFirstVisibleTab(false);
+				}
 			}
 
 		};
@@ -95,8 +111,8 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 	@Override
 	public void init(final Window parameter) {
 
-		progressView.init(parameter);
-		progressView.setJob(job);
+		progressControl.init(parameter);
+		progressControl.setObservable(job.getObservableTaskList());
 
 		errorOutput = job.getObservableSnakemakeOutput(
 			SynchronizableFileType.StandardErrorFile);
@@ -119,14 +135,11 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 			}
 		}
 
-		if (areExecutionDetailsAvailable()) {
-			enableAllTabs();
-		}
-		else {
-			disableNonPermanentTabs();
-		}
+		errorOutputListener.changed(null, null, errorOutput.getValue());
+		standardOutputListener.changed(null, null, standardOutput.getValue());
 
-		setActiveFirstVisibleTab();
+		setActiveFirstVisibleTab(true);
+
 	}
 
 	// -- CloseableControl methods --
@@ -135,7 +148,7 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 	public void close() {
 
 		// Close controllers
-		progressView.close();
+		progressControl.close();
 		errorOutput.removeListener(errorOutputListener);
 		snakemakeOutputControl.close();
 		standardOutput.removeListener(standardOutputListener);
@@ -146,37 +159,18 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 
 	// -- Helper methods --
 
-	/*
-	 * Checks whether execution details are available
-	 */
-	private boolean areExecutionDetailsAvailable() {
-		return job.getValue().getState() == JobState.Running || job.getValue()
-			.getState() == JobState.Finished || job.getValue()
-				.getState() == JobState.Failed || job.getValue()
-					.getState() == JobState.Canceled;
-	}
+	private void setActiveFirstVisibleTab(final boolean force) {
 
-	/*
-	 * Disables all tabs except those which shall be always enabled, such as job properties tab
-	 */
-	private void disableNonPermanentTabs() {
-		getTabs().stream().filter(t -> t != jobPropertiesTab && t != dataUploadTab)
-			.forEach(t -> t.setDisable(true));
-	}
+		if (!force && !getSelectionModel().getSelectedItem().isDisabled()) {
+			return;
+		}
 
-	/*
-	 * Enables all tabs
-	 */
-	private void enableAllTabs() {
-		getTabs().stream().forEach(t -> t.setDisable(false));
-	}
-
-	private void setActiveFirstVisibleTab() {
 		for (final Tab t : getTabs()) {
 			if (!t.isDisable()) {
 				t.getTabPane().getSelectionModel().select(t);
 				break;
 			}
 		}
+
 	}
 }

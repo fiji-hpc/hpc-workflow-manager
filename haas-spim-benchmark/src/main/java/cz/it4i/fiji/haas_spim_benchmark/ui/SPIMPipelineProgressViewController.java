@@ -29,7 +29,6 @@ import cz.it4i.fiji.haas.ui.TableViewContextMenu;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_spim_benchmark.core.Constants;
 import cz.it4i.fiji.haas_spim_benchmark.core.FXFrameExecutorService;
-import cz.it4i.fiji.haas_spim_benchmark.core.ObservableBenchmarkJob;
 import cz.it4i.fiji.haas_spim_benchmark.core.SimpleObservableList;
 import cz.it4i.fiji.haas_spim_benchmark.core.SimpleObservableValue;
 import cz.it4i.fiji.haas_spim_benchmark.core.Task;
@@ -112,8 +111,8 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 		this.root = parameter;
 	}
 
-	public void setJob(final ObservableBenchmarkJob job) {
-		observedList = job.getObservableTaskList();
+	public void setObservable(final SimpleObservableList<Task> taskList) {
+		observedList = taskList;
 		observedList.subscribe(taskChangeListener);
 
 		Progress progress = ModalDialogs.doModal(new ProgressDialog(root,
