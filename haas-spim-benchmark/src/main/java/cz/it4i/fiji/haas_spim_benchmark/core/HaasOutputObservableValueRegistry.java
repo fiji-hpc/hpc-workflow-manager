@@ -13,7 +13,6 @@ import java.util.TimerTask;
 
 import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
 import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.BenchmarkJob;
-import javafx.beans.value.ObservableValue;
 
 class HaasOutputObservableValueRegistry implements Closeable {
 
@@ -40,7 +39,7 @@ class HaasOutputObservableValueRegistry implements Closeable {
 		}
 	}
 
-	public ObservableValue<String> getObservableOutput(
+	public SimpleObservableValue<String> getObservableOutput(
 		final SynchronizableFileType type)
 	{
 		return observableValues.get(type);

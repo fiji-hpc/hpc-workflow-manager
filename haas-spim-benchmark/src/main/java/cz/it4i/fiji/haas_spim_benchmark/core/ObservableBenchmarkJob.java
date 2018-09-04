@@ -17,7 +17,6 @@ import org.slf4j.LoggerFactory;
 import cz.it4i.fiji.haas.ui.UpdatableObservableValue;
 import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
 import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.BenchmarkJob;
-import javafx.beans.value.ObservableValue;
 
 public class ObservableBenchmarkJob extends
 	UpdatableObservableValue<BenchmarkJob> implements Closeable
@@ -86,7 +85,7 @@ public class ObservableBenchmarkJob extends
 		fileTransferObservable.deleteObserver(observer);
 	}
 
-	public ObservableValue<String> getObservableSnakemakeOutput(
+	public SimpleObservableValue<String> getObservableSnakemakeOutput(
 		SynchronizableFileType type)
 	{
 		return haasOutputRegistry.getObservableOutput(type);

@@ -12,6 +12,9 @@ import cz.it4i.fiji.haas.ui.JavaFXRoutines;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
 import cz.it4i.fiji.haas_spim_benchmark.core.ObservableBenchmarkJob;
+import cz.it4i.fiji.haas_spim_benchmark.core.SimpleObservableValue;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
@@ -27,10 +30,16 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 	private SPIMPipelineProgressViewController progressView;
 
 	@FXML
-	private LogViewControl errorOutput;
+	private LogViewControl snakemakeOutputControl;
 
 	@FXML
-	private LogViewControl standardOutput;
+	private Tab snakemakeOutputTab;
+
+	@FXML
+	private LogViewControl otherOutputControl;
+
+	@FXML
+	private Tab otherOutputTab;
 
 	@FXML
 	private JobPropertiesControl jobProperties;
@@ -46,6 +55,36 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 
 	private final ObservableBenchmarkJob job;
 
+	private SimpleObservableValue<String> errorOutput;
+
+	private final ChangeListener<String> errorOutputListener =
+		new ChangeListener<String>()
+		{
+
+			@Override
+			public void changed(ObservableValue<? extends String> observable,
+				String oldValue, String newValue)
+		{
+				snakemakeOutputTab.setDisable(newValue.isEmpty());
+			}
+
+		};
+
+	private SimpleObservableValue<String> standardOutput;
+
+	private final ChangeListener<String> standardOutputListener =
+		new ChangeListener<String>()
+		{
+
+			@Override
+			public void changed(ObservableValue<? extends String> observable,
+				String oldValue, String newValue)
+		{
+				otherOutputTab.setDisable(newValue.isEmpty());
+			}
+
+		};
+
 	public JobDetailControl(final ObservableBenchmarkJob job) {
 		JavaFXRoutines.initRootAndController("JobDetail.fxml", this);
 		this.job = job;
@@ -55,12 +94,20 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 
 	@Override
 	public void init(final Window parameter) {
+
 		progressView.init(parameter);
 		progressView.setJob(job);
-		errorOutput.setObservable(job.getObservableSnakemakeOutput(
-			SynchronizableFileType.StandardErrorFile));
-		standardOutput.setObservable(job.getObservableSnakemakeOutput(
-			SynchronizableFileType.StandardOutputFile));
+
+		errorOutput = job.getObservableSnakemakeOutput(
+			SynchronizableFileType.StandardErrorFile);
+		errorOutput.addListener(errorOutputListener);
+		snakemakeOutputControl.setObservable(errorOutput);
+
+		standardOutput = job.getObservableSnakemakeOutput(
+			SynchronizableFileType.StandardOutputFile);
+		standardOutput.addListener(standardOutputListener);
+		otherOutputControl.setObservable(standardOutput);
+
 		jobProperties.setJob(job);
 		dataUpload.setJob(job);
 
@@ -89,8 +136,10 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 
 		// Close controllers
 		progressView.close();
-		errorOutput.close();
-		standardOutput.close();
+		errorOutput.removeListener(errorOutputListener);
+		snakemakeOutputControl.close();
+		standardOutput.removeListener(standardOutputListener);
+		otherOutputControl.close();
 		jobProperties.close();
 		dataUpload.close();
 	}

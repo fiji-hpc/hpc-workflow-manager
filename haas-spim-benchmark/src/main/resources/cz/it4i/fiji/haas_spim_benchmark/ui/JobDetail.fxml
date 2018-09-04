@@ -22,18 +22,18 @@
 				</HBox>
 			</content>
 		</Tab>
-		<Tab closable="false" text="Snakemake output">
+		<Tab closable="false" text="Snakemake output" fx:id="snakemakeOutputTab">
 			<content>
 				<HBox>
-					<LogViewControl fx:id="errorOutput" HBox.hgrow="ALWAYS" />
+					<LogViewControl fx:id="snakemakeOutputControl" HBox.hgrow="ALWAYS" />
 
 				</HBox>
 			</content>
 		</Tab>
-		<Tab closable="false" text="Other output" >
+		<Tab closable="false" text="Other output" fx:id="otherOutputTab">
 			<content>
 				<HBox>
-					<LogViewControl fx:id="standardOutput" HBox.hgrow="ALWAYS" />
+					<LogViewControl fx:id="otherOutputControl" HBox.hgrow="ALWAYS" />
 				</HBox>
 			</content>
 
