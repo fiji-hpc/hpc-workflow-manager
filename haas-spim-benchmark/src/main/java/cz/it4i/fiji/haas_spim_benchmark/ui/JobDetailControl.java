@@ -12,9 +12,12 @@ import cz.it4i.fiji.haas.ui.JavaFXRoutines;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
 import cz.it4i.fiji.haas_spim_benchmark.core.ObservableBenchmarkJob;
+import cz.it4i.fiji.haas_spim_benchmark.core.SimpleObservableList;
 import cz.it4i.fiji.haas_spim_benchmark.core.SimpleObservableValue;
+import cz.it4i.fiji.haas_spim_benchmark.core.Task;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.ListChangeListener;
 import javafx.fxml.FXML;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
@@ -58,6 +61,22 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 
 	private final ObservableBenchmarkJob job;
 
+	private SimpleObservableList<Task> taskList;
+
+	private final ListChangeListener<Task> taskListListener =
+		new ListChangeListener<Task>()
+		{
+
+			@Override
+			public void onChanged(Change<? extends Task> c) {
+
+				final boolean listEmpty = taskList == null || taskList.isEmpty();
+				progressTab.setDisable(listEmpty);
+				setActiveFirstVisibleTab(false);
+			}
+
+		};
+
 	private SimpleObservableValue<String> errorOutput;
 
 	private final ChangeListener<String> errorOutputListener =
@@ -69,13 +88,7 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 				String oldValue, String newValue)
 		{
 				if (newValue != null) {
-
 					snakemakeOutputTab.setDisable(newValue.isEmpty());
-					// Although we're bringing some bits of business logic here
-					// (the fact that task info is parsed from Snakemake output),
-					// it is way easier than adding a dedicated ListChangeListener.
-					progressTab.setDisable(newValue.isEmpty());
-
 					setActiveFirstVisibleTab(false);
 				}
 			}
@@ -94,7 +107,6 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 		{
 				if (newValue != null) {
 					otherOutputTab.setDisable(newValue.isEmpty());
-
 					setActiveFirstVisibleTab(false);
 				}
 			}
@@ -112,7 +124,9 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 	public void init(final Window parameter) {
 
 		progressControl.init(parameter);
-		progressControl.setObservable(job.getObservableTaskList());
+		taskList = job.getObservableTaskList();
+		taskList.subscribe(taskListListener);
+		progressControl.setObservable(taskList);
 
 		errorOutput = job.getObservableSnakemakeOutput(
 			SynchronizableFileType.StandardErrorFile);
@@ -135,6 +149,7 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 			}
 		}
 
+		taskListListener.onChanged(null);
 		errorOutputListener.changed(null, null, errorOutput.getValue());
 		standardOutputListener.changed(null, null, standardOutput.getValue());
 
@@ -148,6 +163,7 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 	public void close() {
 
 		// Close controllers
+		taskList.unsubscribe(taskListListener);
 		progressControl.close();
 		errorOutput.removeListener(errorOutputListener);
 		snakemakeOutputControl.close();
