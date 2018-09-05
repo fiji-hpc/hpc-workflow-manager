@@ -6,11 +6,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 import javax.swing.WindowConstants;
 
@@ -80,8 +78,6 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 	private final Executor executorFx = new FXFrameExecutorService();
 	private Window root;
 
-	private CountDownLatch fillingLatch = new CountDownLatch(1);
-
 	private boolean closed;
 
 	private final ListChangeListener<Task> taskChangeListener =
@@ -89,9 +85,7 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 		{
 
 			@Override
-			public void onChanged(Change<? extends Task> c) {
-				fillingLatch.countDown();
-			}
+			public void onChanged(Change<? extends Task> c) {}
 		};
 
 	public SPIMPipelineProgressViewController() {
@@ -151,13 +145,6 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 	private synchronized void fillTable() {
 		if (closed) {
 			return;
-		}
-
-		try {
-			fillingLatch.await(10, TimeUnit.SECONDS);
-		}
-		catch (InterruptedException exc) {
-			// Handle time out properly
 		}
 
 		final Optional<Integer> optional = getNumberOfTimepoints(observedList);

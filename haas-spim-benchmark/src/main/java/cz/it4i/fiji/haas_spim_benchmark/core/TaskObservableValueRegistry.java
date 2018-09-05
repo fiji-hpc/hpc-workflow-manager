@@ -5,6 +5,8 @@ import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.BenchmarkJob;
 
@@ -29,24 +31,33 @@ class TaskObservableValueRegistry implements Closeable {
 		}
 	}
 
-	public SimpleObservableList<Task> getTaskList() {
+	public synchronized SimpleObservableList<Task> getTaskList() {
 		return observableTaskList;
 	}
 
 	private void evaluateTimer() {
 
 		final boolean anyListeners = observableTaskList.hasAnyListeners();
+		final CountDownLatch timerLatch = new CountDownLatch(1);
 
 		if (!isRunning && anyListeners) {
 			timer = new Timer();
 			timer.schedule(new TimerTask() {
 
 				@Override
-				public void run() {
+				public synchronized void run() {
 					observableTaskList.setAll(job.getTasks());
+					timerLatch.countDown();
 				}
 			}, 0, Constants.HAAS_UPDATE_TIMEOUT /
 				Constants.UI_TO_HAAS_FREQUENCY_UPDATE_RATIO);
+
+			try {
+				timerLatch.await(10, TimeUnit.SECONDS);
+			}
+			catch (InterruptedException exc) {
+				// TODO Handle properly
+			}
 			isRunning = true;
 		}
 		else if (isRunning && !anyListeners) {
