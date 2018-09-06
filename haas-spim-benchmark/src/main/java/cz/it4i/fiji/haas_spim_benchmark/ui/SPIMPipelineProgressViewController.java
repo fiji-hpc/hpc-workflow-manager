@@ -78,6 +78,7 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 	private final Executor executorFx = new FXFrameExecutorService();
 	private Window root;
 
+	private boolean filled = false;
 	private boolean closed;
 
 	private final ListChangeListener<Task> taskChangeListener =
@@ -85,7 +86,13 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 		{
 
 			@Override
-			public void onChanged(Change<? extends Task> c) {}
+			public void onChanged(Change<? extends Task> c) {
+
+				if (!filled) {
+					fillTable();
+				}
+
+			}
 		};
 
 	public SPIMPipelineProgressViewController() {
@@ -152,6 +159,7 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 		if (!optional.isPresent()) {
 			return;
 		}
+
 		final Integer numberOfComputations = optional.get();
 
 		executorFx.execute(() -> {
@@ -170,6 +178,7 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 			}
 
 			this.tasks.setItems(observedList);
+			filled = true;
 		});
 	}
 
