@@ -22,6 +22,7 @@ class HaasOutputObservableValueRegistry implements Closeable {
 	private Timer timer;
 	private boolean isRunning = false;
 	private int numberOfListeners = 0;
+	private boolean closed = false;
 
 	public HaasOutputObservableValueRegistry(final BenchmarkJob job) {
 		this.job = job;
@@ -34,6 +35,8 @@ class HaasOutputObservableValueRegistry implements Closeable {
 	@Override
 	public void close() {
 		stopTimer();
+		numberOfListeners = 0;
+		closed = true;
 	}
 
 	public SimpleObservableValue<String> getObservableOutput(
@@ -48,13 +51,17 @@ class HaasOutputObservableValueRegistry implements Closeable {
 	}
 
 	private synchronized void increaseNumberOfObservers() {
-		numberOfListeners++;
-		evaluateTimer();
+		if (!closed) {
+			numberOfListeners++;
+			evaluateTimer();
+		}
 	}
 
 	private synchronized void decreaseNumberOfObservers() {
-		numberOfListeners--;
-		evaluateTimer();
+		if (!closed) {
+			numberOfListeners--;
+			evaluateTimer();
+		}
 	}
 
 	private void evaluateTimer() {

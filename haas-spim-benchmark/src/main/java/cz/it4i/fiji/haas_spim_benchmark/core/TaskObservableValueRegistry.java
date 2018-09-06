@@ -16,6 +16,7 @@ class TaskObservableValueRegistry implements Closeable {
 	private final SimpleObservableList<Task> observableTaskList;
 	private Timer timer;
 	private boolean isRunning = false;
+	private boolean closed = false;
 
 	public TaskObservableValueRegistry(final BenchmarkJob job) {
 		this.job = job;
@@ -26,6 +27,7 @@ class TaskObservableValueRegistry implements Closeable {
 	@Override
 	public void close() {
 		stopTimer();
+		closed = true;
 	}
 
 	public synchronized SimpleObservableList<Task> getTaskList() {
@@ -33,6 +35,10 @@ class TaskObservableValueRegistry implements Closeable {
 	}
 
 	private void evaluateTimer() {
+
+		if (closed) {
+			return;
+		}
 
 		final boolean anyListeners = observableTaskList.hasAnyListeners();
 		final CountDownLatch timerLatch = new CountDownLatch(1);
