@@ -7,12 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import javax.swing.WindowConstants;
-
-import net.imagej.updater.util.Progress;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +17,6 @@ import cz.it4i.fiji.haas.ui.CloseableControl;
 import cz.it4i.fiji.haas.ui.InitiableControl;
 import cz.it4i.fiji.haas.ui.JavaFXRoutines;
 import cz.it4i.fiji.haas.ui.ModalDialogs;
-import cz.it4i.fiji.haas.ui.ProgressDialog;
 import cz.it4i.fiji.haas.ui.TableCellAdapter;
 import cz.it4i.fiji.haas.ui.TableViewContextMenu;
 import cz.it4i.fiji.haas_java_client.JobState;
@@ -74,7 +69,6 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 
 	private SimpleObservableList<Task> observedList;
 
-	private final ExecutorService executorServiceWS;
 	private final Executor executorFx = new FXFrameExecutorService();
 	private Window root;
 
@@ -88,6 +82,9 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 			@Override
 			public void onChanged(Change<? extends Task> c) {
 
+				// We are assuming that once the table has been filled,
+				// it cannot be "unfilled", i.e. the tasks cannot be
+				// changed or removed at runtime.
 				if (!filled) {
 					fillTable();
 				}
@@ -96,14 +93,12 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 		};
 
 	public SPIMPipelineProgressViewController() {
-		executorServiceWS = Executors.newSingleThreadExecutor();
 		init();
 	}
 
 	@Override
 	public synchronized void close() {
 		observedList.unsubscribe(taskChangeListener);
-		executorServiceWS.shutdown();
 		closed = true;
 	}
 
@@ -113,20 +108,11 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 	}
 
 	public void setObservable(final SimpleObservableList<Task> taskList) {
+
 		observedList = taskList;
 		observedList.subscribe(taskChangeListener);
 
-		Progress progress = ModalDialogs.doModal(new ProgressDialog(root,
-			"Downloading tasks"), WindowConstants.DO_NOTHING_ON_CLOSE);
-
-		executorServiceWS.execute(() -> {
-			try {
-				fillTable();
-			}
-			finally {
-				progress.done();
-			}
-		});
+		taskChangeListener.onChanged(null);
 	}
 
 	private void init() {

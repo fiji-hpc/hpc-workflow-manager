@@ -2,6 +2,12 @@
 package cz.it4i.fiji.haas_spim_benchmark.ui;
 
 import java.awt.Window;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+import javax.swing.WindowConstants;
+
+import net.imagej.updater.util.Progress;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,6 +15,8 @@ import org.slf4j.LoggerFactory;
 import cz.it4i.fiji.haas.ui.CloseableControl;
 import cz.it4i.fiji.haas.ui.InitiableControl;
 import cz.it4i.fiji.haas.ui.JavaFXRoutines;
+import cz.it4i.fiji.haas.ui.ModalDialogs;
+import cz.it4i.fiji.haas.ui.ProgressDialog;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
 import cz.it4i.fiji.haas_spim_benchmark.core.ObservableBenchmarkJob;
@@ -58,6 +66,8 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 
 	@FXML
 	private Tab dataUploadTab;
+
+	private final ExecutorService executorServiceWS;
 
 	private final ObservableBenchmarkJob job;
 
@@ -114,6 +124,7 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 		};
 
 	public JobDetailControl(final ObservableBenchmarkJob job) {
+		executorServiceWS = Executors.newSingleThreadExecutor();
 		JavaFXRoutines.initRootAndController("JobDetail.fxml", this);
 		this.job = job;
 	}
@@ -123,37 +134,48 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 	@Override
 	public void init(final Window parameter) {
 
-		progressControl.init(parameter);
-		taskList = job.getObservableTaskList();
-		taskList.subscribe(taskListListener);
-		progressControl.setObservable(taskList);
+		Progress progress = ModalDialogs.doModal(new ProgressDialog(parameter,
+			"Downloading tasks"), WindowConstants.DO_NOTHING_ON_CLOSE);
 
-		errorOutput = job.getObservableSnakemakeOutput(
-			SynchronizableFileType.StandardErrorFile);
-		errorOutput.addListener(errorOutputListener);
-		snakemakeOutputControl.setObservable(errorOutput);
+		executorServiceWS.execute(() -> {
 
-		standardOutput = job.getObservableSnakemakeOutput(
-			SynchronizableFileType.StandardOutputFile);
-		standardOutput.addListener(standardOutputListener);
-		otherOutputControl.setObservable(standardOutput);
+			try {
+				progressControl.init(parameter);
+				taskList = job.getObservableTaskList();
+				taskList.subscribe(taskListListener);
+				progressControl.setObservable(taskList);
 
-		jobProperties.setJob(job);
-		dataUpload.setJob(job);
+				errorOutput = job.getObservableSnakemakeOutput(
+					SynchronizableFileType.StandardErrorFile);
+				errorOutput.addListener(errorOutputListener);
+				snakemakeOutputControl.setObservable(errorOutput);
 
-		if (job.getValue().getState() == JobState.Disposed) {
-			// TODO: Handle this?
-			if (log.isInfoEnabled()) {
-				log.info("Job " + job.getValue().getId() +
-					" state has been resolved as Disposed.");
+				standardOutput = job.getObservableSnakemakeOutput(
+					SynchronizableFileType.StandardOutputFile);
+				standardOutput.addListener(standardOutputListener);
+				otherOutputControl.setObservable(standardOutput);
+
+				jobProperties.setJob(job);
+				dataUpload.setJob(job);
+
+				if (job.getValue().getState() == JobState.Disposed) {
+					// TODO: Handle this?
+					if (log.isInfoEnabled()) {
+						log.info("Job " + job.getValue().getId() +
+							" state has been resolved as Disposed.");
+					}
+				}
+
+				taskListListener.onChanged(null);
+				errorOutputListener.changed(null, null, errorOutput.getValue());
+				standardOutputListener.changed(null, null, standardOutput.getValue());
+
+				setActiveFirstVisibleTab(true);
 			}
-		}
-
-		taskListListener.onChanged(null);
-		errorOutputListener.changed(null, null, errorOutput.getValue());
-		standardOutputListener.changed(null, null, standardOutput.getValue());
-
-		setActiveFirstVisibleTab(true);
+			finally {
+				progress.done();
+			}
+		});
 
 	}
 
@@ -161,6 +183,8 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 
 	@Override
 	public void close() {
+
+		executorServiceWS.shutdown();
 
 		// Close controllers
 		taskList.unsubscribe(taskListListener);
