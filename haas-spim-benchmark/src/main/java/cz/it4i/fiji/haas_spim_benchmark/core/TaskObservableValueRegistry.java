@@ -24,46 +24,54 @@ class TaskObservableValueRegistry implements Closeable {
 	}
 
 	@Override
-	public synchronized void close() {
-		if (timer != null) {
-			timer.cancel();
-		}
+	public void close() {
+		stopTimer();
 	}
 
 	public synchronized SimpleObservableList<Task> getTaskList() {
 		return observableTaskList;
 	}
 
-	private synchronized void evaluateTimer() {
+	private void evaluateTimer() {
 
 		final boolean anyListeners = observableTaskList.hasAnyListeners();
 		final CountDownLatch timerLatch = new CountDownLatch(1);
 
 		if (!isRunning && anyListeners) {
+
 			timer = new Timer();
-			timer.schedule(new TimerTask() {
+			synchronized (timer) {
+				timer.schedule(new TimerTask() {
 
-				@Override
-				public synchronized void run() {
-					observableTaskList.setAll(job.getTasks());
-					timerLatch.countDown();
+					@Override
+					public void run() {
+						observableTaskList.setAll(job.getTasks());
+						timerLatch.countDown();
+					}
+				}, 0, Constants.HAAS_UPDATE_TIMEOUT /
+					Constants.UI_TO_HAAS_FREQUENCY_UPDATE_RATIO);
+
+				try {
+					timerLatch.await(10, TimeUnit.SECONDS);
 				}
-			}, 0, Constants.HAAS_UPDATE_TIMEOUT /
-				Constants.UI_TO_HAAS_FREQUENCY_UPDATE_RATIO);
-
-			try {
-				timerLatch.await(10, TimeUnit.SECONDS);
+				catch (InterruptedException exc) {
+					// TODO Handle properly
+				}
+				isRunning = true;
 			}
-			catch (InterruptedException exc) {
-				// TODO Handle properly
-			}
-			isRunning = true;
 		}
 		else if (isRunning && !anyListeners) {
-			timer.cancel();
-			isRunning = false;
+			stopTimer();
 		}
+	}
 
+	private void stopTimer() {
+		if (timer != null) {
+			synchronized (timer) {
+				timer.cancel();
+				isRunning = false;
+			}
+		}
 	}
 
 }

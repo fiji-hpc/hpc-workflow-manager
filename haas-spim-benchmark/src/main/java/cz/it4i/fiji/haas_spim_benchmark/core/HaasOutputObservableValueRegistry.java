@@ -32,13 +32,11 @@ class HaasOutputObservableValueRegistry implements Closeable {
 	}
 
 	@Override
-	public synchronized void close() {
-		if (timer != null) {
-			timer.cancel();
-		}
+	public void close() {
+		stopTimer();
 	}
 
-	public synchronized SimpleObservableValue<String> getObservableOutput(
+	public SimpleObservableValue<String> getObservableOutput(
 		final SynchronizableFileType type)
 	{
 		return observableValues.get(type);
@@ -59,33 +57,43 @@ class HaasOutputObservableValueRegistry implements Closeable {
 		evaluateTimer();
 	}
 
-	private synchronized void evaluateTimer() {
+	private void evaluateTimer() {
 
 		final boolean anyListeners = numberOfListeners > 0;
 
 		if (!isRunning && anyListeners) {
+
 			timer = new Timer();
-			timer.schedule(new TimerTask() {
+			synchronized (timer) {
+				timer.schedule(new TimerTask() {
 
-				@Override
-				public synchronized void run() {
+					@Override
+					public void run() {
 
-					final List<SynchronizableFileType> types = new LinkedList<>(
-						observableValues.keySet());
+						final List<SynchronizableFileType> types = new LinkedList<>(
+							observableValues.keySet());
 
-					Streams.zip(types.stream(), job.getComputationOutput(types).stream(),
-						(type, value) -> (Runnable) (() -> observableValues.get(type)
-							.update(value))).forEach(r -> r.run());
-				}
-			}, 0, Constants.HAAS_UPDATE_TIMEOUT /
-				Constants.UI_TO_HAAS_FREQUENCY_UPDATE_RATIO);
-			isRunning = true;
+						Streams.zip(types.stream(), job.getComputationOutput(types)
+							.stream(), (type, value) -> (Runnable) (() -> observableValues
+								.get(type).update(value))).forEach(r -> r.run());
+					}
+				}, 0, Constants.HAAS_UPDATE_TIMEOUT /
+					Constants.UI_TO_HAAS_FREQUENCY_UPDATE_RATIO);
+				isRunning = true;
+			}
 		}
 		else if (isRunning && !anyListeners) {
-			timer.cancel();
-			isRunning = false;
+			stopTimer();
 		}
+	}
 
+	private void stopTimer() {
+		if (timer != null) {
+			synchronized (timer) {
+				timer.cancel();
+				isRunning = false;
+			}
+		}
 	}
 
 }
