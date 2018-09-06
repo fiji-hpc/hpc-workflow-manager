@@ -24,10 +24,9 @@ class TaskObservableValueRegistry implements Closeable {
 	}
 
 	@Override
-	public void close() {
+	public synchronized void close() {
 		if (timer != null) {
 			timer.cancel();
-			timer.purge();
 		}
 	}
 
@@ -35,7 +34,7 @@ class TaskObservableValueRegistry implements Closeable {
 		return observableTaskList;
 	}
 
-	private void evaluateTimer() {
+	private synchronized void evaluateTimer() {
 
 		final boolean anyListeners = observableTaskList.hasAnyListeners();
 		final CountDownLatch timerLatch = new CountDownLatch(1);
@@ -62,7 +61,6 @@ class TaskObservableValueRegistry implements Closeable {
 		}
 		else if (isRunning && !anyListeners) {
 			timer.cancel();
-			timer.purge();
 			isRunning = false;
 		}
 

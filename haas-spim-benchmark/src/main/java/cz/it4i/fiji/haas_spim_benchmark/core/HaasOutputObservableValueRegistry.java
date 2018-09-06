@@ -35,11 +35,10 @@ class HaasOutputObservableValueRegistry implements Closeable {
 	public synchronized void close() {
 		if (timer != null) {
 			timer.cancel();
-			timer.purge();
 		}
 	}
 
-	public SimpleObservableValue<String> getObservableOutput(
+	public synchronized SimpleObservableValue<String> getObservableOutput(
 		final SynchronizableFileType type)
 	{
 		return observableValues.get(type);
@@ -60,7 +59,7 @@ class HaasOutputObservableValueRegistry implements Closeable {
 		evaluateTimer();
 	}
 
-	private void evaluateTimer() {
+	private synchronized void evaluateTimer() {
 
 		final boolean anyListeners = numberOfListeners > 0;
 
@@ -69,7 +68,7 @@ class HaasOutputObservableValueRegistry implements Closeable {
 			timer.schedule(new TimerTask() {
 
 				@Override
-				public void run() {
+				public synchronized void run() {
 
 					final List<SynchronizableFileType> types = new LinkedList<>(
 						observableValues.keySet());
@@ -84,7 +83,6 @@ class HaasOutputObservableValueRegistry implements Closeable {
 		}
 		else if (isRunning && !anyListeners) {
 			timer.cancel();
-			timer.purge();
 			isRunning = false;
 		}
 
