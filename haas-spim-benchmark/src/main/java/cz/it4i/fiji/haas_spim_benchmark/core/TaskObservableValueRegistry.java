@@ -30,7 +30,7 @@ class TaskObservableValueRegistry implements Closeable {
 		closed = true;
 	}
 
-	public synchronized SimpleObservableList<Task> getTaskList() {
+	public SimpleObservableList<Task> getTaskList() {
 		return observableTaskList;
 	}
 
@@ -72,6 +72,7 @@ class TaskObservableValueRegistry implements Closeable {
 	private void stopTimer() {
 		if (timer != null) {
 			timer.cancel();
+			timer = null;
 			isRunning = false;
 		}
 	}

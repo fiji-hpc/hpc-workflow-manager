@@ -95,6 +95,7 @@ class HaasOutputObservableValueRegistry implements Closeable {
 	private void stopTimer() {
 		if (timer != null) {
 			timer.cancel();
+			timer = null;
 			isRunning = false;
 		}
 	}
