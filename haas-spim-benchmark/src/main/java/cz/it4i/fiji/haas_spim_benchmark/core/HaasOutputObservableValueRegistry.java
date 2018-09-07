@@ -33,7 +33,7 @@ class HaasOutputObservableValueRegistry implements Closeable {
 	}
 
 	@Override
-	public void close() {
+	public synchronized void close() {
 		stopTimer();
 		numberOfListeners = 0;
 		closed = true;
@@ -90,16 +90,16 @@ class HaasOutputObservableValueRegistry implements Closeable {
 			}
 		}
 		else if (isRunning && !anyListeners) {
-			stopTimer();
+			synchronized (timer) {
+				stopTimer();
+			}
 		}
 	}
 
 	private void stopTimer() {
 		if (timer != null) {
-			synchronized (timer) {
-				timer.cancel();
-				isRunning = false;
-			}
+			timer.cancel();
+			isRunning = false;
 		}
 	}
 

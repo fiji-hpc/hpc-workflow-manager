@@ -25,7 +25,7 @@ class TaskObservableValueRegistry implements Closeable {
 	}
 
 	@Override
-	public void close() {
+	public synchronized void close() {
 		stopTimer();
 		closed = true;
 	}
@@ -67,16 +67,16 @@ class TaskObservableValueRegistry implements Closeable {
 			}
 		}
 		else if (isRunning && !anyListeners) {
-			stopTimer();
+			synchronized (timer) {
+				stopTimer();
+			}
 		}
 	}
 
 	private void stopTimer() {
 		if (timer != null) {
-			synchronized (timer) {
-				timer.cancel();
-				isRunning = false;
-			}
+			timer.cancel();
+			isRunning = false;
 		}
 	}
 
