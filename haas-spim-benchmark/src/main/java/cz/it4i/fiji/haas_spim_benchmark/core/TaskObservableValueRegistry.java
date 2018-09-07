@@ -34,42 +34,38 @@ class TaskObservableValueRegistry implements Closeable {
 		return observableTaskList;
 	}
 
-	private void evaluateTimer() {
+	private synchronized void evaluateTimer() {
 
 		if (closed) {
 			return;
 		}
 
 		final boolean anyListeners = observableTaskList.hasAnyListeners();
-		final CountDownLatch timerLatch = new CountDownLatch(1);
 
 		if (!isRunning && anyListeners) {
 
+			final CountDownLatch timerLatch = new CountDownLatch(1);
 			timer = new Timer();
-			synchronized (timer) {
-				timer.schedule(new TimerTask() {
+			timer.schedule(new TimerTask() {
 
-					@Override
-					public void run() {
-						observableTaskList.setAll(job.getTasks());
-						timerLatch.countDown();
-					}
-				}, 0, Constants.HAAS_UPDATE_TIMEOUT /
-					Constants.UI_TO_HAAS_FREQUENCY_UPDATE_RATIO);
+				@Override
+				public void run() {
+					observableTaskList.setAll(job.getTasks());
+					timerLatch.countDown();
+				}
+			}, 0, Constants.HAAS_UPDATE_TIMEOUT /
+				Constants.UI_TO_HAAS_FREQUENCY_UPDATE_RATIO);
 
-				try {
-					timerLatch.await(10, TimeUnit.SECONDS);
-				}
-				catch (InterruptedException exc) {
-					// TODO Handle properly
-				}
-				isRunning = true;
+			try {
+				timerLatch.await(10, TimeUnit.SECONDS);
 			}
+			catch (InterruptedException exc) {
+				// TODO Handle properly
+			}
+			isRunning = true;
 		}
 		else if (isRunning && !anyListeners) {
-			synchronized (timer) {
-				stopTimer();
-			}
+			stopTimer();
 		}
 	}
 

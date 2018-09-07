@@ -71,28 +71,24 @@ class HaasOutputObservableValueRegistry implements Closeable {
 		if (!isRunning && anyListeners) {
 
 			timer = new Timer();
-			synchronized (timer) {
-				timer.schedule(new TimerTask() {
+			timer.schedule(new TimerTask() {
 
-					@Override
-					public void run() {
+				@Override
+				public void run() {
 
-						final List<SynchronizableFileType> types = new LinkedList<>(
-							observableValues.keySet());
+					final List<SynchronizableFileType> types = new LinkedList<>(
+						observableValues.keySet());
 
-						Streams.zip(types.stream(), job.getComputationOutput(types)
-							.stream(), (type, value) -> (Runnable) (() -> observableValues
-								.get(type).update(value))).forEach(r -> r.run());
-					}
-				}, 0, Constants.HAAS_UPDATE_TIMEOUT /
-					Constants.UI_TO_HAAS_FREQUENCY_UPDATE_RATIO);
-				isRunning = true;
-			}
+					Streams.zip(types.stream(), job.getComputationOutput(types).stream(),
+						(type, value) -> (Runnable) (() -> observableValues.get(type)
+							.update(value))).forEach(r -> r.run());
+				}
+			}, 0, Constants.HAAS_UPDATE_TIMEOUT /
+				Constants.UI_TO_HAAS_FREQUENCY_UPDATE_RATIO);
+			isRunning = true;
 		}
 		else if (isRunning && !anyListeners) {
-			synchronized (timer) {
-				stopTimer();
-			}
+			stopTimer();
 		}
 	}
 
