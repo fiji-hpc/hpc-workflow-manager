@@ -79,10 +79,7 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 
 			@Override
 			public void onChanged(Change<? extends Task> c) {
-
-				final boolean listEmpty = taskList == null || taskList.isEmpty();
-				progressTab.setDisable(listEmpty);
-				setActiveFirstVisibleTab(false);
+				setTabAvailability(progressTab, taskList == null || taskList.isEmpty());
 			}
 
 		};
@@ -98,8 +95,7 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 				String oldValue, String newValue)
 		{
 				if (newValue != null) {
-					snakemakeOutputTab.setDisable(newValue.isEmpty());
-					setActiveFirstVisibleTab(false);
+					setTabAvailability(snakemakeOutputTab, newValue.isEmpty());
 				}
 			}
 
@@ -116,8 +112,7 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 				String oldValue, String newValue)
 		{
 				if (newValue != null) {
-					otherOutputTab.setDisable(newValue.isEmpty());
-					setActiveFirstVisibleTab(false);
+					setTabAvailability(otherOutputTab, newValue.isEmpty());
 				}
 			}
 
@@ -198,6 +193,11 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 	}
 
 	// -- Helper methods --
+
+	private void setTabAvailability(final Tab tab, final boolean disabled) {
+		tab.setDisable(disabled);
+		setActiveFirstVisibleTab(false);
+	}
 
 	private void setActiveFirstVisibleTab(final boolean force) {
 
