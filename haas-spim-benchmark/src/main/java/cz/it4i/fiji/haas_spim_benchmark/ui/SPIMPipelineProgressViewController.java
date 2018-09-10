@@ -137,14 +137,14 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 	}
 
 	private synchronized void fillTable() {
-		if (closed) {
+		if (closed || filled) {
 			return;
 		}
 
 		final Optional<List<TaskComputation>> optional = getComputations(
 			observedList);
 
-		if (!optional.isPresent()) {
+		if (!optional.isPresent() || optional.get().size() < 1) {
 			return;
 		}
 
@@ -167,8 +167,9 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 			}
 
 			this.tasks.setItems(observedList);
-			filled = true;
 		});
+
+		filled = true;
 	}
 
 	private long computeTableColumnWidth(List<TaskComputation> computations) {
