@@ -15,9 +15,7 @@ class TaskObservableValueRegistry implements Closeable {
 	private Timer timer;
 	private boolean isRunning = false;
 	private boolean closed = false;
-	private boolean waitForFirstTimerRun = false;
-	private Thread waitingThread;
-
+	
 	public TaskObservableValueRegistry(final BenchmarkJob job) {
 		this.job = job;
 		this.observableTaskList = new SimpleObservableList<>(new ArrayList<Task>(),
@@ -27,9 +25,6 @@ class TaskObservableValueRegistry implements Closeable {
 	//TODO close neverCalled
 	@Override
 	public synchronized void close() {
-		if (waitingThread != null) {
-			waitingThread.interrupt();
-		}
 		stopTimer();
 		closed = true;
 	}
@@ -40,6 +35,22 @@ class TaskObservableValueRegistry implements Closeable {
 
 	private synchronized void evaluateTimer() {
 
+		class L_TimerTask extends TimerTask {
+
+			@Override
+			public void run() {
+				observableTaskList.setAll(job.getTasks());
+				
+				synchronized(TaskObservableValueRegistry.this) {
+					if (timer != null) {
+						timer.schedule(new L_TimerTask(), Constants.HAAS_UPDATE_TIMEOUT /
+							Constants.UI_TO_HAAS_FREQUENCY_UPDATE_RATIO);
+					}
+				}
+				
+			}
+		}
+		
 		if (closed) {
 			return;
 		}
@@ -49,30 +60,8 @@ class TaskObservableValueRegistry implements Closeable {
 		if (!isRunning && anyListeners) {
 
 			timer = new Timer();
-			waitForFirstTimerRun = true;
-			timer.schedule(new TimerTask() {
-
-				@Override
-				public void run() {
-					observableTaskList.setAll(job.getTasks());
-					synchronized(TaskObservableValueRegistry.this) {
-						waitForFirstTimerRun = false;
-						TaskObservableValueRegistry.this.notifyAll();
-					}
-				}
-			}, 0, Constants.HAAS_UPDATE_TIMEOUT /
-				Constants.UI_TO_HAAS_FREQUENCY_UPDATE_RATIO);
-			while (waitForFirstTimerRun) {
-				try {
-					this.waitingThread = Thread.currentThread();
-					this.wait();
-					this.waitingThread = null;
-				}
-				catch (InterruptedException exc) {
-					//ignore and return
-					return;
-				}
-			}
+			//waitForFirstTimerRun = true;
+			timer.schedule(new L_TimerTask(), 0);
 			isRunning = true;
 		}
 		else if (isRunning && !anyListeners) {

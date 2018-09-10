@@ -87,8 +87,7 @@ public class BenchmarkJobManager implements Closeable {
 
 		public BenchmarkJob(Job job) {
 			this.job = job;
-			snakemakeOutputHelper = new SnakemakeOutputHelper(job,
-				new LinkedList<Task>(), new LinkedList<BenchmarkError>());
+			snakemakeOutputHelper = new SnakemakeOutputHelper(job);
 		}
 
 		public synchronized void startJob(Progress progress) throws IOException {
