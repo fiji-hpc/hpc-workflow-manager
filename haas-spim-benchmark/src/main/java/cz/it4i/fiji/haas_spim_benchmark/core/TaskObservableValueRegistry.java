@@ -5,8 +5,6 @@ import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.BenchmarkJob;
 
@@ -17,6 +15,8 @@ class TaskObservableValueRegistry implements Closeable {
 	private Timer timer;
 	private boolean isRunning = false;
 	private boolean closed = false;
+	private boolean waitForFirstTimerRun = false;
+	private Thread waitingThread;
 
 	public TaskObservableValueRegistry(final BenchmarkJob job) {
 		this.job = job;
@@ -24,8 +24,12 @@ class TaskObservableValueRegistry implements Closeable {
 			this::evaluateTimer);
 	}
 
+	//TODO close neverCalled
 	@Override
 	public synchronized void close() {
+		if (waitingThread != null) {
+			waitingThread.interrupt();
+		}
 		stopTimer();
 		closed = true;
 	}
@@ -44,23 +48,30 @@ class TaskObservableValueRegistry implements Closeable {
 
 		if (!isRunning && anyListeners) {
 
-			final CountDownLatch timerLatch = new CountDownLatch(1);
 			timer = new Timer();
+			waitForFirstTimerRun = true;
 			timer.schedule(new TimerTask() {
 
 				@Override
 				public void run() {
 					observableTaskList.setAll(job.getTasks());
-					timerLatch.countDown();
+					synchronized(TaskObservableValueRegistry.this) {
+						waitForFirstTimerRun = false;
+						TaskObservableValueRegistry.this.notifyAll();
+					}
 				}
 			}, 0, Constants.HAAS_UPDATE_TIMEOUT /
 				Constants.UI_TO_HAAS_FREQUENCY_UPDATE_RATIO);
-
-			try {
-				timerLatch.await(10, TimeUnit.SECONDS);
-			}
-			catch (InterruptedException exc) {
-				// TODO Handle properly
+			while (waitForFirstTimerRun) {
+				try {
+					this.waitingThread = Thread.currentThread();
+					this.wait();
+					this.waitingThread = null;
+				}
+				catch (InterruptedException exc) {
+					//ignore and return
+					return;
+				}
 			}
 			isRunning = true;
 		}

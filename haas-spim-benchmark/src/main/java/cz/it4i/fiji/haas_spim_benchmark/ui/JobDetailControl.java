@@ -161,10 +161,6 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 					}
 				}
 
-				taskListListener.onChanged(null);
-				errorOutputListener.changed(null, null, errorOutput.getValue());
-				standardOutputListener.changed(null, null, standardOutput.getValue());
-
 				setActiveFirstVisibleTab(true);
 			}
 			finally {

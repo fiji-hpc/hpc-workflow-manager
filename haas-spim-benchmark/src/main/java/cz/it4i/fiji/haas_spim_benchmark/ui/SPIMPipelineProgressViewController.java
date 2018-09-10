@@ -109,11 +109,8 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 	}
 
 	public void setObservable(final SimpleObservableList<Task> taskList) {
-
 		observedList = taskList;
 		observedList.subscribe(taskChangeListener);
-
-		taskChangeListener.onChanged(null);
 	}
 
 	private void init() {
@@ -140,7 +137,7 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 		if (closed || filled) {
 			return;
 		}
-
+		
 		final Optional<List<TaskComputation>> optional = getComputations(
 			observedList);
 
