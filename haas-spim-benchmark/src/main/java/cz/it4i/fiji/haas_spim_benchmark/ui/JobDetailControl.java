@@ -168,10 +168,8 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 
 					@Override
 					public void onChanged(Change<? extends Task> c) {
-						if (!taskList.isEmpty()) {
-							taskList.unsubscribe(this);
-							progress.done();
-						}
+						taskList.unsubscribe(this);
+						progress.done();
 					}
 				};
 				taskList.subscribe(localListener);

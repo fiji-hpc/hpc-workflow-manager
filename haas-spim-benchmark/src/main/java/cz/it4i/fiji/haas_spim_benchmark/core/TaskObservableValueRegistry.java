@@ -12,6 +12,9 @@ import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.BenchmarkJob;
 
 class TaskObservableValueRegistry implements Closeable {
 
+	private final static Task EMPTY_TASK = new Task(
+		new SPIMComputationAccessorAdapter(), "", 0); 
+	
 	private final BenchmarkJob job;
 	private final SimpleObservableList<Task> observableTaskList;
 	private Timer timer;
@@ -22,6 +25,7 @@ class TaskObservableValueRegistry implements Closeable {
 		this.job = job;
 		this.observableTaskList = new SimpleObservableList<>(new ArrayList<Task>(),
 			this::evaluateTimer);
+		this.observableTaskList.add(EMPTY_TASK);
 	}
 
 	//TODO close neverCalled
