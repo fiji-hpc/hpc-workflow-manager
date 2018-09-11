@@ -3,9 +3,11 @@ package cz.it4i.fiji.haas_spim_benchmark.core;
 
 import java.io.Closeable;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import cz.it4i.fiji.haas.ui.JavaFXRoutines;
 import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.BenchmarkJob;
 
 class TaskObservableValueRegistry implements Closeable {
@@ -39,7 +41,8 @@ class TaskObservableValueRegistry implements Closeable {
 
 			@Override
 			public void run() {
-				observableTaskList.setAll(job.getTasks());
+				List<Task> tasks = job.getTasks();
+				JavaFXRoutines.runOnFxThread(() -> observableTaskList.setAll(tasks));
 				
 				synchronized(TaskObservableValueRegistry.this) {
 					if (timer != null) {
