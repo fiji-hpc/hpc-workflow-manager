@@ -54,7 +54,6 @@ class TaskObservableValueRegistry implements Closeable {
 							Constants.UI_TO_HAAS_FREQUENCY_UPDATE_RATIO);
 					}
 				}
-				
 			}
 		}
 		
@@ -65,9 +64,7 @@ class TaskObservableValueRegistry implements Closeable {
 		final boolean anyListeners = observableTaskList.hasAnyListeners();
 
 		if (!isRunning && anyListeners) {
-
 			timer = new Timer();
-			//waitForFirstTimerRun = true;
 			timer.schedule(new L_TimerTask(), 0);
 			isRunning = true;
 		}
