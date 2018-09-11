@@ -88,6 +88,9 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 				// changed or removed at runtime.
 				if (!filled) {
 					fillTable();
+				} 
+				else {
+					tasks.refresh();
 				}
 
 			}
@@ -163,7 +166,6 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 				tableCol.setPrefWidth(tableColumnWidth);
 				constructCellFactory(index);
 			}
-
 			this.tasks.setItems(observedList);
 		});
 
