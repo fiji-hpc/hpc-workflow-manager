@@ -21,6 +21,7 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.paint.Color;
+import javafx.util.Callback;
 
 public interface JavaFXRoutines {
 
@@ -62,7 +63,15 @@ public interface JavaFXRoutines {
 			Function<U, V> mapper) {
 		((TableColumn<T, V>) tableView.getColumns().get(index))
 				.setCellValueFactory(f -> new ObservableValueAdapter<>(f.getValue(), mapper));
+	}
 
+	@SuppressWarnings("unchecked")
+	static public <T, V> void setCellValueFactoryForList(TableView<T> tableView,
+		int index,
+		Callback<TableColumn.CellDataFeatures<T, V>, ObservableValue<V>> callback)
+	{
+		((TableColumn<T, V>) tableView.getColumns().get(index)).setCellValueFactory(
+			callback);
 	}
 
 	static public RunnableFuture<Void> runOnFxThread(Runnable runnable) {

@@ -2,6 +2,12 @@
 package cz.it4i.fiji.haas_spim_benchmark.ui;
 
 import java.awt.Window;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+import javax.swing.WindowConstants;
+
+import net.imagej.updater.util.Progress;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,9 +15,17 @@ import org.slf4j.LoggerFactory;
 import cz.it4i.fiji.haas.ui.CloseableControl;
 import cz.it4i.fiji.haas.ui.InitiableControl;
 import cz.it4i.fiji.haas.ui.JavaFXRoutines;
+import cz.it4i.fiji.haas.ui.ModalDialogs;
+import cz.it4i.fiji.haas.ui.ProgressDialog;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
 import cz.it4i.fiji.haas_spim_benchmark.core.ObservableBenchmarkJob;
+import cz.it4i.fiji.haas_spim_benchmark.core.SimpleObservableList;
+import cz.it4i.fiji.haas_spim_benchmark.core.SimpleObservableValue;
+import cz.it4i.fiji.haas_spim_benchmark.core.Task;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import javafx.collections.ListChangeListener;
 import javafx.fxml.FXML;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
@@ -24,13 +38,22 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 		cz.it4i.fiji.haas_spim_benchmark.ui.JobDetailControl.class);
 
 	@FXML
-	private SPIMPipelineProgressViewController progressView;
+	private SPIMPipelineProgressViewController progressControl;
 
 	@FXML
-	private LogViewControl errorOutput;
+	private Tab progressTab;
 
 	@FXML
-	private LogViewControl standardOutput;
+	private LogViewControl snakemakeOutputControl;
+
+	@FXML
+	private Tab snakemakeOutputTab;
+
+	@FXML
+	private LogViewControl otherOutputControl;
+
+	@FXML
+	private Tab otherOutputTab;
 
 	@FXML
 	private JobPropertiesControl jobProperties;
@@ -44,9 +67,59 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 	@FXML
 	private Tab dataUploadTab;
 
+	private final ExecutorService executorServiceWS;
+
 	private final ObservableBenchmarkJob job;
 
+	private SimpleObservableList<Task> taskList;
+
+	private final ListChangeListener<Task> taskListListener =
+		new ListChangeListener<Task>()
+		{
+
+			@Override
+			public void onChanged(Change<? extends Task> c) {
+				setTabAvailability(progressTab, taskList == null || taskList.isEmpty());
+			}
+
+		};
+
+	private SimpleObservableValue<String> errorOutput;
+
+	private final ChangeListener<String> errorOutputListener =
+		new ChangeListener<String>()
+		{
+
+			@Override
+			public void changed(ObservableValue<? extends String> observable,
+				String oldValue, String newValue)
+		{
+				if (newValue != null) {
+					setTabAvailability(snakemakeOutputTab, newValue.isEmpty());
+				}
+			}
+
+		};
+
+	private SimpleObservableValue<String> standardOutput;
+
+	private final ChangeListener<String> standardOutputListener =
+		new ChangeListener<String>()
+		{
+
+			@Override
+			public void changed(ObservableValue<? extends String> observable,
+				String oldValue, String newValue)
+		{
+				if (newValue != null) {
+					setTabAvailability(otherOutputTab, newValue.isEmpty());
+				}
+			}
+
+		};
+
 	public JobDetailControl(final ObservableBenchmarkJob job) {
+		executorServiceWS = Executors.newSingleThreadExecutor();
 		JavaFXRoutines.initRootAndController("JobDetail.fxml", this);
 		this.job = job;
 	}
@@ -55,31 +128,54 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 
 	@Override
 	public void init(final Window parameter) {
-		progressView.init(parameter);
-		progressView.setJob(job);
-		errorOutput.setObservable(job.getObservableSnakemakeOutput(
-			SynchronizableFileType.StandardErrorFile));
-		standardOutput.setObservable(job.getObservableSnakemakeOutput(
-			SynchronizableFileType.StandardOutputFile));
-		jobProperties.setJob(job);
-		dataUpload.setJob(job);
 
-		if (job.getValue().getState() == JobState.Disposed) {
-			// TODO: Handle this?
-			if (log.isInfoEnabled()) {
-				log.info("Job " + job.getValue().getId() +
-					" state has been resolved as Disposed.");
+		Progress progress = ModalDialogs.doModal(new ProgressDialog(parameter,
+			"Downloading tasks"), WindowConstants.DO_NOTHING_ON_CLOSE);
+
+		executorServiceWS.execute(() -> {
+
+			try {
+				progressControl.init(parameter);
+				taskList = job.getObservableTaskList();
+				taskList.subscribe(taskListListener);
+				progressControl.setObservable(taskList);
+
+				errorOutput = job.getObservableSnakemakeOutput(
+					SynchronizableFileType.StandardErrorFile);
+				errorOutput.addListener(errorOutputListener);
+				snakemakeOutputControl.setObservable(errorOutput);
+
+				standardOutput = job.getObservableSnakemakeOutput(
+					SynchronizableFileType.StandardOutputFile);
+				standardOutput.addListener(standardOutputListener);
+				otherOutputControl.setObservable(standardOutput);
+
+				jobProperties.setJob(job);
+				dataUpload.setJob(job);
+
+				if (job.getValue().getState() == JobState.Disposed) {
+					// TODO: Handle this?
+					if (log.isInfoEnabled()) {
+						log.info("Job " + job.getValue().getId() +
+							" state has been resolved as Disposed.");
+					}
+				}
+
+				setActiveFirstVisibleTab(true);
 			}
-		}
+			finally {
+				final ListChangeListener<Task> localListener = new ListChangeListener<Task>() {
 
-		if (areExecutionDetailsAvailable()) {
-			enableAllTabs();
-		}
-		else {
-			disableNonPermanentTabs();
-		}
+					@Override
+					public void onChanged(Change<? extends Task> c) {
+						taskList.unsubscribe(this);
+						progress.done();
+					}
+				};
+				taskList.subscribe(localListener);
+			}
+		});
 
-		setActiveFirstVisibleTab();
 	}
 
 	// -- CloseableControl methods --
@@ -87,45 +183,38 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 	@Override
 	public void close() {
 
+		executorServiceWS.shutdown();
+
 		// Close controllers
-		progressView.close();
+		taskList.unsubscribe(taskListListener);
+		progressControl.close();
+		errorOutput.removeListener(errorOutputListener);
+		snakemakeOutputControl.close();
+		standardOutput.removeListener(standardOutputListener);
+		otherOutputControl.close();
 		jobProperties.close();
 		dataUpload.close();
 	}
 
 	// -- Helper methods --
 
-	/*
-	 * Checks whether execution details are available
-	 */
-	private boolean areExecutionDetailsAvailable() {
-		return job.getValue().getState() == JobState.Running || job.getValue()
-			.getState() == JobState.Finished || job.getValue()
-				.getState() == JobState.Failed || job.getValue()
-					.getState() == JobState.Canceled;
+	private void setTabAvailability(final Tab tab, final boolean disabled) {
+		tab.setDisable(disabled);
+		setActiveFirstVisibleTab(false);
 	}
 
-	/*
-	 * Disables all tabs except those which shall be always enabled, such as job properties tab
-	 */
-	private void disableNonPermanentTabs() {
-		getTabs().stream().filter(t -> t != jobPropertiesTab && t != dataUploadTab)
-			.forEach(t -> t.setDisable(true));
-	}
+	private void setActiveFirstVisibleTab(final boolean force) {
 
-	/*
-	 * Enables all tabs
-	 */
-	private void enableAllTabs() {
-		getTabs().stream().forEach(t -> t.setDisable(false));
-	}
+		if (!force && !getSelectionModel().getSelectedItem().isDisabled()) {
+			return;
+		}
 
-	private void setActiveFirstVisibleTab() {
 		for (final Tab t : getTabs()) {
 			if (!t.isDisable()) {
 				t.getTabPane().getSelectionModel().select(t);
 				break;
 			}
 		}
+
 	}
 }

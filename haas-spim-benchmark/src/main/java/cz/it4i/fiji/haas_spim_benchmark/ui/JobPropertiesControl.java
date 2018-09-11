@@ -1,3 +1,4 @@
+
 package cz.it4i.fiji.haas_spim_benchmark.ui;
 
 import java.io.Closeable;
@@ -13,9 +14,8 @@ import org.slf4j.LoggerFactory;
 
 import cz.it4i.fiji.haas.ui.JavaFXRoutines;
 import cz.it4i.fiji.haas.ui.ShellRoutines;
-import cz.it4i.fiji.haas.ui.UpdatableObservableValue;
-import cz.it4i.fiji.haas.ui.UpdatableObservableValue.UpdateStatus;
 import cz.it4i.fiji.haas_spim_benchmark.core.ObservableBenchmarkJob;
+import cz.it4i.fiji.haas_spim_benchmark.core.SimpleObservableValue;
 import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
 import javafx.scene.control.TableView;
@@ -66,18 +66,13 @@ public class JobPropertiesControl extends BorderPane implements Closeable {
 	}
 
 	private void fillTable() {
-		properties.getItems().add(new UpdatableObservableValue<>(new P_Value(
-			"Input", job.getValue().getInputDirectory(),
-			"Demo data on the Salomon IT4I cluster"), x -> UpdateStatus.NotUpdated,
-			x -> x));
-		properties.getItems().add(new UpdatableObservableValue<>(new P_Value(
-			"Output", job.getValue().getOutputDirectory(), "N/A"),
-			x -> UpdateStatus.NotUpdated, x -> x));
-
-		properties.getItems().add(new UpdatableObservableValue<>(new P_Value(
-			"Working", job.getValue().getDirectory(), "N/A"),
-			x -> UpdateStatus.NotUpdated, x -> x));
-
+		properties.getItems().add(new SimpleObservableValue<>(new P_Value("Input",
+			job.getValue().getInputDirectory(),
+			"Demo data on the Salomon IT4I cluster")));
+		properties.getItems().add(new SimpleObservableValue<>(new P_Value("Output",
+			job.getValue().getOutputDirectory(), "N/A")));
+		properties.getItems().add(new SimpleObservableValue<>(new P_Value("Working",
+			job.getValue().getDirectory(), "N/A")));
 	}
 
 	private void setCellValueFactory(int i, Function<P_Value, String> mapper) {

@@ -13,27 +13,27 @@
 <fx:root type="TabPane" xmlns:fx="http://javafx.com/fxml/1"
 	xmlns="http://javafx.com/javafx/8.0.65" fx:controller="cz.it4i.fiji.haas_spim_benchmark.ui.JobDetailControl">
 	<tabs>
-		<Tab closable="false" text="Progress">
+		<Tab closable="false" text="Progress" fx:id="progressTab">
 			<content>
 				<HBox>
-					<SPIMPipelineProgressViewController fx:id="progressView"
+					<SPIMPipelineProgressViewController fx:id="progressControl"
 						HBox.hgrow="ALWAYS" />
 
 				</HBox>
 			</content>
 		</Tab>
-		<Tab closable="false" text="Snakemake output">
+		<Tab closable="false" text="Snakemake output" fx:id="snakemakeOutputTab">
 			<content>
 				<HBox>
-					<LogViewControl fx:id="errorOutput" HBox.hgrow="ALWAYS" />
+					<LogViewControl fx:id="snakemakeOutputControl" HBox.hgrow="ALWAYS" />
 
 				</HBox>
 			</content>
 		</Tab>
-		<Tab closable="false" text="Other output" >
+		<Tab closable="false" text="Other output" fx:id="otherOutputTab">
 			<content>
 				<HBox>
-					<LogViewControl fx:id="standardOutput" HBox.hgrow="ALWAYS" />
+					<LogViewControl fx:id="otherOutputControl" HBox.hgrow="ALWAYS" />
 				</HBox>
 			</content>
 

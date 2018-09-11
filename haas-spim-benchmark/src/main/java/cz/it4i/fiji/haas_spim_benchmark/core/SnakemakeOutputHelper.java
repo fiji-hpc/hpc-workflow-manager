@@ -5,6 +5,7 @@ import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.BENCHMARK_TASK_NAM
 import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.HAAS_UPDATE_TIMEOUT;
 import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.UI_TO_HAAS_FREQUENCY_UPDATE_RATIO;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -29,13 +30,12 @@ class SnakemakeOutputHelper implements HaaSOutputHolder {
 	private final List<BenchmarkError> nonTaskSpecificErrors;
 	private int processedOutputLength;
 
-	public SnakemakeOutputHelper(final Job job, final List<Task> tasks,
-		final List<BenchmarkError> nonTaskSpecificErrors)
+	public SnakemakeOutputHelper(final Job job)
 	{
 		this.job = job;
 		this.computationAccessor = createComputationAccessor();
-		this.tasks = tasks;
-		this.nonTaskSpecificErrors = nonTaskSpecificErrors;
+		this.tasks = new ArrayList<>();
+		this.nonTaskSpecificErrors = new ArrayList<>();
 	}
 
 	@Override
@@ -45,7 +45,7 @@ class SnakemakeOutputHelper implements HaaSOutputHolder {
 		return computationAccessor.getActualOutput(content);
 	}
 
-	List<Task> getTasks() {
+	synchronized List<Task> getTasks() {
 
 		// If no tasks have been identified, try to search through the output
 		if (tasks.isEmpty()) {

@@ -17,7 +17,6 @@ import org.slf4j.LoggerFactory;
 import cz.it4i.fiji.haas.ui.UpdatableObservableValue;
 import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
 import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.BenchmarkJob;
-import javafx.beans.value.ObservableValue;
 
 public class ObservableBenchmarkJob extends
 	UpdatableObservableValue<BenchmarkJob> implements Closeable
@@ -36,7 +35,9 @@ public class ObservableBenchmarkJob extends
 
 	private final P_Observable fileTransferObservable = new P_Observable();
 
-	private final HaasOutputObservableValueRegistry observableValueRegistry;
+	private final HaasOutputObservableValueRegistry haasOutputRegistry;
+
+	private final TaskObservableValueRegistry taskRegistry;
 
 	public interface TransferProgress {
 
@@ -59,7 +60,8 @@ public class ObservableBenchmarkJob extends
 		wrapped.setUploadNotifier(uploadProgress);
 		wrapped.resumeTransfer();
 
-		observableValueRegistry = new HaasOutputObservableValueRegistry(getValue());
+		haasOutputRegistry = new HaasOutputObservableValueRegistry(getValue());
+		taskRegistry = new TaskObservableValueRegistry(getValue());
 	}
 
 	public TransferProgress getDownloadProgress() {
@@ -83,15 +85,20 @@ public class ObservableBenchmarkJob extends
 		fileTransferObservable.deleteObserver(observer);
 	}
 
-	public ObservableValue<String> getObservableSnakemakeOutput(
+	public SimpleObservableValue<String> getObservableSnakemakeOutput(
 		SynchronizableFileType type)
 	{
-		return observableValueRegistry.getObservableOutput(type);
+		return haasOutputRegistry.getObservableOutput(type);
+	}
+
+	public SimpleObservableList<Task> getObservableTaskList() {
+		return taskRegistry.getTaskList();
 	}
 
 	@Override
 	public void close() {
-		observableValueRegistry.close();
+		haasOutputRegistry.close();
+		taskRegistry.close();
 	}
 
 	@Override
