@@ -164,7 +164,17 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 				setActiveFirstVisibleTab(true);
 			}
 			finally {
-				progress.done();
+				final ListChangeListener<Task> localListener = new ListChangeListener<Task>() {
+
+					@Override
+					public void onChanged(Change<? extends Task> c) {
+						if (!taskList.isEmpty()) {
+							taskList.unsubscribe(this);
+							progress.done();
+						}
+					}
+				};
+				taskList.subscribe(localListener);
 			}
 		});
 
