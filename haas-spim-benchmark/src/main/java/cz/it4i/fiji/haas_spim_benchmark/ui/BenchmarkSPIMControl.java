@@ -123,13 +123,14 @@ public class BenchmarkSPIMControl extends BorderPane implements
 			}
 		}
 	}
-	
+
 	@Override
 	synchronized public void close() {
-		if(!closed) {
+		if (!closed) {
 			executorServiceShell.shutdown();
 			executorServiceWS.shutdown();
 			executorServiceJobState.shutdown();
+			registry.close();
 			timer.cancel();
 			manager.close();
 			closed = true;
@@ -427,8 +428,6 @@ public class BenchmarkSPIMControl extends BorderPane implements
 			log.error(e.getMessage(), e);
 		}
 	}
-
-	
 
 	private interface P_JobAction {
 
