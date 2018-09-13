@@ -9,7 +9,6 @@ import cz.it4i.fiji.haas.ui.JavaFXRoutines;
 import cz.it4i.fiji.haas.ui.TableCellAdapter;
 import cz.it4i.fiji.haas_java_client.FileTransferInfo;
 import cz.it4i.fiji.haas_java_client.FileTransferState;
-import cz.it4i.fiji.haas_spim_benchmark.core.ObservableBenchmarkJob;
 import cz.it4i.fiji.haas_spim_benchmark.core.SimpleObservableList;
 import cz.it4i.fiji.haas_spim_benchmark.core.SimpleObservableValue;
 import javafx.fxml.FXML;
@@ -37,10 +36,9 @@ public class DataTransferController extends BorderPane implements
 	}
 
 	@SuppressWarnings("unchecked")
-	public void setJob(final ObservableBenchmarkJob job) {
-
-		SimpleObservableList<FileTransferInfo> fileTransferList = job
-			.getFileTransferList();
+	public void setObservable(
+		final SimpleObservableList<FileTransferInfo> fileTransferList)
+	{
 
 		if (fileTransferList != null && fileTransferList.size() != 0) {
 

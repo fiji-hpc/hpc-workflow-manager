@@ -17,6 +17,7 @@ import cz.it4i.fiji.haas.ui.InitiableControl;
 import cz.it4i.fiji.haas.ui.JavaFXRoutines;
 import cz.it4i.fiji.haas.ui.ModalDialogs;
 import cz.it4i.fiji.haas.ui.ProgressDialog;
+import cz.it4i.fiji.haas_java_client.FileTransferInfo;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
 import cz.it4i.fiji.haas_spim_benchmark.core.ObservableBenchmarkJob;
@@ -62,7 +63,7 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 	private Tab jobPropertiesTab;
 
 	@FXML
-	private DataTransferController dataUpload;
+	private DataTransferController dataUploadControl;
 
 	@FXML
 	private Tab dataUploadTab;
@@ -151,7 +152,12 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 				otherOutputControl.setObservable(standardOutput);
 
 				jobProperties.setJob(job);
-				dataUpload.setJob(job);
+
+				SimpleObservableList<FileTransferInfo> fileTransferList = job
+					.getFileTransferList();
+				setTabAvailability(dataUploadTab, fileTransferList == null ||
+					fileTransferList.size() == 0);
+				dataUploadControl.setObservable(fileTransferList);
 
 				if (job.getValue().getState() == JobState.Disposed) {
 					// TODO: Handle this?
@@ -193,7 +199,7 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 		standardOutput.removeListener(standardOutputListener);
 		otherOutputControl.close();
 		jobProperties.close();
-		dataUpload.close();
+		dataUploadControl.close();
 	}
 
 	// -- Helper methods --

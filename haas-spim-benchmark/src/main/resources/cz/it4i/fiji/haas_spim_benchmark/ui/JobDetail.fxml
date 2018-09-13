@@ -49,7 +49,7 @@
 		<Tab closable="false" text="Data upload" fx:id="dataUploadTab">
 			<content>
 				<HBox>
-					<DataTransferController fx:id="dataUpload" HBox.hgrow="ALWAYS" />
+					<DataTransferController fx:id="dataUploadControl" HBox.hgrow="ALWAYS" />
 				</HBox>
 			</content>
 		</Tab>
