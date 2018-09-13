@@ -2,8 +2,6 @@
 package cz.it4i.fiji.haas_spim_benchmark.core;
 
 import java.io.Closeable;
-import java.util.Observable;
-import java.util.Observer;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -15,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import cz.it4i.fiji.haas.ui.UpdatableObservableValue;
+import cz.it4i.fiji.haas_java_client.FileTransferInfo;
 import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
 import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.BenchmarkJob;
 
@@ -33,11 +32,11 @@ public class ObservableBenchmarkJob extends
 		() -> getValue().needsUpload());
 	private final Executor executor;
 
-	private final P_Observable fileTransferObservable = new P_Observable();
-
 	private final HaasOutputObservableValueRegistry haasOutputRegistry;
 
 	private final TaskObservableValueRegistry taskRegistry;
+
+	private final SimpleObservableList<FileTransferInfo> fileTransferList;
 
 	public interface TransferProgress {
 
@@ -62,6 +61,8 @@ public class ObservableBenchmarkJob extends
 
 		haasOutputRegistry = new HaasOutputObservableValueRegistry(getValue());
 		taskRegistry = new TaskObservableValueRegistry(getValue());
+		fileTransferList = new SimpleObservableList<>(wrapped
+			.getFileTransferInfo());
 	}
 
 	public TransferProgress getDownloadProgress() {
@@ -77,12 +78,8 @@ public class ObservableBenchmarkJob extends
 		getValue().setUploadNotifier(null);
 	}
 
-	public void startObservingFileTransfer(final Observer observer) {
-		fileTransferObservable.addObserver(observer);
-	}
-
-	public void stopObservingFileTransfer(final Observer observer) {
-		fileTransferObservable.deleteObserver(observer);
+	public SimpleObservableList<FileTransferInfo> getFileTransferList() {
+		return fileTransferList;
 	}
 
 	public SimpleObservableValue<String> getObservableSnakemakeOutput(
@@ -108,20 +105,7 @@ public class ObservableBenchmarkJob extends
 		});
 	}
 
-	private void notifyFileTransferObservers() {
-		fileTransferObservable.setChanged();
-		fileTransferObservable.notifyObservers();
-	}
-
 	// -- Private classes --
-
-	private class P_Observable extends Observable {
-
-		@Override
-		public synchronized void setChanged() {
-			super.setChanged();
-		}
-	}
 
 	private class P_TransferProgress implements Progress, TransferProgress {
 
@@ -192,7 +176,7 @@ public class ObservableBenchmarkJob extends
 
 		@Override
 		public void itemDone(final Object item) {
-			notifyFileTransferObservers();
+			fileTransferList.setAll(getValue().getFileTransferInfo());
 		}
 
 		@Override
