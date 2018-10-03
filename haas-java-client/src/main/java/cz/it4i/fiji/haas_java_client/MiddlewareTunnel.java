@@ -20,6 +20,7 @@ import java.util.concurrent.Future;
 import java.util.function.Consumer;
 
 import javax.xml.ws.BindingProvider;
+import javax.xml.ws.WebServiceException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -303,7 +304,12 @@ class MiddlewareTunnel implements Closeable {
 		if (log.isDebugEnabled()) {
 			log.debug("sendEOF to middleware");
 		}
-		dataTransfer.writeDataToJobNode(null, jobId, ipAddress, sessionCode, true);
+		try {
+			dataTransfer.writeDataToJobNode(null, jobId, ipAddress, sessionCode, true);
+		} 
+		catch (WebServiceException e) {
+			//ignore this
+		}
 	}
 
 	private void readFromMiddleware(final P_Connection connection) {
