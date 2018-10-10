@@ -76,6 +76,7 @@ public abstract class PersistentSynchronizationProcess<T> {
 				index.insert(item);
 				toProcessQueue.add(item);
 			}
+			index.storeToWorkingFile();
 			return runner.runIfNotRunning(this::doProcess);
 		} finally {
 			startFinished = true;
