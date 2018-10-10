@@ -58,6 +58,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.Label;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -100,6 +101,7 @@ public class BenchmarkSPIMControl extends BorderPane implements
 	public BenchmarkSPIMControl(BenchmarkJobManager manager) {
 		this.manager = manager;
 		JavaFXRoutines.initRootAndController("BenchmarkSPIM.fxml", this);
+		jobs.setPlaceholder(new Label("No content in table. Right click to create new one."));
 	}
 
 	@Override
