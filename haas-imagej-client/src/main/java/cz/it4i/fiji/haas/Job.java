@@ -178,7 +178,7 @@ public class Job {
 	}
 
 	public boolean canBeDownloaded() {
-		return Boolean.parseBoolean(getProperty(JOB_CAN_BE_DOWNLOADED));
+		return true;//Boolean.parseBoolean(getProperty(JOB_CAN_BE_DOWNLOADED));
 	}
 
 	public void setUploaded(boolean b) {
