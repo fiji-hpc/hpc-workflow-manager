@@ -40,7 +40,8 @@ public class ResultFileTask {
 		// Calculate start and wall time values
 		DateTimeFormatter formatter = new DateTimeFormatterBuilder()
 				.appendOptional(DateTimeFormatter.ofPattern("EEE MMM d kk:mm:ss z yyyy"))
-				.appendOptional(DateTimeFormatter.ofPattern("EEE MMM d kk:mm:ss yyyy")).toFormatter(Locale.ENGLISH);
+				.appendOptional(DateTimeFormatter.ofPattern("EEE MMM d kk:mm:ss yyyy"))
+				.appendOptional(DateTimeFormatter.ofPattern("EEE MMM  d kk:mm:ss yyyy")).toFormatter(Locale.ENGLISH);
 		Collection<Double> startTimeValues = retrieveValues(Constants.STATISTICS_RESOURCES_START_TIME)
 				.map(s -> s != null && !s.equals("null")
 						? (double) LocalDateTime.parse(s, formatter).toEpochSecond(ZoneOffset.UTC)
