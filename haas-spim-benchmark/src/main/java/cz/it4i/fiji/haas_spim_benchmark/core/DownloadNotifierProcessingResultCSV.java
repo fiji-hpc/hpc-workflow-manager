@@ -49,7 +49,12 @@ class DownloadNotifierProcessingResultCSV implements ProgressNotifier {
 	public void itemDone(final Object item) {
 		if (item instanceof String && ((String)item).endsWith(Constants.BENCHMARK_RESULT_FILE)) {
 			final Path resultFile = job.getDirectory().resolve(Constants.BENCHMARK_RESULT_FILE);
-			if (resultFile != null) BenchmarkJobManager.formatResultFile(resultFile);
+			try {
+				if (resultFile != null) BenchmarkJobManager.formatResultFile(resultFile);
+			} 
+			catch (RuntimeException e) {
+				log.warn("parsing result file failed", e);
+			}
 		}
 		decorated.itemDone(item);
 	}
