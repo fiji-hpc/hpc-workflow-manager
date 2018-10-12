@@ -69,6 +69,11 @@ import cz.it4i.fiji.haas_java_client.UploadingFile;
 
 public class BenchmarkJobManager implements Closeable {
 
+	public interface DownloadingStatusProvider {
+		boolean isDownloaded();
+		boolean needsDownload();
+	}
+
 	private static Logger log = LoggerFactory
 			.getLogger(cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.class);
 
@@ -82,6 +87,18 @@ public class BenchmarkJobManager implements Closeable {
 		private boolean verifiedStateProcessed;
 		private CompletableFuture<JobState> running;
 		private ProgressNotifier downloadNotifier;
+		private DownloadingStatusProvider downloadingStatus = new DownloadingStatusProvider() {
+			
+			@Override
+			public boolean needsDownload() {
+				return job.needsDownload();
+			}
+			
+			@Override
+			public boolean isDownloaded() {
+				return job.isDownloaded();
+			}
+		};
 
 		private boolean visibleInBDV;
 
@@ -221,7 +238,7 @@ public class BenchmarkJobManager implements Closeable {
 		}
 
 		public boolean needsDownload() {
-			return job.needsDownload();
+			return downloadingStatus.needsDownload();
 		}
 
 		public void setDownloadNotifier(Progress progress) {
@@ -239,7 +256,7 @@ public class BenchmarkJobManager implements Closeable {
 		}
 
 		public boolean isDownloaded() {
-			return job.isDownloaded();
+			return downloadingStatus.isDownloaded();
 		}
 
 		public void resumeTransfer() {
@@ -383,12 +400,16 @@ public class BenchmarkJobManager implements Closeable {
 			throws IOException
 		{
 			String mainFile = job.getProperty(SPIM_OUTPUT_FILENAME_PATTERN) + ".xml";
-			final ProgressNotifierTemporarySwitchOff notifierSwitch =
+			final StillRunningDownloadSwitcher stillRunningTemporarySwitch =
+				new StillRunningDownloadSwitcher(() -> downloadingStatus,
+					val -> downloadingStatus = val);
+			final ProgressNotifierTemporarySwitchOff progressNotifierTemporarySwitchOff =
 				new ProgressNotifierTemporarySwitchOff(downloadNotifier, job);
-
 			job.startDownload(downloadFileNameExtractDecorator(fileName -> fileName
-				.equals(mainFile))).whenComplete((X, E) -> {
-					notifierSwitch.switchOn();
+				.equals(mainFile))).exceptionally(__ -> {
+					progressNotifierTemporarySwitchOff.switchOn();
+					stillRunningTemporarySwitch.switchBack();
+					return null;
 				}).thenCompose(X -> {
 					Set<String> otherFiles = extractNames(getOutputDirectory().resolve(
 						mainFile));
@@ -398,8 +419,11 @@ public class BenchmarkJobManager implements Closeable {
 					}
 					catch (IOException e) {
 						throw new RuntimeException(e);
+					} 
+					finally {
+						progressNotifierTemporarySwitchOff.switchOn();
+						stillRunningTemporarySwitch.switchBack();
 					}
-
 				}).whenComplete((X, e) -> {
 					if (e != null) {
 						log.error(e.getMessage(), e);
