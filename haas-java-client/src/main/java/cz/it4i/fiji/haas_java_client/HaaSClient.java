@@ -32,6 +32,7 @@ import javax.xml.ws.WebServiceException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import cz.it4i.fiji.haas_java_client.HaasFileTransferReconnectingAfterAuthFail.Supplier;
 import cz.it4i.fiji.haas_java_client.proxy.ArrayOfCommandTemplateParameterValueExt;
 import cz.it4i.fiji.haas_java_client.proxy.ArrayOfEnvironmentVariableExt;
 import cz.it4i.fiji.haas_java_client.proxy.ArrayOfTaskFileOffsetExt;
@@ -226,8 +227,7 @@ public class HaaSClient {
 		try {
 			return createFileTransfer(jobId, notifier);
 		}
-		catch (RemoteException | ServiceException | UnsupportedEncodingException
-				| JSchException e)
+		catch (RemoteException | ServiceException e)
 		{
 			throw new HaaSClientException(e);
 		}
@@ -356,32 +356,43 @@ public class HaaSClient {
 		return sessionID;
 	}
 
-	private HaaSFileTransferImp createFileTransfer(final long jobId,
+	private HaaSFileTransfer createFileTransfer(final long jobId,
 		final TransferFileProgress progress) throws RemoteException,
-		UnsupportedEncodingException, ServiceException, JSchException
+		ServiceException
 	{
 		final P_FileTransferPool pool = filetransferPoolMap.computeIfAbsent(jobId,
 			id -> new P_FileTransferPool(id));
-		final FileTransferMethodExt ft = pool.obtain();
-		try {
-			return new HaaSFileTransferImp(ft, getScpClient(ft), progress) {
+		
+			return new HaasFileTransferReconnectingAfterAuthFail(getHaasFileTransferFactory(pool, progress),
+				() -> pool.reconnect());
+	}
 
-				@Override
-				public void close() {
-					super.close();
-					try {
-						pool.release();
+	private Supplier<HaaSFileTransfer> getHaasFileTransferFactory(
+		P_FileTransferPool pool, TransferFileProgress progress)
+	{
+		return () -> {
+
+			final FileTransferMethodExt ft = pool.obtain();
+			try {
+				return new HaaSFileTransferImp(ft, getScpClient(ft), progress) {
+
+					@Override
+					public void close() {
+						super.close();
+						try {
+							pool.release();
+						}
+						catch (RemoteException | ServiceException e) {
+							throw new HaaSClientException(e);
+						}
 					}
-					catch (RemoteException | ServiceException e) {
-						throw new HaaSClientException(e);
-					}
-				}
-			};
-		}
-		catch (UnsupportedEncodingException | JSchException e) {
-			pool.release();
-			throw e;
-		}
+				};
+			}
+			catch (UnsupportedEncodingException | JSchException e) {
+				pool.release();
+				throw new HaaSClientException(e);
+			}
+		};
 	}
 
 	private HaaSDataTransfer createDataTransfer(final long jobId,
@@ -661,7 +672,22 @@ public class HaaSClient {
 			this.factory = () -> getFileTransfer().getFileTransferMethod(jobId,
 				getSessionID());
 			this.destroyer = val -> getFileTransfer().endFileTransfer(jobId, val,
-				sessionID);
+				getSessionID());
+		}
+
+		public void reconnect() {
+			try {
+				if (holded != null) {
+					destroyer.accept(holded);
+				}
+				sessionID = null;
+				if (holded != null) {
+					holded = factory.get();
+				}
+			}
+			catch (RemoteException | ServiceException exc) {
+				throw new HaaSClientException(exc);
+			}
 		}
 
 		public synchronized FileTransferMethodExt obtain() throws RemoteException,
