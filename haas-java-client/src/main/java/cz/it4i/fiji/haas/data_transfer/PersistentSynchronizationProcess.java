@@ -153,6 +153,9 @@ public abstract class PersistentSynchronizationProcess<T> {
 					fileTransfered(p);
 				}
 				catch (InterruptedIOException | HaaSClientException e) {
+					if (e instanceof HaaSClientException) {
+						log.warn("process ", e);
+					}
 					toProcessQueue.clear();
 					interrupted = true;
 				}

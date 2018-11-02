@@ -14,8 +14,16 @@ public class UploadingFileImpl implements UploadingFile {
 
 	private final Path path;
 
-	public UploadingFileImpl(Path path) {
-		this.path = path;
+	private Path baseDirPath;
+
+	
+	public UploadingFileImpl(Path p) {
+		this(p, null);
+	}
+	
+	public UploadingFileImpl(Path p, Path baseDirPath) {
+		this.path = p;
+		this.baseDirPath = baseDirPath;
 	}
 
 	@Override
@@ -25,7 +33,10 @@ public class UploadingFileImpl implements UploadingFile {
 
 	@Override
 	public String getName() {
-		return path.getFileName().toString();
+		if (baseDirPath == null || !path.startsWith(baseDirPath)) {
+			return path.getFileName().toString();
+		}
+		return baseDirPath.relativize(path).toString();
 	}
 
 	@Override

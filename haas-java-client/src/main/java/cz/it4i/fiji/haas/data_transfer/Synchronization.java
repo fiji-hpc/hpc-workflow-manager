@@ -4,7 +4,6 @@ package cz.it4i.fiji.haas.data_transfer;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InterruptedIOException;
-import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -18,6 +17,7 @@ import java.util.concurrent.Executors;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import org.slf4j.Logger;
@@ -140,10 +140,9 @@ public class Synchronization implements Closeable {
 
 			@Override
 			protected Collection<Path> getItems() throws IOException {
-				try (DirectoryStream<Path> ds = Files.newDirectoryStream(inputDirectory,
-						Synchronization.this::canUpload)) {
-					return StreamSupport.stream(ds.spliterator(), false).filter(
-						p -> !filesUploaded.contains(p)).collect(Collectors.toList());
+				try (Stream<Path> ds = Files.walk(inputDirectory)) {
+					return ds.filter(p -> !Files.isDirectory(p) && canUpload(p) &&
+						!filesUploaded.contains(p)).collect(Collectors.toList());
 				}
 
 			}
@@ -152,15 +151,14 @@ public class Synchronization implements Closeable {
 			protected void processItem(final HaaSFileTransfer tr, final Path p)
 				throws InterruptedIOException
 			{
-				final UploadingFile uf = new UploadingFileImpl(p);
+				final UploadingFile uf = new UploadingFileImpl(p, inputDirectory);
 				tr.upload(uf);
 				filesUploaded.insert(inputDirectory.resolve(p.toString()));
 				try {
 					filesUploaded.storeToWorkingFile();
-				}
-				catch (final IOException e) {
+				} catch (final IOException e) {
 					log.error(e.getMessage(), e);
-				}
+				} 
 			}
 
 			@Override

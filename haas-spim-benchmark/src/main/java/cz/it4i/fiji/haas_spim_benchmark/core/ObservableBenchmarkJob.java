@@ -126,7 +126,7 @@ public class ObservableBenchmarkJob extends
 
 		@Override
 		public synchronized void setCount(int count, int total) {
-			if (total < -1) {
+			if (total <= -1) {
 				clearProgress();
 			}
 			else if (start != null) {

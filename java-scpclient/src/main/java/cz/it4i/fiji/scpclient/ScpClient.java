@@ -21,6 +21,7 @@ import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
 import java.nio.channels.ClosedByInterruptException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -33,9 +34,11 @@ import cz.it4i.fiji.commons.DoActionEventualy;
 
 public class ScpClient implements Closeable {
 
+		private static final String NO_SUCH_FILE_OR_DIRECTORY_ERROR_TEXT = "No such file or directory";
+
 	public static final Logger log = LoggerFactory.getLogger(
 		cz.it4i.fiji.scpclient.ScpClient.class);
-
+	
 	private static final int MAX_NUMBER_OF_CONNECTION_ATTEMPTS = 5;
 
 	private static final long TIMEOUT_BETWEEN_CONNECTION_ATTEMPTS = 500;
@@ -162,6 +165,7 @@ public class ScpClient implements Closeable {
 					// System.out.println("filesize="+filesize+", file="+file);
 
 					// send '\0'
+					
 					buf[0] = 0;
 					out.write(buf, 0, 1);
 					out.flush();
@@ -223,68 +227,28 @@ public class ScpClient implements Closeable {
 		long lastModified, TransferFileProgress progress) throws JSchException,
 		IOException
 	{
-		boolean ptimestamp = true;
-		// exec 'scp -t rfile' remotely
-		String command = "scp " + (ptimestamp ? "-p" : "") + " -t " + fileName;
-		Channel channel = getConnectedSession().openChannel("exec");
-		((ChannelExec) channel).setCommand(command);
-		// get I/O streams for remote scp
-		try (OutputStream out = channel.getOutputStream();
-				InputStream in = channel.getInputStream())
-		{
-			channel.connect();
-			if (checkAck(in) != 0) {
-				return false;
-			}
-
-			if (ptimestamp) {
-				command = "T " + (lastModified / 1000) + " 0";
-				// The access time should be sent here,
-				// but it is not accessible with JavaAPI ;-<
-				command += (" " + (lastModified / 1000) + " 0\n");
-				out.write(command.getBytes());
-				out.flush();
-				if (checkAck(in) != 0) {
-					return false;
+		int noSuchFileExceptionThrown = 0;
+		do {
+			
+			try {
+				return scp2Server(is, fileName, length, lastModified, progress);
+			} catch (NoSuchFileException e) {
+				if(noSuchFileExceptionThrown > MAX_NUMBER_OF_CONNECTION_ATTEMPTS) {
+					break;
 				}
+				if (noSuchFileExceptionThrown > 0) {
+					try {
+						Thread.sleep(TIMEOUT_BETWEEN_CONNECTION_ATTEMPTS);
+					}
+					catch (InterruptedException exc) {
+					}
+				}
+				mkdir(e.getFile());
+				noSuchFileExceptionThrown++;
+				continue;
 			}
-
-			// send "C0644 filesize filename", where filename should not include '/'
-			long filesize = length;
-			command = "C0644 " + filesize + " ";
-			command += Paths.get(fileName).getFileName().toString();
-			command += "\n";
-			out.write(command.getBytes());
-			out.flush();
-			if (checkAck(in) != 0) {
-				return false;
-			}
-			byte[] buf = new byte[getBufferSize()];
-			// send a content of lfile
-			while (true) {
-				int len = is.read(buf, 0, buf.length);
-				if (len <= 0) break;
-				out.write(buf, 0, len); // out.flush();
-				progress.dataTransfered(len);
-			}
-			// send '\0'
-			buf[0] = 0;
-			out.write(buf, 0, 1);
-			out.flush();
-			if (checkAck(in) != 0) {
-				return false;
-			}
-			out.close();
-
-		}
-		catch (ClosedByInterruptException e) {
-			Thread.interrupted();
-			throw new InterruptedIOException();
-		}
-		finally {
-			channel.disconnect();
-		}
-		return true;
+		} while(true);
+		return false;
 	}
 
 	public long size(String lfile) throws JSchException, IOException {
@@ -427,6 +391,98 @@ public class ScpClient implements Closeable {
 		return session;
 	}
 
+	private boolean scp2Server(InputStream is, String fileName, long length,
+		long lastModified, TransferFileProgress progress) throws JSchException,
+		IOException, InterruptedIOException
+	{
+		boolean ptimestamp = true;
+		// exec 'scp -t rfile' remotely
+		String command = "scp " + (ptimestamp ? "-p" : "") + " -t '" + fileName + "'";
+		Channel channel = getConnectedSession().openChannel("exec");
+		((ChannelExec) channel).setCommand(command);
+		// get I/O streams for remote scp
+		try (OutputStream out = channel.getOutputStream();
+				InputStream in = channel.getInputStream())
+		{
+			channel.connect();
+			if (checkAck(in) != 0) {
+				return false;
+			}
+	
+			if (ptimestamp) {
+				command = "T " + (lastModified / 1000) + " 0";
+				// The access time should be sent here,
+				// but it is not accessible with JavaAPI ;-<
+				command += (" " + (lastModified / 1000) + " 0\n");
+				out.write(command.getBytes());
+				out.flush();
+				if (checkAck(in) != 0) {
+					return false;
+				}
+			}
+	
+			// send "C0644 filesize filename", where filename should not include '/'
+			long filesize = length;
+			command = "C0644 " + filesize + " ";
+			command += Paths.get(fileName).getFileName().toString();
+			command += "\n";
+			out.write(command.getBytes());
+			out.flush();
+			StringBuilder sb = new StringBuilder();
+			int result;
+			if ((result = checkAck(in, sb)) != 0) {
+				if (result == 1 && sb.toString().contains(NO_SUCH_FILE_OR_DIRECTORY_ERROR_TEXT) ) {
+					throw new NoSuchFileException(getParent(fileName));
+				}
+				return false;
+			}
+			byte[] buf = new byte[getBufferSize()];
+			// send a content of lfile
+			while (true) {
+				int len = is.read(buf, 0, buf.length);
+				if (len <= 0) break;
+				out.write(buf, 0, len); // out.flush();
+				progress.dataTransfered(len);
+			}
+			// send '\0'
+			buf[0] = 0;
+			out.write(buf, 0, 1);
+			out.flush();
+			if (checkAck(in) != 0) {
+				return false;
+			}
+			out.close();
+	
+		}
+		catch (ClosedByInterruptException e) {
+			Thread.interrupted();
+			throw new InterruptedIOException();
+		}
+		finally {
+			channel.disconnect();
+		}
+		return true;
+	}
+
+	private int mkdir(String file) throws JSchException {
+		ChannelExec channel = (ChannelExec) getConnectedSession().openChannel("exec");
+		channel.setCommand("mkdir -p '" + file + "'");
+		try {
+			channel.connect();
+			return channel.getExitStatus();
+		} finally {
+			channel.disconnect();
+		}
+	}
+
+	private String getParent(String fileName) {
+		int index = fileName.lastIndexOf('/');
+		if (index == -1) {
+			return null;
+		}
+		return fileName.substring(0, index);
+	}
+
 	private class P_UserInfo implements UserInfo {
 
 		@Override
@@ -460,6 +516,14 @@ public class ScpClient implements Closeable {
 	}
 
 	static int checkAck(InputStream in) throws IOException {
+		StringBuilder sb = new StringBuilder();
+		int result = checkAck(in, sb);
+		if (result != 0) {
+			log.warn(sb.toString());
+		}
+		return result;
+	}
+	static int checkAck(InputStream in, StringBuilder sb) throws IOException {
 		int b = in.read();
 		// b may be 0 for success,
 		// 1 for error,
@@ -469,19 +533,12 @@ public class ScpClient implements Closeable {
 		if (b == -1) return b;
 
 		if (b == 1 || b == 2) {
-			StringBuffer sb = new StringBuffer();
 			int c;
 			do {
 				c = in.read();
 				sb.append((char) c);
 			}
 			while (c != '\n');
-			if (b == 1) { // error
-				System.out.print(sb.toString());
-			}
-			if (b == 2) { // fatal error
-				System.out.print(sb.toString());
-			}
 		}
 		return b;
 	}

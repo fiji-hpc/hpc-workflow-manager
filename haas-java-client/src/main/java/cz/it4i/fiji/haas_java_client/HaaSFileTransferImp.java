@@ -41,8 +41,7 @@ class HaaSFileTransferImp implements HaaSFileTransfer {
 
 	@Override
 	public void upload(final UploadingFile file) throws InterruptedIOException {
-		final String destFile = "'" + ft.getSharedBasepath() + "/" + file
-			.getName() + "'";
+		final String destFile = ft.getSharedBasepath() + "/" + file.getName();
 		try (InputStream is = file.getInputStream()) {
 			if (!scpClient.upload(is, destFile, file.getLength(), file.getLastTime(),
 				progress))
