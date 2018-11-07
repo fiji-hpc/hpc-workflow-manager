@@ -43,18 +43,13 @@ class HaaSFileTransferImp implements HaaSFileTransfer {
 	public void upload(final UploadingFile file) throws InterruptedIOException {
 		final String destFile = ft.getSharedBasepath() + "/" + file.getName();
 		try (InputStream is = file.getInputStream()) {
-			if (!scpClient.upload(is, destFile, file.getLength(), file.getLastTime(),
-				progress))
-			{
-				throw new HaaSClientException("Uploading of " + file + " to " +
-					destFile + " failed");
-			}
-		}
-		catch (final InterruptedIOException e) {
-			throw e;
+			scpClient.upload(is, destFile, file.getLength(), file.getLastTime(),
+				progress);
+			
 		}
 		catch (JSchException | IOException e) {
-			throw new HaaSClientException(e);
+			throw new HaaSClientException("An upload of " + file + " to " + destFile +
+				" failed: " + e.getMessage(), e);
 		}
 	}
 
@@ -67,16 +62,14 @@ class HaaSFileTransferImp implements HaaSFileTransfer {
 			final Path rFile = workDirectory.resolve(fileName);
 			final String fileToDownload = "'" + ft.getSharedBasepath() + "/" +
 				fileName + "'";
-			if (!scpClient.download(fileToDownload, rFile, progress)) {
-				throw new HaaSClientException("Downloading of " + fileName + " to " +
-					workDirectory + " failed");
-			}
+			scpClient.download(fileToDownload, rFile, progress);
 		}
 		catch (final InterruptedIOException e) {
 			throw e;
 		}
 		catch (JSchException | IOException e) {
-			throw new HaaSClientException(e);
+			throw new HaaSClientException("A download of " + fileName + " to " +
+				workDirectory + " failed: " + e.getMessage());
 		}
 	}
 

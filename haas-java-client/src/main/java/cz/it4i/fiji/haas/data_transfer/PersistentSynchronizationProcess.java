@@ -30,9 +30,10 @@ import cz.it4i.fiji.haas_java_client.TransferFileProgressForHaaSClient;
 
 public abstract class PersistentSynchronizationProcess<T> {
 
-	private boolean startFinished = true;
+	
+	public static final String FAILED_ITEM = "Failed item"; 
 
-	public static final Logger log = LoggerFactory
+	private static final Logger log = LoggerFactory
 			.getLogger(cz.it4i.fiji.haas.data_transfer.PersistentSynchronizationProcess.class);
 
 	private static final TransferFileProgressForHaaSClient DUMMY_FILE_PROGRESS = new TransferFileProgressForHaaSClient(
@@ -56,6 +57,8 @@ public abstract class PersistentSynchronizationProcess<T> {
 
 	private ProgressNotifier notifier;
 
+	private boolean startFinished = true;
+	
 	private final AtomicInteger runningProcessCounter = new AtomicInteger();
 	
 	private final Collection<P_HolderOfOpenClosables> openedClosables = new LinkedList<>();
@@ -114,6 +117,10 @@ public abstract class PersistentSynchronizationProcess<T> {
 		this.notifier = notifier;
 	}
 
+	public synchronized boolean isWorking() {
+		return !toProcessQueue.isEmpty();
+	}
+
 	abstract protected Iterable<T> getItems() throws IOException;
 
 	abstract protected void processItem(HaaSFileTransfer tr, T p) throws InterruptedIOException;
@@ -151,15 +158,19 @@ public abstract class PersistentSynchronizationProcess<T> {
 				try {
 					processItem(tr, p);
 					fileTransfered(p);
+					actualnotifier.itemDone(item);
 				}
 				catch (InterruptedIOException | HaaSClientException e) {
-					if (e instanceof HaaSClientException) {
-						log.warn("process ", e);
+					synchronized (this) {
+						toProcessQueue.clear();
+						interrupted = true;
+						if (e instanceof HaaSClientException) {
+							log.warn("process ", e);
+							actualnotifier.addItem(FAILED_ITEM);
+						}
 					}
-					toProcessQueue.clear();
-					interrupted = true;
 				}
-				actualnotifier.itemDone(item);
+				
 			} while(true);
 		} finally {
 			runningTransferThreads.remove(Thread.currentThread());

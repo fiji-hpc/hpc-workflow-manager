@@ -2,6 +2,7 @@
 package cz.it4i.fiji.haas_spim_benchmark.core;
 
 import java.io.Closeable;
+import java.util.Objects;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -12,6 +13,7 @@ import net.imagej.updater.util.Progress;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import cz.it4i.fiji.haas.data_transfer.PersistentSynchronizationProcess;
 import cz.it4i.fiji.haas.ui.UpdatableObservableValue;
 import cz.it4i.fiji.haas_java_client.FileTransferInfo;
 import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
@@ -26,10 +28,10 @@ public class ObservableBenchmarkJob extends
 
 	private final P_TransferProgress downloadProgress = new P_TransferProgress(
 		val -> getValue().setDownloaded(val), () -> getValue().isDownloaded(),
-		() -> getValue().needsDownload());
+		() -> getValue().isDownloading());
 	private final P_TransferProgress uploadProgress = new P_TransferProgress(
 		val -> getValue().setUploaded(val), () -> getValue().isUploaded(),
-		() -> getValue().needsUpload());
+		() -> getValue().isUploading());
 	private final Executor executor;
 
 	private final HaasOutputObservableValueRegistry haasOutputRegistry;
@@ -45,6 +47,8 @@ public class ObservableBenchmarkJob extends
 		public boolean isDone();
 
 		public boolean isWorking();
+		
+		public boolean isFailed();
 
 		public Float getRemainingPercents();
 	}
@@ -115,6 +119,7 @@ public class ObservableBenchmarkJob extends
 		private Long start;
 		private Long remainingMiliseconds;
 		private Float remainingPercents;
+		private boolean failed = false;
 
 		public P_TransferProgress(Consumer<Boolean> doneStatusConsumer,
 			Supplier<Boolean> doneStatusSupplier, Supplier<Boolean> workingSupplier)
@@ -140,7 +145,11 @@ public class ObservableBenchmarkJob extends
 
 		@Override
 		public synchronized void addItem(Object item) {
-			if (start == null) {
+			if (Objects.equals(item, PersistentSynchronizationProcess.FAILED_ITEM)) {
+				failed = true;
+				doneStatusConsumer.accept(false);
+				fireValueChangedEvent();
+			} else if (start == null) {
 				setDone(false);
 				clearProgress();
 				start = System.currentTimeMillis();
@@ -159,6 +168,11 @@ public class ObservableBenchmarkJob extends
 		@Override
 		public synchronized boolean isWorking() {
 			return workingSupplier.get();
+		}
+		
+		@Override
+		public boolean isFailed() {
+			return failed ;
 		}
 
 		@Override
@@ -193,6 +207,7 @@ public class ObservableBenchmarkJob extends
 		}
 
 		private void setDone(boolean val) {
+			failed = false;
 			doneStatusConsumer.accept(val);
 		}
 	}

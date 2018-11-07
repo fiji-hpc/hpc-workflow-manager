@@ -193,12 +193,20 @@ public class Job {
 		return getSafeBoolean(getProperty(JOB_IS_UPLOADED));
 	}
 
+	public boolean isUploading() {
+		return synchronization.isUploading();
+	}
+
 	public boolean isDownloaded() {
 		return getSafeBoolean(getProperty(JOB_IS_DOWNLOADED));
 	}
 
 	public boolean needsDownload() {
 		return Boolean.parseBoolean(getProperty(JOB_NEEDS_DOWNLOAD));
+	}
+
+	public boolean isDownloading() {
+		return synchronization.isDownloading();
 	}
 
 	public boolean needsUpload() {
@@ -414,6 +422,12 @@ public class Job {
 		return synchronization.getFileTransferInfo();
 	}
 
+	public void createEmptyFile(String fileName) throws InterruptedIOException {
+		try(HaaSFileTransfer transfer = haasClientSupplier.get().startFileTransfer(getId())) {
+			transfer.upload(new UploadingFileData(fileName));
+		}
+	}
+
 	private void storeInputOutputDirectory() {
 		if (inputDirectory == null) {
 			useDemoData = true;
@@ -500,12 +514,6 @@ public class Job {
 
 	private void setCanBeDownloaded(boolean b) {
 		setProperty(JOB_CAN_BE_DOWNLOADED, b);
-	}
-
-	public void createEmptyFile(String fileName) throws InterruptedIOException {
-		try(HaaSFileTransfer transfer = haasClientSupplier.get().startFileTransfer(getId())) {
-			transfer.upload(new UploadingFileData(fileName));
-		}
 	}
 
 }

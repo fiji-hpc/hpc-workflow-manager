@@ -32,12 +32,16 @@ import cz.it4i.fiji.haas_java_client.UploadingFileImpl;
 
 public class Synchronization implements Closeable {
 
-	public static final Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas.data_transfer.Synchronization.class);
-
+	private final static Logger log = LoggerFactory.getLogger(
+		cz.it4i.fiji.haas.data_transfer.Synchronization.class);
+	
 	private static final String FILE_INDEX_TO_UPLOAD_FILENAME = ".toUploadFiles";
+	
 	private static final String FILE_INDEX_UPLOADED_FILENAME = ".uploaded";
+	
 	private static final String FILE_INDEX_TO_DOWNLOAD_FILENAME =
 		".toDownloadFiles";
+	
 	private static final String FILE_INDEX_DOWNLOADED_FILENAME = ".downloaded";
 
 	private final Path workingDirectory;
@@ -97,6 +101,10 @@ public class Synchronization implements Closeable {
 		uploadProcess.resume();
 	}
 
+	public boolean isUploading() {
+		return uploadProcess.isWorking();
+	}
+
 	public synchronized CompletableFuture<?> startDownload(Collection<String> files) throws IOException {
 		this.downloadProcess.setItems(files);
 		return this.downloadProcess.start();
@@ -108,6 +116,10 @@ public class Synchronization implements Closeable {
 
 	public synchronized void resumeDownload() {
 		this.downloadProcess.resume();
+	}
+
+	public boolean isDownloading() {
+		return downloadProcess.isWorking();
 	}
 
 	public List<FileTransferInfo> getFileTransferInfo() {

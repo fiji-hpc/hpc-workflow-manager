@@ -58,7 +58,9 @@ import org.xml.sax.SAXException;
 import cz.it4i.fiji.commons.WebRoutines;
 import cz.it4i.fiji.haas.Job;
 import cz.it4i.fiji.haas.JobManager;
+import cz.it4i.fiji.haas.data_transfer.PersistentSynchronizationProcess;
 import cz.it4i.fiji.haas_java_client.FileTransferInfo;
+import cz.it4i.fiji.haas_java_client.HaaSClientException;
 import cz.it4i.fiji.haas_java_client.HaaSClientSettings;
 import cz.it4i.fiji.haas_java_client.JobSettings;
 import cz.it4i.fiji.haas_java_client.JobSettingsBuilder;
@@ -205,8 +207,8 @@ public class BenchmarkJobManager implements Closeable {
 			job.stopUploadData();
 		}
 
-		public boolean needsUpload() {
-			return job.needsUpload();
+		public boolean isUploading() {
+			return job.isUploading();
 		}
 
 		public void setUploadNotifier(Progress progress) {
@@ -237,10 +239,6 @@ public class BenchmarkJobManager implements Closeable {
 			job.stopDownloadData();
 		}
 
-		public boolean needsDownload() {
-			return downloadingStatus.needsDownload();
-		}
-
 		public void setDownloadNotifier(Progress progress) {
 			job.setDownloadNotifier(downloadNotifier =
 				createDownloadNotifierProcessingResultCSV(convertToProgressNotifier(
@@ -257,6 +255,10 @@ public class BenchmarkJobManager implements Closeable {
 
 		public boolean isDownloaded() {
 			return downloadingStatus.isDownloaded();
+		}
+
+		public boolean isDownloading() {
+			return job.isDownloading();
 		}
 
 		public void resumeTransfer() {
@@ -427,14 +429,16 @@ public class BenchmarkJobManager implements Closeable {
 				}).whenComplete((X, e) -> {
 					if (e != null) {
 						log.error(e.getMessage(), e);
+						downloadNotifier.addItem(
+							PersistentSynchronizationProcess.FAILED_ITEM);
 					}
 					result.complete(null);
 				});
 		}
 
-		private Set<String> extractNames(Path resolve) {
+		private Set<String> extractNames(Path pathToXML) {
 			Set<String> result = new HashSet<>();
-			try (InputStream fileIS = Files.newInputStream(resolve)) {
+			try (InputStream fileIS = Files.newInputStream(pathToXML)) {
 				DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
 				DocumentBuilder builder = builderFactory.newDocumentBuilder();
 				Document xmlDocument = builder.parse(fileIS);
@@ -448,7 +452,7 @@ public class BenchmarkJobManager implements Closeable {
 					result.add(nl.item(i).getTextContent());
 				}
 			} catch (IOException | ParserConfigurationException | SAXException | XPathExpressionException e) {
-				log.error(e.getMessage(), e);
+				throw new HaaSClientException("Extract names from " + pathToXML, e);
 			}
 			return result;
 		}

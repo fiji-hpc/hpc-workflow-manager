@@ -368,6 +368,9 @@ public class BenchmarkSPIMControl extends BorderPane implements
 	}
 
 	private String decorateTransfer(TransferProgress progress) {
+		if (progress.isFailed()) {
+			return "Failed";
+		}
 		if (!progress.isWorking() && !progress.isDone()) {
 			return "";
 		}

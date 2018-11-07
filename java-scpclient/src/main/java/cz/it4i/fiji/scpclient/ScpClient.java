@@ -34,10 +34,16 @@ import cz.it4i.fiji.commons.DoActionEventualy;
 
 public class ScpClient implements Closeable {
 
-		private static final String NO_SUCH_FILE_OR_DIRECTORY_ERROR_TEXT = "No such file or directory";
+	private static final String NO_SUCH_FILE_OR_DIRECTORY_ERROR_TEXT =
+		"No such file or directory";
 
 	public static final Logger log = LoggerFactory.getLogger(
 		cz.it4i.fiji.scpclient.ScpClient.class);
+	
+	private static String constructExceptionText(AckowledgementChecker ack) {
+		return "Check acknowledgement failed with status: " + ack.getLastStatus() +
+			" and message: " + ack.getLastMessage();
+	}
 	
 	private static final int MAX_NUMBER_OF_CONNECTION_ATTEMPTS = 5;
 
@@ -98,20 +104,21 @@ public class ScpClient implements Closeable {
 		download(lfile, rFile, dummyProgress);
 	}
 
-	public boolean download(String lfile, Path rfile,
+	public void download(String lfile, Path rfile,
 		TransferFileProgress progress) throws JSchException, IOException
 	{
 		if (!Files.exists(rfile.getParent())) {
 			Files.createDirectories(rfile.getParent());
 		}
 		try (OutputStream os = Files.newOutputStream(rfile)) {
-			return download(lfile, os, progress);
+			download(lfile, os, progress);
 		}
 	}
 
-	public boolean download(String lfile, OutputStream os,
+	public void download(String lfile, OutputStream os,
 		TransferFileProgress progress) throws JSchException, IOException
 	{
+		AckowledgementChecker ack = new AckowledgementChecker();
 		// exec 'scp -f rfile' remotely
 		String command = "scp -f " + lfile;
 		Channel channel = getConnectedSession().openChannel("exec");
@@ -134,8 +141,8 @@ public class ScpClient implements Closeable {
 				out.flush();
 
 				while (true) {
-					int c = checkAck(in);
-					if (c != 'C') {
+					ack.checkAck(in);
+					if (ack.getLastStatus() != 'C') {
 						break;
 					}
 
@@ -186,8 +193,8 @@ public class ScpClient implements Closeable {
 						if (filesize == 0L) break;
 					}
 
-					if (checkAck(in) != 0) {
-						return false;
+					if (!ack.checkAck(in)) {
+						throw new JSchException(constructExceptionText(ack));
 					}
 
 					// send '\0'
@@ -205,36 +212,35 @@ public class ScpClient implements Closeable {
 		finally {
 			channel.disconnect();
 		}
-		return true;
 	}
 
-	public boolean upload(Path file, String rfile) throws JSchException,
+	public void upload(Path file, String rfile) throws JSchException,
 		IOException
 	{
-		return upload(file, rfile, dummyProgress);
+		upload(file, rfile, dummyProgress);
 	}
 
-	public boolean upload(Path file, String rfile, TransferFileProgress progress)
+	public void upload(Path file, String rfile, TransferFileProgress progress)
 		throws JSchException, IOException
 	{
 		try (InputStream is = Files.newInputStream(file)) {
-			return upload(is, rfile, file.toFile().length(), file.toFile()
+			upload(is, rfile, file.toFile().length(), file.toFile()
 				.lastModified(), progress);
 		}
 	}
 
-	public boolean upload(InputStream is, String fileName, long length,
+	public void upload(InputStream is, String fileName, long length,
 		long lastModified, TransferFileProgress progress) throws JSchException,
 		IOException
 	{
 		int noSuchFileExceptionThrown = 0;
 		do {
-			
 			try {
-				return scp2Server(is, fileName, length, lastModified, progress);
+				scp2Server(is, fileName, length, lastModified, progress);
+				break;
 			} catch (NoSuchFileException e) {
-				if(noSuchFileExceptionThrown > MAX_NUMBER_OF_CONNECTION_ATTEMPTS) {
-					break;
+				if (noSuchFileExceptionThrown > MAX_NUMBER_OF_CONNECTION_ATTEMPTS) {
+					throw new JSchException(e.getReason());
 				}
 				if (noSuchFileExceptionThrown > 0) {
 					try {
@@ -248,10 +254,10 @@ public class ScpClient implements Closeable {
 				continue;
 			}
 		} while(true);
-		return false;
 	}
 
 	public long size(String lfile) throws JSchException, IOException {
+		AckowledgementChecker ack = new AckowledgementChecker();
 		// exec 'scp -f rfile' remotely
 		String command = "scp -f " + lfile;
 		Channel channel = getConnectedSession().openChannel("exec");
@@ -274,8 +280,8 @@ public class ScpClient implements Closeable {
 				out.flush();
 
 				while (true) {
-					int c = checkAck(in);
-					if (c != 'C') {
+					ack.checkAck(in);
+					if (ack.getLastStatus() != 'C') {
 						break;
 					}
 
@@ -391,10 +397,11 @@ public class ScpClient implements Closeable {
 		return session;
 	}
 
-	private boolean scp2Server(InputStream is, String fileName, long length,
+	private void scp2Server(InputStream is, String fileName, long length,
 		long lastModified, TransferFileProgress progress) throws JSchException,
 		IOException, InterruptedIOException
 	{
+		AckowledgementChecker ack = new AckowledgementChecker();
 		boolean ptimestamp = true;
 		// exec 'scp -t rfile' remotely
 		String command = "scp " + (ptimestamp ? "-p" : "") + " -t '" + fileName + "'";
@@ -405,8 +412,8 @@ public class ScpClient implements Closeable {
 				InputStream in = channel.getInputStream())
 		{
 			channel.connect();
-			if (checkAck(in) != 0) {
-				return false;
+			if (!ack.checkAck(in)) {
+				throw new JSchException(constructExceptionText(ack));
 			}
 	
 			if (ptimestamp) {
@@ -416,8 +423,8 @@ public class ScpClient implements Closeable {
 				command += (" " + (lastModified / 1000) + " 0\n");
 				out.write(command.getBytes());
 				out.flush();
-				if (checkAck(in) != 0) {
-					return false;
+				if (!ack.checkAck(in)) {
+					throw new JSchException(constructExceptionText(ack));
 				}
 			}
 	
@@ -428,13 +435,14 @@ public class ScpClient implements Closeable {
 			command += "\n";
 			out.write(command.getBytes());
 			out.flush();
-			StringBuilder sb = new StringBuilder();
-			int result;
-			if ((result = checkAck(in, sb)) != 0) {
-				if (result == 1 && sb.toString().contains(NO_SUCH_FILE_OR_DIRECTORY_ERROR_TEXT) ) {
-					throw new NoSuchFileException(getParent(fileName));
+			if (!ack.checkAck(in)) {
+				if (ack.getLastStatus() == 1 && ack.getLastMessage().contains(
+					NO_SUCH_FILE_OR_DIRECTORY_ERROR_TEXT))
+				{
+					throw new NoSuchFileException(getParent(fileName), null,
+						constructExceptionText(ack));
 				}
-				return false;
+				throw new JSchException(constructExceptionText(ack));
 			}
 			byte[] buf = new byte[getBufferSize()];
 			// send a content of lfile
@@ -448,8 +456,8 @@ public class ScpClient implements Closeable {
 			buf[0] = 0;
 			out.write(buf, 0, 1);
 			out.flush();
-			if (checkAck(in) != 0) {
-				return false;
+			if (!ack.checkAck(in)) {
+				throw new JSchException(constructExceptionText(ack));
 			}
 			out.close();
 	
@@ -461,7 +469,6 @@ public class ScpClient implements Closeable {
 		finally {
 			channel.disconnect();
 		}
-		return true;
 	}
 
 	private int mkdir(String file) throws JSchException {
@@ -515,31 +522,6 @@ public class ScpClient implements Closeable {
 
 	}
 
-	static int checkAck(InputStream in) throws IOException {
-		StringBuilder sb = new StringBuilder();
-		int result = checkAck(in, sb);
-		if (result != 0) {
-			log.warn(sb.toString());
-		}
-		return result;
-	}
-	static int checkAck(InputStream in, StringBuilder sb) throws IOException {
-		int b = in.read();
-		// b may be 0 for success,
-		// 1 for error,
-		// 2 for fatal error,
-		// -1
-		if (b == 0) return b;
-		if (b == -1) return b;
-
-		if (b == 1 || b == 2) {
-			int c;
-			do {
-				c = in.read();
-				sb.append((char) c);
-			}
-			while (c != '\n');
-		}
-		return b;
-	}
+	
+	
 }
