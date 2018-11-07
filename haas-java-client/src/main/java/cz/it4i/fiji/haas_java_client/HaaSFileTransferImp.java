@@ -45,7 +45,6 @@ class HaaSFileTransferImp implements HaaSFileTransfer {
 		try (InputStream is = file.getInputStream()) {
 			scpClient.upload(is, destFile, file.getLength(), file.getLastTime(),
 				progress);
-			
 		}
 		catch (JSchException | IOException e) {
 			throw new HaaSClientException("An upload of " + file + " to " + destFile +
@@ -63,9 +62,6 @@ class HaaSFileTransferImp implements HaaSFileTransfer {
 			final String fileToDownload = "'" + ft.getSharedBasepath() + "/" +
 				fileName + "'";
 			scpClient.download(fileToDownload, rFile, progress);
-		}
-		catch (final InterruptedIOException e) {
-			throw e;
 		}
 		catch (JSchException | IOException e) {
 			throw new HaaSClientException("A download of " + fileName + " to " +
