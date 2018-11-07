@@ -148,6 +148,7 @@ public class ObservableBenchmarkJob extends
 			if (Objects.equals(item, PersistentSynchronizationProcess.FAILED_ITEM)) {
 				failed = true;
 				doneStatusConsumer.accept(false);
+				reloadFileTransferList();
 				fireValueChangedEvent();
 			} else if (start == null) {
 				setDone(false);
@@ -190,7 +191,7 @@ public class ObservableBenchmarkJob extends
 
 		@Override
 		public void itemDone(final Object item) {
-			fileTransferList.setAll(getValue().getFileTransferInfo());
+			reloadFileTransferList();
 		}
 
 		@Override
@@ -199,6 +200,10 @@ public class ObservableBenchmarkJob extends
 		@Override
 		public boolean isDone() {
 			return doneStatusSupplier.get();
+		}
+
+		private void reloadFileTransferList() {
+			fileTransferList.setAll(getValue().getFileTransferInfo());
 		}
 
 		private void clearProgress() {
