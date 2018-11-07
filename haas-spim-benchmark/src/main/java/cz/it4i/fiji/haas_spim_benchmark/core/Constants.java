@@ -12,9 +12,9 @@ public interface Constants {
 	int HAAS_UPDATE_TIMEOUT = 30000;
 	short UI_TO_HAAS_FREQUENCY_UPDATE_RATIO = 10;
 	String HAAS_JOB_NAME = "HaaSSPIMBenchmark";
-	int HAAS_CLUSTER_NODE_TYPE = 6;
+	int HAAS_CLUSTER_NODE_TYPE = 7;
 	int HAAS_TEMPLATE_ID = 4;
-	String HAAS_PROJECT_ID = "OPEN-12-20";
+	String HAAS_PROJECT_ID = "";
 	int HAAS_TIMEOUT = 9600; //Walltime in seconds
 	long WAIT_FOR_SUBMISSION_TIMEOUT = 100;
 	String BDS_ADDRESS = "http://julius2.it4i.cz/";
