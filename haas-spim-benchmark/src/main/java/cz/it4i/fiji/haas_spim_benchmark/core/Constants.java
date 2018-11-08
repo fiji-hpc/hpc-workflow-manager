@@ -15,7 +15,7 @@ public interface Constants {
 	int HAAS_CLUSTER_NODE_TYPE = 7;
 	int HAAS_TEMPLATE_ID = 4;
 	String HAAS_PROJECT_ID = "";
-	int HAAS_TIMEOUT = 9600; //Walltime in seconds
+	int HAAS_TIMEOUT = 3600; //Walltime in seconds
 	long WAIT_FOR_SUBMISSION_TIMEOUT = 100;
 	String BDS_ADDRESS = "http://julius2.it4i.cz/";
 	
