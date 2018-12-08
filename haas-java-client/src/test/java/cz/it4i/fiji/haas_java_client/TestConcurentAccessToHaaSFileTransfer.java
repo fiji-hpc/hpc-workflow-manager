@@ -1,3 +1,4 @@
+
 package cz.it4i.fiji.haas_java_client;
 
 import java.io.IOException;
@@ -12,14 +13,18 @@ public class TestConcurentAccessToHaaSFileTransfer {
 
 	@SuppressWarnings("resource")
 	public static void main(String[] args) throws IOException {
-		HaaSClient client = new HaaSClient(SettingsProvider.getSettings("OPEN-12-20",TestingConstants.CONFIGURATION_FILE_NAME));
-		HaaSFileTransfer tr1 = client.startFileTransfer(250, HaaSClient.DUMMY_TRANSFER_FILE_PROGRESS);
-		HaaSFileTransfer tr2 = client.startFileTransfer(249, HaaSClient.DUMMY_TRANSFER_FILE_PROGRESS);
-		log.info("config.yaml - size:" + tr1.obtainSize(Arrays.asList("config.yaml")));
+		HaaSClient client = new HaaSClient(SettingsProvider.getSettings("DD-18-42",
+			TestingConstants.CONFIGURATION_FILE_NAME));
+		HaaSFileTransfer tr1 = client.startFileTransfer(250,
+			HaaSClient.DUMMY_TRANSFER_FILE_PROGRESS);
+		HaaSFileTransfer tr2 = client.startFileTransfer(249,
+			HaaSClient.DUMMY_TRANSFER_FILE_PROGRESS);
+		log.info("config.yaml - size:" + tr1.obtainSize(Arrays.asList(
+			"config.yaml")));
 		tr1.close();
-		log.info("config.yaml - size:" + tr2.obtainSize(Arrays.asList("config.yaml")));
+		log.info("config.yaml - size:" + tr2.obtainSize(Arrays.asList(
+			"config.yaml")));
 		tr2.close();
 	}
 
-	
 }
