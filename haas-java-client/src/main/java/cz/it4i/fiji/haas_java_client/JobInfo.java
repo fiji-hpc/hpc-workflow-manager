@@ -6,7 +6,6 @@ import java.util.List;
 
 public interface JobInfo {
 	
-	
 	Collection<Long> getTasks();
 	
 	JobState getState();

@@ -402,7 +402,7 @@ public class ScpClient implements Closeable {
 		IOException, InterruptedIOException
 	{
 		AckowledgementChecker ack = new AckowledgementChecker();
-		boolean ptimestamp = true;
+		boolean ptimestamp = false;
 		// exec 'scp -t rfile' remotely
 		String command = "scp " + (ptimestamp ? "-p" : "") + " -t '" + fileName + "'";
 		Channel channel = getConnectedSession().openChannel("exec");
