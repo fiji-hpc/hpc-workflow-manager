@@ -1,3 +1,4 @@
+
 package cz.it4i.fiji.haas_java_client;
 
 import java.io.IOException;
@@ -11,8 +12,8 @@ public class TestCommunicationWithNodes {
 
 	public static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas_java_client.TestCommunicationWithNodes.class);
 
-	private static String[] predefined  = new String[2];
-	
+	private static String[] predefined = new String[2];
+
 	@SuppressWarnings("resource")
 	public static void main(String[] args) throws IOException, InterruptedException {
 		predefined[0] = "POST /modules/'command:net.imagej.ops.math.PrimitiveMath$IntegerAdd'?process=false HTTP/1.1\r\n" +
@@ -28,9 +29,9 @@ public class TestCommunicationWithNodes {
 				"User-Agent: curl/7.47.0\r\n" + //
 				"Accept: */*\r\n" + //
 				"\r\n";
-		
-		HaaSClientSettings settings = SettingsProvider.getSettings("OPEN-12-20",
-				TestingConstants.CONFIGURATION_FILE_NAME);
+
+		HaaSClientSettings settings = SettingsProvider.getSettings("DD-18-42",
+			TestingConstants.CONFIGURATION_FILE_NAME);
 		HaaSClient client = new HaaSClient(settings);
 		long id = startBDS(client);
 		String sessionID = client.getSessionID();

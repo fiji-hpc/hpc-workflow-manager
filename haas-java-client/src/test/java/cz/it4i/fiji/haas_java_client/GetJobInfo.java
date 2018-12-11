@@ -1,3 +1,4 @@
+
 package cz.it4i.fiji.haas_java_client;
 
 import org.slf4j.Logger;
@@ -15,7 +16,8 @@ public class GetJobInfo {
 	public static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas_java_client.GetJobInfo.class);
 
 	public static void main(String[] args) {
-		HaaSClientSettings settings = SettingsProvider.getSettings("OPEN-12-20", TestingConstants.CONFIGURATION_FILE_NAME);
+		HaaSClientSettings settings = SettingsProvider.getSettings("DD-18-42",
+			TestingConstants.CONFIGURATION_FILE_NAME);
 		HaaSClient client = new HaaSClient(settings);
 		JobInfo ji = client.obtainJobInfo(334);
 		System.out.println("created: " + ji.getCreationTime());
