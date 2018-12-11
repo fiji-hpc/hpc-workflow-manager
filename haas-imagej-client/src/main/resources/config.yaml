@@ -202,14 +202,14 @@ common: {
   #          sysconfcpus
   # ============================================================================
   # current working Fiji
-  fiji-app: "opt/Fiji.app/ImageJ-linux64 -Xss4m",
+  fiji-app: "/opt/Fiji.app/ImageJ-linux64 -Xss4m",
   # bean shell scripts and Snakefile
-  bsh_directory: "opt/snakemake-workflows/spim_registration/timelapse/",
+  bsh_directory: "/opt/snakemake-workflows/spim_registration/timelapse/",
   # Directory that contains the cuda libraries
   directory_cuda: "/sw/users/schmied/cuda/",
   # xvfb 
   fiji-prefix: "",
-  sysconfcpus: "opt/bin/sysconfcpus -n",
+  sysconfcpus: "sysconfcpus -n",
   memory-prefix: "-Xmx"
   }
   
