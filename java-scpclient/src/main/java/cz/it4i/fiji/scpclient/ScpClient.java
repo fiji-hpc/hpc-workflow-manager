@@ -63,6 +63,8 @@ public class ScpClient implements Closeable {
 		}
 		};
 
+	private int port = 22;
+
 	public ScpClient(String hostName, String username, byte[] privateKeyFile)
 		throws JSchException
 	{
@@ -88,6 +90,10 @@ public class ScpClient implements Closeable {
 			throw new RuntimeException(e);
 		}
 		init(hostName, userName, id);
+	}
+	
+	public void setPort(int port) {
+		this.port  = port;
 	}
 
 	private void init(String initHostName, String initUsername,
@@ -363,7 +369,7 @@ public class ScpClient implements Closeable {
 
 	private Session getConnectedSession() throws JSchException {
 		if (session == null) {
-			session = jsch.getSession(username, hostName);
+			session = jsch.getSession(username, hostName, port);
 
 			UserInfo ui = new P_UserInfo();
 
