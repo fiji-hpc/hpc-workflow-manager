@@ -126,6 +126,10 @@ public class ScpClient implements Closeable {
 	{
 		AckowledgementChecker ack = new AckowledgementChecker();
 		// exec 'scp -f rfile' remotely
+
+		lfile=lfile.replace("'", "'\"'\"'");
+		lfile="'"+lfile+"'";
+
 		String command = "scp -f " + lfile;
 		Channel channel = getConnectedSession().openChannel("exec");
 
@@ -265,6 +269,10 @@ public class ScpClient implements Closeable {
 	public long size(String lfile) throws JSchException, IOException {
 		AckowledgementChecker ack = new AckowledgementChecker();
 		// exec 'scp -f rfile' remotely
+
+		lfile=lfile.replace("'", "'\"'\"'");
+		lfile="'"+lfile+"'";
+
 		String command = "scp -f " + lfile;
 		Channel channel = getConnectedSession().openChannel("exec");
 
@@ -410,6 +418,9 @@ public class ScpClient implements Closeable {
 		AckowledgementChecker ack = new AckowledgementChecker();
 		boolean ptimestamp = false;
 		// exec 'scp -t rfile' remotely
+
+		fileName=fileName.replace("'", "'\"'\"'");
+
 		String command = "scp " + (ptimestamp ? "-p" : "") + " -t '" + fileName + "'";
 		Channel channel = getConnectedSession().openChannel("exec");
 		((ChannelExec) channel).setCommand(command);
