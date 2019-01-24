@@ -49,6 +49,8 @@ public class ScpClient implements Closeable {
 
 	private static final long TIMEOUT_BETWEEN_CONNECTION_ATTEMPTS = 500;
 
+	private static final int BUFFER_SIZE = 4 * 1024 * 1024 ; //4 MB
+
 	private String hostName;
 	private String username;
 	private final JSch jsch = new JSch();
@@ -372,7 +374,7 @@ public class ScpClient implements Closeable {
 	}
 
 	private int getBufferSize() {
-		return 1024 * 1024;
+		return BUFFER_SIZE;
 	}
 
 	private Session getConnectedSession() throws JSchException {
