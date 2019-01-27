@@ -8,6 +8,8 @@ import com.jcraft.jsch.JSchException;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.LinkedList;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,8 +37,8 @@ public class SshCommandClient extends AbstractBaseSshClient {
 		super(hostName, userName, keyFile, pass);
 	}
 
-	public String executeCommand(String command) {
-		StringBuilder sb = new StringBuilder();
+	public List<String> executeCommand(String command) {
+		List<String> result = new LinkedList<>();
 		try {
 			ChannelExec channelExec = (ChannelExec) getConnectedSession().openChannel(
 				"exec");
@@ -50,7 +52,7 @@ public class SshCommandClient extends AbstractBaseSshClient {
 			String line;
 
 			while ((line = reader.readLine()) != null) {
-				sb.append(line).append('\n');
+				result.add(line);
 			}
 
 			int exitStatus = channelExec.getExitStatus();
@@ -70,6 +72,17 @@ public class SshCommandClient extends AbstractBaseSshClient {
 			log.error("Error: ", e);
 			throw new RuntimeException(e);
 		}
-		return sb.toString();
+		return result;
+	}
+
+	public boolean setPortForwarding(int lport, String rhost, int rport) {
+		try {
+			getConnectedSession().setPortForwardingL(lport, rhost, rport);
+		}
+		catch (JSchException exc) {
+			log.error("forward", exc);
+			return false;
+		}
+		return true;
 	}
 }
