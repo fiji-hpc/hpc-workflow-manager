@@ -49,10 +49,16 @@ public class SshCommandClient extends AbstractBaseSshClient {
 			channelExec.connect();
 
 			BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+			BufferedReader errReader = new BufferedReader(new InputStreamReader(
+				channelExec.getErrStream()));
 			String line;
 
 			while ((line = reader.readLine()) != null) {
 				result.add(line);
+			}
+			List<String> errors = new LinkedList<>();
+			while ((line = errReader.readLine()) != null) {
+				errors.add(line);
 			}
 
 			int exitStatus = channelExec.getExitStatus();
@@ -62,7 +68,8 @@ public class SshCommandClient extends AbstractBaseSshClient {
 				log.debug("Done, but exit status not set!");
 			}
 			else if (exitStatus > 0) {
-				log.debug("Done, but with error!");
+				log.debug("Done, but with error! ");
+				throw new SshExecuteCommandException(exitStatus, result, errors);
 			}
 			else {
 				log.debug("Done!");
