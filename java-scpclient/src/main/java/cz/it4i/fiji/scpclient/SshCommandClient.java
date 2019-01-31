@@ -6,6 +6,7 @@ import com.jcraft.jsch.Identity;
 import com.jcraft.jsch.JSchException;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.LinkedList;
@@ -37,20 +38,29 @@ public class SshCommandClient extends AbstractBaseSshClient {
 		super(hostName, userName, keyFile, pass);
 	}
 
-	public List<String> executeCommand(String command) {
-		List<String> result = new LinkedList<>();
+	public SshExecutionSession openSshExecutionSession(String command) {
 		try {
 			ChannelExec channelExec = (ChannelExec) getConnectedSession().openChannel(
 				"exec");
 
-			InputStream in = channelExec.getInputStream();
-
 			channelExec.setCommand(command);
 			channelExec.connect();
+			return new P_SshExecutionSession(channelExec);
+		}
+		catch (Exception e) {
+			log.error("Error: ", e);
+			throw new RuntimeException(e);
+		}
+	}
 
-			BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+	public List<String> executeCommand(String command) {
+		List<String> result = new LinkedList<>();
+		try (SshExecutionSession session = openSshExecutionSession(command)) {
+
+			BufferedReader reader = new BufferedReader(new InputStreamReader(session
+				.getStdout()));
 			BufferedReader errReader = new BufferedReader(new InputStreamReader(
-				channelExec.getErrStream()));
+				session.getStderr()));
 			String line;
 
 			while ((line = reader.readLine()) != null) {
@@ -61,8 +71,7 @@ public class SshCommandClient extends AbstractBaseSshClient {
 				errors.add(line);
 			}
 
-			int exitStatus = channelExec.getExitStatus();
-			channelExec.disconnect();
+			int exitStatus = session.getExitStatus();
 
 			if (exitStatus < 0) {
 				log.debug("Done, but exit status not set!");
@@ -91,5 +100,35 @@ public class SshCommandClient extends AbstractBaseSshClient {
 			return false;
 		}
 		return true;
+	}
+
+	private class P_SshExecutionSession implements SshExecutionSession {
+
+		private ChannelExec channel;
+
+		public P_SshExecutionSession(ChannelExec channel) {
+			this.channel = channel;
+		}
+
+		@Override
+		public InputStream getStdout() throws IOException {
+			return channel.getInputStream();
+		}
+
+		@Override
+		public InputStream getStderr() throws IOException {
+			return channel.getErrStream();
+		}
+
+		@Override
+		public int getExitStatus() {
+			return channel.getExitStatus();
+		}
+
+		@Override
+		public void close() {
+			channel.disconnect();
+		}
+
 	}
 }
