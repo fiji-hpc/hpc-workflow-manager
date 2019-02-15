@@ -1,8 +1,10 @@
 
 package cz.it4i.fiji.haas_spim_benchmark.core;
 
+import static cz.it4i.fiji.haas_java_client.SynchronizableFileType.StandardErrorFile;
+import static cz.it4i.fiji.haas_java_client.SynchronizableFileType.StandardOutputFile;
+import static cz.it4i.fiji.haas_spim_benchmark.core.Configuration.getHaasUpdateTimeout;
 import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.BENCHMARK_TASK_NAME_MAP;
-import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.HAAS_UPDATE_TIMEOUT;
 import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.UI_TO_HAAS_FREQUENCY_UPDATE_RATIO;
 
 import java.util.ArrayList;
@@ -30,8 +32,7 @@ class SnakemakeOutputHelper implements HaaSOutputHolder {
 	private final List<BenchmarkError> nonTaskSpecificErrors;
 	private int processedOutputLength;
 
-	public SnakemakeOutputHelper(final Job job)
-	{
+	public SnakemakeOutputHelper(final Job job) {
 		this.job = job;
 		this.computationAccessor = createComputationAccessor();
 		this.tasks = new ArrayList<>();
@@ -98,9 +99,8 @@ class SnakemakeOutputHelper implements HaaSOutputHolder {
 		};
 
 		result = new SPIMComputationAccessorDecoratorWithTimeout(result,
-			new HashSet<>(Arrays.asList(SynchronizableFileType.StandardOutputFile,
-				SynchronizableFileType.StandardErrorFile)), HAAS_UPDATE_TIMEOUT /
-					UI_TO_HAAS_FREQUENCY_UPDATE_RATIO);
+			new HashSet<>(Arrays.asList(StandardOutputFile, StandardErrorFile)),
+			getHaasUpdateTimeout() / UI_TO_HAAS_FREQUENCY_UPDATE_RATIO);
 		return result;
 	}
 

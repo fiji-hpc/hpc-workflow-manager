@@ -1,6 +1,9 @@
 
 package cz.it4i.fiji.haas_spim_benchmark.core;
 
+import static cz.it4i.fiji.haas_spim_benchmark.core.Configuration.getHaasUpdateTimeout;
+import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.UI_TO_HAAS_FREQUENCY_UPDATE_RATIO;
+
 import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.List;
@@ -49,8 +52,8 @@ class TaskObservableValueRegistry implements Closeable {
 
 				synchronized (TaskObservableValueRegistry.this) {
 					if (timer != null) {
-						timer.schedule(new L_TimerTask(), Constants.HAAS_UPDATE_TIMEOUT /
-							Constants.UI_TO_HAAS_FREQUENCY_UPDATE_RATIO);
+						timer.schedule(new L_TimerTask(), getHaasUpdateTimeout() /
+							UI_TO_HAAS_FREQUENCY_UPDATE_RATIO);
 					}
 				}
 			}

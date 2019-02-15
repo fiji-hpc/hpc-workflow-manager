@@ -1,8 +1,18 @@
 
 package cz.it4i.fiji.haas_spim_benchmark.core;
 
+import static cz.it4i.fiji.haas.data_transfer.PersistentSynchronizationProcess.FAILED_ITEM;
+import static cz.it4i.fiji.haas_java_client.JobState.Canceled;
+import static cz.it4i.fiji.haas_java_client.JobState.Failed;
+import static cz.it4i.fiji.haas_java_client.JobState.Finished;
+import static cz.it4i.fiji.haas_spim_benchmark.core.Configuration.getHaasClusterNodeType;
+import static cz.it4i.fiji.haas_spim_benchmark.core.Configuration.getHaasTemplateID;
+import static cz.it4i.fiji.haas_spim_benchmark.core.Configuration.getWalltime;
 import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.BENCHMARK_TASK_NAME_MAP;
+import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.CORES_PER_NODE;
+import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.DONE_TASK;
 import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.FUSION_SWITCH;
+import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.HAAS_JOB_NAME;
 import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.HDF5_XML_FILENAME;
 import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.SPIM_OUTPUT_FILENAME_PATTERN;
 import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.VERIFIED_STATE_OF_FINISHED_JOB;
@@ -58,7 +68,6 @@ import org.xml.sax.SAXException;
 import cz.it4i.fiji.commons.WebRoutines;
 import cz.it4i.fiji.haas.Job;
 import cz.it4i.fiji.haas.JobManager;
-import cz.it4i.fiji.haas.data_transfer.PersistentSynchronizationProcess;
 import cz.it4i.fiji.haas_java_client.FileTransferInfo;
 import cz.it4i.fiji.haas_java_client.HaaSClientException;
 import cz.it4i.fiji.haas_java_client.HaaSClientSettings;
@@ -72,12 +81,14 @@ import cz.it4i.fiji.haas_java_client.UploadingFile;
 public class BenchmarkJobManager implements Closeable {
 
 	public interface DownloadingStatusProvider {
+
 		boolean isDownloaded();
+
 		boolean needsDownload();
 	}
 
-	private static Logger log = LoggerFactory
-			.getLogger(cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.class);
+	private static Logger log = LoggerFactory.getLogger(
+		cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.class);
 
 	private final JobManager jobManager;
 
@@ -89,18 +100,20 @@ public class BenchmarkJobManager implements Closeable {
 		private boolean verifiedStateProcessed;
 		private CompletableFuture<JobState> running;
 		private ProgressNotifier downloadNotifier;
-		private DownloadingStatusProvider downloadingStatus = new DownloadingStatusProvider() {
-			
-			@Override
-			public boolean needsDownload() {
-				return job.needsDownload();
-			}
-			
-			@Override
-			public boolean isDownloaded() {
-				return job.isDownloaded();
-			}
-		};
+		private DownloadingStatusProvider downloadingStatus =
+			new DownloadingStatusProvider()
+			{
+
+				@Override
+				public boolean needsDownload() {
+					return job.needsDownload();
+				}
+
+				@Override
+				public boolean isDownloaded() {
+					return job.isDownloaded();
+				}
+			};
 
 		private boolean visibleInBDV;
 
@@ -110,17 +123,19 @@ public class BenchmarkJobManager implements Closeable {
 		}
 
 		public synchronized void startJob(Progress progress) throws IOException {
-			job.uploadFile(Constants.CONFIG_YAML, new ProgressNotifierAdapter(progress));
-			LoadedYAML yaml = new LoadedYAML(job.openLocalFile(Constants.CONFIG_YAML));
+			job.uploadFile(Constants.CONFIG_YAML, new ProgressNotifierAdapter(
+				progress));
+			LoadedYAML yaml = new LoadedYAML(job.openLocalFile(
+				Constants.CONFIG_YAML));
 			verifiedStateProcessed = false;
 			running = null;
-			String message = "Submitting job id #"+getId();
+			String message = "Submitting job id #" + getId();
 			progress.addItem(message);
 			job.updateInfo();
 			JobState oldState = updateAndGetState();
 			job.submit();
 			setVerifiedState(null);
-			while(oldState == updateAndGetState()){
+			while (oldState == updateAndGetState()) {
 				try {
 					Thread.sleep(Constants.WAIT_FOR_SUBMISSION_TIMEOUT);
 				}
@@ -129,8 +144,8 @@ public class BenchmarkJobManager implements Closeable {
 				}
 			}
 			progress.itemDone(message);
-			job.setProperty(SPIM_OUTPUT_FILENAME_PATTERN,
-					yaml.getCommonProperty(FUSION_SWITCH) + "_" + yaml.getCommonProperty(HDF5_XML_FILENAME));
+			job.setProperty(SPIM_OUTPUT_FILENAME_PATTERN, yaml.getCommonProperty(
+				FUSION_SWITCH) + "_" + yaml.getCommonProperty(HDF5_XML_FILENAME));
 		}
 
 		public boolean delete() {
@@ -145,13 +160,16 @@ public class BenchmarkJobManager implements Closeable {
 			return getStateAsync(r -> r.run()).getNow(JobState.Unknown);
 		}
 
-
-		public synchronized CompletableFuture<JobState> getStateAsync(Executor executor) {
+		public synchronized CompletableFuture<JobState> getStateAsync(
+			Executor executor)
+		{
 			if (running != null) {
 				return running;
 			}
 			CompletableFuture<JobState> result = doGetStateAsync(executor);
-			if (!result.isCancelled() && !result.isCompletedExceptionally() && !result.isDone()) {
+			if (!result.isCancelled() && !result.isCompletedExceptionally() && !result
+				.isDone())
+			{
 				running = result;
 			}
 			return result;
@@ -183,10 +201,11 @@ public class BenchmarkJobManager implements Closeable {
 				digest = MessageDigest.getInstance("SHA-1");
 				digest.reset();
 				digest.update(changed.getBytes("utf8"));
-				String sha1 = String.format("%040x", new BigInteger(1, digest.digest()));
-				String result =  Constants.BDS_ADDRESS + sha1 + "/";
+				String sha1 = String.format("%040x", new BigInteger(1, digest
+					.digest()));
+				String result = Configuration.getBDSAddress() + sha1 + "/";
 				if (log.isDebugEnabled()) {
-					log.debug("getBDSPathForData changed={} path={}",result, result);
+					log.debug("getBDSPathForData changed={} path={}", result, result);
 				}
 				return result;
 			}
@@ -194,11 +213,11 @@ public class BenchmarkJobManager implements Closeable {
 				throw new RuntimeException(exc);
 			}
 		}
-		
+
 		public boolean isVisibleInBDV() {
 			return visibleInBDV;
 		}
-		
+
 		public void startUpload() {
 			job.startUploadData();
 		}
@@ -224,13 +243,15 @@ public class BenchmarkJobManager implements Closeable {
 		}
 
 		public CompletableFuture<?> startDownload() throws IOException {
-			if (job.getState() == JobState.Finished) {
+			if (job.getState() == Finished) {
 				CompletableFuture<?> result = new CompletableFuture<Void>();
 				startDownloadResults(result);
 				return result;
-			} else if (job.getState() == JobState.Failed || job.getState() == JobState.Canceled) {
+			}
+			else if (job.getState() == Failed || job.getState() == Canceled) {
 				return job.startDownload(downloadFailedData());
-			} else {
+			}
+			else {
 				return CompletableFuture.completedFuture(null);
 			}
 		}
@@ -310,7 +331,9 @@ public class BenchmarkJobManager implements Closeable {
 			return snakemakeOutputHelper.getActualOutput(types);
 		}
 
-		public void storeDataInWorkdirectory(UploadingFile file) throws IOException {
+		public void storeDataInWorkdirectory(UploadingFile file)
+			throws IOException
+		{
 			job.storeDataInWorkdirectory(file);
 		}
 
@@ -352,27 +375,29 @@ public class BenchmarkJobManager implements Closeable {
 			return progress == null ? null : new ProgressNotifierAdapter(progress);
 		}
 
-		private synchronized CompletableFuture<JobState> doGetStateAsync(Executor executor) {
+		private synchronized CompletableFuture<JobState> doGetStateAsync(
+			Executor executor)
+		{
 			JobState state = job.getState();
-			if (state != JobState.Finished) {
+			if (state != Finished) {
 				setVerifiedState(null);
 				return CompletableFuture.completedFuture(state);
 			}
 			if (getVerifiedState() != null) {
 				return CompletableFuture.completedFuture(getVerifiedState());
 			}
-		
+
 			verifiedStateProcessed = true;
 			return CompletableFuture.supplyAsync(() -> {
 				try {
-					JobState workVerifiedState = Stream.concat(Arrays.asList(state).stream(),
-						getTasks().stream().filter(task -> !task.getDescription().equals(
-							Constants.DONE_TASK)).flatMap(task -> task.getComputations()
+					JobState workVerifiedState = Stream.concat(Arrays.asList(state)
+						.stream(), getTasks().stream().filter(task -> !task.getDescription()
+							.equals(DONE_TASK)).flatMap(task -> task.getComputations()
 								.stream()).map(tc -> tc.getState())).max(
 									new JobStateComparator()).get();
-					
-					if (workVerifiedState != JobState.Finished && workVerifiedState != JobState.Canceled) {
-						workVerifiedState = JobState.Failed;
+
+					if (workVerifiedState != Finished && workVerifiedState != Canceled) {
+						workVerifiedState = Failed;
 					}
 					synchronized (BenchmarkJob.this) {
 						// test whether job was restarted - it sets running to null
@@ -384,7 +409,8 @@ public class BenchmarkJobManager implements Closeable {
 						setVerifiedState(workVerifiedState);
 						return workVerifiedState;
 					}
-				} finally {
+				}
+				finally {
 					synchronized (BenchmarkJob.this) {
 						if (running != null) {
 							running = null;
@@ -421,7 +447,7 @@ public class BenchmarkJobManager implements Closeable {
 					}
 					catch (IOException e) {
 						throw new RuntimeException(e);
-					} 
+					}
 					finally {
 						progressNotifierTemporarySwitchOff.switchOn();
 						stillRunningTemporarySwitch.switchBack();
@@ -429,8 +455,7 @@ public class BenchmarkJobManager implements Closeable {
 				}).whenComplete((X, e) -> {
 					if (e != null) {
 						log.error(e.getMessage(), e);
-						downloadNotifier.addItem(
-							PersistentSynchronizationProcess.FAILED_ITEM);
+						downloadNotifier.addItem(FAILED_ITEM);
 					}
 					result.complete(null);
 				});
@@ -439,19 +464,26 @@ public class BenchmarkJobManager implements Closeable {
 		private Set<String> extractNames(Path pathToXML) {
 			Set<String> result = new HashSet<>();
 			try (InputStream fileIS = Files.newInputStream(pathToXML)) {
-				DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
+				DocumentBuilderFactory builderFactory = DocumentBuilderFactory
+					.newInstance();
 				DocumentBuilder builder = builderFactory.newDocumentBuilder();
 				Document xmlDocument = builder.parse(fileIS);
 				XPath xPath = XPathFactory.newInstance().newXPath();
-				Node imageLoader = ((NodeList) xPath.evaluate("/SpimData/SequenceDescription/ImageLoader", xmlDocument,
-						XPathConstants.NODESET)).item(0);
-				Node hdf5 = ((NodeList) xPath.evaluate("hdf5", imageLoader, XPathConstants.NODESET)).item(0);
+				Node imageLoader = ((NodeList) xPath.evaluate(
+					"/SpimData/SequenceDescription/ImageLoader", xmlDocument,
+					XPathConstants.NODESET)).item(0);
+				Node hdf5 = ((NodeList) xPath.evaluate("hdf5", imageLoader,
+					XPathConstants.NODESET)).item(0);
 				result.add(hdf5.getTextContent());
-				NodeList nl = (NodeList) xPath.evaluate("partition/path", imageLoader, XPathConstants.NODESET);
+				NodeList nl = (NodeList) xPath.evaluate("partition/path", imageLoader,
+					XPathConstants.NODESET);
 				for (int i = 0; i < nl.getLength(); i++) {
 					result.add(nl.item(i).getTextContent());
 				}
-			} catch (IOException | ParserConfigurationException | SAXException | XPathExpressionException e) {
+			}
+			catch (IOException | ParserConfigurationException | SAXException
+					| XPathExpressionException e)
+			{
 				throw new HaaSClientException("Extract names from " + pathToXML, e);
 			}
 			return result;
@@ -469,17 +501,17 @@ public class BenchmarkJobManager implements Closeable {
 			job.setProperty(VERIFIED_STATE_OF_FINISHED_JOB, value != null ? value
 				.toString() : null);
 		}
-		
+
 		private JobState getVerifiedState() {
-			if(verifiedState == null) {
-				String storedVerifiedState = job.getProperty(VERIFIED_STATE_OF_FINISHED_JOB);
-				if(storedVerifiedState != null) {
+			if (verifiedState == null) {
+				String storedVerifiedState = job.getProperty(
+					VERIFIED_STATE_OF_FINISHED_JOB);
+				if (storedVerifiedState != null) {
 					verifiedState = JobState.valueOf(storedVerifiedState);
 				}
 			}
 			return verifiedState;
 		}
-		
 
 		private JobState updateAndGetState() {
 			job.updateInfo();
@@ -488,27 +520,31 @@ public class BenchmarkJobManager implements Closeable {
 	}
 
 	public BenchmarkJobManager(BenchmarkSPIMParameters params) {
-		jobManager = new JobManager(params.workingDirectory(), constructSettingsFromParams(params));
+		jobManager = new JobManager(params.workingDirectory(),
+			constructSettingsFromParams(params));
 		jobManager.setUploadFilter(this::canUpload);
 	}
 
 	public BenchmarkJob createJob(Function<Path, Path> inputDirectoryProvider,
-			Function<Path, Path> outputDirectoryProvider) throws IOException {
-		Job job = jobManager.createJob( getJobSettings(),inputDirectoryProvider, outputDirectoryProvider);
-		if(job.getInputDirectory() == null) {
+		Function<Path, Path> outputDirectoryProvider) throws IOException
+	{
+		Job job = jobManager.createJob(getJobSettings(), inputDirectoryProvider,
+			outputDirectoryProvider);
+		if (job.getInputDirectory() == null) {
 			job.createEmptyFile(Constants.DEMO_DATA_SIGNAL_FILE_NAME);
 		}
 		return convertJob(job);
 	}
 
 	public Collection<BenchmarkJob> getJobs() {
-		return jobManager.getJobs().stream().map(this::convertJob).collect(Collectors.toList());
+		return jobManager.getJobs().stream().map(this::convertJob).collect(
+			Collectors.toList());
 	}
 
 	public void checkConnection() {
 		jobManager.checkConnection();
 	}
-	
+
 	public static void formatResultFile(Path filename) {
 
 		List<ResultFileTask> identifiedTasks = new LinkedList<>();
@@ -531,7 +567,8 @@ public class BenchmarkJobManager implements Closeable {
 
 				if (columns[0].equals(Constants.STATISTICS_TASK_NAME)) {
 
-					// If there is a task being processed, add all cached jobs to it and wrap it up
+					// If there is a task being processed, add all cached jobs to it and
+					// wrap it up
 					if (null != processedTask) {
 						processedTask.setJobs(jobs);
 						identifiedTasks.add(processedTask);
@@ -541,14 +578,16 @@ public class BenchmarkJobManager implements Closeable {
 					processedTask = new ResultFileTask(columns[1]);
 					jobs.clear();
 
-				} else if (columns[0].equals(Constants.STATISTICS_JOB_IDS)) {
+				}
+				else if (columns[0].equals(Constants.STATISTICS_JOB_IDS)) {
 
 					// Cache all found jobs
 					for (int i = 1; i < columns.length; i++) {
 						jobs.add(new ResultFileJob());
 					}
 
-				} else if (!columns[0].equals(Constants.STATISTICS_JOB_COUNT)) {
+				}
+				else if (!columns[0].equals(Constants.STATISTICS_JOB_COUNT)) {
 
 					// Save values of a given property to cached jobs
 					for (int i = 1; i < columns.length; i++) {
@@ -558,55 +597,68 @@ public class BenchmarkJobManager implements Closeable {
 				}
 			}
 
-			// If there is a task being processed, add all cached jobs to it and wrap it up
+			// If there is a task being processed, add all cached jobs to it and wrap
+			// it up
 			if (null != processedTask) {
 				processedTask.setJobs(jobs);
 				identifiedTasks.add(processedTask);
 			}
 
-		} catch (IOException e) {
+		}
+		catch (IOException e) {
 			log.error(e.getMessage(), e);
 			return;
 		}
 
 		// Order tasks chronologically
-		List<String> chronologicList = BENCHMARK_TASK_NAME_MAP.keySet().stream().collect(Collectors.toList());
-		Collections.sort(identifiedTasks, Comparator.comparingInt(t -> chronologicList.indexOf(t.getName())));
+		List<String> chronologicList = BENCHMARK_TASK_NAME_MAP.keySet().stream()
+			.collect(Collectors.toList());
+		Collections.sort(identifiedTasks, Comparator.comparingInt(
+			t -> chronologicList.indexOf(t.getName())));
 
 		FileWriter fileWriter = null;
 		try {
-			fileWriter = new FileWriter(
-					filename.getParent().toString() + Constants.FORWARD_SLASH + Constants.STATISTICS_SUMMARY_FILENAME);
-			fileWriter.append(Constants.SUMMARY_FILE_HEADER).append(Constants.NEW_LINE_SEPARATOR);
+			fileWriter = new FileWriter(filename.getParent().toString() +
+				Constants.FORWARD_SLASH + Constants.STATISTICS_SUMMARY_FILENAME);
+			fileWriter.append(Constants.SUMMARY_FILE_HEADER).append(
+				Constants.NEW_LINE_SEPARATOR);
 
 			for (ResultFileTask task : identifiedTasks) {
-				fileWriter.append(Constants.BENCHMARK_TASK_NAME_MAP.get(task.getName())).append(Constants.DELIMITER);
-				fileWriter.append(Double.toString(task.getAverageMemoryUsage())).append(Constants.DELIMITER);
-				fileWriter.append(Double.toString(task.getAverageWallTime())).append(Constants.DELIMITER);
-				fileWriter.append(Double.toString(task.getMaximumWallTime())).append(Constants.DELIMITER);
-				fileWriter.append(Double.toString(task.getTotalTime())).append(Constants.DELIMITER);
+				fileWriter.append(Constants.BENCHMARK_TASK_NAME_MAP.get(task.getName()))
+					.append(Constants.DELIMITER);
+				fileWriter.append(Double.toString(task.getAverageMemoryUsage())).append(
+					Constants.DELIMITER);
+				fileWriter.append(Double.toString(task.getAverageWallTime())).append(
+					Constants.DELIMITER);
+				fileWriter.append(Double.toString(task.getMaximumWallTime())).append(
+					Constants.DELIMITER);
+				fileWriter.append(Double.toString(task.getTotalTime())).append(
+					Constants.DELIMITER);
 				fileWriter.append(Integer.toString(task.getJobCount()));
 				fileWriter.append(Constants.NEW_LINE_SEPARATOR);
 			}
 
 			Double pipelineStart = identifiedTasks.stream() //
-					.mapToDouble(t -> t.getEarliestStartInSeconds()).min().getAsDouble();
+				.mapToDouble(t -> t.getEarliestStartInSeconds()).min().getAsDouble();
 
 			Double pipelineEnd = identifiedTasks.stream() //
-					.mapToDouble(t -> t.getLatestEndInSeconds()).max().getAsDouble();
+				.mapToDouble(t -> t.getLatestEndInSeconds()).max().getAsDouble();
 
 			fileWriter.append(Constants.NEW_LINE_SEPARATOR);
 			fileWriter.append("Pipeline duration: " + (pipelineEnd - pipelineStart));
 
-		} catch (Exception e) {
+		}
+		catch (Exception e) {
 			log.error(e.getMessage(), e);
-		} finally {
+		}
+		finally {
 			try {
 				if (fileWriter != null) {
 					fileWriter.flush();
 					fileWriter.close();
 				}
-			} catch (Exception e) {
+			}
+			catch (Exception e) {
 				log.error(e.getMessage(), e);
 			}
 		}
@@ -618,7 +670,8 @@ public class BenchmarkJobManager implements Closeable {
 	}
 
 	private boolean canUpload(Job job, Path p) {
-		return job.getInputDirectory() == null || !p.equals(job.getInputDirectory().resolve(Constants.CONFIG_YAML));
+		return job.getInputDirectory() == null || !p.equals(job.getInputDirectory()
+			.resolve(Constants.CONFIG_YAML));
 	}
 
 	private BenchmarkJob convertJob(Job job) {
@@ -626,52 +679,57 @@ public class BenchmarkJobManager implements Closeable {
 	}
 
 	private static JobSettings getJobSettings() {
-		return new JobSettingsBuilder().jobName(Constants.HAAS_JOB_NAME)
-				.clusterNodeType(Constants.HAAS_CLUSTER_NODE_TYPE).templateId(Constants.HAAS_TEMPLATE_ID)
-				.walltimeLimit(Constants.HAAS_TIMEOUT).numberOfCoresPerNode(Constants.CORES_PER_NODE).build();
+		return new JobSettingsBuilder().jobName(HAAS_JOB_NAME).clusterNodeType(
+			getHaasClusterNodeType()).templateId(getHaasTemplateID()).walltimeLimit(
+				getWalltime()).numberOfCoresPerNode(CORES_PER_NODE).build();
 	}
 
-	static private Predicate<String> downloadFileNameExtractDecorator(Predicate<String> decorated) {
+	static private Predicate<String> downloadFileNameExtractDecorator(
+		Predicate<String> decorated)
+	{
 		return name -> {
 			Path path = getPathSafely(name);
-			if (path == null)
-				return false;
+			if (path == null) return false;
 
 			String fileName = path.getFileName().toString();
 			return decorated.test(fileName);
 		};
 	}
-	
-	static private Predicate<String> downloadCSVDecorator(Predicate<String> decorated) {
+
+	static private Predicate<String> downloadCSVDecorator(
+		Predicate<String> decorated)
+	{
 		return name -> {
-			if(name.toLowerCase().endsWith(".csv")) {
+			if (name.toLowerCase().endsWith(".csv")) {
 				return true;
 			}
 			return decorated.test(name);
 		};
-		
+
 	}
 
 	static private Predicate<String> downloadFailedData() {
 		return name -> {
 			Path path = getPathSafely(name);
-			if (path == null)
-				return false;
-			return path.getFileName().toString().startsWith("snakejob.")
-					|| path.getParent() != null && path.getParent().getFileName() != null
-							&& path.getParent().getFileName().toString().equals("logs");
+			if (path == null) return false;
+			return path.getFileName().toString().startsWith("snakejob.") || path
+				.getParent() != null && path.getParent().getFileName() != null && path
+					.getParent().getFileName().toString().equals("logs");
 		};
 	}
 
 	private static Path getPathSafely(String name) {
 		try {
 			return Paths.get(name);
-		} catch (InvalidPathException ex) {
+		}
+		catch (InvalidPathException ex) {
 			return null;
 		}
 	}
 
-	private static HaaSClientSettings constructSettingsFromParams(BenchmarkSPIMParameters params) {
+	private static HaaSClientSettings constructSettingsFromParams(
+		BenchmarkSPIMParameters params)
+	{
 		return new HaaSClientSettings() {
 
 			@Override
@@ -681,7 +739,7 @@ public class BenchmarkJobManager implements Closeable {
 
 			@Override
 			public String getProjectId() {
-				return Constants.HAAS_PROJECT_ID;
+				return Configuration.getHaasProjectID();
 			}
 
 			@Override

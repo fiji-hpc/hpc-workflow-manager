@@ -1,4 +1,7 @@
+
 package cz.it4i.fiji.haas_spim_benchmark.ui;
+
+import static cz.it4i.fiji.haas_spim_benchmark.core.Configuration.getHaasUpdateTimeout;
 
 import java.io.Closeable;
 import java.util.LinkedList;
@@ -11,7 +14,6 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import cz.it4i.fiji.haas_spim_benchmark.core.Constants;
 import cz.it4i.fiji.haas_spim_benchmark.core.SimpleObservableValue;
 import cz.it4i.fiji.haas_spim_benchmark.core.TaskComputation;
 import cz.it4i.fiji.haas_spim_benchmark.core.TaskComputation.Log;
@@ -20,12 +22,13 @@ import javafx.beans.value.ObservableValueBase;
 
 public class TaskComputationAdapter implements Closeable {
 
-	public final static Logger log = LoggerFactory
-			.getLogger(cz.it4i.fiji.haas_spim_benchmark.ui.TaskComputationAdapter.class);
+	public final static Logger log = LoggerFactory.getLogger(
+		cz.it4i.fiji.haas_spim_benchmark.ui.TaskComputationAdapter.class);
 
 	private final TaskComputation computation;
 
-	private final List<ObservableValue<RemoteFileInfo>> outputs = new LinkedList<>();
+	private final List<ObservableValue<RemoteFileInfo>> outputs =
+		new LinkedList<>();
 
 	private final List<ObservableLog> logs = new LinkedList<>();
 
@@ -38,14 +41,17 @@ public class TaskComputationAdapter implements Closeable {
 
 	public void init() {
 		Map<String, Long> sizes = computation.getOutFileSizes();
-		computation.getOutputs().forEach(outputFile -> addOutputFile(outputFile, sizes.get(outputFile)));
-		computation.getLogs().forEach(decoratedLog -> logs.add(new ObservableLog(decoratedLog)));
+		computation.getOutputs().forEach(outputFile -> addOutputFile(outputFile,
+			sizes.get(outputFile)));
+		computation.getLogs().forEach(decoratedLog -> logs.add(new ObservableLog(
+			decoratedLog)));
 		synchronized (this) {
-			if(timer != null) {
-				timer.schedule(new P_TimerTask(), Constants.HAAS_TIMEOUT, Constants.HAAS_TIMEOUT);
+			if (timer != null) {
+				timer.schedule(new P_TimerTask(), getHaasUpdateTimeout(),
+					getHaasUpdateTimeout());
 			}
 		}
-		
+
 	}
 
 	@Override
@@ -57,7 +63,7 @@ public class TaskComputationAdapter implements Closeable {
 	public List<ObservableValue<RemoteFileInfo>> getOutputs() {
 		return outputs;
 	}
-	
+
 	public List<ObservableLog> getLogs() {
 		return logs;
 	}
@@ -66,29 +72,29 @@ public class TaskComputationAdapter implements Closeable {
 		outputs.add(new ObservableOutputFile(outputFile, size));
 	}
 
-	public static class ObservableLog  {
-	
+	public static class ObservableLog {
+
 		private final String name;
-		
+
 		private final SimpleObservableValue<String> value;
 
 		public ObservableLog(final Log content) {
 			this.value = new SimpleObservableValue<>(content.getContent());
 			this.name = content.getName();
 		}
-	
+
 		public String getName() {
 			return name;
 		}
-		
+
 		public ObservableValue<String> getContent() {
 			return value;
 		}
-	
+
 		public void setContentValue(Log log) {
 			if (!getName().equals(log.getName())) {
-				throw new IllegalArgumentException(
-						"this.name=" + getName() + ", log.name=" + log.getName());
+				throw new IllegalArgumentException("this.name=" + getName() +
+					", log.name=" + log.getName());
 			}
 			value.update(log.getContent());
 		}
@@ -129,7 +135,9 @@ public class TaskComputationAdapter implements Closeable {
 		public void setSize(Long newValue) {
 			Long oldValue = size;
 			size = newValue;
-			if (oldValue != newValue && oldValue != null && !oldValue.equals(newValue)) {
+			if (oldValue != newValue && oldValue != null && !oldValue.equals(
+				newValue))
+			{
 				fireValueChangedEvent();
 			}
 		}
@@ -140,11 +148,13 @@ public class TaskComputationAdapter implements Closeable {
 		@Override
 		public void run() {
 			Map<String, Long> sizes = computation.getOutFileSizes();
-			Map<String, Log> computationLogs = computation.getLogs().stream()
-					.collect(Collectors.<Log, String, Log>toMap((Log l) -> l.getName(), (Log l) -> l));
-			TaskComputationAdapter.this.logs
-					.forEach(processedLog -> processedLog.setContentValue(computationLogs.get(processedLog.getName())));
-			outputs.forEach(value -> ((ObservableOutputFile) value).setSize(sizes.get(value.getValue().getName())));
+			Map<String, Log> computationLogs = computation.getLogs().stream().collect(
+				Collectors.<Log, String, Log> toMap((Log l) -> l.getName(), (
+					Log l) -> l));
+			TaskComputationAdapter.this.logs.forEach(processedLog -> processedLog
+				.setContentValue(computationLogs.get(processedLog.getName())));
+			outputs.forEach(value -> ((ObservableOutputFile) value).setSize(sizes.get(
+				value.getValue().getName())));
 		}
 
 	}

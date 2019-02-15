@@ -1,0 +1,13 @@
+#miliseconds
+haas_update_timeout=30000
+
+haas_project_ID=open-15-12
+
+haas_cluster_node_type=7
+
+haas_template_ID=4
+
+#seconds
+walltime=3600
+
+bds_address=http://julius2.it4i.cz/

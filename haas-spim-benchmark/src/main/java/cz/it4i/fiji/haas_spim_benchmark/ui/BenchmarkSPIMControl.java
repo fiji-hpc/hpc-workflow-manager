@@ -1,6 +1,7 @@
 
 package cz.it4i.fiji.haas_spim_benchmark.ui;
 
+import static cz.it4i.fiji.haas_spim_benchmark.core.Configuration.getHaasUpdateTimeout;
 import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.CONFIG_YAML;
 
 import java.awt.Window;
@@ -94,14 +95,15 @@ public class BenchmarkSPIMControl extends BorderPane implements
 	private final JobStateNameProvider provider = new JobStateNameProvider();
 
 	private boolean closed;
-	
+
 	private static Logger log = LoggerFactory.getLogger(
 		cz.it4i.fiji.haas_spim_benchmark.ui.BenchmarkSPIMControl.class);
 
 	public BenchmarkSPIMControl(BenchmarkJobManager manager) {
 		this.manager = manager;
 		JavaFXRoutines.initRootAndController("BenchmarkSPIM.fxml", this);
-		jobs.setPlaceholder(new Label("No content in table. Right click to create new one."));
+		jobs.setPlaceholder(new Label(
+			"No content in table. Right click to create new one."));
 	}
 
 	@Override
@@ -114,13 +116,14 @@ public class BenchmarkSPIMControl extends BorderPane implements
 		initMenu();
 		boolean result = checkConnection();
 		synchronized (this) {
-			if(result && !closed) {
+			if (result && !closed) {
 				timer.scheduleAtFixedRate(new TimerTask() {
+
 					@Override
 					public void run() {
 						updateJobs(false);
 					}
-				}, Constants.HAAS_UPDATE_TIMEOUT, Constants.HAAS_UPDATE_TIMEOUT);
+				}, getHaasUpdateTimeout(), getHaasUpdateTimeout());
 				updateJobs(true);
 			}
 		}
@@ -300,15 +303,16 @@ public class BenchmarkSPIMControl extends BorderPane implements
 	}
 
 	private boolean checkConnection() {
-		boolean [] result = {false}; 
-		Progress progress = ModalDialogs.doModal(new ProgressDialog(
-			root, "Connecting to HPC"), WindowConstants.DO_NOTHING_ON_CLOSE);
+		boolean[] result = { false };
+		Progress progress = ModalDialogs.doModal(new ProgressDialog(root,
+			"Connecting to HPC"), WindowConstants.DO_NOTHING_ON_CLOSE);
 		final CountDownLatch latch = new CountDownLatch(1);
 		executorServiceWS.execute(() -> {
 			try {
 				manager.checkConnection();
 				result[0] = true;
-			} finally {
+			}
+			finally {
 				progress.done();
 				latch.countDown();
 			}
@@ -321,7 +325,7 @@ public class BenchmarkSPIMControl extends BorderPane implements
 		}
 		return result[0];
 	}
-	
+
 	private void updateJobs(boolean showProgress) {
 		Progress progress = showProgress ? ModalDialogs.doModal(new ProgressDialog(
 			root, "Updating jobs"), WindowConstants.DO_NOTHING_ON_CLOSE)

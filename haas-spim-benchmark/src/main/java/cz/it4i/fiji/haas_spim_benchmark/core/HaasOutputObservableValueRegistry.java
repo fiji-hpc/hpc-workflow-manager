@@ -1,6 +1,11 @@
 
 package cz.it4i.fiji.haas_spim_benchmark.core;
 
+import static cz.it4i.fiji.haas_java_client.SynchronizableFileType.StandardErrorFile;
+import static cz.it4i.fiji.haas_java_client.SynchronizableFileType.StandardOutputFile;
+import static cz.it4i.fiji.haas_spim_benchmark.core.Configuration.getHaasUpdateTimeout;
+import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.UI_TO_HAAS_FREQUENCY_UPDATE_RATIO;
+
 import com.google.common.collect.Streams;
 
 import java.io.Closeable;
@@ -26,10 +31,8 @@ class HaasOutputObservableValueRegistry implements Closeable {
 
 	public HaasOutputObservableValueRegistry(final BenchmarkJob job) {
 		this.job = job;
-		this.observableValues.put(SynchronizableFileType.StandardOutputFile,
-			createObservableValue());
-		this.observableValues.put(SynchronizableFileType.StandardErrorFile,
-			createObservableValue());
+		this.observableValues.put(StandardOutputFile, createObservableValue());
+		this.observableValues.put(StandardErrorFile, createObservableValue());
 	}
 
 	@Override
@@ -83,8 +86,7 @@ class HaasOutputObservableValueRegistry implements Closeable {
 						(type, value) -> (Runnable) (() -> observableValues.get(type)
 							.update(value))).forEach(r -> r.run());
 				}
-			}, 0, Constants.HAAS_UPDATE_TIMEOUT /
-				Constants.UI_TO_HAAS_FREQUENCY_UPDATE_RATIO);
+			}, 0, getHaasUpdateTimeout() / UI_TO_HAAS_FREQUENCY_UPDATE_RATIO);
 			isRunning = true;
 		}
 		else if (isRunning && !anyListeners) {
