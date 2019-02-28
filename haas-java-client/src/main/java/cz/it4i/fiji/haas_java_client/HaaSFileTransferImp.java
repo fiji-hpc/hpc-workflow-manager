@@ -59,8 +59,7 @@ class HaaSFileTransferImp implements HaaSFileTransfer {
 		try {
 			fileName = fileName.replaceFirst("/", "");
 			final Path rFile = workDirectory.resolve(fileName);
-			final String fileToDownload = "'" + ft.getSharedBasepath() + "/" +
-				fileName + "'";
+			final String fileToDownload = ft.getSharedBasepath() + "/" + fileName;
 			scpClient.download(fileToDownload, rFile, progress);
 		}
 		catch (JSchException | IOException e) {
@@ -78,7 +77,8 @@ class HaaSFileTransferImp implements HaaSFileTransfer {
 	public List<Long> obtainSize(List<String> files) throws InterruptedIOException {
 		try {
 			return getSizes(files.stream()
-					.map(filename -> "'" + ft.getSharedBasepath() + "/" + filename + "'").collect(Collectors.toList()));
+				.map(filename -> ft.getSharedBasepath() + "/" + filename).collect(
+					Collectors.toList()));
 		} catch (InterruptedIOException e) {
 			throw e;
 		} catch (JSchException | IOException e) {
@@ -95,7 +95,7 @@ class HaaSFileTransferImp implements HaaSFileTransfer {
 			for (String fileName : files) {
 				fileName = replaceIfFirstFirst(fileName);
 				try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
-					String fileToDownload = "'" + ft.getSharedBasepath() + "/" + fileName + "'";
+					String fileToDownload = ft.getSharedBasepath() + "/" + fileName;
 					scpClient.download(fileToDownload, os, progress);
 					os.flush();
 					result.add(os.toString());
