@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>cz.it4i.fiji</groupId>
 	<artifactId>haas-parent</artifactId>
-	<version>0.0.4-SNAPSHOT</version>
+	<version>1.0.0</version>
 	<packaging>pom</packaging>
 	<parent>
 		<groupId>org.scijava</groupId>

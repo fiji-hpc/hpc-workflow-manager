@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>cz.it4i.fiji</groupId>
 	<artifactId>haas-java-client</artifactId>
-	<version>0.0.8-SNAPSHOT</version>
+	<version>1.0.0</version>
 	<name>HaaS library for Java</name>
 	<packaging>jar</packaging>
 	<properties>
@@ -122,7 +122,7 @@
 		<dependency>
 			<groupId>cz.it4i.fiji</groupId>
 			<artifactId>java-scpclient</artifactId>
-			<version>0.0.2-SNAPSHOT</version>
+			<version>1.0.0</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/javax.xml/jaxrpc-api -->
 		<dependency>

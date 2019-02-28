@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>cz.it4i.fiji</groupId>
 	<artifactId>java-scpclient</artifactId>
-	<version>0.0.2-SNAPSHOT</version>
+	<version>1.0.0</version>
 	<name>Scp client library for Java</name>
 	<packaging>jar</packaging>
 	<properties>

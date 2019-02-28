@@ -5,9 +5,10 @@
 	<parent>
 		<groupId>cz.it4i.fiji</groupId>
 		<artifactId>haas-parent</artifactId>
-		<version>0.0.4-SNAPSHOT</version>
+		<version>1.0.0</version>
 		<relativePath> ../haas-parent/pom.xml</relativePath>
 	</parent>
+	
 	<artifactId>haas-imagej-client</artifactId>
 	<packaging>jar</packaging>
 	<name>HaaS for ImageJ</name>
@@ -74,7 +75,7 @@
 		<dependency>
 			<groupId>cz.it4i.fiji</groupId>
 			<artifactId>haas-java-client</artifactId>
-			<version>0.0.8-SNAPSHOT</version>
+			<version>1.0.0</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-api -->
 		<dependency>
