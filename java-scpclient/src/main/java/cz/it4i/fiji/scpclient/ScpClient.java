@@ -89,8 +89,7 @@ public class ScpClient extends AbstractBaseSshClient {
 		AckowledgementChecker ack = new AckowledgementChecker();
 		// exec 'scp -f rfile' remotely
 
-		lfile = lfile.replace("'", "'\"'\"'");
-		lfile = "'" + lfile + "'";
+		lfile = sanityFileName(lfile);
 
 		String command = "scp -f " + lfile;
 		Channel channel = getConnectedSession().openChannel("exec");
@@ -233,8 +232,7 @@ public class ScpClient extends AbstractBaseSshClient {
 		AckowledgementChecker ack = new AckowledgementChecker();
 		// exec 'scp -f rfile' remotely
 
-		lfile = lfile.replace("'", "'\"'\"'");
-		lfile = "'" + lfile + "'";
+		lfile = sanityFileName(lfile);
 
 		String command = "scp -f " + lfile;
 		Channel channel = getConnectedSession().openChannel("exec");
@@ -291,7 +289,7 @@ public class ScpClient extends AbstractBaseSshClient {
 
 		// exec 'scp -f rfile' remotely
 		Channel channel = getConnectedSession().openChannel("sftp");
-
+		lfile = sanityFileName(lfile);
 		try {
 			channel.connect();
 			return ((List<LsEntry>) ((ChannelSftp) channel).ls(lfile)).stream().map(
@@ -319,10 +317,9 @@ public class ScpClient extends AbstractBaseSshClient {
 		boolean ptimestamp = false;
 		// exec 'scp -t rfile' remotely
 
-		fileName = fileName.replace("'", "'\"'\"'");
+		fileName = sanityFileName(fileName);
 
-		String command = "scp " + (ptimestamp ? "-p" : "") + " -t '" + fileName +
-			"'";
+		String command = "scp " + (ptimestamp ? "-p" : "") + " -t " + fileName;
 		Channel channel = getConnectedSession().openChannel("exec");
 		((ChannelExec) channel).setCommand(command);
 		// get I/O streams for remote scp
@@ -389,9 +386,17 @@ public class ScpClient extends AbstractBaseSshClient {
 		}
 	}
 
+	private String sanityFileName(String fileName) {
+		fileName = fileName.replace("\"", "\\\\\\\"");
+		fileName = fileName.replace("'", "\\\\\\'");
+		fileName = "'" + fileName + "'";
+		return fileName;
+	}
+
 	private int mkdir(String file) throws JSchException {
 		ChannelExec channel = (ChannelExec) getConnectedSession().openChannel(
 			"exec");
+		file = sanityFileName(file);
 		channel.setCommand("mkdir -p '" + file + "'");
 		try {
 			channel.connect();
