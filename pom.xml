@@ -12,7 +12,6 @@
 		<maven.deploy.skip>true</maven.deploy.skip>
 	</properties>
 	<modules>
-		<module>java-scpclient</module>
 		<module>haas-java-client</module>
 		<module>haas-spim-benchmark</module>
 		<module>haas-imagej-client</module>

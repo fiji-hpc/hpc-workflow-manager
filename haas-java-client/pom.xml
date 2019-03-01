@@ -13,7 +13,6 @@
 	<scm>
 		<url>https://code.it4i.cz/fiji/haas-java-client.git</url>
 		<connection>scm:git:https://code.it4i.cz/fiji/haas-java-client.git</connection>
-
 	</scm>
 	<build>
 		<plugins>
@@ -145,6 +144,12 @@
 			<scope>provided</scope>
 		</dependency>
 	</dependencies>
+	<repositories>
+		<repository>
+			<id>it4i</id>
+			<url>https://artifactory.cs.vsb.cz/it4i/</url>
+		</repository>
+	</repositories>
 	<distributionManagement>
 		<repository>
 			<id>it4i</id>
