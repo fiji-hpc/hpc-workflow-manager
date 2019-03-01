@@ -6,7 +6,7 @@
 		<groupId>cz.it4i.fiji</groupId>
 		<artifactId>haas-parent</artifactId>
 		<version>1.0.0</version>
-		<relativePath> ../haas-parent/pom.xml</relativePath>
+		<relativePath> ../pom.xml</relativePath>
 	</parent>
 	<artifactId>haas-spim-benchmark</artifactId>
 	<packaging>jar</packaging>

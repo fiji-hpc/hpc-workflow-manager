@@ -12,7 +12,62 @@
 		<version>17.1.1</version>
 		<relativePath />
 	</parent>
+	<name>HPC Workflow Manager</name>
+	<url>${project_url}</url>
+	<description>Plugin for benchmarking SPIM automated workflow and starting by IT4I HaaS.</description>
+	<inceptionYear>2018</inceptionYear>
+	<organization>
+		<name>${organization.name}</name>
+		<url>${organization.url}</url>
+	</organization>
+	<licenses>
+		<license>
+			<name>${license.name}</name>
+			<url>${license.url}</url>
+			<distribution>${license.distribution}</distribution>
+		</license>
+	</licenses>
+
+	<developers>
+		<developer>
+			<id>koz01</id>
+			<name>Jan Kožusznik</name>
+			<url>http://www.kozusznik.cz</url>
+		</developer>
+	</developers>
+	<contributors>
+		<contributor>
+			<name>None</name>
+		</contributor>
+	</contributors>
+
+	<mailingLists>
+		<mailingList>
+			<name>ImageJ Forum</name>
+			<archive>http://forum.imagej.net/</archive>
+		</mailingList>
+	</mailingLists>
+
+	<scm>
+		<connection>${scm.connection}</connection>
+		<developerConnection>${scm.developerConnection}</developerConnection>
+		<tag>${scm.tag}</tag>
+		<url>${scm.url}</url>
+	</scm>
+	<issueManagement>
+		<system>${issueManagement.system}</system>
+		<url>${issueManagement.url}</url>
+	</issueManagement>
+	<ciManagement>
+		<system>None</system>
+	</ciManagement>
+
+
+
 	<properties>
+		<license.licenseName>${license.base.licenseName}</license.licenseName>
+		<license.copyrightOwners>${license.base.copyrightOwners}</license.copyrightOwners>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project_url>https://code.it4i.cz/fiji/haas-java-client/</project_url>
 		<organization.name>IT4Innovations - National Supercomputing Center</organization.name>
 		<organization.url>http://www.it4i.cz/</organization.url>
@@ -28,12 +83,14 @@
 		<scm.tag>HEAD</scm.tag>
 		<scm.url>${project_url}</scm.url>
 
-
-
 		<issueManagement.system>GitLab Issues</issueManagement.system>
 		<issueManagement.url>https://code.it4i.cz/fiji/haas-java-client/issues</issueManagement.url>
 		<maven.deploy.skip>true</maven.deploy.skip>
 	</properties>
+	<modules>
+		<module>haas-spim-benchmark</module>
+		<module>haas-imagej-client</module>
+	</modules>
 	<repositories>
 		<repository>
 			<id>imagej.public</id>
