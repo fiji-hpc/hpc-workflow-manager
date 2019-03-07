@@ -68,7 +68,7 @@
 	<dependencies>
 		<dependency>
 			<groupId>cz.it4i.fiji</groupId>
-			<artifactId>haas-java-client</artifactId>
+			<artifactId>heappe-java-client</artifactId>
 			<version>1.0.0</version>
 		</dependency>
 		<dependency>
