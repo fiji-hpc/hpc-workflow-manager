@@ -3,7 +3,7 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>cz.it4i.fiji</groupId>
-	<artifactId>haas-parent</artifactId>
+	<artifactId>hpc-workflow-manager-parent</artifactId>
 	<version>1.0.1-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<parent>
@@ -88,8 +88,8 @@
 		<maven.deploy.skip>true</maven.deploy.skip>
 	</properties>
 	<modules>
-		<module>haas-spim-benchmark</module>
-		<module>haas-imagej-client</module>
+		<module>hpc-workflow-manager-client</module>
+		<module>hpc-workflow-manager-heappe-adapter</module>
 	</modules>
 	<repositories>
 		<repository>

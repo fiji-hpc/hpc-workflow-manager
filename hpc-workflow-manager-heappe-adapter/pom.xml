@@ -4,16 +4,16 @@
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
 		<groupId>cz.it4i.fiji</groupId>
-		<artifactId>haas-parent</artifactId>
+		<artifactId>hpc-workflow-manager-parent</artifactId>
 		<version>1.0.1-SNAPSHOT</version>
 		<relativePath> ../pom.xml</relativePath>
 	</parent>
 	
-	<artifactId>haas-imagej-client</artifactId>
+	<artifactId>hpc-workflow-manager-heappe-adapter</artifactId>
 	<packaging>jar</packaging>
 	<name>HaaS for ImageJ</name>
 	<url>${project_url}</url>
-	<description>Library with for working with HaaS in ImageJ.</description>
+	<description>HEAppE adapter for HPC Workflow Manager.</description>
 	<inceptionYear>2018</inceptionYear>
 	<organization>
 		<name>${organization.name}</name>

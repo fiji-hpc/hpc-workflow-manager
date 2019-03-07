@@ -4,15 +4,15 @@
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
 		<groupId>cz.it4i.fiji</groupId>
-		<artifactId>haas-parent</artifactId>
+		<artifactId>hpc-workflow-manager-parent</artifactId>
 		<version>1.0.1-SNAPSHOT</version>
 		<relativePath> ../pom.xml</relativePath>
 	</parent>
-	<artifactId>haas-spim-benchmark</artifactId>
+	<artifactId>hpc-workflow-manager-client</artifactId>
 	<packaging>jar</packaging>
 	<name>HaaS benchmark of SPIM</name>
 	<url>${project_url}</url>
-	<description>Plugin for benchmarking SPIM automated workflow and starting by IT4I HaaS.</description>
+	<description>HPC Workflow Manager client plugin for FIJI.</description>
 	<inceptionYear>2018</inceptionYear>
 	<organization>
 		<name>${organization.name}</name>
@@ -68,7 +68,7 @@
 	<dependencies>
 		<dependency>
 			<groupId>cz.it4i.fiji</groupId>
-			<artifactId>haas-imagej-client</artifactId>
+			<artifactId>hpc-workflow-manager-heappe-adapter</artifactId>
 			<version>1.0.1-SNAPSHOT</version>
 		</dependency>
 
