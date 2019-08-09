@@ -63,6 +63,7 @@ public interface Constants {
 		"Task;AvgMemoryUsage;AvgWallTime;MaxWallTime;TotalTime;JobCount";
 	String DONE_TASK = "done";
 	int CORES_PER_NODE = 24;
+	int NUMBER_OF_NODES = 2;
 	String DEMO_DATA_SIGNAL_FILE_NAME = "demodata";
 
 }

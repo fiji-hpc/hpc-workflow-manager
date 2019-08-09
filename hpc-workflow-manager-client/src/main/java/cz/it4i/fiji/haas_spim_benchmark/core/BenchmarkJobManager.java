@@ -10,12 +10,14 @@ import static cz.it4i.fiji.haas_spim_benchmark.core.Configuration.getHaasTemplat
 import static cz.it4i.fiji.haas_spim_benchmark.core.Configuration.getWalltime;
 import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.BENCHMARK_TASK_NAME_MAP;
 import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.CORES_PER_NODE;
+import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.NUMBER_OF_NODES;
 import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.DONE_TASK;
 import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.FUSION_SWITCH;
 import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.HAAS_JOB_NAME;
 import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.HDF5_XML_FILENAME;
 import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.SPIM_OUTPUT_FILENAME_PATTERN;
 import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.VERIFIED_STATE_OF_FINISHED_JOB;
+
 
 import java.io.BufferedReader;
 import java.io.Closeable;
@@ -681,7 +683,7 @@ public class BenchmarkJobManager implements Closeable {
 	private static JobSettings getJobSettings() {
 		return new JobSettingsBuilder().jobName(HAAS_JOB_NAME).clusterNodeType(
 			getHaasClusterNodeType()).templateId(getHaasTemplateID()).walltimeLimit(
-				getWalltime()).numberOfCoresPerNode(CORES_PER_NODE).build();
+				getWalltime()).numberOfCoresPerNode(CORES_PER_NODE).numberOfNodes(NUMBER_OF_NODES).build();
 	}
 
 	static private Predicate<String> downloadFileNameExtractDecorator(
