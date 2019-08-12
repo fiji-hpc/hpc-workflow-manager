@@ -3,6 +3,7 @@
 <?import cz.it4i.fiji.haas_spim_benchmark.ui.DataTransferController?>
 <?import cz.it4i.fiji.haas_spim_benchmark.ui.LogViewControl?>
 <?import cz.it4i.fiji.haas_spim_benchmark.ui.SPIMPipelineProgressViewController?>
+<?import cz.it4i.fiji.haas_spim_benchmark.ui.MPITaskProgressViewController?>
 <?import javafx.scene.control.Tab?>
 <?import javafx.scene.control.TabPane?>
 <?import javafx.scene.layout.AnchorPane?>
@@ -11,21 +12,33 @@
 
 
 <fx:root type="TabPane" xmlns:fx="http://javafx.com/fxml/1"
-	xmlns="http://javafx.com/javafx/8.0.65" fx:controller="cz.it4i.fiji.haas_spim_benchmark.ui.JobDetailControl">
+	xmlns="http://javafx.com/javafx/8.0.65"
+	fx:controller="cz.it4i.fiji.haas_spim_benchmark.ui.JobDetailControl">	
 	<tabs>
-		<Tab closable="false" text="Progress" fx:id="progressTab">
+		<!-- This is the MPI Task progress tab: -->
+		<Tab closable="false" text="MPI Progress" fx:id="mpiProgressTab">
 			<content>
 				<HBox>
-					<SPIMPipelineProgressViewController fx:id="progressControl"
-						HBox.hgrow="ALWAYS" />
-
+					<MPITaskProgressViewController
+						fx:id="mpiProgressControl" HBox.hgrow="ALWAYS" />
 				</HBox>
 			</content>
 		</Tab>
-		<Tab closable="false" text="Snakemake output" fx:id="snakemakeOutputTab">
+		<!-- This is the SPIM Pipeline progress tab: -->
+		<Tab closable="false" text="Progress" fx:id="progressTab">
 			<content>
 				<HBox>
-					<LogViewControl fx:id="snakemakeOutputControl" HBox.hgrow="ALWAYS" />
+					<SPIMPipelineProgressViewController
+						fx:id="progressControl" HBox.hgrow="ALWAYS" />
+				</HBox>
+			</content>
+		</Tab>
+		<Tab closable="false" text="Snakemake output"
+			fx:id="snakemakeOutputTab">
+			<content>
+				<HBox>
+					<LogViewControl fx:id="snakemakeOutputControl"
+						HBox.hgrow="ALWAYS" />
 
 				</HBox>
 			</content>
@@ -33,15 +46,18 @@
 		<Tab closable="false" text="Other output" fx:id="otherOutputTab">
 			<content>
 				<HBox>
-					<LogViewControl fx:id="otherOutputControl" HBox.hgrow="ALWAYS" />
+					<LogViewControl fx:id="otherOutputControl"
+						HBox.hgrow="ALWAYS" />
 				</HBox>
 			</content>
 
 		</Tab>
-		<Tab closable="false" text="Job directories" fx:id="jobPropertiesTab">
+		<Tab closable="false" text="Job directories"
+			fx:id="jobPropertiesTab">
 			<content>
 				<HBox>
-					<JobPropertiesControl fx:id="jobProperties" HBox.hgrow="ALWAYS" />
+					<JobPropertiesControl fx:id="jobProperties"
+						HBox.hgrow="ALWAYS" />
 				</HBox>
 			</content>
 
@@ -49,7 +65,8 @@
 		<Tab closable="false" text="Data upload" fx:id="dataUploadTab">
 			<content>
 				<HBox>
-					<DataTransferController fx:id="dataUploadControl" HBox.hgrow="ALWAYS" />
+					<DataTransferController
+						fx:id="dataUploadControl" HBox.hgrow="ALWAYS" />
 				</HBox>
 			</content>
 		</Tab>

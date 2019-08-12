@@ -39,8 +39,14 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 		cz.it4i.fiji.haas_spim_benchmark.ui.JobDetailControl.class);
 
 	@FXML
+	private MPITaskProgressViewController mpiProgressControl;
+	
+	@FXML
 	private SPIMPipelineProgressViewController progressControl;
 
+	@FXML
+	private Tab mpiProgressTab;
+	
 	@FXML
 	private Tab progressTab;
 
@@ -136,6 +142,8 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 		executorServiceWS.execute(() -> {
 
 			try {
+				mpiProgressControl.init(parameter);				
+				
 				progressControl.init(parameter);
 				taskList = job.getObservableTaskList();
 				taskList.subscribe(taskListListener);

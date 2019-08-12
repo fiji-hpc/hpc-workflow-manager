@@ -37,7 +37,7 @@ import javafx.scene.paint.Color;
 public class SPIMPipelineProgressViewController extends BorderPane implements CloseableControl, InitiableControl {
 
 
-	public final static Logger log = LoggerFactory
+	public static final Logger log = LoggerFactory
 			.getLogger(cz.it4i.fiji.haas_spim_benchmark.ui.SPIMPipelineProgressViewController.class);
 	
 	private static final String EMPTY_VALUE = "";
