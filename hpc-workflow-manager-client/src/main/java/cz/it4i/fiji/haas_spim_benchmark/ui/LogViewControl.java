@@ -14,6 +14,9 @@ import javafx.scene.layout.BorderPane;
 
 public class LogViewControl extends BorderPane implements CloseableControl {
 
+	@FXML
+	private TextArea otherOutputTextArea;
+
 	@SuppressWarnings("unused")
 	private static Logger log = LoggerFactory.getLogger(
 		cz.it4i.fiji.haas_spim_benchmark.ui.LogViewControl.class);
@@ -30,18 +33,15 @@ public class LogViewControl extends BorderPane implements CloseableControl {
 			public void changed(ObservableValue<? extends String> observable,
 				String oldValue, String newValue)
 			{
-				JavaFXRoutines.runOnFxThread(() -> ta.setText(observedValue
+				JavaFXRoutines.runOnFxThread(() -> otherOutputTextArea.setText(observedValue
 					.getValue()));
 			}
 		};
 	}
 
-	@FXML
-	private TextArea ta;
-
 	public void setObservable(ObservableValue<String> value) {
 		observedValue = value;
-		JavaFXRoutines.runOnFxThread(() -> ta.setText(observedValue.getValue()));
+		JavaFXRoutines.runOnFxThread(() -> otherOutputTextArea.setText(observedValue.getValue()));
 		observedValue.addListener(outputChangeListener);
 	}
 

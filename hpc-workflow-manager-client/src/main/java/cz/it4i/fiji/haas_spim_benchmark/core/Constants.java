@@ -25,7 +25,7 @@ public interface Constants {
 	String HDF5_XML_FILENAME = "hdf5_xml_filename";
 	String FUSION_SWITCH = "fusion_switch";
 
-	// This map is considered as ground truth for chronologic task sorting
+	// This map is considered as ground truth for chronological task sorting
 	Map<String, String> BENCHMARK_TASK_NAME_MAP =
 		new LinkedHashMap<String, String>()
 		{

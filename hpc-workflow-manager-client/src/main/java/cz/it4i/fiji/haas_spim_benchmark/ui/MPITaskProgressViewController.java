@@ -25,7 +25,7 @@ public class MPITaskProgressViewController extends BorderPane implements Closeab
 
 	@Override
 	public void init(Window parameter) {
-		this.root = parameter;		
+		this.root = parameter;
 	}
 
 	@Override

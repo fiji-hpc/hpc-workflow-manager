@@ -25,8 +25,8 @@ public class TaskComputation {
 		cz.it4i.fiji.haas_spim_benchmark.core.TaskComputation.class);
 	
 	public static class Log {
-		final private String name;
-		final private String content;
+		private final String name;
+		private final String content;
 
 		public Log(String name, String content) {
 			this.name = name;
@@ -70,8 +70,8 @@ public class TaskComputation {
 	}
 
 	public static class File {
-		final private String name;
-		final private long size;
+		private final String name;
+		private final long size;
 
 		public File(String name, long size) {
 			this.name = name;

@@ -142,7 +142,7 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 		executorServiceWS.execute(() -> {
 
 			try {
-				mpiProgressControl.init(parameter);				
+				mpiProgressControl.init(parameter);
 				
 				progressControl.init(parameter);
 				taskList = job.getObservableTaskList();
