@@ -15,7 +15,7 @@ import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.BenchmarkJob;
 
 class TaskObservableValueRegistry implements Closeable {
 
-	private final static Task EMPTY_TASK = new Task(
+	private static final  Task EMPTY_TASK = new Task(
 		new SPIMComputationAccessorAdapter(), "", 0);
 
 	private final BenchmarkJob job;
