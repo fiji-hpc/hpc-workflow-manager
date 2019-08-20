@@ -18,7 +18,6 @@ import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.HDF5_XML_FILENAME;
 import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.SPIM_OUTPUT_FILENAME_PATTERN;
 import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.VERIFIED_STATE_OF_FINISHED_JOB;
 
-
 import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.FileWriter;
@@ -435,8 +434,11 @@ public class BenchmarkJobManager implements Closeable {
 					val -> downloadingStatus = val);
 			final ProgressNotifierTemporarySwitchOff progressNotifierTemporarySwitchOff =
 				new ProgressNotifierTemporarySwitchOff(downloadNotifier, job);
-			job.startDownload(downloadFileNameExtractDecorator(fileName -> fileName
-				.equals(mainFile))).exceptionally(__ -> {
+			// Disabled download filter by changing: "fileName ->
+			// fileName.equals(mainFile)" to "s -> true" in order to download MPI job
+			// outputs.
+			job.startDownload(downloadFileNameExtractDecorator(s -> true))
+				.exceptionally(__ -> {
 					progressNotifierTemporarySwitchOff.switchOn();
 					stillRunningTemporarySwitch.switchBack();
 					return null;
@@ -683,7 +685,8 @@ public class BenchmarkJobManager implements Closeable {
 	private static JobSettings getJobSettings() {
 		return new JobSettingsBuilder().jobName(HAAS_JOB_NAME).clusterNodeType(
 			getHaasClusterNodeType()).templateId(getHaasTemplateID()).walltimeLimit(
-				getWalltime()).numberOfCoresPerNode(CORES_PER_NODE).numberOfNodes(NUMBER_OF_NODES).build();
+				getWalltime()).numberOfCoresPerNode(CORES_PER_NODE).numberOfNodes(
+					NUMBER_OF_NODES).build();
 	}
 
 	static private Predicate<String> downloadFileNameExtractDecorator(
