@@ -2,7 +2,10 @@
 package cz.it4i.fiji.haas_spim_benchmark.ui;
 
 import java.awt.Window;
+import java.util.ArrayList;
+import java.util.List;
 
+import cz.it4i.fiji.haas.Job;
 import cz.it4i.fiji.haas.ui.CloseableControl;
 import cz.it4i.fiji.haas.ui.InitiableControl;
 import cz.it4i.fiji.haas.ui.JavaFXRoutines;
@@ -32,6 +35,8 @@ public class MPITaskProgressViewController extends BorderPane implements
 	private TableColumn<MPITask, String> descriptionColumn;
 
 	private Window root;
+	
+	private Job job;
 
 	private ObservableList<MPITask> tableData = FXCollections
 		.observableArrayList();
@@ -62,8 +67,6 @@ public class MPITaskProgressViewController extends BorderPane implements
 			"description"));
 		// Create columns for the progress of each node:
 		Platform.runLater(() -> createColumnsForEachNode());
-		// Add process indicators:
-		
 
 		tasksTableView.setItems(tableData);
 	}
@@ -106,5 +109,18 @@ public class MPITaskProgressViewController extends BorderPane implements
 	@Override
 	public void close() {
 		// TODO Auto-generated method stub
+	}
+
+	public void setJobParameter(Job newJob) {
+		this.job = newJob;
+		
+		// Get the actual data from the progress files:	
+		List<String> files = new ArrayList<>();
+		files.add("progress_0.plog");
+		List<String> printMe = job.getFileContents(files);
+		
+		for (String me : printMe) {
+			System.out.println(me);
+		}
 	}
 }

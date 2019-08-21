@@ -13,6 +13,7 @@ import net.imagej.updater.util.Progress;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import cz.it4i.fiji.haas.Job;
 import cz.it4i.fiji.haas.data_transfer.PersistentSynchronizationProcess;
 import cz.it4i.fiji.haas.ui.UpdatableObservableValue;
 import cz.it4i.fiji.haas_java_client.FileTransferInfo;
@@ -39,7 +40,9 @@ public class ObservableBenchmarkJob extends
 	private final TaskObservableValueRegistry taskRegistry;
 
 	private final SimpleObservableList<FileTransferInfo> fileTransferList;
-
+	
+	private BenchmarkJob benchmarkJob;
+	
 	public interface TransferProgress {
 
 		public Long getRemainingMiliseconds();
@@ -52,12 +55,13 @@ public class ObservableBenchmarkJob extends
 
 		public Float getRemainingPercents();
 	}
-
+	
 	public ObservableBenchmarkJob(BenchmarkJob wrapped,
 		Function<BenchmarkJob, UpdateStatus> updateFunction,
 		Function<BenchmarkJob, Object> stateProvider, Executor executorUI)
-	{
+	{		
 		super(wrapped, updateFunction, stateProvider);
+		this.benchmarkJob = wrapped;
 		this.executor = executorUI;
 		wrapped.setDownloadNotifier(downloadProgress);
 		wrapped.setUploadNotifier(uploadProgress);
@@ -215,6 +219,10 @@ public class ObservableBenchmarkJob extends
 			failed = false;
 			doneStatusConsumer.accept(val);
 		}
+	}
+	
+	public Job getJob() {
+		return benchmarkJob.getJob();
 	}
 
 }
