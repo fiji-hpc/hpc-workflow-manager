@@ -27,4 +27,13 @@ public class MPITask {
 			return -1;
 		}
 	}
+	
+	public void setProgress(int nodeId, Long newProgress) {
+		try{
+			this.progress.get(nodeId);
+			this.progress.set(nodeId, newProgress);
+			} catch (Exception exc){
+			this.progress.add(nodeId, newProgress);
+		}
+	}
 }

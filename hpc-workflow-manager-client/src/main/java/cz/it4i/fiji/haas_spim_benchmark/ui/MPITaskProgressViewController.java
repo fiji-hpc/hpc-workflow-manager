@@ -47,8 +47,11 @@ public class MPITaskProgressViewController extends BorderPane implements
 		this.root = parameter;
 
 		// Add some fake tasks:
-		tableData.addAll(new MPITask("An empty task."), new MPITask(
-			"A second one."));
+		MPITask fakeMPITask1 = new MPITask("An empty task.");
+		fakeMPITask1.setProgress(0, 90L);
+		MPITask fakeMPITask2 = new MPITask("A second one.");
+		fakeMPITask2.setProgress(0, 99L);
+		tableData.addAll(fakeMPITask1, fakeMPITask2);
 
 		// initialize table columns:
 		// Get task descriptions:
@@ -87,8 +90,9 @@ public class MPITaskProgressViewController extends BorderPane implements
 		@Override
 		protected void updateItem(Long t, boolean empty) {
 			super.updateItem(t, empty);
-			if (!empty) {
+			if (!empty && t >= 0) {
 				setText(null);
+				cellProgress.setProgress(t.doubleValue()/100D);
 				setGraphic(cellProgress);
 			} else {
 				setText(null);
