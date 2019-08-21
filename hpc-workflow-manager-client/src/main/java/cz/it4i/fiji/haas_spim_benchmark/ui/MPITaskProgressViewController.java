@@ -70,42 +70,20 @@ public class MPITaskProgressViewController extends BorderPane implements
 			final int index = i;
 			tempColumn.setCellValueFactory(cellData -> new SimpleObservableValue<>(
 				cellData.getValue().getProgress(index)));
-			tempColumn.setCellFactory(e -> new ProgressCell());
+			tempColumn.setCellFactory(e -> new ProgressCell(e.getCellData(index)));
 			tasksTableView.getColumns().add(tempColumn);	
 		}
 	}
 	
-//	private void setProgressIndicator(TableColumn<MPITask, Long> column) {
-//		column.setCellFactory(cell -> new TableCell<MPITask, Long>() {
-//
-//			@Override
-//			protected void updateItem(Long item, boolean empty) {
-//				super.updateItem(item, empty);
-//
-//				if (item == null || empty) {
-//					setText(null);
-//					setStyle("");
-//				}
-//				else {
-//					setText(null);
-//					ProgressIndicator pb = new ProgressIndicator();
-//					pb.setProgress(0);
-//					setText("Where is the indicator?");
-//				}
-//			}
-//		});
-//	}
-	
-	// Define the details button cell:
 	private class ProgressCell extends TableCell<MPITask, Long> {
 
 		final ProgressIndicator cellProgress = new ProgressIndicator();
 
-		ProgressCell() {
-			cellProgress.setProgress(0.9);
+		ProgressCell(double progress) {
+			cellProgress.setProgress(progress);
 		}
 
-		// Display details button if the row is not empty:
+		// Display progress indicator if the row is not empty:
 		@Override
 		protected void updateItem(Long t, boolean empty) {
 			super.updateItem(t, empty);
