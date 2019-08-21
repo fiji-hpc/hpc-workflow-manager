@@ -57,6 +57,9 @@ public class NewJobController extends BorderPane implements CloseableControl, In
 
 	@FXML
 	private TextField et_outputDirectory;
+	
+	@FXML
+	private TextField et_numberOfNodes;
 
 	private DataLocation inputDataLocation;
 
@@ -97,6 +100,10 @@ public class NewJobController extends BorderPane implements CloseableControl, In
 
 	public Path getOutputDirectory(Path workingDirectory) {
 		return getDirectory(outputDataLocation, et_outputDirectory.getText(), workingDirectory);
+	}
+	
+	public int getNumberOfNodes() {
+		return  Integer.parseInt(et_numberOfNodes.getText());
 	}
 
 	public void setCreatePressedNotifier(Runnable createPressedNotifier) {

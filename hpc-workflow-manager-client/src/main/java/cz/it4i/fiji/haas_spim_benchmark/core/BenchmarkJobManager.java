@@ -530,9 +530,9 @@ public class BenchmarkJobManager implements Closeable {
 	}
 
 	public BenchmarkJob createJob(Function<Path, Path> inputDirectoryProvider,
-		Function<Path, Path> outputDirectoryProvider) throws IOException
+		Function<Path, Path> outputDirectoryProvider, int numberOfNodes) throws IOException
 	{
-		Job job = jobManager.createJob(getJobSettings(), inputDirectoryProvider,
+		Job job = jobManager.createJob(getJobSettings(numberOfNodes), inputDirectoryProvider,
 			outputDirectoryProvider);
 		if (job.getInputDirectory() == null) {
 			job.createEmptyFile(Constants.DEMO_DATA_SIGNAL_FILE_NAME);
@@ -682,11 +682,11 @@ public class BenchmarkJobManager implements Closeable {
 		return new BenchmarkJob(job);
 	}
 
-	private static JobSettings getJobSettings() {
+	private static JobSettings getJobSettings(int  numberOfNodes) {
 		return new JobSettingsBuilder().jobName(HAAS_JOB_NAME).clusterNodeType(
 			getHaasClusterNodeType()).templateId(getHaasTemplateID()).walltimeLimit(
 				getWalltime()).numberOfCoresPerNode(CORES_PER_NODE).numberOfNodes(
-					NUMBER_OF_NODES).build();
+						numberOfNodes).build();
 	}
 
 	static private Predicate<String> downloadFileNameExtractDecorator(

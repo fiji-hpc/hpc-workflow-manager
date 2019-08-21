@@ -211,7 +211,7 @@ public class BenchmarkSPIMControl extends BorderPane implements
 				@Override
 				public void doAction(Progress p) throws IOException {
 					BenchmarkJob job = doCreateJob(wd -> newJobWindow.getInputDirectory(
-						wd), wd -> newJobWindow.getOutputDirectory(wd));
+						wd), wd -> newJobWindow.getOutputDirectory(wd), newJobWindow.getNumberOfNodes());
 					if (job.isUseDemoData()) {
 						job.storeDataInWorkdirectory(getConfigYamlFile());
 					}
@@ -253,9 +253,9 @@ public class BenchmarkSPIMControl extends BorderPane implements
 	}
 
 	private BenchmarkJob doCreateJob(Function<Path, Path> inputProvider,
-		Function<Path, Path> outputProvider) throws IOException
+		Function<Path, Path> outputProvider, int numberOfNodes) throws IOException
 	{
-		BenchmarkJob bj = manager.createJob(inputProvider, outputProvider);
+		BenchmarkJob bj = manager.createJob(inputProvider, outputProvider, numberOfNodes);
 		ObservableBenchmarkJob obj = registry.addIfAbsent(bj);
 		addJobToItems(obj);
 		jobs.refresh();

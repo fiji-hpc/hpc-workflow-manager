@@ -28,4 +28,9 @@ public class NewJobWindow extends FXFrame<NewJobController> {
 	public void setCreatePressedNotifier(Runnable runnable) {
 		getFxPanel().getControl().setCreatePressedNotifier(runnable);
 	}
+	
+	public int getNumberOfNodes() {
+		return getFxPanel().getControl().getNumberOfNodes();
+	}
+	
 }
