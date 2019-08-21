@@ -19,6 +19,8 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
 
+import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.NUMBER_OF_NODES;
+
 public class MPITaskProgressViewController extends BorderPane implements
 	CloseableControl, InitiableControl
 {
@@ -51,6 +53,7 @@ public class MPITaskProgressViewController extends BorderPane implements
 		fakeMPITask1.setProgress(0, 90L);
 		MPITask fakeMPITask2 = new MPITask("A second one.");
 		fakeMPITask2.setProgress(0, 99L);
+		fakeMPITask2.setProgress(1, 100L);
 		tableData.addAll(fakeMPITask1, fakeMPITask2);
 
 		// initialize table columns:
@@ -66,8 +69,7 @@ public class MPITaskProgressViewController extends BorderPane implements
 	}
 
 	private void createColumnsForEachNode() {
-		int numberOfNodes = 2;
-		for (int i = 0; i < numberOfNodes; i++) {
+		for (int i = 0; i < NUMBER_OF_NODES; i++) {
 			TableColumn<MPITask, Long> tempColumn = new TableColumn<>("Node " + i +
 				" progress (%)");
 			final int index = i;
