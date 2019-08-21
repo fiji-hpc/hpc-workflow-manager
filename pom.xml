@@ -93,13 +93,13 @@
 	</modules>
 	<repositories>
 		<repository>
-			<id>imagej.public</id>
-			<url>http://maven.imagej.net/content/groups/public</url>
-		</repository>
-		<repository>
 			<id>it4i</id>
 			<name>IT4I repository</name>
 			<url>https://artifactory.cs.vsb.cz/it4i/</url>
+		</repository>
+		<repository>
+			<id>imagej.public</id>
+			<url>http://maven.imagej.net/content/groups/public</url>
 		</repository>
 	</repositories>
 </project>
