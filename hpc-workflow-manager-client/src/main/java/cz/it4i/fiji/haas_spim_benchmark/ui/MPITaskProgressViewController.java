@@ -12,6 +12,8 @@ import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.scene.control.ProgressIndicator;
+import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -54,6 +56,8 @@ public class MPITaskProgressViewController extends BorderPane implements
 			"description"));
 		// Create columns for the progress of each node:
 		Platform.runLater(() -> createColumnsForEachNode());
+		// Add process indicators:
+		
 
 		tasksTableView.setItems(tableData);
 	}
@@ -66,7 +70,52 @@ public class MPITaskProgressViewController extends BorderPane implements
 			final int index = i;
 			tempColumn.setCellValueFactory(cellData -> new SimpleObservableValue<>(
 				cellData.getValue().getProgress(index)));
-			tasksTableView.getColumns().add(tempColumn);
+			tempColumn.setCellFactory(e -> new ProgressCell());
+			tasksTableView.getColumns().add(tempColumn);	
+		}
+	}
+	
+//	private void setProgressIndicator(TableColumn<MPITask, Long> column) {
+//		column.setCellFactory(cell -> new TableCell<MPITask, Long>() {
+//
+//			@Override
+//			protected void updateItem(Long item, boolean empty) {
+//				super.updateItem(item, empty);
+//
+//				if (item == null || empty) {
+//					setText(null);
+//					setStyle("");
+//				}
+//				else {
+//					setText(null);
+//					ProgressIndicator pb = new ProgressIndicator();
+//					pb.setProgress(0);
+//					setText("Where is the indicator?");
+//				}
+//			}
+//		});
+//	}
+	
+	// Define the details button cell:
+	private class ProgressCell extends TableCell<MPITask, Long> {
+
+		final ProgressIndicator cellProgress = new ProgressIndicator();
+
+		ProgressCell() {
+			cellProgress.setProgress(0.9);
+		}
+
+		// Display details button if the row is not empty:
+		@Override
+		protected void updateItem(Long t, boolean empty) {
+			super.updateItem(t, empty);
+			if (!empty) {
+				setText(null);
+				setGraphic(cellProgress);
+			} else {
+				setText(null);
+				setGraphic(null);
+			}
 		}
 	}
 
