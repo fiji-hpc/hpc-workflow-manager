@@ -3,7 +3,9 @@ package cz.it4i.fiji.haas_spim_benchmark.ui;
 
 import java.awt.Window;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import cz.it4i.fiji.haas.Job;
 import cz.it4i.fiji.haas.ui.CloseableControl;
@@ -35,7 +37,7 @@ public class MPITaskProgressViewController extends BorderPane implements
 	private TableColumn<MPITask, String> descriptionColumn;
 
 	private Window root;
-	
+
 	private Job job;
 
 	private ObservableList<MPITask> tableData = FXCollections
@@ -62,10 +64,10 @@ public class MPITaskProgressViewController extends BorderPane implements
 			tempColumn.setCellValueFactory(cellData -> new SimpleObservableValue<>(
 				cellData.getValue().getProgress(index)));
 			tempColumn.setCellFactory(e -> new ProgressCell(e.getCellData(index)));
-			tasksTableView.getColumns().add(tempColumn);	
+			tasksTableView.getColumns().add(tempColumn);
 		}
 	}
-	
+
 	private class ProgressCell extends TableCell<MPITask, Long> {
 
 		final ProgressIndicator cellProgress = new ProgressIndicator();
@@ -80,9 +82,10 @@ public class MPITaskProgressViewController extends BorderPane implements
 			super.updateItem(t, empty);
 			if (!empty && t >= 0) {
 				setText(null);
-				cellProgress.setProgress(t.doubleValue()/100D);
+				cellProgress.setProgress(t.doubleValue() / 100D);
 				setGraphic(cellProgress);
-			} else {
+			}
+			else {
 				setText(null);
 				setGraphic(null);
 			}
@@ -91,23 +94,23 @@ public class MPITaskProgressViewController extends BorderPane implements
 
 	@Override
 	public void close() {
-		// TODO Auto-generated method stub
+		// Empty
 	}
 
 	public void setJobParameter(Job newJob) {
 		this.job = newJob;
-		
-		// Get the actual data from the progress files:	
+
+		// Get the actual data from the progress files:
 		List<String> files = new ArrayList<>();
-		for(int i = 0; i < NUMBER_OF_NODES; i++) {
+		for (int i = 0; i < NUMBER_OF_NODES; i++) {
 			String filename = "progress_".concat(String.valueOf(i)).concat(".plog");
-			System.out.println("Adding file: "+filename);
+			System.out.println("Adding file: " + filename);
 			files.add(filename);
 		}
-		
+
 		List<String> progressLogs = job.getFileContents(files);
-		
-		readProgress(progressLogs);
+
+		parseProgressLogs(progressLogs);
 
 		// initialize table columns:
 		// Get task descriptions:
@@ -118,35 +121,54 @@ public class MPITaskProgressViewController extends BorderPane implements
 
 		tasksTableView.setItems(tableData);
 	}
-	
-	private void readProgress(List<String> progressLogs) {
+
+	private void parseProgressLogs(List<String> progressLogs) {
+		int numberOfNodes = NUMBER_OF_NODES;
+
+		// Maps task id of a specific node to description:
+		List<Map<Integer, String>> nodeTaskToDescription = new ArrayList<>();
+
+		for (int i = 0; i < numberOfNodes; i++) {
+			nodeTaskToDescription.add(new HashMap<>());
+		}
+
+		// Maps description to taskId:
+		Map<String, Integer> descriptionToTaskId = new HashMap<>();
+
 		int nodeId = 0;
+		int taskIdCounter = 0;
 		for (String log : progressLogs) {
-			System.out.println(log);
 			String[] logLines = splitStringByDelimiter(log, "\n");
-			
-			for(String line : logLines) {
+
+			for (String line : logLines) {
 				String[] element = splitStringByDelimiter(line, ",");
-				if(element.length == 2) {
-					int taskId = Integer.parseInt(element[0]);
+
+				if (element.length == 2) {
+					int taskIdForNode = Integer.parseInt(element[0]);
 					try {
 						Long progress = Long.parseLong(element[1]);
+						String description = nodeTaskToDescription.get(nodeId).get(
+							taskIdForNode);
+						int taskId = descriptionToTaskId.get(description);
 						tableData.get(taskId).setProgress(nodeId, progress);
-					} catch(NumberFormatException exc) {
-						if(nodeId == 0) {
-							String description = element[1];
+					}
+					catch (NumberFormatException exc) {
+						String description = element[1];
+						if (!descriptionToTaskId.containsKey(description)) {
+							descriptionToTaskId.put(description, taskIdCounter++);
 							tableData.add(new MPITask(description));
 						}
-					}					
-				} else {
-					System.out.println("Incorrect progress log file. Incorrect line: "+line);
-				}				
+						nodeTaskToDescription.get(nodeId).put(taskIdForNode, description);						
+					}
+				}
 			}
 			nodeId++;
 		}
 	}
-	
-	private String[] splitStringByDelimiter(String stringToSplit, String delimiter) {
-    return stringToSplit.split(delimiter);
+
+	private String[] splitStringByDelimiter(String stringToSplit,
+		String delimiter)
+	{
+		return stringToSplit.split(delimiter);
 	}
 }

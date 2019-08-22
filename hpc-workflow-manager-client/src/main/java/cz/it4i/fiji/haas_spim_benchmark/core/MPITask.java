@@ -10,7 +10,7 @@ public class MPITask {
 
 	// Progress in percentage for each node that the task run on:
 	private List<Long> progress;
-	
+
 	public MPITask(String description) {
 		this.description = description;
 		this.progress = new ArrayList<>();
@@ -23,16 +23,18 @@ public class MPITask {
 	public long getProgress(int nodeId) {
 		try {
 			return this.progress.get(nodeId);
-		}	catch (Exception e) {
+		}
+		catch (Exception e) {
 			return -1;
 		}
 	}
-	
+
 	public void setProgress(int nodeId, Long newProgress) {
-		try{
+		try {
 			this.progress.get(nodeId);
 			this.progress.set(nodeId, newProgress);
-			} catch (Exception exc){
+		}
+		catch (Exception exc) {
 			this.progress.add(nodeId, newProgress);
 		}
 	}
