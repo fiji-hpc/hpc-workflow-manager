@@ -30,6 +30,20 @@ public class NewJobController extends BorderPane implements CloseableControl, In
 	public enum DataLocation {
 		DEMONSTRATION_ON_SERVER, WORK_DIRECTORY, CUSTOM_DIRECTORY
 	}
+	
+	public enum WorkflowType {
+		SPIM_WORKFLOW(4), MACRO_WORKFLOW(8);
+		
+		private final int haasTemplateID;
+		
+		private WorkflowType(int workflowType) {
+			this.haasTemplateID = workflowType;
+		}
+		
+		public int getHaasTemplateID() {
+	        return this.haasTemplateID;
+	    }
+	}
 
 	private static final Runnable EMPTY_NOTIFIER = () -> {
 	};
@@ -47,12 +61,15 @@ public class NewJobController extends BorderPane implements CloseableControl, In
 	private ToggleGroup tg_outputDataLocation;
 
 	@FXML
+	private ToggleGroup tg_workflowSelector;
+	
+	@FXML
 	private RadioButton rb_ownInput;
 
 	@FXML
 	private RadioButton rb_ownOutput;
-
-	@FXML
+	
+ 	@FXML
 	private TextField et_inputDirectory;
 
 	@FXML
@@ -64,6 +81,8 @@ public class NewJobController extends BorderPane implements CloseableControl, In
 	private DataLocation inputDataLocation;
 
 	private DataLocation outputDataLocation;
+	
+	private WorkflowType workflowType;
 
 	private FXFrame<?> ownerWindow;
 
@@ -106,6 +125,10 @@ public class NewJobController extends BorderPane implements CloseableControl, In
 		return  Integer.parseInt(et_numberOfNodes.getText());
 	}
 
+	public WorkflowType getWorkflowType() {
+		return workflowType;
+	}
+	
 	public void setCreatePressedNotifier(Runnable createPressedNotifier) {
 		if (createPressedNotifier != null) {
 			this.createPressedNotifier = createPressedNotifier;
@@ -174,6 +197,13 @@ public class NewJobController extends BorderPane implements CloseableControl, In
 	private void obtainValues() {
 		inputDataLocation = obtainDataLocation(tg_inputDataLocation);
 		outputDataLocation = obtainDataLocation(tg_outputDataLocation);
+		workflowType = obtainWorkflowType(tg_workflowSelector);
+	}
+	
+	private WorkflowType obtainWorkflowType(ToggleGroup group) {
+		int backawardOrderOfSelected = group.getToggles().size()
+				- group.getToggles().indexOf(group.getSelectedToggle());
+		return WorkflowType.values()[WorkflowType.values().length - backawardOrderOfSelected];
 	}
 
 	private DataLocation obtainDataLocation(ToggleGroup group) {
@@ -185,5 +215,5 @@ public class NewJobController extends BorderPane implements CloseableControl, In
 	private void selected(Toggle n, Parent disableIfNotSelected) {
 		disableIfNotSelected.getChildrenUnmodifiable().forEach(node -> node.setDisable(n != disableIfNotSelected));
 	}
-
+	
 }

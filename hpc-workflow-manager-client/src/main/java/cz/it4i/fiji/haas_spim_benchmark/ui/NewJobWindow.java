@@ -33,4 +33,8 @@ public class NewJobWindow extends FXFrame<NewJobController> {
 		return getFxPanel().getControl().getNumberOfNodes();
 	}
 	
+	public int getHaasTemplateId() {
+		return getFxPanel().getControl().getWorkflowType().getHaasTemplateID();
+	}
+	
 }

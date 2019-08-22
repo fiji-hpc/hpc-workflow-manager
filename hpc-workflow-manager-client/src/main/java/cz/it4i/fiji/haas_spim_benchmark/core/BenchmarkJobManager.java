@@ -6,11 +6,9 @@ import static cz.it4i.fiji.haas_java_client.JobState.Canceled;
 import static cz.it4i.fiji.haas_java_client.JobState.Failed;
 import static cz.it4i.fiji.haas_java_client.JobState.Finished;
 import static cz.it4i.fiji.haas_spim_benchmark.core.Configuration.getHaasClusterNodeType;
-import static cz.it4i.fiji.haas_spim_benchmark.core.Configuration.getHaasTemplateID;
 import static cz.it4i.fiji.haas_spim_benchmark.core.Configuration.getWalltime;
 import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.BENCHMARK_TASK_NAME_MAP;
 import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.CORES_PER_NODE;
-import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.NUMBER_OF_NODES;
 import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.DONE_TASK;
 import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.FUSION_SWITCH;
 import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.HAAS_JOB_NAME;
@@ -534,9 +532,9 @@ public class BenchmarkJobManager implements Closeable {
 	}
 
 	public BenchmarkJob createJob(Function<Path, Path> inputDirectoryProvider,
-		Function<Path, Path> outputDirectoryProvider, int numberOfNodes) throws IOException
+		Function<Path, Path> outputDirectoryProvider, int numberOfNodes, int haasTemplateId) throws IOException
 	{
-		Job job = jobManager.createJob(getJobSettings(numberOfNodes), inputDirectoryProvider,
+		Job job = jobManager.createJob(getJobSettings(numberOfNodes, haasTemplateId), inputDirectoryProvider,
 			outputDirectoryProvider);
 		if (job.getInputDirectory() == null) {
 			job.createEmptyFile(Constants.DEMO_DATA_SIGNAL_FILE_NAME);
@@ -686,9 +684,9 @@ public class BenchmarkJobManager implements Closeable {
 		return new BenchmarkJob(job);
 	}
 
-	private static JobSettings getJobSettings(int  numberOfNodes) {
+	private static JobSettings getJobSettings(int numberOfNodes, int haasTemplateId) {
 		return new JobSettingsBuilder().jobName(HAAS_JOB_NAME).clusterNodeType(
-			getHaasClusterNodeType()).templateId(getHaasTemplateID()).walltimeLimit(
+			getHaasClusterNodeType()).templateId(haasTemplateId).walltimeLimit(
 				getWalltime()).numberOfCoresPerNode(CORES_PER_NODE).numberOfNodes(
 						numberOfNodes).build();
 	}

@@ -211,7 +211,7 @@ public class BenchmarkSPIMControl extends BorderPane implements
 				@Override
 				public void doAction(Progress p) throws IOException {
 					BenchmarkJob job = doCreateJob(wd -> newJobWindow.getInputDirectory(
-						wd), wd -> newJobWindow.getOutputDirectory(wd), newJobWindow.getNumberOfNodes());
+						wd), wd -> newJobWindow.getOutputDirectory(wd), newJobWindow.getNumberOfNodes(), newJobWindow.getHaasTemplateId());
 					if (job.isUseDemoData()) {
 						job.storeDataInWorkdirectory(getConfigYamlFile());
 					}
@@ -253,9 +253,9 @@ public class BenchmarkSPIMControl extends BorderPane implements
 	}
 
 	private BenchmarkJob doCreateJob(Function<Path, Path> inputProvider,
-		Function<Path, Path> outputProvider, int numberOfNodes) throws IOException
+		Function<Path, Path> outputProvider, int numberOfNodes, int haasTemplateId) throws IOException
 	{
-		BenchmarkJob bj = manager.createJob(inputProvider, outputProvider, numberOfNodes);
+		BenchmarkJob bj = manager.createJob(inputProvider, outputProvider, numberOfNodes, haasTemplateId);
 		ObservableBenchmarkJob obj = registry.addIfAbsent(bj);
 		addJobToItems(obj);
 		jobs.refresh();
