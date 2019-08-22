@@ -52,23 +52,6 @@ public class MPITaskProgressViewController extends BorderPane implements
 	@Override
 	public void init(Window parameter) {
 		this.root = parameter;
-
-		// Add some fake tasks:
-		MPITask fakeMPITask1 = new MPITask("An empty task.");
-		fakeMPITask1.setProgress(0, 90L);
-		MPITask fakeMPITask2 = new MPITask("A second one.");
-		fakeMPITask2.setProgress(0, 99L);
-		fakeMPITask2.setProgress(1, 100L);
-		tableData.addAll(fakeMPITask1, fakeMPITask2);
-
-		// initialize table columns:
-		// Get task descriptions:
-		this.descriptionColumn.setCellValueFactory(new PropertyValueFactory<>(
-			"description"));
-		// Create columns for the progress of each node:
-		Platform.runLater(() -> createColumnsForEachNode());
-
-		tasksTableView.setItems(tableData);
 	}
 
 	private void createColumnsForEachNode() {
@@ -116,11 +99,54 @@ public class MPITaskProgressViewController extends BorderPane implements
 		
 		// Get the actual data from the progress files:	
 		List<String> files = new ArrayList<>();
-		files.add("progress_0.plog");
-		List<String> printMe = job.getFileContents(files);
-		
-		for (String me : printMe) {
-			System.out.println(me);
+		for(int i = 0; i < NUMBER_OF_NODES; i++) {
+			String filename = "progress_".concat(String.valueOf(i)).concat(".plog");
+			System.out.println("Adding file: "+filename);
+			files.add(filename);
 		}
+		
+		List<String> progressLogs = job.getFileContents(files);
+		
+		readProgress(progressLogs);
+
+		// initialize table columns:
+		// Get task descriptions:
+		this.descriptionColumn.setCellValueFactory(new PropertyValueFactory<>(
+			"description"));
+		// Create columns for the progress of each node:
+		Platform.runLater(() -> createColumnsForEachNode());
+
+		tasksTableView.setItems(tableData);
+	}
+	
+	private void readProgress(List<String> progressLogs) {
+		int nodeId = 0;
+		for (String log : progressLogs) {
+			System.out.println(log);
+			String[] logLines = splitStringByDelimiter(log, "\n");
+			
+			for(String line : logLines) {
+				String[] element = splitStringByDelimiter(line, ",");
+				if(element.length == 2) {
+					int taskId = Integer.parseInt(element[0]);
+					try {
+						Long progress = Long.parseLong(element[1]);
+						tableData.get(taskId).setProgress(nodeId, progress);
+					} catch(NumberFormatException exc) {
+						if(nodeId == 0) {
+							String description = element[1];
+							tableData.add(new MPITask(description));
+						}
+					}					
+				} else {
+					System.out.println("Incorrect progress log file. Incorrect line: "+line);
+				}				
+			}
+			nodeId++;
+		}
+	}
+	
+	private String[] splitStringByDelimiter(String stringToSplit, String delimiter) {
+    return stringToSplit.split(delimiter);
 	}
 }
