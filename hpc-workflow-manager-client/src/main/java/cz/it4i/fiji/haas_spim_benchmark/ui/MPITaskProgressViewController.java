@@ -10,6 +10,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import org.python.jline.internal.Log;
+
 import cz.it4i.fiji.haas.Job;
 import cz.it4i.fiji.haas.ui.CloseableControl;
 import cz.it4i.fiji.haas.ui.InitiableControl;
@@ -27,8 +29,6 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
-
-import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.NUMBER_OF_NODES;
 
 public class MPITaskProgressViewController extends BorderPane implements
 	CloseableControl, InitiableControl
@@ -68,18 +68,6 @@ public class MPITaskProgressViewController extends BorderPane implements
 		this.root = parameter;
 	}
 
-	private void createColumnsForEachNode() {
-		for (int i = 0; i < NUMBER_OF_NODES; i++) {
-			TableColumn<MPITask, Long> tempColumn = new TableColumn<>("Node " + i +
-				" progress (%)");
-			final int index = i;
-			tempColumn.setCellValueFactory(cellData -> new SimpleObservableValue<>(
-				cellData.getValue().getProgress(index)));
-			tempColumn.setCellFactory(e -> new ProgressCell(e.getCellData(index)));
-			tasksTableView.getColumns().add(tempColumn);
-		}
-	}
-
 	private class ProgressCell extends TableCell<MPITask, Long> {
 
 		final ProgressIndicator cellProgress = new ProgressIndicator();
@@ -111,22 +99,11 @@ public class MPITaskProgressViewController extends BorderPane implements
 
 	public void setJobParameter(Job newJob) {
 		this.job = newJob;
-		System.out.println(job.getState());
-
-		// File names of the progress files for each node:
-		List<String> files = new ArrayList<>();
-		for (int i = 0; i < NUMBER_OF_NODES; i++) {
-			String filename = "progress_".concat(String.valueOf(i)).concat(".plog");
-			System.out.println("Adding file: " + filename);
-			files.add(filename);
-		}
 
 		// initialize table columns:
 		// Get task descriptions:
 		this.descriptionColumn.setCellValueFactory(new PropertyValueFactory<>(
 			"description"));
-		// Create columns for the progress of each node:
-		Platform.runLater(() -> createColumnsForEachNode());
 
 		tasksTableView.setItems(tableData);
 
@@ -134,30 +111,82 @@ public class MPITaskProgressViewController extends BorderPane implements
 
 			@Override
 			public void run() {
+				List<String> files = generateProgressFileNames();
+				Platform.runLater(() -> createColumnsForEachNode(files.size()));
 				getAndParseFileUpdateTasks(files);
 				if (job.getState() != JobState.Queued && job
 					.getState() != JobState.Running && job
-						.getState() != JobState.Submitted && job
-							.getState() != JobState.Configuring)
+						.getState() != JobState.Submitted)
 				{
+					Log.info("Stoped updating progress because state is: " + job
+						.getState().toString());
 					exec.shutdown();
 				}
 			}
 		}, 0, 1, TimeUnit.SECONDS);
+
+	}
+
+	private List<String> generateProgressFileNames() {
+		// Get number of nodes from first node's progress file:
+		int numberOfNodes = 0;
+		List<String> files = new ArrayList<>();
+
+		files.add("progress_0.plog");
+
+		List<String> progressLogs = job.getFileContents(files);
+		if (!progressLogs.isEmpty()) {
+			String log = progressLogs.get(0);
+			String[] lines = splitStringByDelimiter(log, "\n");
+			try {
+				numberOfNodes = Integer.parseInt(lines[0]);
+			}
+			catch (NumberFormatException exc) {
+				Log.error("Incorrect progress log file!" + exc);
+			}
+		}
+
+		// File names of the progress files for each node:
+		for (int i = 1; i < numberOfNodes; i++) {
+			String filename = "progress_".concat(String.valueOf(i)).concat(".plog");
+			Log.info("Adding file: " + filename);
+
+			files.add(filename);
+
+		}
+		return files;
+	}
+
+	private void createColumnsForEachNode(int numberOfNodes) {
+		for (int i = 0; i < numberOfNodes; i++) {
+			try {
+				// If column exists for node do nothing:
+				// First column is ignored as it is the task description column.
+				tasksTableView.getColumns().get(i + 1);
+			}
+			catch (IndexOutOfBoundsException exc) {
+				TableColumn<MPITask, Long> tempColumn = new TableColumn<>("Node " + i +
+					" progress (%)");
+				final int index = i;
+				tempColumn.setCellValueFactory(cellData -> new SimpleObservableValue<>(
+					cellData.getValue().getProgress(index)));
+				tempColumn.setCellFactory(e -> new ProgressCell(e.getCellData(index)));
+				tasksTableView.getColumns().add(tempColumn);
+			}
+		}
 	}
 
 	private void getAndParseFileUpdateTasks(List<String> files) {
-		System.out.println("Getting the files...");
+		Log.info("Getting the files...");
 		List<String> progressLogs = job.getFileContents(files);
-		System.out.println("Parsing the files...");
+		Log.info("Parsing the files...");
 		parseProgressLogs(progressLogs);
-		System.out.println("Done.");
+		Log.info("Done.");
 	}
 
 	private void parseProgressLogs(List<String> progressLogs) {
-		int numberOfNodes = NUMBER_OF_NODES;
 
-		for (int i = 0; i < numberOfNodes; i++) {
+		for (int i = 0; i < progressLogs.size(); i++) {
 			nodeTaskToDescription.add(new HashMap<>());
 		}
 
