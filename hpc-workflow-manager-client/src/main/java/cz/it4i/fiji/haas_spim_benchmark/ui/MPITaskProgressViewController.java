@@ -146,9 +146,7 @@ public class MPITaskProgressViewController extends BorderPane implements
 		for (int i = 1; i < numberOfNodes; i++) {
 			String filename = "progress_".concat(String.valueOf(i)).concat(".plog");
 			Log.info("Adding file: " + filename);
-
 			files.add(filename);
-
 		}
 		return files;
 	}
@@ -182,9 +180,8 @@ public class MPITaskProgressViewController extends BorderPane implements
 	}
 
 	private void parseProgressLogs(List<String> progressLogs) {
-
-		for (int i = 0; i < progressLogs.size(); i++) {
-			nodeTaskToDescription.add(new HashMap<>());
+		for (int i = nodeTaskToDescription.size(); i < progressLogs.size(); i++) {
+				nodeTaskToDescription.add(new HashMap<>());
 		}
 
 		int nodeId = 0;
