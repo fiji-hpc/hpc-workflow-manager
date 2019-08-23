@@ -6,11 +6,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import cz.it4i.fiji.haas.Job;
 import cz.it4i.fiji.haas.ui.CloseableControl;
 import cz.it4i.fiji.haas.ui.InitiableControl;
 import cz.it4i.fiji.haas.ui.JavaFXRoutines;
+import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_spim_benchmark.core.MPITask;
 import cz.it4i.fiji.haas_spim_benchmark.core.SimpleObservableValue;
 import javafx.application.Platform;
@@ -42,6 +46,14 @@ public class MPITaskProgressViewController extends BorderPane implements
 
 	private ObservableList<MPITask> tableData = FXCollections
 		.observableArrayList();
+
+	ScheduledExecutorService exec = Executors.newSingleThreadScheduledExecutor();
+
+	// Maps task id of a specific node to description:
+	private List<Map<Integer, String>> nodeTaskToDescription = new ArrayList<>();
+
+	// Maps description to taskId:
+	private Map<String, Integer> descriptionToTaskId = new HashMap<>();
 
 	public MPITaskProgressViewController() {
 		init();
@@ -94,23 +106,20 @@ public class MPITaskProgressViewController extends BorderPane implements
 
 	@Override
 	public void close() {
-		// Empty
+		exec.shutdown();
 	}
 
 	public void setJobParameter(Job newJob) {
 		this.job = newJob;
+		System.out.println(job.getState());
 
-		// Get the actual data from the progress files:
+		// File names of the progress files for each node:
 		List<String> files = new ArrayList<>();
 		for (int i = 0; i < NUMBER_OF_NODES; i++) {
 			String filename = "progress_".concat(String.valueOf(i)).concat(".plog");
 			System.out.println("Adding file: " + filename);
 			files.add(filename);
 		}
-
-		List<String> progressLogs = job.getFileContents(files);
-
-		parseProgressLogs(progressLogs);
 
 		// initialize table columns:
 		// Get task descriptions:
@@ -120,20 +129,37 @@ public class MPITaskProgressViewController extends BorderPane implements
 		Platform.runLater(() -> createColumnsForEachNode());
 
 		tasksTableView.setItems(tableData);
+
+		exec.scheduleAtFixedRate(new Runnable() {
+
+			@Override
+			public void run() {
+				getAndParseFileUpdateTasks(files);
+				if (job.getState() != JobState.Queued && job
+					.getState() != JobState.Running && job
+						.getState() != JobState.Submitted && job
+							.getState() != JobState.Configuring)
+				{
+					exec.shutdown();
+				}
+			}
+		}, 0, 1, TimeUnit.SECONDS);
+	}
+
+	private void getAndParseFileUpdateTasks(List<String> files) {
+		System.out.println("Getting the files...");
+		List<String> progressLogs = job.getFileContents(files);
+		System.out.println("Parsing the files...");
+		parseProgressLogs(progressLogs);
+		System.out.println("Done.");
 	}
 
 	private void parseProgressLogs(List<String> progressLogs) {
 		int numberOfNodes = NUMBER_OF_NODES;
 
-		// Maps task id of a specific node to description:
-		List<Map<Integer, String>> nodeTaskToDescription = new ArrayList<>();
-
 		for (int i = 0; i < numberOfNodes; i++) {
 			nodeTaskToDescription.add(new HashMap<>());
 		}
-
-		// Maps description to taskId:
-		Map<String, Integer> descriptionToTaskId = new HashMap<>();
 
 		int nodeId = 0;
 		int taskIdCounter = 0;
@@ -158,7 +184,7 @@ public class MPITaskProgressViewController extends BorderPane implements
 							descriptionToTaskId.put(description, taskIdCounter++);
 							tableData.add(new MPITask(description));
 						}
-						nodeTaskToDescription.get(nodeId).put(taskIdForNode, description);						
+						nodeTaskToDescription.get(nodeId).put(taskIdForNode, description);
 					}
 				}
 			}
