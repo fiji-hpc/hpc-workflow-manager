@@ -14,7 +14,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<fx:root maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" type="BorderPane" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="cz.it4i.fiji.haas_spim_benchmark.ui.NewJobController">
+<fx:root maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" type="BorderPane" xmlns="http://javafx.com/javafx/8.0.202-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="cz.it4i.fiji.haas_spim_benchmark.ui.NewJobController">
    <center>
       <VBox BorderPane.alignment="CENTER">
          <children>
@@ -112,7 +112,7 @@
                               <Insets right="20.0" />
                            </padding>
                         </Label>
-                        <TextField fx:id="et_numberOfNodes" alignment="CENTER" maxWidth="1.7976931348623157E308" text="2" />
+                        <TextField fx:id="et_numberOfNodes" alignment="CENTER" disable="true" maxWidth="1.7976931348623157E308" text="1" />
                      </items>
                   </SplitPane>
                </content>
@@ -122,7 +122,7 @@
                   <AnchorPane>
                      <children>
                         <VBox layoutX="35.0" layoutY="-27.0" />
-                        <RadioButton layoutY="5.0" mnemonicParsing="false" selected="true" text="SPIM Workflow">
+                        <RadioButton fx:id="rb_workflowSpim" layoutY="5.0" mnemonicParsing="false" selected="true" text="SPIM Workflow">
                            <toggleGroup>
                               <ToggleGroup fx:id="tg_workflowSelector" />
                            </toggleGroup>
