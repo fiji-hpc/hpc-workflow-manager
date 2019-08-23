@@ -71,11 +71,7 @@ public class MPITaskProgressViewController extends BorderPane implements
 	private class ProgressCell extends TableCell<MPITask, Long> {
 
 		final ProgressIndicator cellProgress = new ProgressIndicator();
-
-		ProgressCell(double progress) {
-			cellProgress.setProgress(progress);
-		}
-
+		
 		// Display progress indicator if the row is not empty:
 		@Override
 		protected void updateItem(Long t, boolean empty) {
@@ -170,7 +166,7 @@ public class MPITaskProgressViewController extends BorderPane implements
 				final int index = i;
 				tempColumn.setCellValueFactory(cellData -> new SimpleObservableValue<>(
 					cellData.getValue().getProgress(index)));
-				tempColumn.setCellFactory(e -> new ProgressCell(e.getCellData(index)));
+				tempColumn.setCellFactory(cell -> new ProgressCell());
 				tasksTableView.getColumns().add(tempColumn);
 			}
 		}
