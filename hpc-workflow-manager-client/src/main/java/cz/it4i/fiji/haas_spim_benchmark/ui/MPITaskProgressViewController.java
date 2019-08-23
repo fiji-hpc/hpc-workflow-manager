@@ -155,6 +155,7 @@ public class MPITaskProgressViewController extends BorderPane implements
 
 	private void createColumnsForEachNode(int numberOfNodes) {
 		for (int i = 0; i < numberOfNodes; i++) {
+
 			try {
 				// If column exists for node do nothing:
 				// First column is ignored as it is the task description column.
@@ -163,9 +164,9 @@ public class MPITaskProgressViewController extends BorderPane implements
 			catch (IndexOutOfBoundsException exc) {
 				TableColumn<MPITask, Long> tempColumn = new TableColumn<>("Node " + i +
 					" progress (%)");
-				final int index = i;
+				final int nodeId = i;
 				tempColumn.setCellValueFactory(cellData -> new SimpleObservableValue<>(
-					cellData.getValue().getProgress(index)));
+					cellData.getValue().getProgress(nodeId)));
 				tempColumn.setCellFactory(cell -> new ProgressCell());
 				tasksTableView.getColumns().add(tempColumn);
 			}

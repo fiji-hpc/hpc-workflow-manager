@@ -202,6 +202,7 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 
 		// Close controllers
 		taskList.unsubscribe(taskListListener);
+		mpiProgressControl.close();
 		progressControl.close();
 		errorOutput.removeListener(errorOutputListener);
 		snakemakeOutputControl.close();
