@@ -103,10 +103,7 @@ public class MPITaskProgressViewController extends BorderPane implements
 
 		tasksTableView.setItems(tableData);
 
-		exec.scheduleAtFixedRate(new Runnable() {
-
-			@Override
-			public void run() {
+		exec.scheduleAtFixedRate(() -> {
 				List<String> files = generateProgressFileNames();
 				Platform.runLater(() -> createColumnsForEachNode(files.size()));
 				getAndParseFileUpdateTasks(files);
@@ -118,8 +115,7 @@ public class MPITaskProgressViewController extends BorderPane implements
 						.getState().toString());
 					exec.shutdown();
 				}
-			}
-		}, 0, 1, TimeUnit.SECONDS);
+			}, 0, 1, TimeUnit.SECONDS);
 
 	}
 
