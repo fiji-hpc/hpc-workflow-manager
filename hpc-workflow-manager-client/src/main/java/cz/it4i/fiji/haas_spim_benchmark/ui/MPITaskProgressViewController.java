@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -18,14 +19,15 @@ import cz.it4i.fiji.haas.ui.InitiableControl;
 import cz.it4i.fiji.haas.ui.JavaFXRoutines;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_spim_benchmark.core.MPITask;
-import cz.it4i.fiji.haas_spim_benchmark.core.SimpleObservableValue;
 import javafx.application.Platform;
+import javafx.beans.property.SimpleLongProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableColumn.CellDataFeatures;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
@@ -55,6 +57,12 @@ public class MPITaskProgressViewController extends BorderPane implements
 	// Maps description to taskId:
 	private Map<String, Integer> descriptionToTaskId = new HashMap<>();
 
+	// Maps description to map of node index to observable property:
+	private Map<String, Map<Integer, SimpleLongProperty>> descriptionToProperty =
+		new HashMap<>();
+
+	final CountDownLatch latchToWaitForJavaFx = new CountDownLatch(1);
+
 	public MPITaskProgressViewController() {
 		init();
 	}
@@ -71,7 +79,7 @@ public class MPITaskProgressViewController extends BorderPane implements
 	private class ProgressCell extends TableCell<MPITask, Long> {
 
 		final ProgressIndicator cellProgress = new ProgressIndicator();
-		
+
 		// Display progress indicator if the row is not empty:
 		@Override
 		protected void updateItem(Long t, boolean empty) {
@@ -96,26 +104,36 @@ public class MPITaskProgressViewController extends BorderPane implements
 	public void setJobParameter(Job newJob) {
 		this.job = newJob;
 
-		// initialize table columns:
-		// Get task descriptions:
+		// Initialize table columns:
+		// Task description column:
 		this.descriptionColumn.setCellValueFactory(new PropertyValueFactory<>(
 			"description"));
 
 		tasksTableView.setItems(tableData);
 
 		exec.scheduleAtFixedRate(() -> {
-				List<String> files = generateProgressFileNames();
-				Platform.runLater(() -> createColumnsForEachNode(files.size()));
-				getAndParseFileUpdateTasks(files);
-				if (job.getState() != JobState.Queued && job
-					.getState() != JobState.Running && job
-						.getState() != JobState.Submitted)
-				{
-					Log.info("Stoped updating progress because state is: " + job
-						.getState().toString());
-					exec.shutdown();
-				}
-			}, 0, 1, TimeUnit.SECONDS);
+			List<String> files = generateProgressFileNames();
+			Platform.runLater(() -> {
+				createColumnsForEachNode(files.size());
+				latchToWaitForJavaFx.countDown();
+			});
+			try {
+				latchToWaitForJavaFx.await();
+			}
+			catch (InterruptedException exc) {
+				Log.error(exc.getMessage());
+			}
+			getAndParseFileUpdateTasks(files);
+
+			if (job.getState() != JobState.Queued && job
+				.getState() != JobState.Running && job.getState() != JobState.Submitted)
+			{
+				Log.info("Stoped updating progress because state is: " + job.getState()
+					.toString());
+				exec.shutdown();
+			}
+
+		}, 0, 1, TimeUnit.SECONDS);
 
 	}
 
@@ -149,7 +167,6 @@ public class MPITaskProgressViewController extends BorderPane implements
 
 	private void createColumnsForEachNode(int numberOfNodes) {
 		for (int i = 0; i < numberOfNodes; i++) {
-
 			try {
 				// If column exists for node do nothing:
 				// First column is ignored as it is the task description column.
@@ -159,12 +176,33 @@ public class MPITaskProgressViewController extends BorderPane implements
 				TableColumn<MPITask, Long> tempColumn = new TableColumn<>("Node " + i +
 					" progress (%)");
 				final int nodeId = i;
-				tempColumn.setCellValueFactory(cellData -> new SimpleObservableValue<>(
-					cellData.getValue().getProgress(nodeId)));
+				tempColumn.setCellValueFactory(cellData -> createObservableProperty(
+					cellData, nodeId).asObject());
 				tempColumn.setCellFactory(cell -> new ProgressCell());
 				tasksTableView.getColumns().add(tempColumn);
 			}
 		}
+	}
+
+	private SimpleLongProperty createObservableProperty(
+		CellDataFeatures<MPITask, Long> cellData, int nodeId)
+	{
+		SimpleLongProperty cellValueProperty = new SimpleLongProperty();
+		cellValueProperty.setValue(cellData.getValue().getProgress(nodeId));
+		Map<Integer, SimpleLongProperty> innerMap;
+		String description = cellData.getValue().getDescription();
+		if (this.descriptionToProperty.containsKey(description)) {
+			innerMap = this.descriptionToProperty.get(description);
+			if (!innerMap.containsKey(nodeId)) {
+				innerMap.put(Integer.valueOf(nodeId), cellValueProperty);
+			}
+		}
+		else {
+			innerMap = new HashMap<>();
+			innerMap.put(nodeId, cellValueProperty);
+			this.descriptionToProperty.put(description, innerMap);
+		}
+		return this.descriptionToProperty.get(description).get(nodeId);
 	}
 
 	private void getAndParseFileUpdateTasks(List<String> files) {
@@ -177,7 +215,7 @@ public class MPITaskProgressViewController extends BorderPane implements
 
 	private void parseProgressLogs(List<String> progressLogs) {
 		for (int i = nodeTaskToDescription.size(); i < progressLogs.size(); i++) {
-				nodeTaskToDescription.add(new HashMap<>());
+			nodeTaskToDescription.add(new HashMap<>());
 		}
 
 		int nodeId = 0;
@@ -196,6 +234,13 @@ public class MPITaskProgressViewController extends BorderPane implements
 							taskIdForNode);
 						int taskId = descriptionToTaskId.get(description);
 						tableData.get(taskId).setProgress(nodeId, progress);
+						try {
+							this.descriptionToProperty.get(description).get(nodeId).set(
+								progress);
+						}
+						catch (Exception exc) {
+							// Do nothing.
+						}
 					}
 					catch (NumberFormatException exc) {
 						String description = element[1];

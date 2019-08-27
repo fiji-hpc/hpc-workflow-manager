@@ -29,10 +29,12 @@ public class MPITask {
 		}
 	}
 
-	public void setProgress(int nodeId, Long newProgress) {
+	public void setProgress(int nodeId, long newProgress) {
 		try {
-			this.progress.get(nodeId);
-			this.progress.set(nodeId, newProgress);
+			long oldProgress = this.progress.get(nodeId);
+			if(newProgress > oldProgress) {
+				this.progress.set(nodeId, newProgress);
+			}
 		}
 		catch (Exception exc) {
 			this.progress.add(nodeId, newProgress);
