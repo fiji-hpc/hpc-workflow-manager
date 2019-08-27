@@ -43,6 +43,16 @@ public class NewJobController extends BorderPane implements CloseableControl, In
 		public int getHaasTemplateID() {
 	        return this.haasTemplateID;
 	    }
+		
+		public static WorkflowType forLong(long id) {
+	        for (WorkflowType workflows : values()) {
+	            if (workflows.haasTemplateID == id) {
+	                return workflows;
+	            }
+	        }
+	        throw new IllegalArgumentException("Invalid WorkflowType id: " + id);
+	    }
+		
 	}
 
 	private static final Runnable EMPTY_NOTIFIER = () -> {

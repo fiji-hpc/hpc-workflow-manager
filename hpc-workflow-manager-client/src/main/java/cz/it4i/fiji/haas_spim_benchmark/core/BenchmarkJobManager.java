@@ -76,6 +76,7 @@ import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.ProgressNotifier;
 import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
 import cz.it4i.fiji.haas_java_client.UploadingFile;
+import cz.it4i.fiji.haas_spim_benchmark.ui.NewJobController;
 
 public class BenchmarkJobManager implements Closeable {
 
@@ -522,6 +523,10 @@ public class BenchmarkJobManager implements Closeable {
 
 		public Job getJob() {
 			return job;
+		}
+
+		public String getHaasTemplateName() {
+			return  NewJobController.WorkflowType.forLong(job.getHaasTemplateId()).toString();
 		}
 	}
 

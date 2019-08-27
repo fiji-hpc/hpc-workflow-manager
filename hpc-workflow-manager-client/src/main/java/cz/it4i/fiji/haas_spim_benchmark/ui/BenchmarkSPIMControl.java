@@ -366,6 +366,7 @@ public class BenchmarkSPIMControl extends BorderPane implements
 			.getUploadProgress()));
 		setCellValueFactory(6, j -> decorateTransfer(registry.get(j)
 			.getDownloadProgress()));
+		setCellValueFactory(7, j -> j.getHaasTemplateName());
 		JavaFXRoutines.setOnDoubleClickAction(jobs, executorServiceJobState,
 			openJobDetailsWindow -> true, obsBenchmarkJob -> openJobDetailsWindow(
 				obsBenchmarkJob));
