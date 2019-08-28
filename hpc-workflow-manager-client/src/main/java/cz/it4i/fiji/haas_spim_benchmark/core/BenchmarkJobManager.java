@@ -77,6 +77,7 @@ import cz.it4i.fiji.haas_java_client.ProgressNotifier;
 import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
 import cz.it4i.fiji.haas_java_client.UploadingFile;
 import cz.it4i.fiji.haas_spim_benchmark.ui.NewJobController;
+import cz.it4i.fiji.haas_spim_benchmark.ui.NewJobController.WorkflowType;
 
 public class BenchmarkJobManager implements Closeable {
 
@@ -424,6 +425,20 @@ public class BenchmarkJobManager implements Closeable {
 			return time != null ? time.getTime().toString() : "N/A";
 		}
 
+		private boolean enableDownload(String fileName, String mainFile) {
+			if (WorkflowType.forLong(job
+				.getHaasTemplateId()) == WorkflowType.SPIM_WORKFLOW)
+			{
+				return fileName.equals(mainFile);
+			}
+			else if (WorkflowType.forLong(job
+				.getHaasTemplateId()) == WorkflowType.MACRO_WORKFLOW)
+			{
+				return true;
+			}
+			return false;
+		}
+
 		private void startDownloadResults(CompletableFuture<?> result)
 			throws IOException
 		{
@@ -433,11 +448,9 @@ public class BenchmarkJobManager implements Closeable {
 					val -> downloadingStatus = val);
 			final ProgressNotifierTemporarySwitchOff progressNotifierTemporarySwitchOff =
 				new ProgressNotifierTemporarySwitchOff(downloadNotifier, job);
-			// Disabled download filter by changing: "fileName ->
-			// fileName.equals(mainFile)" to "s -> true" in order to download MPI job
-			// outputs.
-			job.startDownload(downloadFileNameExtractDecorator(s -> true))
-				.exceptionally(__ -> {
+
+			job.startDownload(downloadFileNameExtractDecorator(
+				fileName -> enableDownload(fileName, mainFile))).exceptionally(__ -> {
 					progressNotifierTemporarySwitchOff.switchOn();
 					stillRunningTemporarySwitch.switchBack();
 					return null;
@@ -526,8 +539,9 @@ public class BenchmarkJobManager implements Closeable {
 		}
 
 		public String getHaasTemplateName() {
-			return  NewJobController.WorkflowType.forLong(job.getHaasTemplateId()).toString();
-		}	
+			return NewJobController.WorkflowType.forLong(job.getHaasTemplateId())
+				.toString();
+		}
 	}
 
 	public BenchmarkJobManager(BenchmarkSPIMParameters params) {
@@ -537,10 +551,11 @@ public class BenchmarkJobManager implements Closeable {
 	}
 
 	public BenchmarkJob createJob(Function<Path, Path> inputDirectoryProvider,
-		Function<Path, Path> outputDirectoryProvider, int numberOfNodes, int haasTemplateId) throws IOException
+		Function<Path, Path> outputDirectoryProvider, int numberOfNodes,
+		int haasTemplateId) throws IOException
 	{
-		Job job = jobManager.createJob(getJobSettings(numberOfNodes, haasTemplateId), inputDirectoryProvider,
-			outputDirectoryProvider);
+		Job job = jobManager.createJob(getJobSettings(numberOfNodes,
+			haasTemplateId), inputDirectoryProvider, outputDirectoryProvider);
 		if (job.getInputDirectory() == null) {
 			job.createEmptyFile(Constants.DEMO_DATA_SIGNAL_FILE_NAME);
 		}
@@ -689,11 +704,13 @@ public class BenchmarkJobManager implements Closeable {
 		return new BenchmarkJob(job);
 	}
 
-	private static JobSettings getJobSettings(int numberOfNodes, int haasTemplateId) {
+	private static JobSettings getJobSettings(int numberOfNodes,
+		int haasTemplateId)
+	{
 		return new JobSettingsBuilder().jobName(HAAS_JOB_NAME).clusterNodeType(
 			getHaasClusterNodeType()).templateId(haasTemplateId).walltimeLimit(
 				getWalltime()).numberOfCoresPerNode(CORES_PER_NODE).numberOfNodes(
-						numberOfNodes).build();
+					numberOfNodes).build();
 	}
 
 	static private Predicate<String> downloadFileNameExtractDecorator(
@@ -720,7 +737,7 @@ public class BenchmarkJobManager implements Closeable {
 
 	}
 
-	static private Predicate<String> downloadFailedData() {
+	private static Predicate<String> downloadFailedData() {
 		return name -> {
 			Path path = getPathSafely(name);
 			if (path == null) return false;

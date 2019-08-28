@@ -129,31 +129,35 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 		executorServiceWS.execute(() -> {
 
 			try {
-				if (WorkflowType.forLong(job.getJob()
-					.getHaasTemplateId()) == WorkflowType.SPIM_WORKFLOW)
-				{
+				WorkflowType jobType = WorkflowType.forLong(job.getJob()
+					.getHaasTemplateId());
+
+				if (jobType == WorkflowType.SPIM_WORKFLOW) {
 					setTabAvailability(mpiProgressTab, true);
+					
+					// SPIM-only related initializations:
+					progressControl.init(parameter);
+					taskList = job.getObservableTaskList();
+					taskList.subscribe(taskListListener);
+					progressControl.setObservable(taskList);
+					
+					errorOutput = job.getObservableSnakemakeOutput(
+						SynchronizableFileType.StandardErrorFile);
+					errorOutput.addListener(errorOutputListener);
+					snakemakeOutputControl.setObservable(errorOutput);
 				}
 				else {
 					setTabAvailability(mpiProgressTab, false);
 					setTabAvailability(progressTab, true);
+					setTabAvailability(snakemakeOutputTab, true);
 
+					// Macro-only related initializations:
 					mpiProgressControl.init(parameter);
 					mpiProgressControl.setJobParameter(job.getJob());
-					
+
 					progress.done();
 				}
-
-				progressControl.init(parameter);
-				taskList = job.getObservableTaskList();
-				taskList.subscribe(taskListListener);
-				progressControl.setObservable(taskList);
-
-				errorOutput = job.getObservableSnakemakeOutput(
-					SynchronizableFileType.StandardErrorFile);
-				errorOutput.addListener(errorOutputListener);
-				snakemakeOutputControl.setObservable(errorOutput);
-
+				
 				standardOutput = job.getObservableSnakemakeOutput(
 					SynchronizableFileType.StandardOutputFile);
 				standardOutput.addListener(standardOutputListener);
@@ -188,7 +192,11 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 							progress.done();
 						}
 					};
-				taskList.subscribe(localListener);
+				WorkflowType jobType = WorkflowType.forLong(job.getJob()
+					.getHaasTemplateId());
+				if (jobType == WorkflowType.SPIM_WORKFLOW) {
+					taskList.subscribe(localListener);
+				}
 			}
 		});
 
@@ -198,15 +206,21 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 
 	@Override
 	public void close() {
+		WorkflowType jobType = WorkflowType.forLong(job.getJob()
+			.getHaasTemplateId());
 
 		executorServiceWS.shutdown();
 
 		// Close controllers
-		taskList.unsubscribe(taskListListener);
-		mpiProgressControl.close();
-		progressControl.close();
-		errorOutput.removeListener(errorOutputListener);
-		snakemakeOutputControl.close();
+		if (jobType == WorkflowType.SPIM_WORKFLOW) {
+			taskList.unsubscribe(taskListListener);
+			progressControl.close();
+			errorOutput.removeListener(errorOutputListener);
+			snakemakeOutputControl.close();
+		}
+		else {
+			mpiProgressControl.close();
+		}
 		standardOutput.removeListener(standardOutputListener);
 		otherOutputControl.close();
 		jobProperties.close();
