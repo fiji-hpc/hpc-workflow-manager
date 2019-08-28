@@ -138,10 +138,11 @@ public class BenchmarkJobManager implements Closeable {
 			setVerifiedState(null);
 			while (oldState == updateAndGetState()) {
 				try {
-					Thread.sleep(Constants.WAIT_FOR_SUBMISSION_TIMEOUT);
+					wait(Constants.WAIT_FOR_SUBMISSION_TIMEOUT);
 				}
 				catch (InterruptedException exc) {
 					log.error(exc.getMessage(), exc);
+					Thread.currentThread().interrupt();
 				}
 			}
 			progress.itemDone(message);
@@ -245,7 +246,7 @@ public class BenchmarkJobManager implements Closeable {
 
 		public CompletableFuture<?> startDownload() throws IOException {
 			if (job.getState() == Finished) {
-				CompletableFuture<?> result = new CompletableFuture<Void>();
+				CompletableFuture<?> result = new CompletableFuture<>();
 				startDownloadResults(result);
 				return result;
 			}
@@ -318,7 +319,7 @@ public class BenchmarkJobManager implements Closeable {
 
 		public void exploreErrors() {
 			for (BenchmarkError error : snakemakeOutputHelper.getErrors()) {
-				System.out.println(error.getPlainDescription());
+				log.error(error.getPlainDescription());
 			}
 		}
 
@@ -450,11 +451,11 @@ public class BenchmarkJobManager implements Closeable {
 				new ProgressNotifierTemporarySwitchOff(downloadNotifier, job);
 
 			job.startDownload(downloadFileNameExtractDecorator(
-				fileName -> enableDownload(fileName, mainFile))).exceptionally(__ -> {
+				fileName -> enableDownload(fileName, mainFile))).exceptionally(temp -> {
 					progressNotifierTemporarySwitchOff.switchOn();
 					stillRunningTemporarySwitch.switchBack();
 					return null;
-				}).thenCompose(X -> {
+				}).thenCompose(x -> {
 					Set<String> otherFiles = extractNames(getOutputDirectory().resolve(
 						mainFile));
 					try {
@@ -468,7 +469,7 @@ public class BenchmarkJobManager implements Closeable {
 						progressNotifierTemporarySwitchOff.switchOn();
 						stillRunningTemporarySwitch.switchBack();
 					}
-				}).whenComplete((X, e) -> {
+				}).whenComplete((x, e) -> {
 					if (e != null) {
 						log.error(e.getMessage(), e);
 						downloadNotifier.addItem(FAILED_ITEM);
@@ -542,6 +543,49 @@ public class BenchmarkJobManager implements Closeable {
 			return NewJobController.WorkflowType.forLong(job.getHaasTemplateId())
 				.toString();
 		}
+
+		private Predicate<String> downloadFailedData() {
+			return name -> {
+				Path path = getPathSafely(name);
+				if (path == null) return false;
+				return path.getFileName().toString().startsWith("snakejob.") || path
+					.getParent() != null && path.getParent().getFileName() != null && path
+						.getParent().getFileName().toString().equals("logs");
+			};
+		}
+
+		private Predicate<String> downloadFileNameExtractDecorator(
+			Predicate<String> decorated)
+		{
+			return name -> {
+				Path path = getPathSafely(name);
+				if (path == null) return false;
+
+				String fileName = path.getFileName().toString();
+				return decorated.test(fileName);
+			};
+		}
+
+		private Path getPathSafely(String name) {
+			try {
+				return Paths.get(name);
+			}
+			catch (InvalidPathException ex) {
+				return null;
+			}
+		}
+
+		private Predicate<String> downloadCSVDecorator(
+			Predicate<String> decorated)
+		{
+			return name -> {
+				if (name.toLowerCase().endsWith(".csv")) {
+					return true;
+				}
+				return decorated.test(name);
+			};
+
+		}
 	}
 
 	public BenchmarkJobManager(BenchmarkSPIMParameters params) {
@@ -575,13 +619,12 @@ public class BenchmarkJobManager implements Closeable {
 
 		List<ResultFileTask> identifiedTasks = new LinkedList<>();
 
-		try {
+		try(BufferedReader reader = Files.newBufferedReader(filename)) {
 			String line = null;
 
 			ResultFileTask processedTask = null;
 			List<ResultFileJob> jobs = new LinkedList<>();
-
-			BufferedReader reader = Files.newBufferedReader(filename);
+			
 			while (null != (line = reader.readLine())) {
 
 				line = line.trim();
@@ -642,10 +685,8 @@ public class BenchmarkJobManager implements Closeable {
 		Collections.sort(identifiedTasks, Comparator.comparingInt(
 			t -> chronologicList.indexOf(t.getName())));
 
-		FileWriter fileWriter = null;
-		try {
-			fileWriter = new FileWriter(filename.getParent().toString() +
-				Constants.FORWARD_SLASH + Constants.STATISTICS_SUMMARY_FILENAME);
+		try(FileWriter fileWriter = new FileWriter(filename.getParent().toString() +
+				Constants.FORWARD_SLASH + Constants.STATISTICS_SUMMARY_FILENAME)) {
 			fileWriter.append(Constants.SUMMARY_FILE_HEADER).append(
 				Constants.NEW_LINE_SEPARATOR);
 
@@ -677,17 +718,6 @@ public class BenchmarkJobManager implements Closeable {
 		catch (Exception e) {
 			log.error(e.getMessage(), e);
 		}
-		finally {
-			try {
-				if (fileWriter != null) {
-					fileWriter.flush();
-					fileWriter.close();
-				}
-			}
-			catch (Exception e) {
-				log.error(e.getMessage(), e);
-			}
-		}
 	}
 
 	@Override
@@ -711,49 +741,6 @@ public class BenchmarkJobManager implements Closeable {
 			getHaasClusterNodeType()).templateId(haasTemplateId).walltimeLimit(
 				getWalltime()).numberOfCoresPerNode(CORES_PER_NODE).numberOfNodes(
 					numberOfNodes).build();
-	}
-
-	static private Predicate<String> downloadFileNameExtractDecorator(
-		Predicate<String> decorated)
-	{
-		return name -> {
-			Path path = getPathSafely(name);
-			if (path == null) return false;
-
-			String fileName = path.getFileName().toString();
-			return decorated.test(fileName);
-		};
-	}
-
-	static private Predicate<String> downloadCSVDecorator(
-		Predicate<String> decorated)
-	{
-		return name -> {
-			if (name.toLowerCase().endsWith(".csv")) {
-				return true;
-			}
-			return decorated.test(name);
-		};
-
-	}
-
-	private static Predicate<String> downloadFailedData() {
-		return name -> {
-			Path path = getPathSafely(name);
-			if (path == null) return false;
-			return path.getFileName().toString().startsWith("snakejob.") || path
-				.getParent() != null && path.getParent().getFileName() != null && path
-					.getParent().getFileName().toString().equals("logs");
-		};
-	}
-
-	private static Path getPathSafely(String name) {
-		try {
-			return Paths.get(name);
-		}
-		catch (InvalidPathException ex) {
-			return null;
-		}
 	}
 
 	private static HaaSClientSettings constructSettingsFromParams(
