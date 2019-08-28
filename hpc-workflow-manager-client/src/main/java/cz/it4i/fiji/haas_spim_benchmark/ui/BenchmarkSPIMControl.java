@@ -448,7 +448,7 @@ public class BenchmarkSPIMControl extends BorderPane implements
 	
 	private void openEditor(BenchmarkJob job) {
 		TextEditor txt = new TextEditor(new Context());   //TODO Context handling is wrong
-		File editFile = new File(job.getJob().getInputDirectory().toString(), "mpitest.txt");
+		File editFile = new File(job.getJob().getInputDirectory().toString(), Constants.DEFAULT_MACRO_FILE);
 		txt.open(editFile);
 		txt.setVisible(true);
 	}

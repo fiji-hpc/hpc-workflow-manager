@@ -58,6 +58,7 @@ public interface Constants {
 	String STATISTICS_RESOURCES_START_TIME = "stime";
 
 	String BENCHMARK_RESULT_FILE = "benchmark_result.csv";
+	String DEFAULT_MACRO_FILE = "mpitest.txt";
 	String STATISTICS_SUMMARY_FILENAME = "summary.csv";
 	String SUMMARY_FILE_HEADER =
 		"Task;AvgMemoryUsage;AvgWallTime;MaxWallTime;TotalTime;JobCount";
