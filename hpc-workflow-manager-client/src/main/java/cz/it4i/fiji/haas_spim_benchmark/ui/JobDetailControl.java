@@ -24,6 +24,7 @@ import cz.it4i.fiji.haas_spim_benchmark.core.ObservableBenchmarkJob;
 import cz.it4i.fiji.haas_spim_benchmark.core.SimpleObservableList;
 import cz.it4i.fiji.haas_spim_benchmark.core.SimpleObservableValue;
 import cz.it4i.fiji.haas_spim_benchmark.core.Task;
+import cz.it4i.fiji.haas_spim_benchmark.ui.NewJobController.WorkflowType;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
@@ -40,13 +41,13 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 
 	@FXML
 	private MPITaskProgressViewController mpiProgressControl;
-	
+
 	@FXML
 	private SPIMPipelineProgressViewController progressControl;
 
 	@FXML
 	private Tab mpiProgressTab;
-	
+
 	@FXML
 	private Tab progressTab;
 
@@ -93,37 +94,23 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 
 	private SimpleObservableValue<String> errorOutput;
 
-	private final ChangeListener<String> errorOutputListener =
-		new ChangeListener<String>()
-		{
-
-			@Override
-			public void changed(ObservableValue<? extends String> observable,
-				String oldValue, String newValue)
-		{
-				if (newValue != null) {
-					setTabAvailability(snakemakeOutputTab, newValue.isEmpty());
-				}
-			}
-
-		};
+	private final ChangeListener<String> errorOutputListener = (
+		ObservableValue<? extends String> observable, String oldValue,
+		String newValue) -> {
+		if (newValue != null) {
+			setTabAvailability(snakemakeOutputTab, newValue.isEmpty());
+		}
+	};
 
 	private SimpleObservableValue<String> standardOutput;
 
-	private final ChangeListener<String> standardOutputListener =
-		new ChangeListener<String>()
-		{
-
-			@Override
-			public void changed(ObservableValue<? extends String> observable,
-				String oldValue, String newValue)
-		{
-				if (newValue != null) {
-					setTabAvailability(otherOutputTab, newValue.isEmpty());
-				}
-			}
-
-		};
+	private final ChangeListener<String> standardOutputListener = (
+		ObservableValue<? extends String> observable, String oldValue,
+		String newValue) -> {
+		if (newValue != null) {
+			setTabAvailability(otherOutputTab, newValue.isEmpty());
+		}
+	};
 
 	public JobDetailControl(final ObservableBenchmarkJob job) {
 		executorServiceWS = Executors.newSingleThreadExecutor();
@@ -142,9 +129,19 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 		executorServiceWS.execute(() -> {
 
 			try {
-				mpiProgressControl.init(parameter);
-				mpiProgressControl.setJobParameter(job.getJob());
-				
+				if (WorkflowType.forLong(job.getJob()
+					.getHaasTemplateId()) == WorkflowType.SPIM_WORKFLOW)
+				{
+					setTabAvailability(mpiProgressTab, true);
+				}
+				else {
+					setTabAvailability(mpiProgressTab, false);
+					setTabAvailability(progressTab, true);
+
+					mpiProgressControl.init(parameter);
+					mpiProgressControl.setJobParameter(job.getJob());
+				}
+
 				progressControl.init(parameter);
 				taskList = job.getObservableTaskList();
 				taskList.subscribe(taskListListener);
@@ -165,28 +162,30 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 				SimpleObservableList<FileTransferInfo> fileTransferList = job
 					.getFileTransferList();
 				setTabAvailability(dataUploadTab, fileTransferList == null ||
-					fileTransferList.size() == 0);
+					fileTransferList.isEmpty());
 				dataUploadControl.setObservable(fileTransferList);
 
-				if (job.getValue().getState() == JobState.Disposed) {
+				if (job.getValue().getState() == JobState.Disposed && log
+					.isInfoEnabled())
+				{
 					// TODO: Handle this?
-					if (log.isInfoEnabled()) {
-						log.info("Job " + job.getValue().getId() +
-							" state has been resolved as Disposed.");
-					}
+					log.info("Job " + job.getValue().getId() +
+						" state has been resolved as Disposed.");
 				}
 
 				setActiveFirstVisibleTab(true);
 			}
 			finally {
-				final ListChangeListener<Task> localListener = new ListChangeListener<Task>() {
+				final ListChangeListener<Task> localListener =
+					new ListChangeListener<Task>()
+					{
 
-					@Override
-					public void onChanged(Change<? extends Task> c) {
-						taskList.unsubscribe(this);
-						progress.done();
-					}
-				};
+						@Override
+						public void onChanged(Change<? extends Task> c) {
+							taskList.unsubscribe(this);
+							progress.done();
+						}
+					};
 				taskList.subscribe(localListener);
 			}
 		});
@@ -214,8 +213,8 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 
 	// -- Helper methods --
 
-	private void setTabAvailability(final Tab tab, final boolean disabled) {
-		tab.setDisable(disabled);
+	private void setTabAvailability(final Tab tab, final boolean isDisabled) {
+		tab.setDisable(isDisabled);
 		setActiveFirstVisibleTab(false);
 	}
 
