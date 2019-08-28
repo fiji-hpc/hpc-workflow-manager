@@ -122,6 +122,7 @@ public class MPITaskProgressViewController extends BorderPane implements
 			}
 			catch (InterruptedException exc) {
 				Log.error(exc.getMessage());
+				Thread.currentThread().interrupt();
 			}
 			getAndParseFileUpdateTasks(files);
 
@@ -224,35 +225,47 @@ public class MPITaskProgressViewController extends BorderPane implements
 			String[] logLines = splitStringByDelimiter(log, "\n");
 
 			for (String line : logLines) {
-				String[] element = splitStringByDelimiter(line, ",");
-
-				if (element.length == 2) {
-					int taskIdForNode = Integer.parseInt(element[0]);
-					try {
-						Long progress = Long.parseLong(element[1]);
-						String description = nodeTaskToDescription.get(nodeId).get(
-							taskIdForNode);
-						int taskId = descriptionToTaskId.get(description);
-						tableData.get(taskId).setProgress(nodeId, progress);
-						try {
-							this.descriptionToProperty.get(description).get(nodeId).set(
-								progress);
-						}
-						catch (Exception exc) {
-							// Do nothing.
-						}
-					}
-					catch (NumberFormatException exc) {
-						String description = element[1];
-						if (!descriptionToTaskId.containsKey(description)) {
-							descriptionToTaskId.put(description, taskIdCounter++);
-							tableData.add(new MPITask(description));
-						}
-						nodeTaskToDescription.get(nodeId).put(taskIdForNode, description);
-					}
-				}
+				String[] elements = splitStringByDelimiter(line, ",");
+				taskIdCounter = setTaskProgressOrDescriptionFromElements(nodeId,
+					elements, taskIdCounter);
 			}
 			nodeId++;
+		}
+	}
+
+	private int setTaskProgressOrDescriptionFromElements(int nodeId,
+		String[] elements, int taskIdCounter)
+	{
+		if (elements.length == 2) {
+			int taskIdForNode = Integer.parseInt(elements[0]);
+			try {
+				Long progress = Long.parseLong(elements[1]);
+				String description = nodeTaskToDescription.get(nodeId).get(
+					taskIdForNode);
+				int taskId = descriptionToTaskId.get(description);
+				tableData.get(taskId).setProgress(nodeId, progress);
+				setDescriptionToPropertyIfPossible(description, nodeId, progress);
+			}
+			catch (NumberFormatException exc) {
+				String description = elements[1];
+				if (!descriptionToTaskId.containsKey(description)) {
+					descriptionToTaskId.put(description, taskIdCounter++);
+					tableData.add(new MPITask(description));
+				}
+				nodeTaskToDescription.get(nodeId).put(taskIdForNode, description);
+			}
+		}
+		return taskIdCounter;
+	}
+
+	private void setDescriptionToPropertyIfPossible(String description,
+		int nodeId, long progress)
+	{
+		try {
+			this.descriptionToProperty.get(description).get(nodeId).set(progress);
+		}
+		catch (Exception exc) {
+			// Do nothing.
 		}
 	}
 

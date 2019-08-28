@@ -11,20 +11,8 @@ public class JobDetailWindow extends FXFrame<JobDetailControl> {
 	private static final long serialVersionUID = 1L;
 
 	public JobDetailWindow(Window parentWindow, ObservableBenchmarkJob job) {
-		super(parentWindow, () -> {
-			return new JobDetailControl(job);
-		});
+		super(parentWindow, () -> new JobDetailControl(job));
 		setTitle("Job dashboard for job #" + job.getValue().getId());
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-	}
-
-	@Override
-	public void dispose() {
-		super.dispose();
-	}
-	
-	@Override
-	public void setVisible(boolean value) {
-		super.setVisible(value);
 	}
 }

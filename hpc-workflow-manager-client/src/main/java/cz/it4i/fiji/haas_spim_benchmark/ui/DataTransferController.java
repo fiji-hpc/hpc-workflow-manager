@@ -40,7 +40,7 @@ public class DataTransferController extends BorderPane implements
 		final SimpleObservableList<FileTransferInfo> fileTransferList)
 	{
 
-		if (fileTransferList != null && fileTransferList.size() != 0) {
+		if (fileTransferList != null && !fileTransferList.isEmpty()) {
 
 			final int columnIndexPath = 0;
 			final int columnIndexState = 1;

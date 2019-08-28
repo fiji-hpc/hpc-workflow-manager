@@ -23,7 +23,7 @@ import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.BenchmarkJob;
 
 public class JobOutputView {
 	@SuppressWarnings("unused")
-	private final static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas_spim_benchmark.ui.JobOutputView.class);
+	private static final  Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas_spim_benchmark.ui.JobOutputView.class);
 
 	private final Timer timer;
 	private final BenchmarkJob job;
