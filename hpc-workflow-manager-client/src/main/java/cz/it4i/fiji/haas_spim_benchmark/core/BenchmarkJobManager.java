@@ -527,7 +527,7 @@ public class BenchmarkJobManager implements Closeable {
 
 		public String getHaasTemplateName() {
 			return  NewJobController.WorkflowType.forLong(job.getHaasTemplateId()).toString();
-		}
+		}	
 	}
 
 	public BenchmarkJobManager(BenchmarkSPIMParameters params) {

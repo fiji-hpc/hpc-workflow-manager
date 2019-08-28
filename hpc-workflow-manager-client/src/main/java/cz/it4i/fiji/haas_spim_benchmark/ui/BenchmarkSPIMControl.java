@@ -5,6 +5,7 @@ import static cz.it4i.fiji.haas_spim_benchmark.core.Configuration.getHaasUpdateT
 import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.CONFIG_YAML;
 
 import java.awt.Window;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -27,6 +28,8 @@ import javax.swing.WindowConstants;
 
 import net.imagej.updater.util.Progress;
 
+import org.scijava.Context;
+import org.scijava.ui.swing.script.TextEditor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -168,6 +171,10 @@ public class BenchmarkSPIMControl extends BorderPane implements
 		menu.addItem("Open in BigDataViewer", j -> openBigDataViewer(j.getValue()),
 			x -> JavaFXRoutines.notNullValue(x, j -> j
 				.getState() == JobState.Finished && j.isVisibleInBDV()));
+		menu.addItem("Open macro in Editor", j -> openEditor(j.getValue()),
+				x -> JavaFXRoutines.notNullValue(x, j -> j
+						.getJob().getHaasTemplateId() == NewJobController.WorkflowType.MACRO_WORKFLOW.getHaasTemplateID()));
+		
 		menu.addSeparator();
 
 		menu.addItem("Upload data", job -> executeWSCallAsync("Uploading data",
@@ -437,6 +444,13 @@ public class BenchmarkSPIMControl extends BorderPane implements
 		catch (SpimDataException e) {
 			log.error(e.getMessage(), e);
 		}
+	}
+	
+	private void openEditor(BenchmarkJob job) {
+		TextEditor txt = new TextEditor(new Context());   //TODO Context handling is wrong
+		File editFile = new File(job.getJob().getInputDirectory().toString(), "mpitest.txt");
+		txt.open(editFile);
+		txt.setVisible(true);
 	}
 
 	private interface P_JobAction {
