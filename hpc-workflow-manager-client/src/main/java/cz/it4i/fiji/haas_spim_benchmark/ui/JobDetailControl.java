@@ -140,6 +140,8 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 
 					mpiProgressControl.init(parameter);
 					mpiProgressControl.setJobParameter(job.getJob());
+					
+					progress.done();
 				}
 
 				progressControl.init(parameter);
