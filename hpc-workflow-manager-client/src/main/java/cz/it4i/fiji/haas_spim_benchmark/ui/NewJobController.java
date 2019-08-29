@@ -61,34 +61,40 @@ public class NewJobController extends BorderPane implements CloseableControl, In
 	private static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas_spim_benchmark.ui.NewJobController.class);
 
 	@FXML
-	private Button bt_create;
+	private Button createButton;
 
 	@FXML
-	private ToggleGroup tg_inputDataLocation;
+	private ToggleGroup inputDataLocationToggleGroup;
 
 	@FXML
-	private ToggleGroup tg_outputDataLocation;
+	private ToggleGroup outputDataLocationToggleGroup;
 
 	@FXML
-	private ToggleGroup tg_workflowSelector;
+	private ToggleGroup workflowSelectorToggleGroup;
 	
 	@FXML
-	private RadioButton rb_ownInput;
+	private RadioButton ownInputRadioButton;
 
 	@FXML
-	private RadioButton rb_ownOutput;
+	private RadioButton ownOutputRadioButton;
 	
 	@FXML
-	private RadioButton rb_workflowSpim;
+	private RadioButton workflowSpimRadioButton;
 	
  	@FXML
-	private TextField et_inputDirectory;
+	private TextField inputDirectoryTextField;
 
 	@FXML
-	private TextField et_outputDirectory;
+	private TextField outputDirectoryTextField;
 	
 	@FXML
-	private TextField et_numberOfNodes;
+	private TextField numberOfNodesTextField;
+	
+	@FXML
+	private Button selectInputButton;
+
+	@FXML
+	private Button selectOutputButton;
 
 	private DataLocation inputDataLocation;
 
@@ -99,22 +105,16 @@ public class NewJobController extends BorderPane implements CloseableControl, In
 	private FXFrame<?> ownerWindow;
 
 	private Runnable createPressedNotifier;
-
-	@FXML
-	private Button bt_selectInput;
-
-	@FXML
-	private Button bt_selectOutput;
 	
 	public NewJobController() {
 		JavaFXRoutines.initRootAndController("NewJobView.fxml", this);
 		getStylesheets().add(getClass().getResource("NewJobView.css").toExternalForm());
-		bt_create.setOnMouseClicked(X -> createPressed());
-		tg_inputDataLocation.selectedToggleProperty().addListener((v, old, n) -> selected(n, rb_ownInput));
-		tg_outputDataLocation.selectedToggleProperty().addListener((v, o, n) -> selected(n, rb_ownOutput));
-		rb_workflowSpim.selectedProperty().addListener((v, o, n) -> selectedSpimWorkflow(n));
-		initSelectButton(et_inputDirectory, bt_selectInput);
-		initSelectButton(et_outputDirectory, bt_selectOutput);
+		createButton.setOnMouseClicked(x -> createPressed());
+		inputDataLocationToggleGroup.selectedToggleProperty().addListener((v, old, n) -> selected(n, ownInputRadioButton));
+		outputDataLocationToggleGroup.selectedToggleProperty().addListener((v, o, n) -> selected(n, ownOutputRadioButton));
+		workflowSpimRadioButton.selectedProperty().addListener((v, o, n) -> selectedSpimWorkflow(n));
+		initSelectButton(inputDirectoryTextField, selectInputButton);
+		initSelectButton(outputDirectoryTextField, selectOutputButton);
 	}
 
 	@Override
@@ -127,15 +127,15 @@ public class NewJobController extends BorderPane implements CloseableControl, In
 	}
 
 	public Path getInputDirectory(Path workingDirectory) {
-		return getDirectory(inputDataLocation, et_inputDirectory.getText(), workingDirectory);
+		return getDirectory(inputDataLocation, inputDirectoryTextField.getText(), workingDirectory);
 	}
 
 	public Path getOutputDirectory(Path workingDirectory) {
-		return getDirectory(outputDataLocation, et_outputDirectory.getText(), workingDirectory);
+		return getDirectory(outputDataLocation, outputDirectoryTextField.getText(), workingDirectory);
 	}
 	
 	public int getNumberOfNodes() {
-		return  Integer.parseInt(et_numberOfNodes.getText());
+		return  Integer.parseInt(numberOfNodesTextField.getText());
 	}
 
 	public WorkflowType getWorkflowType() {
@@ -187,8 +187,8 @@ public class NewJobController extends BorderPane implements CloseableControl, In
 	}
 
 	private boolean checkDirectoryLocationIfNeeded() {
-		return checkDataLocationValue(inputDataLocation, et_inputDirectory.getText(), "input")
-				&& checkDataLocationValue(outputDataLocation, et_outputDirectory.getText(), "output");
+		return checkDataLocationValue(inputDataLocation, inputDirectoryTextField.getText(), "input")
+				&& checkDataLocationValue(outputDataLocation, outputDirectoryTextField.getText(), "output");
 
 	}
 
@@ -208,9 +208,9 @@ public class NewJobController extends BorderPane implements CloseableControl, In
 	}
 
 	private void obtainValues() {
-		inputDataLocation = obtainDataLocation(tg_inputDataLocation);
-		outputDataLocation = obtainDataLocation(tg_outputDataLocation);
-		workflowType = obtainWorkflowType(tg_workflowSelector);
+		inputDataLocation = obtainDataLocation(inputDataLocationToggleGroup);
+		outputDataLocation = obtainDataLocation(outputDataLocationToggleGroup);
+		workflowType = obtainWorkflowType(workflowSelectorToggleGroup);
 	}
 	
 	private WorkflowType obtainWorkflowType(ToggleGroup group) {
@@ -231,10 +231,10 @@ public class NewJobController extends BorderPane implements CloseableControl, In
 	
 	private void selectedSpimWorkflow(Boolean n) {
 		if (n) {
-			et_numberOfNodes.setText("1");
-			et_numberOfNodes.setDisable(true);
+			numberOfNodesTextField.setText("1");
+			numberOfNodesTextField.setDisable(true);
 		} else {
-			et_numberOfNodes.setDisable(false);
+			numberOfNodesTextField.setDisable(false);
 		}
 	}
 	
