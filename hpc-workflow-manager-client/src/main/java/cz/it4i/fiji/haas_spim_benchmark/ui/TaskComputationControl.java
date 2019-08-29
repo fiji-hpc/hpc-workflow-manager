@@ -82,7 +82,7 @@ public class TaskComputationControl extends TabPane implements CloseableControl,
 				logViewControl.setObservable(observableLog.getContent());
 				runnables.add(() -> addTab(observableLog.getName(), logViewControl));
 			}
-			uiExecutor.execute(() -> runnables.forEach(r -> r.run()));
+			uiExecutor.execute(() -> runnables.forEach(Runnable::run));
 		});
 	}
 

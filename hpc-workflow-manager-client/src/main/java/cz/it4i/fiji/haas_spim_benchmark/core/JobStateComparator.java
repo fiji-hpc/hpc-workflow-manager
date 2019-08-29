@@ -17,7 +17,7 @@ public class JobStateComparator implements Comparator<JobState> {
 
 	static {
 		Arrays.asList(JobState.Finished, JobState.Queued, JobState.Running, JobState.Canceled, JobState.Failed, JobState.Unknown)
-				.forEach(state -> add(state));
+				.forEach(JobStateComparator::add);
 	}
 
 	@Override

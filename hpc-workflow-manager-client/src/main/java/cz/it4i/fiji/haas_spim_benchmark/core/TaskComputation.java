@@ -150,8 +150,8 @@ public class TaskComputation {
 	public Collection<Log> getLogs() {
 		List<String> logNames = new LinkedList<>(logs);
 		List<String> contents = computationAccessor.getFileContents(logNames);
-		return Streams.<String, String, Log>zip(logNames.stream(), contents.stream(),
-				(name, content) -> new Log(name, content)).collect(Collectors.toList());
+		return Streams.<String, String, Log> zip(logNames.stream(), contents
+			.stream(), Log::new).collect(Collectors.toList());
 	}
 
 	/**
@@ -187,8 +187,8 @@ public class TaskComputation {
 	public Map<String, Long> getOutFileSizes() {
 		List<String> names = new LinkedList<>(outputs);
 		List<Long> sizes = computationAccessor.getFileSizes(names);
-		return Streams.zip(names.stream(), sizes.stream(), (name, size) -> new Pair<>(name, size))
-				.collect(Collectors.toMap(p -> p.getFirst(), p -> p.getSecond()));
+		return Streams.zip(names.stream(), sizes.stream(), Pair::new)
+				.collect(Collectors.toMap(Pair::getFirst, Pair::getSecond));
 	}
 
 	private void updateState() {
@@ -196,7 +196,7 @@ public class TaskComputation {
 		// Should the state be queued, try to find out whether a log file exists
 		if (state == JobState.Queued) {
 			if (!taskDescription.equals(Constants.DONE_TASK) && null != logs
-					&& logs.stream().noneMatch(logFile -> computationAccessor.fileExists(logFile))) {
+					&& logs.stream().noneMatch(computationAccessor::fileExists)) {
 				return; // No log file exists yet
 			}
 			state = JobState.Running;

@@ -84,7 +84,7 @@ class HaasOutputObservableValueRegistry implements Closeable {
 
 					Streams.zip(types.stream(), job.getComputationOutput(types).stream(),
 						(type, value) -> (Runnable) (() -> observableValues.get(type)
-							.update(value))).forEach(r -> r.run());
+							.update(value))).forEach(Runnable::run);
 				}
 			}, 0, getHaasUpdateTimeout() / UI_TO_HAAS_FREQUENCY_UPDATE_RATIO);
 			isRunning = true;

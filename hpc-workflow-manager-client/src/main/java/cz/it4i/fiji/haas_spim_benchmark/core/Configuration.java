@@ -76,7 +76,7 @@ public class Configuration {
 	private static int getOrDefault(String name, int def) {
 		try {
 			return Optional.ofNullable(getProperties().getProperty(name)).map(
-				val -> Integer.parseInt(val)).orElse(def);
+				Integer::parseInt).orElse(def);
 		}
 		catch (IOException e) {
 			log.error(e.getMessage(), e);

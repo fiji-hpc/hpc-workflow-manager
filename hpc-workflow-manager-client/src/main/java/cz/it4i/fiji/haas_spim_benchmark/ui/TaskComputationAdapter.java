@@ -149,7 +149,7 @@ public class TaskComputationAdapter implements Closeable {
 		public void run() {
 			Map<String, Long> sizes = computation.getOutFileSizes();
 			Map<String, Log> computationLogs = computation.getLogs().stream().collect(
-				Collectors.<Log, String, Log> toMap((Log l) -> l.getName(), (
+				Collectors.<Log, String, Log> toMap(Log::getName, (
 					Log l) -> l));
 			TaskComputationAdapter.this.logs.forEach(processedLog -> processedLog
 				.setContentValue(computationLogs.get(processedLog.getName())));

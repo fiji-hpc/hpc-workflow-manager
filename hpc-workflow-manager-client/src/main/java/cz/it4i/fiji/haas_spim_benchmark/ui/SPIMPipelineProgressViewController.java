@@ -28,6 +28,7 @@ import cz.it4i.fiji.haas_spim_benchmark.core.SimpleObservableValue;
 import cz.it4i.fiji.haas_spim_benchmark.core.Task;
 import cz.it4i.fiji.haas_spim_benchmark.core.TaskComputation;
 import javafx.collections.ListChangeListener;
+import javafx.collections.ListChangeListener.Change;
 import javafx.fxml.FXML;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -77,12 +78,8 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 	private boolean closed;
 
 	private final ListChangeListener<Task> taskChangeListener =
-		new ListChangeListener<Task>()
+		(Change<? extends Task> c) ->
 		{
-
-			@Override
-			public void onChanged(Change<? extends Task> c) {
-
 				// We are assuming that once the table has been filled,
 				// it cannot be "unfilled", i.e. the tasks cannot be
 				// changed or removed at runtime.
@@ -92,8 +89,6 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 				else {
 					tasks.refresh();
 				}
-
-			}
 		};
 
 	public SPIMPipelineProgressViewController() {
@@ -121,8 +116,7 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 		tasks.setPrefWidth(PREFERRED_WIDTH);
 
 		TableViewContextMenu<Task> menu = new TableViewContextMenu<>(this.tasks);
-		menu.addItem("Open view", (task, columnIndex) -> proof(task, columnIndex), (
-			x, columnIndex) -> check(x, columnIndex));
+		menu.addItem("Open view", this::proof, this::check);
 	}
 
 	private boolean check(Task x, Integer columnIndex) {
@@ -189,7 +183,7 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 	}
 
 	private Optional<List<TaskComputation>> getComputations(List<Task> taskList) {
-		return taskList.stream().map(task -> task.getComputations()).collect(
+		return taskList.stream().map(Task::getComputations).collect(
 			Collectors.<List<TaskComputation>> maxBy((a, b) -> a.size() - b.size()));
 
 	}

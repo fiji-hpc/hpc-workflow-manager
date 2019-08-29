@@ -15,6 +15,6 @@ class JobStateNameProvider {
 	}
 	
 	public String getName(JobState state) {
-		return Optional.ofNullable(translateTable.get(state)).orElseGet(() -> state.toString());
+		return Optional.ofNullable(translateTable.get(state)).orElseGet(state::toString);
 	}
 }

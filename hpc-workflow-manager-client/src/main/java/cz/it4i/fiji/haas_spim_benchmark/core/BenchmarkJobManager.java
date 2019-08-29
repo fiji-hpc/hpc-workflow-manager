@@ -159,7 +159,7 @@ public class BenchmarkJobManager implements Closeable {
 		}
 
 		public JobState getState() {
-			return getStateAsync(r -> r.run()).getNow(JobState.Unknown);
+			return getStateAsync(Runnable::run).getNow(JobState.Unknown);
 		}
 
 		public synchronized CompletableFuture<JobState> getStateAsync(
@@ -395,7 +395,7 @@ public class BenchmarkJobManager implements Closeable {
 					JobState workVerifiedState = Stream.concat(Arrays.asList(state)
 						.stream(), getTasks().stream().filter(task -> !task.getDescription()
 							.equals(DONE_TASK)).flatMap(task -> task.getComputations()
-								.stream()).map(tc -> tc.getState())).max(
+								.stream()).map(TaskComputation::getState)).max(
 									new JobStateComparator()).get();
 
 					if (workVerifiedState != Finished && workVerifiedState != Canceled) {
@@ -405,7 +405,7 @@ public class BenchmarkJobManager implements Closeable {
 						// test whether job was restarted - it sets running to null
 						if (!verifiedStateProcessed) {
 							workVerifiedState = null;
-							return doGetStateAsync(r -> r.run()).getNow(null);
+							return doGetStateAsync(Runnable::run).getNow(null);
 						}
 						running = null;
 						setVerifiedState(workVerifiedState);
@@ -460,7 +460,7 @@ public class BenchmarkJobManager implements Closeable {
 						mainFile));
 					try {
 						return job.startDownload(downloadFileNameExtractDecorator(
-							downloadCSVDecorator(name -> otherFiles.contains(name))));
+							downloadCSVDecorator(otherFiles::contains)));
 					}
 					catch (IOException e) {
 						throw new RuntimeException(e);
@@ -706,10 +706,10 @@ public class BenchmarkJobManager implements Closeable {
 			}
 
 			Double pipelineStart = identifiedTasks.stream() //
-				.mapToDouble(t -> t.getEarliestStartInSeconds()).min().getAsDouble();
+				.mapToDouble(ResultFileTask::getEarliestStartInSeconds).min().getAsDouble();
 
 			Double pipelineEnd = identifiedTasks.stream() //
-				.mapToDouble(t -> t.getLatestEndInSeconds()).max().getAsDouble();
+				.mapToDouble(ResultFileTask::getLatestEndInSeconds).max().getAsDouble();
 
 			fileWriter.append(Constants.NEW_LINE_SEPARATOR);
 			fileWriter.append("Pipeline duration: " + (pipelineEnd - pipelineStart));

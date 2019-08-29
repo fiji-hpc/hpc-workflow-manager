@@ -48,17 +48,17 @@ public class ResultFileTask {
 						: Double.NaN)
 				.collect(Collectors.toList());
 		Collection<Double> wallTimeValues = retrieveValues(Constants.STATISTICS_RESOURCES_WALL_TIME)
-				.map(s -> Double.parseDouble(s)).collect(Collectors.toList());
+				.map(Double::parseDouble).collect(Collectors.toList());
 
 		// Calculate stats
-		memoryUsageStats = retrieveValues(Constants.STATISTICS_RESOURCES_MEMORY_USAGE).map(s -> Double.parseDouble(s))
+		memoryUsageStats = retrieveValues(Constants.STATISTICS_RESOURCES_MEMORY_USAGE).map(Double::parseDouble)
 				.collect(Collectors.summarizingDouble((Double::doubleValue)));
 		startTimeStats = startTimeValues.stream().collect(Collectors.summarizingDouble((Double::doubleValue)));
 		wallTimeStats = wallTimeValues.stream().collect(Collectors.summarizingDouble((Double::doubleValue)));
 		endTimeStats = Streams.zip(startTimeValues.stream(), wallTimeValues.stream(), (stv, wtv) -> stv + wtv)
 				.collect(Collectors.summarizingDouble((Double::doubleValue)));
 		cpuPercentageStats = retrieveValues(Constants.STATISTICS_RESOURCES_CPU_PERCENTAGE)
-				.map(s -> Double.parseDouble(s)).collect(Collectors.summarizingDouble((Double::doubleValue)));
+				.map(Double::parseDouble).collect(Collectors.summarizingDouble((Double::doubleValue)));
 	}
 
 	public int getJobCount() {

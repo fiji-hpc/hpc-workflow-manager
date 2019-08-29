@@ -108,7 +108,7 @@ public class ObservableBenchmarkJob extends
 
 	@Override
 	protected void fireValueChangedEvent() {
-		executor.execute(() -> super.fireValueChangedEvent());
+		executor.execute(super::fireValueChangedEvent);
 	}
 
 	// -- Private classes --

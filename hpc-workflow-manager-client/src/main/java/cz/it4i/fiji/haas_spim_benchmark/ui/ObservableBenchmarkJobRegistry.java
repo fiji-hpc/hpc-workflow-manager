@@ -27,7 +27,7 @@ public class ObservableBenchmarkJobRegistry extends ObservableValueRegistry<Benc
 
 	@Override
 	public void close() {
-		super.getAllItems().forEach(obj -> obj.close());
+		super.getAllItems().forEach(ObservableBenchmarkJob::close);
 	}
 
 	@Override

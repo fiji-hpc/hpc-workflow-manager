@@ -73,7 +73,7 @@ class SnakemakeOutputHelper implements HaaSOutputHolder {
 		SPIMComputationAccessor result = new SPIMComputationAccessor() {
 
 			private final HaaSOutputHolder outputOfSnakemake =
-				new HaaSOutputHolderImpl(list -> job.getOutput(list));
+				new HaaSOutputHolderImpl(job::getOutput);
 
 			@Override
 			public List<String> getActualOutput(

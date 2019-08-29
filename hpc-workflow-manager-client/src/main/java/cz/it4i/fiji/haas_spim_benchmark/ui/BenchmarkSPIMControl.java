@@ -164,8 +164,8 @@ public class BenchmarkSPIMControl extends BorderPane implements
 		}), job -> JavaFXRoutines.notNullValue(job, j -> j
 			.getState() == JobState.Running || j.getState() == JobState.Queued));
 
-		menu.addItem("Job dashboard", obsBenchmarkJob -> openJobDetailsWindow(
-			obsBenchmarkJob), job -> JavaFXRoutines.notNullValue(job, j -> true));
+		menu.addItem("Job dashboard", this::openJobDetailsWindow,
+			job -> JavaFXRoutines.notNullValue(job, j -> true));
 		menu.addItem("Open job subdirectory", j -> openJobSubdirectory(j
 			.getValue()), x -> JavaFXRoutines.notNullValue(x, j -> true));
 		menu.addItem("Open in BigDataViewer", j -> openBigDataViewer(j.getValue()),
@@ -217,8 +217,9 @@ public class BenchmarkSPIMControl extends BorderPane implements
 
 				@Override
 				public void doAction(Progress p) throws IOException {
-					BenchmarkJob job = doCreateJob(wd -> newJobWindow.getInputDirectory(
-						wd), wd -> newJobWindow.getOutputDirectory(wd), newJobWindow.getNumberOfNodes(), newJobWindow.getHaasTemplateId());
+					BenchmarkJob job = doCreateJob(newJobWindow::getInputDirectory,
+						newJobWindow::getOutputDirectory, newJobWindow.getNumberOfNodes(),
+						newJobWindow.getHaasTemplateId());
 					if (job.isUseDemoData()) {
 						job.storeDataInWorkdirectory(getConfigYamlFile());
 					}
@@ -359,23 +360,22 @@ public class BenchmarkSPIMControl extends BorderPane implements
 	}
 
 	private void initTable() {
-		registry = new ObservableBenchmarkJobRegistry(bj -> remove(bj),
+		registry = new ObservableBenchmarkJobRegistry(this::remove,
 			executorServiceJobState, executorServiceFX);
 		setCellValueFactory(0, j -> j.getId() + "");
 		setCellValueFactoryCompletable(1, j -> j.getStateAsync(
 			executorServiceJobState).thenApply(state -> "" + provider.getName(
 				state)));
-		setCellValueFactory(2, j -> j.getCreationTime());
-		setCellValueFactory(3, j -> j.getStartTime());
-		setCellValueFactory(4, j -> j.getEndTime());
+		setCellValueFactory(2, BenchmarkJob::getCreationTime);
+		setCellValueFactory(3, BenchmarkJob::getStartTime);
+		setCellValueFactory(4, BenchmarkJob::getEndTime);
 		setCellValueFactory(5, j -> decorateTransfer(registry.get(j)
 			.getUploadProgress()));
 		setCellValueFactory(6, j -> decorateTransfer(registry.get(j)
 			.getDownloadProgress()));
-		setCellValueFactory(7, j -> j.getHaasTemplateName());
+		setCellValueFactory(7, BenchmarkJob::getHaasTemplateName);
 		JavaFXRoutines.setOnDoubleClickAction(jobs, executorServiceJobState,
-			openJobDetailsWindow -> true, obsBenchmarkJob -> openJobDetailsWindow(
-				obsBenchmarkJob));
+			openJobDetailsWindow -> true, this::openJobDetailsWindow);
 	}
 
 	private String decorateTransfer(TransferProgress progress) {

@@ -11,7 +11,7 @@ public class NewJobWindow extends FXFrame<NewJobController> {
 	private static final long serialVersionUID = 1L;
 
 	public NewJobWindow(Window parentWindow) {
-		super(parentWindow, () -> new NewJobController());
+		super(parentWindow, NewJobController::new);
 		setTitle("Create job");
 	}
 

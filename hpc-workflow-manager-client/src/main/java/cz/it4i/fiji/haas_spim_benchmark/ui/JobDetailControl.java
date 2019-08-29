@@ -28,6 +28,7 @@ import cz.it4i.fiji.haas_spim_benchmark.ui.NewJobController.WorkflowType;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
+import javafx.collections.ListChangeListener.Change;
 import javafx.fxml.FXML;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
@@ -81,16 +82,9 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 
 	private SimpleObservableList<Task> taskList;
 
-	private final ListChangeListener<Task> taskListListener =
-		new ListChangeListener<Task>()
-		{
-
-			@Override
-			public void onChanged(Change<? extends Task> c) {
-				setTabAvailability(progressTab, taskList == null || taskList.isEmpty());
-			}
-
-		};
+	private final ListChangeListener<Task> taskListListener = (
+		Change<? extends Task> c) -> setTabAvailability(progressTab,
+			taskList == null || taskList.isEmpty());
 
 	private SimpleObservableValue<String> errorOutput;
 
