@@ -40,13 +40,13 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 		cz.it4i.fiji.haas_spim_benchmark.ui.JobDetailControl.class);
 
 	@FXML
-	private MPITaskProgressViewController mpiProgressControl;
+	private MacroTaskProgressViewController macroProgressControl;
 
 	@FXML
 	private SPIMPipelineProgressViewController progressControl;
 
 	@FXML
-	private Tab mpiProgressTab;
+	private Tab macroProgressTab;
 
 	@FXML
 	private Tab progressTab;
@@ -133,7 +133,8 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 					.getHaasTemplateId());
 
 				if (jobType == WorkflowType.SPIM_WORKFLOW) {
-					setTabAvailability(mpiProgressTab, true);
+					setTabAvailability(macroProgressTab, true);
+					removeTab(macroProgressTab);
 					
 					// SPIM-only related initializations:
 					progressControl.init(parameter);
@@ -147,13 +148,16 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 					snakemakeOutputControl.setObservable(errorOutput);
 				}
 				else {
-					setTabAvailability(mpiProgressTab, false);
+					setTabAvailability(macroProgressTab, false);
 					setTabAvailability(progressTab, true);
 					setTabAvailability(snakemakeOutputTab, true);
 
+					removeTab(progressTab);
+					removeTab(snakemakeOutputTab);
+					
 					// Macro-only related initializations:
-					mpiProgressControl.init(parameter);
-					mpiProgressControl.setJobParameter(job.getJob());
+					macroProgressControl.init(parameter);
+					macroProgressControl.setJobParameter(job.getJob());
 
 					progress.done();
 				}
@@ -219,7 +223,7 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 			snakemakeOutputControl.close();
 		}
 		else {
-			mpiProgressControl.close();
+			macroProgressControl.close();
 		}
 		standardOutput.removeListener(standardOutputListener);
 		otherOutputControl.close();
@@ -232,6 +236,10 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 	private void setTabAvailability(final Tab tab, final boolean isDisabled) {
 		tab.setDisable(isDisabled);
 		setActiveFirstVisibleTab(false);
+	}
+	
+	private void removeTab(final Tab tab) {
+		JavaFXRoutines.runOnFxThread( () -> this.getTabs().remove(tab));
 	}
 
 	private void setActiveFirstVisibleTab(final boolean force) {

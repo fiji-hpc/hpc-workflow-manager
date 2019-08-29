@@ -3,7 +3,7 @@
 <?import cz.it4i.fiji.haas_spim_benchmark.ui.DataTransferController?>
 <?import cz.it4i.fiji.haas_spim_benchmark.ui.LogViewControl?>
 <?import cz.it4i.fiji.haas_spim_benchmark.ui.SPIMPipelineProgressViewController?>
-<?import cz.it4i.fiji.haas_spim_benchmark.ui.MPITaskProgressViewController?>
+<?import cz.it4i.fiji.haas_spim_benchmark.ui.MacroTaskProgressViewController?>
 <?import javafx.scene.control.Tab?>
 <?import javafx.scene.control.TabPane?>
 <?import javafx.scene.layout.AnchorPane?>
@@ -15,12 +15,12 @@
 	xmlns="http://javafx.com/javafx/8.0.65"
 	fx:controller="cz.it4i.fiji.haas_spim_benchmark.ui.JobDetailControl">	
 	<tabs>
-		<!-- This is the MPI Task progress tab: -->
-		<Tab closable="false" text="MPI Progress" fx:id="mpiProgressTab">
+		<!-- This is the Macro Task progress tab: -->
+		<Tab closable="false" text="Macro Progress" fx:id="macroProgressTab">
 			<content>
 				<HBox>
-					<MPITaskProgressViewController
-						fx:id="mpiProgressControl" HBox.hgrow="ALWAYS" />
+					<MacroTaskProgressViewController
+						fx:id="macroProgressControl" HBox.hgrow="ALWAYS" />
 				</HBox>
 			</content>
 		</Tab>

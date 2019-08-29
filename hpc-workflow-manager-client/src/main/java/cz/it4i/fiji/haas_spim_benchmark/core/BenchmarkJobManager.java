@@ -180,7 +180,7 @@ public class BenchmarkJobManager implements Closeable {
 		public void update() {
 			job.updateInfo();
 			try {
-				visibleInBDV = Files.exists(getLocalPathToResultXML()) || WebRoutines
+				visibleInBDV = getLocalPathToResultXML().toFile().exists() || WebRoutines
 					.doesURLExist(new URL(getPathToToResultXMLOnBDS()));
 				if (log.isDebugEnabled()) {
 					log.debug("job #" + getId() + " is visible in BDV " + visibleInBDV);

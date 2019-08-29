@@ -4,14 +4,14 @@ package cz.it4i.fiji.haas_spim_benchmark.core;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MPITask {
+public class MacroTask {
 
 	private String description;
 
 	// Progress in percentage for each node that the task run on:
 	private List<Long> progress;
 
-	public MPITask(String description) {
+	public MacroTask(String description) {
 		this.description = description;
 		this.progress = new ArrayList<>();
 	}

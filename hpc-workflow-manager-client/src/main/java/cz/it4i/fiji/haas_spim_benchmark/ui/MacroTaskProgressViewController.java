@@ -18,7 +18,7 @@ import cz.it4i.fiji.haas.ui.CloseableControl;
 import cz.it4i.fiji.haas.ui.InitiableControl;
 import cz.it4i.fiji.haas.ui.JavaFXRoutines;
 import cz.it4i.fiji.haas_java_client.JobState;
-import cz.it4i.fiji.haas_spim_benchmark.core.MPITask;
+import cz.it4i.fiji.haas_spim_benchmark.core.MacroTask;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleLongProperty;
 import javafx.collections.FXCollections;
@@ -32,21 +32,21 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
 
-public class MPITaskProgressViewController extends BorderPane implements
+public class MacroTaskProgressViewController extends BorderPane implements
 	CloseableControl, InitiableControl
 {
 
 	@FXML
-	private TableView<MPITask> tasksTableView;
+	private TableView<MacroTask> tasksTableView;
 
 	@FXML
-	private TableColumn<MPITask, String> descriptionColumn;
+	private TableColumn<MacroTask, String> descriptionColumn;
 
 	private Window root;
 
 	private Job job;
 
-	private ObservableList<MPITask> tableData = FXCollections
+	private ObservableList<MacroTask> tableData = FXCollections
 		.observableArrayList();
 
 	ScheduledExecutorService exec = Executors.newSingleThreadScheduledExecutor();
@@ -63,12 +63,12 @@ public class MPITaskProgressViewController extends BorderPane implements
 
 	final CountDownLatch latchToWaitForJavaFx = new CountDownLatch(1);
 
-	public MPITaskProgressViewController() {
+	public MacroTaskProgressViewController() {
 		init();
 	}
 
 	private void init() {
-		JavaFXRoutines.initRootAndController("MPITaskProgressView.fxml", this);
+		JavaFXRoutines.initRootAndController("MacroTaskProgressView.fxml", this);
 	}
 
 	@Override
@@ -76,7 +76,7 @@ public class MPITaskProgressViewController extends BorderPane implements
 		this.root = parameter;
 	}
 
-	private class ProgressCell extends TableCell<MPITask, Long> {
+	private class ProgressCell extends TableCell<MacroTask, Long> {
 
 		final ProgressIndicator cellProgress = new ProgressIndicator();
 
@@ -174,7 +174,7 @@ public class MPITaskProgressViewController extends BorderPane implements
 				tasksTableView.getColumns().get(i + 1);
 			}
 			catch (IndexOutOfBoundsException exc) {
-				TableColumn<MPITask, Long> tempColumn = new TableColumn<>("Node " + i +
+				TableColumn<MacroTask, Long> tempColumn = new TableColumn<>("Node " + i +
 					" progress (%)");
 				final int nodeId = i;
 				tempColumn.setCellValueFactory(cellData -> createObservableProperty(
@@ -186,7 +186,7 @@ public class MPITaskProgressViewController extends BorderPane implements
 	}
 
 	private SimpleLongProperty createObservableProperty(
-		CellDataFeatures<MPITask, Long> cellData, int nodeId)
+		CellDataFeatures<MacroTask, Long> cellData, int nodeId)
 	{
 		SimpleLongProperty cellValueProperty = new SimpleLongProperty();
 		cellValueProperty.setValue(cellData.getValue().getProgress(nodeId));
@@ -250,7 +250,7 @@ public class MPITaskProgressViewController extends BorderPane implements
 				String description = elements[1];
 				if (!descriptionToTaskId.containsKey(description)) {
 					descriptionToTaskId.put(description, taskIdCounter++);
-					tableData.add(new MPITask(description));
+					tableData.add(new MacroTask(description));
 				}
 				nodeTaskToDescription.get(nodeId).put(taskIdForNode, description);
 			}

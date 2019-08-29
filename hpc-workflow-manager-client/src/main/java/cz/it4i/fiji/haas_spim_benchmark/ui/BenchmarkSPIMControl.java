@@ -366,9 +366,9 @@ public class BenchmarkSPIMControl extends BorderPane implements
 		setCellValueFactoryCompletable(1, j -> j.getStateAsync(
 			executorServiceJobState).thenApply(state -> "" + provider.getName(
 				state)));
-		setCellValueFactory(2, j -> j.getCreationTime().toString());
-		setCellValueFactory(3, j -> j.getStartTime().toString());
-		setCellValueFactory(4, j -> j.getEndTime().toString());
+		setCellValueFactory(2, j -> j.getCreationTime());
+		setCellValueFactory(3, j -> j.getStartTime());
+		setCellValueFactory(4, j -> j.getEndTime());
 		setCellValueFactory(5, j -> decorateTransfer(registry.get(j)
 			.getUploadProgress()));
 		setCellValueFactory(6, j -> decorateTransfer(registry.get(j)
