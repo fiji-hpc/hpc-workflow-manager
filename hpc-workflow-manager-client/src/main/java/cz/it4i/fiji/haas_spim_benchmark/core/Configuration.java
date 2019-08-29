@@ -20,12 +20,12 @@ public class Configuration {
 
 	private static Properties properties;
 
-	private static int HAAS_UPDATE_TIMEOUT = 30000;
-	private static int HAAS_CLUSTER_NODE_TYPE = 7;
-	private static int HAAS_TEMPLATE_ID = 4;
-	private static String HAAS_PROJECT_ID = "DD-18-42";
-	private static int WALLTIME = 3600; // Walltime in seconds
-	private static String BDS_ADDRESS = "http://julius2.it4i.cz/";
+	private static final int HAAS_UPDATE_TIMEOUT = 30000;
+	private static final int HAAS_CLUSTER_NODE_TYPE = 7;
+	private static final int HAAS_TEMPLATE_ID = 4;
+	private static final String HAAS_PROJECT_ID = "DD-18-42";
+	private static final int WALLTIME = 3600; // Walltime in seconds
+	private static final String BDS_ADDRESS = "http://julius2.it4i.cz/";
 
 	private static Properties getProperties() throws IOException {
 		if (properties == null) {

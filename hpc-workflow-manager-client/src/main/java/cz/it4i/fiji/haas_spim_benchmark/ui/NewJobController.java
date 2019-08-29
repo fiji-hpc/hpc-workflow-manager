@@ -112,7 +112,7 @@ public class NewJobController extends BorderPane implements CloseableControl, In
 		bt_create.setOnMouseClicked(X -> createPressed());
 		tg_inputDataLocation.selectedToggleProperty().addListener((v, old, n) -> selected(n, rb_ownInput));
 		tg_outputDataLocation.selectedToggleProperty().addListener((v, o, n) -> selected(n, rb_ownOutput));
-		rb_workflowSpim.selectedProperty().addListener((v, o, n) -> selectedSpimWorkflow(n, rb_workflowSpim));
+		rb_workflowSpim.selectedProperty().addListener((v, o, n) -> selectedSpimWorkflow(n));
 		initSelectButton(et_inputDirectory, bt_selectInput);
 		initSelectButton(et_outputDirectory, bt_selectOutput);
 	}
@@ -229,7 +229,7 @@ public class NewJobController extends BorderPane implements CloseableControl, In
 		disableIfNotSelected.getChildrenUnmodifiable().forEach(node -> node.setDisable(n != disableIfNotSelected));
 	}
 	
-	private void selectedSpimWorkflow(Boolean n, Parent disableIfNotSelected) {
+	private void selectedSpimWorkflow(Boolean n) {
 		if (n) {
 			et_numberOfNodes.setText("1");
 			et_numberOfNodes.setDisable(true);
