@@ -196,7 +196,7 @@ public class TaskComputation {
 		// Should the state be queued, try to find out whether a log file exists
 		if (state == JobState.Queued) {
 			if (!taskDescription.equals(Constants.DONE_TASK) && null != logs
-					&& !logs.stream().anyMatch(logFile -> computationAccessor.fileExists(logFile))) {
+					&& logs.stream().noneMatch(logFile -> computationAccessor.fileExists(logFile))) {
 				return; // No log file exists yet
 			}
 			state = JobState.Running;

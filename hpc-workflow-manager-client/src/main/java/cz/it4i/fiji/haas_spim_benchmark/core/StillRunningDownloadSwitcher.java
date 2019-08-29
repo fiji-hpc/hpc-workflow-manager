@@ -28,7 +28,7 @@ public class StillRunningDownloadSwitcher {
 		setter.accept(providerReportingStillRunning);
 	}
 
-	synchronized public void switchBack() {
+	public synchronized void switchBack() {
 		setter.accept(originalProvider);
 	}
 

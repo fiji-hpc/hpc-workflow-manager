@@ -35,7 +35,7 @@ public class TaskComputationControl extends TabPane implements CloseableControl,
 	InitiableControl
 {
 
-	public final static Logger log = LoggerFactory.getLogger(
+	public static final Logger log = LoggerFactory.getLogger(
 		cz.it4i.fiji.haas_spim_benchmark.ui.TaskComputationControl.class);
 
 	private TaskComputationAdapter adapter;

@@ -10,9 +10,7 @@ public class FXFrameExecutorService implements Executor {
 	@Override
 	public void execute(Runnable command) {
 
-		JavaFXRoutines.runOnFxThread(() -> {
-			command.run();
-		});
+		JavaFXRoutines.runOnFxThread(() -> command.run());
 
 	}
 

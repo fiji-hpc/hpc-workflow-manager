@@ -49,7 +49,7 @@ public class ProgressNotifierTemporarySwitchOff {
 		}
 	}
 
-	synchronized public void switchOn() {
+	public synchronized void switchOn() {
 		if(notifier != null) {
 			this.job.setDownloadNotifier(notifier);
 		}

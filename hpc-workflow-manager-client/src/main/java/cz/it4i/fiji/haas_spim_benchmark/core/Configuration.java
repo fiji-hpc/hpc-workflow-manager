@@ -15,7 +15,7 @@ public class Configuration {
 		// Private constructor.
 	}
 
-	private final static Logger log = LoggerFactory.getLogger(
+	private static final Logger log = LoggerFactory.getLogger(
 		Configuration.class);
 
 	private static Properties properties;

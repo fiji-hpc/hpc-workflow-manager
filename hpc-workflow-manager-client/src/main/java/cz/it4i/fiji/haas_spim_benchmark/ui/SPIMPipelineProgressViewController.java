@@ -126,9 +126,8 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 	}
 
 	private boolean check(Task x, Integer columnIndex) {
-		boolean result = x != null && 0 < columnIndex && columnIndex - 1 < x
-			.getComputations().size();
-		return result;
+		return (x != null && 0 < columnIndex && columnIndex - 1 < x
+			.getComputations().size());
 	}
 
 	private void proof(Task task, int columnIndex) {
@@ -144,7 +143,7 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 		final Optional<List<TaskComputation>> optional = getComputations(
 			observedList);
 
-		if (!optional.isPresent() || optional.get().size() < 1) {
+		if (!optional.isPresent() || optional.get().isEmpty()) {
 			return;
 		}
 
@@ -160,8 +159,8 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 			final double tableColumnWidth = computeTableColumnWidth(computations);
 			for (TaskComputation tc : computations) {
 				TableColumn<Task, String> tableCol;
-				this.tasks.getColumns().add(tableCol = new TableColumn<>(columnHeader(
-					tc)));
+				tableCol = new TableColumn<>(columnHeader(tc));
+				this.tasks.getColumns().add(tableCol);
 				int index = i++;
 				tableCol.setPrefWidth(tableColumnWidth);
 				constructCellFactory(index);
@@ -175,7 +174,7 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 	private long computeTableColumnWidth(List<TaskComputation> computations) {
 		return Math.round(this.tasks.getColumns().get(0).getWidth() /
 			TIMEPOINT_TABLE_COLUMN_WIDTH_RATIO * (1 + Math.max(0,
-				computeMaxColumnHeaderTextLength(computations) - 1) / 2));
+				computeMaxColumnHeaderTextLength(computations) - 1) / (double)2));
 	}
 
 	private int computeMaxColumnHeaderTextLength(

@@ -42,8 +42,6 @@ public class MacroTaskProgressViewController extends BorderPane implements
 	@FXML
 	private TableColumn<MacroTask, String> descriptionColumn;
 
-	private Window root;
-
 	private Job job;
 
 	private ObservableList<MacroTask> tableData = FXCollections
@@ -70,10 +68,10 @@ public class MacroTaskProgressViewController extends BorderPane implements
 	private void init() {
 		JavaFXRoutines.initRootAndController("MacroTaskProgressView.fxml", this);
 	}
-
+	
 	@Override
 	public void init(Window parameter) {
-		this.root = parameter;
+		// This is empty as the parameter is not used.
 	}
 
 	private class ProgressCell extends TableCell<MacroTask, Long> {
@@ -174,8 +172,8 @@ public class MacroTaskProgressViewController extends BorderPane implements
 				tasksTableView.getColumns().get(i + 1);
 			}
 			catch (IndexOutOfBoundsException exc) {
-				TableColumn<MacroTask, Long> tempColumn = new TableColumn<>("Node " + i +
-					" progress (%)");
+				TableColumn<MacroTask, Long> tempColumn = new TableColumn<>("Node " +
+					i + " progress (%)");
 				final int nodeId = i;
 				tempColumn.setCellValueFactory(cellData -> createObservableProperty(
 					cellData, nodeId).asObject());

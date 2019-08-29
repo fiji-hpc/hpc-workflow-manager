@@ -1,6 +1,5 @@
 package cz.it4i.fiji.haas_spim_benchmark.ui;
 
-import java.nio.file.Files;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 
@@ -21,9 +20,8 @@ public class ObservableBenchmarkJobRegistry extends ObservableValueRegistry<Benc
 
 	private Executor executorUI;
 	public ObservableBenchmarkJobRegistry(Consumer<BenchmarkJob> removeConsumer, Executor exec, Executor executorServiceFX) {
-		super(t -> update(t,exec), t -> {
-			return t.getStateAsync(exec).getNow(null);
-		}, removeConsumer);
+		super(t -> update(t, exec), t -> t.getStateAsync(exec).getNow(null),
+			removeConsumer);
 		executorUI = executorServiceFX;
 	}
 
@@ -46,7 +44,7 @@ public class ObservableBenchmarkJobRegistry extends ObservableValueRegistry<Benc
 	
 
 	private static UpdateStatus update(BenchmarkJob t, Executor executor) {
-		if (!Files.isDirectory(t.getDirectory())) {
+		if (!t.getDirectory().toFile().isDirectory()) {
 			return UpdateStatus.Deleted;
 		}
 		JobState oldState = t.getStateAsync(executor).getNow(null);

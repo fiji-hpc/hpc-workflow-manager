@@ -263,9 +263,9 @@ public class BenchmarkJobManager implements Closeable {
 		}
 
 		public void setDownloadNotifier(Progress progress) {
-			job.setDownloadNotifier(downloadNotifier =
-				createDownloadNotifierProcessingResultCSV(convertToProgressNotifier(
-					progress)));
+			downloadNotifier = createDownloadNotifierProcessingResultCSV(
+				convertToProgressNotifier(progress));
+			job.setDownloadNotifier(downloadNotifier);
 		}
 
 		public boolean canBeDownloaded() {

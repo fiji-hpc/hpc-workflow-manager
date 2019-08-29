@@ -42,7 +42,7 @@ public class FileLock implements Closeable {
 	}
 
 	@Override
-	synchronized public void close() {
+	public synchronized void close() {
 		if (lock != null) {
 			try {
 				lock.release();
@@ -62,7 +62,7 @@ public class FileLock implements Closeable {
 			}
 		}
 		try {
-			if (Files.exists(localPath)) {
+			if (localPath.toFile().exists()) {
 				Files.delete(localPath);
 			}
 		}

@@ -54,11 +54,6 @@ public class Task {
 	public List<TaskComputation> getComputations() {
 		return computations;
 	}
-
-	// TODO: Method stub
-	public void update() {
-
-	}
 	
 	/**
 	 * @return all errors corresponding to this task

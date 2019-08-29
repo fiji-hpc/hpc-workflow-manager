@@ -2,7 +2,6 @@ package cz.it4i.fiji.haas_spim_benchmark.ui;
 
 import java.awt.Window;
 import java.io.File;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -155,7 +154,7 @@ public class NewJobController extends BorderPane implements CloseableControl, In
 		button.setOnAction(x -> {
 			Path p = Paths.get(textField.getText());
 			DirectoryChooser dch = new DirectoryChooser();
-			if (Files.exists(p)) {
+			if (p.toFile().exists()) {
 				dch.setInitialDirectory(p.toAbsolutePath().toFile());
 			}
 			File result = dch.showDialog(ownerWindow.getFxPanel().getScene().getWindow());
@@ -195,7 +194,7 @@ public class NewJobController extends BorderPane implements CloseableControl, In
 
 	private boolean checkDataLocationValue(DataLocation dataLocation, String directory, String type) {
 		Path directoryPath = Paths.get(directory);
-		if (dataLocation == DataLocation.CUSTOM_DIRECTORY && (!Files.exists(directoryPath) || directory.isEmpty())) {
+		if (dataLocation == DataLocation.CUSTOM_DIRECTORY && (!directoryPath.toFile().exists() || directory.isEmpty())) {
 			Alert alert = new Alert(AlertType.WARNING);
 			alert.setTitle("Invalid input provided");
 			alert.setHeaderText(null);

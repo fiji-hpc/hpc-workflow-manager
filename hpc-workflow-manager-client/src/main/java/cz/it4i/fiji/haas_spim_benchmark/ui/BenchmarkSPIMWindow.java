@@ -12,9 +12,8 @@ public class BenchmarkSPIMWindow extends FXFrame<BenchmarkSPIMControl>{
 	private static final long serialVersionUID = 1L;
 		
 	public BenchmarkSPIMWindow(Window parentWindow, BenchmarkSPIMParameters params) {
-		super(parentWindow,()->{
-			return new BenchmarkSPIMControl(new BenchmarkJobManager(params));
-		});
+		super(parentWindow, () -> new BenchmarkSPIMControl(new BenchmarkJobManager(
+			params)));
 		
 	}
 }

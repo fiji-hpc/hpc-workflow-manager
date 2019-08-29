@@ -133,7 +133,7 @@ public class BenchmarkSPIMControl extends BorderPane implements
 	}
 
 	@Override
-	synchronized public void close() {
+	public synchronized void close() {
 		if (!closed) {
 			executorServiceShell.shutdown();
 			executorServiceWS.shutdown();
@@ -222,11 +222,10 @@ public class BenchmarkSPIMControl extends BorderPane implements
 					if (job.isUseDemoData()) {
 						job.storeDataInWorkdirectory(getConfigYamlFile());
 					}
-					else if (Files.exists(job.getInputDirectory().resolve(CONFIG_YAML))) {
-						executorServiceFX.execute(new Runnable() {
+					else if ((job.getInputDirectory().resolve(CONFIG_YAML)).toFile().exists()) {
+						executorServiceFX.execute(() -> {
 
-							@Override
-							public void run() {
+						
 								Alert al = new Alert(AlertType.CONFIRMATION, "The file \"" +
 									CONFIG_YAML +
 									"\" found in the defined data input directory \"" + job
@@ -247,7 +246,7 @@ public class BenchmarkSPIMControl extends BorderPane implements
 									}
 								}
 							}
-						});
+						);
 
 					}
 				}
@@ -431,7 +430,7 @@ public class BenchmarkSPIMControl extends BorderPane implements
 	private void openBigDataViewer(BenchmarkJob job) {
 		Path localPathToResultXML = job.getLocalPathToResultXML();
 		String openFile;
-		if (Files.exists(localPathToResultXML)) {
+		if (localPathToResultXML.toFile().exists()) {
 			openFile = localPathToResultXML.toString();
 		}
 		else {
