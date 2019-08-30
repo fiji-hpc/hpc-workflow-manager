@@ -51,7 +51,7 @@ public class Job {
 		} catch (NumberFormatException e) {
 			return false;
 		}
-		return Files.isRegularFile(path.resolve(JOB_INFO_FILENAME));
+		return path.resolve(JOB_INFO_FILENAME).toFile().isFile();
 	}
 
 	private static final String JOB_NAME = "job.name";

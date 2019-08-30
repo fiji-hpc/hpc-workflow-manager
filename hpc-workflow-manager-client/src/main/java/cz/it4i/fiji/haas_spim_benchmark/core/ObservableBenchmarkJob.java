@@ -28,11 +28,10 @@ public class ObservableBenchmarkJob extends
 		cz.it4i.fiji.haas_spim_benchmark.core.ObservableBenchmarkJob.class);
 
 	private final P_TransferProgress downloadProgress = new P_TransferProgress(
-		val -> getValue().setDownloaded(val), () -> getValue().isDownloaded(),
-		() -> getValue().isDownloading());
+		getValue()::setDownloaded, getValue()::isDownloaded,
+		getValue()::isDownloading);
 	private final P_TransferProgress uploadProgress = new P_TransferProgress(
-		val -> getValue().setUploaded(val), () -> getValue().isUploaded(),
-		() -> getValue().isUploading());
+		getValue()::setUploaded, getValue()::isUploaded, getValue()::isUploading);
 	private final Executor executor;
 
 	private final HaasOutputObservableValueRegistry haasOutputRegistry;
