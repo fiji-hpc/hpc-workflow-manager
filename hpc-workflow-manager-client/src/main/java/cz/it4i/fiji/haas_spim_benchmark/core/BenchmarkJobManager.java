@@ -42,8 +42,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
-import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -180,10 +180,11 @@ public class BenchmarkJobManager implements Closeable {
 		public void update() {
 			job.updateInfo();
 			try {
-				visibleInBDV = getLocalPathToResultXML().toFile().exists() || WebRoutines
-					.doesURLExist(new URL(getPathToToResultXMLOnBDS()));
+				visibleInBDV = getLocalPathToResultXML().toFile().exists() ||
+					WebRoutines.doesURLExist(new URL(getPathToToResultXMLOnBDS()));
 				if (log.isDebugEnabled()) {
-					log.debug("job #" + getId() + " is visible in BDV " + visibleInBDV);
+					log.debug("job # ".concat(Long.toString(getId())).concat(
+						" is visible in BDV ").concat(Boolean.toString(visibleInBDV)));
 				}
 			}
 			catch (MalformedURLException exc) {
@@ -280,7 +281,7 @@ public class BenchmarkJobManager implements Closeable {
 			return downloadingStatus.isDownloaded();
 		}
 
-		public boolean isDownloading() {
+		public boolean isDownloading() {			
 			return job.isDownloading();
 		}
 
@@ -443,7 +444,11 @@ public class BenchmarkJobManager implements Closeable {
 		private void startDownloadResults(CompletableFuture<?> result)
 			throws IOException
 		{
-			String mainFile = job.getProperty(SPIM_OUTPUT_FILENAME_PATTERN) + ".xml";
+			WorkflowType jobType = WorkflowType.forLong(job.getHaasTemplateId());
+
+			final String mainFile = job.getProperty(SPIM_OUTPUT_FILENAME_PATTERN) +
+				".xml";
+
 			final StillRunningDownloadSwitcher stillRunningTemporarySwitch =
 				new StillRunningDownloadSwitcher(() -> downloadingStatus,
 					val -> downloadingStatus = val);
@@ -456,23 +461,33 @@ public class BenchmarkJobManager implements Closeable {
 					stillRunningTemporarySwitch.switchBack();
 					return null;
 				}).thenCompose(x -> {
-					Set<String> otherFiles = extractNames(getOutputDirectory().resolve(
-						mainFile));
-					try {
-						return job.startDownload(downloadFileNameExtractDecorator(
-							downloadCSVDecorator(otherFiles::contains)));
+					if (jobType == WorkflowType.SPIM_WORKFLOW) {
+						Set<String> otherFiles = extractNames(getOutputDirectory().resolve(
+							mainFile));
+
+						try {
+							return job.startDownload(downloadFileNameExtractDecorator(
+								downloadCSVDecorator(otherFiles::contains)));
+						}
+						catch (IOException e) {
+							throw new RuntimeException(e);
+						}
+						finally {
+							progressNotifierTemporarySwitchOff.switchOn();
+							stillRunningTemporarySwitch.switchBack();
+						}
 					}
-					catch (IOException e) {
-						throw new RuntimeException(e);
-					}
-					finally {
-						progressNotifierTemporarySwitchOff.switchOn();
-						stillRunningTemporarySwitch.switchBack();
-					}
+					return null;
 				}).whenComplete((x, e) -> {
 					if (e != null) {
-						log.error(e.getMessage(), e);
-						downloadNotifier.addItem(FAILED_ITEM);
+						if (!(e.getCause() instanceof NullPointerException)) {
+							log.error(e.getMessage(), e);
+							downloadNotifier.addItem(FAILED_ITEM);
+						}
+						else {
+							job.setProperty("job.downloaded", true);
+							downloadNotifier.done();
+						}
 					}
 					result.complete(null);
 				});
@@ -594,8 +609,8 @@ public class BenchmarkJobManager implements Closeable {
 		jobManager.setUploadFilter(this::canUpload);
 	}
 
-	public BenchmarkJob createJob(Function<Path, Path> inputDirectoryProvider,
-		Function<Path, Path> outputDirectoryProvider, int numberOfNodes,
+	public BenchmarkJob createJob(UnaryOperator<Path>  inputDirectoryProvider,
+		UnaryOperator<Path> outputDirectoryProvider, int numberOfNodes,
 		int haasTemplateId) throws IOException
 	{
 		Job job = jobManager.createJob(getJobSettings(numberOfNodes,
@@ -619,12 +634,12 @@ public class BenchmarkJobManager implements Closeable {
 
 		List<ResultFileTask> identifiedTasks = new LinkedList<>();
 
-		try(BufferedReader reader = Files.newBufferedReader(filename)) {
+		try (BufferedReader reader = Files.newBufferedReader(filename)) {
 			String line = null;
 
 			ResultFileTask processedTask = null;
 			List<ResultFileJob> jobs = new LinkedList<>();
-			
+
 			while (null != (line = reader.readLine())) {
 
 				line = line.trim();
@@ -685,8 +700,10 @@ public class BenchmarkJobManager implements Closeable {
 		Collections.sort(identifiedTasks, Comparator.comparingInt(
 			t -> chronologicList.indexOf(t.getName())));
 
-		try(FileWriter fileWriter = new FileWriter(filename.getParent().toString() +
-				Constants.FORWARD_SLASH + Constants.STATISTICS_SUMMARY_FILENAME)) {
+		try (FileWriter fileWriter = new FileWriter(filename.getParent()
+			.toString() + Constants.FORWARD_SLASH +
+			Constants.STATISTICS_SUMMARY_FILENAME))
+		{
 			fileWriter.append(Constants.SUMMARY_FILE_HEADER).append(
 				Constants.NEW_LINE_SEPARATOR);
 
@@ -706,7 +723,8 @@ public class BenchmarkJobManager implements Closeable {
 			}
 
 			Double pipelineStart = identifiedTasks.stream() //
-				.mapToDouble(ResultFileTask::getEarliestStartInSeconds).min().getAsDouble();
+				.mapToDouble(ResultFileTask::getEarliestStartInSeconds).min()
+				.getAsDouble();
 
 			Double pipelineEnd = identifiedTasks.stream() //
 				.mapToDouble(ResultFileTask::getLatestEndInSeconds).max().getAsDouble();

@@ -119,6 +119,7 @@ public class NewJobController extends BorderPane implements CloseableControl, In
 
 	@Override
 	public void close() {
+		// There is nothing to close.
 	}
 
 	@Override

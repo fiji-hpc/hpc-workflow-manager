@@ -4,10 +4,9 @@ package cz.it4i.fiji.haas_spim_benchmark.core;
 import java.io.Closeable;
 import java.util.Objects;
 import java.util.concurrent.Executor;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Supplier;
-
 import net.imagej.updater.util.Progress;
 
 import org.slf4j.Logger;
@@ -114,16 +113,16 @@ public class ObservableBenchmarkJob extends
 
 	private class P_TransferProgress implements Progress, TransferProgress {
 
-		private final Supplier<Boolean> doneStatusSupplier;
+		private final BooleanSupplier doneStatusSupplier;
 		private final Consumer<Boolean> doneStatusConsumer;
-		private final Supplier<Boolean> workingSupplier;
+		private final BooleanSupplier workingSupplier;
 		private Long start;
 		private Long remainingMiliseconds;
 		private Float remainingPercents;
 		private boolean failed = false;
 
 		public P_TransferProgress(Consumer<Boolean> doneStatusConsumer,
-			Supplier<Boolean> doneStatusSupplier, Supplier<Boolean> workingSupplier)
+			BooleanSupplier doneStatusSupplier, BooleanSupplier workingSupplier)
 		{
 			this.doneStatusConsumer = doneStatusConsumer;
 			this.doneStatusSupplier = doneStatusSupplier;
@@ -169,7 +168,7 @@ public class ObservableBenchmarkJob extends
 
 		@Override
 		public synchronized boolean isWorking() {
-			return workingSupplier.get();
+			return workingSupplier.getAsBoolean();
 		}
 		
 		@Override
@@ -188,7 +187,9 @@ public class ObservableBenchmarkJob extends
 		}
 
 		@Override
-		public void setItemCount(int count, int total) {}
+		public void setItemCount(int count, int total) {
+			
+		}
 
 		@Override
 		public void itemDone(final Object item) {
@@ -196,11 +197,13 @@ public class ObservableBenchmarkJob extends
 		}
 
 		@Override
-		public void setTitle(String title) {}
+		public void setTitle(String title) {
+			
+		}
 
 		@Override
 		public boolean isDone() {
-			return doneStatusSupplier.get();
+			return doneStatusSupplier.getAsBoolean();
 		}
 
 		private void reloadFileTransferList() {

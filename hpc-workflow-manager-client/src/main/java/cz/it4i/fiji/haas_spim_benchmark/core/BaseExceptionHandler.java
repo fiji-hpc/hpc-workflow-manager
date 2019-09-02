@@ -47,7 +47,7 @@ public class BaseExceptionHandler implements BiPredicate<Thread, Throwable> {
 		if (test.test(t, exc)) {
 			if (closeable != null) {
 				if (log.isDebugEnabled()) {
-					log.debug("Dispose window " + closeable);
+					log.debug("Dispose window ".concat(closeable.toString()));
 				}
 				try {
 					closeable.close();

@@ -44,7 +44,7 @@ public class RemoteFilesInfoControl extends BorderPane implements CloseableContr
 
 	@Override
 	public void close() {
-
+		// There is nothing to close.
 	}
 
 	private void initTable() {

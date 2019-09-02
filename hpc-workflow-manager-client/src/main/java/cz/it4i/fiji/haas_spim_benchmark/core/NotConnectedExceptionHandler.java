@@ -14,7 +14,7 @@ public class NotConnectedExceptionHandler extends BaseExceptionHandler {
 	}
 
 	public NotConnectedExceptionHandler(final Closeable closeable) {
-		super(closeable, (T, exc) -> exc instanceof NotConnectedException,
+		super(closeable, (t, exc) -> exc instanceof NotConnectedException,
 			"Connection to HPC infrastructure failed",
 			"Check your access to the Internet or contact a HPC administrator",
 			MessageType.ERROR_MESSAGE);

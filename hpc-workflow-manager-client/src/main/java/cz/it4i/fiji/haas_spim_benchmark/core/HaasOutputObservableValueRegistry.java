@@ -9,10 +9,9 @@ import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.UI_TO_HAAS_FREQUEN
 import com.google.common.collect.Streams;
 
 import java.io.Closeable;
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -22,8 +21,8 @@ import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.BenchmarkJob;
 class HaasOutputObservableValueRegistry implements Closeable {
 
 	private final BenchmarkJob job;
-	private final Map<SynchronizableFileType, SimpleObservableValue<String>> observableValues =
-		new HashMap<>();
+	private final EnumMap<SynchronizableFileType, SimpleObservableValue<String>> observableValues =
+		new EnumMap<>(SynchronizableFileType.class);
 	private Timer timer;
 	private boolean isRunning = false;
 	private int numberOfListeners = 0;

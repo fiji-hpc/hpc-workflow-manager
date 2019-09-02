@@ -136,10 +136,6 @@ public class TaskComputation {
 		return id;
 	}
 
-	public void update() {
-
-	}
-
 	/**
 	 * @return computations errors
 	 */

@@ -14,7 +14,7 @@ public class AuthenticationExceptionHandler extends BaseExceptionHandler {
 	}
 
 	public AuthenticationExceptionHandler(final Closeable closeable) {
-		super(closeable, (T, exc) -> exc instanceof AuthenticationException,
+		super(closeable, (t, exc) -> exc instanceof AuthenticationException,
 			"Authentication failed", "Invalid username or password provided",
 			MessageType.WARNING_MESSAGE);
 	}

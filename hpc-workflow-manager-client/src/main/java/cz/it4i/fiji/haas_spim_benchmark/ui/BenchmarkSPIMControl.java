@@ -23,6 +23,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 import javax.swing.WindowConstants;
 
@@ -259,8 +260,8 @@ public class BenchmarkSPIMControl extends BorderPane implements
 		return new UploadingFileFromResource("", Constants.CONFIG_YAML);
 	}
 
-	private BenchmarkJob doCreateJob(Function<Path, Path> inputProvider,
-		Function<Path, Path> outputProvider, int numberOfNodes, int haasTemplateId) throws IOException
+	private BenchmarkJob doCreateJob(UnaryOperator<Path> inputProvider,
+		UnaryOperator<Path> outputProvider, int numberOfNodes, int haasTemplateId) throws IOException
 	{
 		BenchmarkJob bj = manager.createJob(inputProvider, outputProvider, numberOfNodes, haasTemplateId);
 		ObservableBenchmarkJob obj = registry.addIfAbsent(bj);
@@ -381,8 +382,7 @@ public class BenchmarkSPIMControl extends BorderPane implements
 	private String decorateTransfer(TransferProgress progress) {
 		if (progress.isFailed()) {
 			return "Failed";
-		}
-		if (!progress.isWorking() && !progress.isDone()) {
+		} else	if (!progress.isWorking() && !progress.isDone()) {
 			return "";
 		}
 		else if (progress.isWorking()) {
