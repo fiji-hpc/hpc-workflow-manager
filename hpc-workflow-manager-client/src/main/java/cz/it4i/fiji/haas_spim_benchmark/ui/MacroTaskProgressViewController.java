@@ -242,7 +242,8 @@ public class MacroTaskProgressViewController extends BorderPane implements
 					taskIdForNode);
 				int taskId = descriptionToTaskId.get(description);
 				tableData.get(taskId).setProgress(nodeId, progress);
-				setDescriptionToPropertyIfPossible(description, nodeId, progress);
+				setDescriptionToPropertyIfPossible(description, nodeId, tableData.get(
+					taskId).getProgress(nodeId));
 			}
 			catch (NumberFormatException exc) {
 				String description = elements[1];
