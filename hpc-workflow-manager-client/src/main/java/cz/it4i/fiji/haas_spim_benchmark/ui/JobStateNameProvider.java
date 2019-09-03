@@ -1,13 +1,14 @@
 package cz.it4i.fiji.haas_spim_benchmark.ui;
 
 import java.util.EnumMap;
+import java.util.Map;
 import java.util.Optional;
 
 import cz.it4i.fiji.haas_java_client.JobState;
 
 class JobStateNameProvider {
 
-	private final EnumMap<JobState,String> translateTable = new EnumMap<>(JobState.class);
+	private final Map<JobState,String> translateTable = new EnumMap<>(JobState.class);
 	
 	public JobStateNameProvider() {
 		translateTable.put(JobState.Configuring, "Configured");

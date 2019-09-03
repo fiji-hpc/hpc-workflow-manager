@@ -4,6 +4,7 @@ package cz.it4i.fiji.haas_spim_benchmark.ui;
 import java.awt.Window;
 import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
@@ -44,7 +45,7 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 
 	private static final int PREFERRED_WIDTH = 900;
 
-	private static final EnumMap<JobState, Color> taskExecutionState2Color =
+	private static final Map<JobState, Color> taskExecutionState2Color =
 		new EnumMap<>(JobState.class);
 
 	private static final double TIMEPOINT_TABLE_COLUMN_WIDTH_RATIO = 6;

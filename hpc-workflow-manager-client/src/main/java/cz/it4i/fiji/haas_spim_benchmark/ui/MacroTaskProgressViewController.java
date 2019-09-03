@@ -49,6 +49,8 @@ public class MacroTaskProgressViewController extends BorderPane implements
 
 	ScheduledExecutorService exec = Executors.newSingleThreadScheduledExecutor();
 
+	private int storedNumberOfNodes = 0;
+
 	// Maps task id of a specific node to description:
 	private List<Map<Integer, String>> nodeTaskToDescription = new ArrayList<>();
 
@@ -68,7 +70,7 @@ public class MacroTaskProgressViewController extends BorderPane implements
 	private void init() {
 		JavaFXRoutines.initRootAndController("MacroTaskProgressView.fxml", this);
 	}
-	
+
 	@Override
 	public void init(Window parameter) {
 		// This is empty as the parameter is not used.
@@ -110,19 +112,25 @@ public class MacroTaskProgressViewController extends BorderPane implements
 		tasksTableView.setItems(tableData);
 
 		exec.scheduleAtFixedRate(() -> {
-			List<String> files = generateProgressFileNames();
-			Platform.runLater(() -> {
-				createColumnsForEachNode(files.size());
-				latchToWaitForJavaFx.countDown();
-			});
-			try {
-				latchToWaitForJavaFx.await();
+			List<String> files = new ArrayList<>();
+			if (this.storedNumberOfNodes == 0) {
+				files = generateProgressFileNames();
+				this.storedNumberOfNodes = files.size();
+				Platform.runLater(() -> {
+					createColumnsForEachNode(this.storedNumberOfNodes);
+					latchToWaitForJavaFx.countDown();
+				});
+				try {
+					latchToWaitForJavaFx.await();
+				}
+				catch (InterruptedException exc) {
+					Log.error(exc.getMessage());
+					Thread.currentThread().interrupt();
+				}
 			}
-			catch (InterruptedException exc) {
-				Log.error(exc.getMessage());
-				Thread.currentThread().interrupt();
+			else {
+				getAndParseFileUpdateTasks(files);
 			}
-			getAndParseFileUpdateTasks(files);
 
 			if (job.getState() != JobState.Queued && job
 				.getState() != JobState.Running && job.getState() != JobState.Submitted)
@@ -139,6 +147,7 @@ public class MacroTaskProgressViewController extends BorderPane implements
 	private List<String> generateProgressFileNames() {
 		// Get number of nodes from first node's progress file:
 		int numberOfNodes = 0;
+
 		List<String> files = new ArrayList<>();
 
 		files.add("progress_0.plog");

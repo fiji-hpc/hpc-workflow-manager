@@ -12,6 +12,7 @@ import java.io.Closeable;
 import java.util.EnumMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -21,7 +22,7 @@ import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.BenchmarkJob;
 class HaasOutputObservableValueRegistry implements Closeable {
 
 	private final BenchmarkJob job;
-	private final EnumMap<SynchronizableFileType, SimpleObservableValue<String>> observableValues =
+	private final Map<SynchronizableFileType, SimpleObservableValue<String>> observableValues =
 		new EnumMap<>(SynchronizableFileType.class);
 	private Timer timer;
 	private boolean isRunning = false;

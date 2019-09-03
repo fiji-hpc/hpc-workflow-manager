@@ -3,11 +3,13 @@ package cz.it4i.fiji.haas_spim_benchmark.core;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.EnumMap;
+import java.util.Map;
+
 import cz.it4i.fiji.haas_java_client.JobState;
 
 public class JobStateComparator implements Comparator<JobState> {
 
-	private static EnumMap<JobState, Integer> priorities = new EnumMap<>(JobState.class);
+	private static Map<JobState, Integer> priorities = new EnumMap<>(JobState.class);
 
 	private static void add(JobState state) {
 		priorities.put(state, priorities.size());

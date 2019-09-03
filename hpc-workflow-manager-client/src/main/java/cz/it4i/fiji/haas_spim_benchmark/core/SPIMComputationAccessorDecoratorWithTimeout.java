@@ -5,6 +5,7 @@ import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
@@ -16,7 +17,7 @@ public class SPIMComputationAccessorDecoratorWithTimeout implements SPIMComputat
 	private final long intervalForQueryInMs;
 	private final  P_ResultCacheHolder<List<String>> outputCache;
 	private final P_ResultCacheHolder<Set<String>> changedFilesCache;
-	private final EnumMap<SynchronizableFileType, Integer> allowedTypesIndices =
+	private final Map<SynchronizableFileType, Integer> allowedTypesIndices =
 		new EnumMap<>(SynchronizableFileType.class);
 	private final List<SynchronizableFileType> allowedTypes = new LinkedList<>();
 	private SPIMComputationAccessor decorated;
