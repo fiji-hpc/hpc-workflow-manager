@@ -49,8 +49,6 @@ public class MacroTaskProgressViewController extends BorderPane implements
 
 	ScheduledExecutorService exec = Executors.newSingleThreadScheduledExecutor();
 
-	private int storedNumberOfNodes = 0;
-
 	// Maps task id of a specific node to description:
 	private List<Map<Integer, String>> nodeTaskToDescription = new ArrayList<>();
 
@@ -112,26 +110,20 @@ public class MacroTaskProgressViewController extends BorderPane implements
 		tasksTableView.setItems(tableData);
 
 		exec.scheduleAtFixedRate(() -> {
-			List<String> files = new ArrayList<>();
-			if (this.storedNumberOfNodes == 0) {
-				files = generateProgressFileNames();
-				this.storedNumberOfNodes = files.size();
-
-				Platform.runLater(() -> {
-					createColumnsForEachNode(this.storedNumberOfNodes);
-					latchToWaitForJavaFx.countDown();
-				});
-				
-				try {
-					latchToWaitForJavaFx.await();
-				}
-				catch (InterruptedException exc) {
-					Log.error(exc.getMessage());
-					Thread.currentThread().interrupt();
-				}
+			List<String> files = generateProgressFileNames();
+			Platform.runLater(() -> {
+				createColumnsForEachNode(files.size());
+				latchToWaitForJavaFx.countDown();
+			});
+			try {
+				latchToWaitForJavaFx.await();
+			}
+			catch (InterruptedException exc) {
+				Log.error(exc.getMessage());
+				Thread.currentThread().interrupt();
 			}
 			getAndParseFileUpdateTasks(files);
-			
+
 			if (job.getState() != JobState.Queued && job
 				.getState() != JobState.Running && job.getState() != JobState.Submitted)
 			{
