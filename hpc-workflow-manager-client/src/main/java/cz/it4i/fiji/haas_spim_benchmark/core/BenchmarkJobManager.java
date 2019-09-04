@@ -439,69 +439,67 @@ public class BenchmarkJobManager implements Closeable {
 			return time != null ? time.getTime().toString() : "N/A";
 		}
 
-		private boolean enableDownload(String fileName, String mainFile) {
-			if (WorkflowType.forLong(job
-				.getHaasTemplateId()) == WorkflowType.SPIM_WORKFLOW)
-			{
-				return fileName.equals(mainFile);
-			}
-			else if (WorkflowType.forLong(job
-				.getHaasTemplateId()) == WorkflowType.MACRO_WORKFLOW)
-			{
-				return true;
-			}
-			return false;
-		}
-
 		private void startDownloadResults(CompletableFuture<?> result)
 			throws IOException
 		{
-			WorkflowType jobType = WorkflowType.forLong(job.getHaasTemplateId());
 
+			final WorkflowType jobType = WorkflowType.forLong(job
+				.getHaasTemplateId());
 			final String mainFile = job.getProperty(SPIM_OUTPUT_FILENAME_PATTERN) +
 				".xml";
-
 			final StillRunningDownloadSwitcher stillRunningTemporarySwitch =
 				new StillRunningDownloadSwitcher(() -> downloadingStatus,
 					val -> downloadingStatus = val);
 			final ProgressNotifierTemporarySwitchOff progressNotifierTemporarySwitchOff =
 				new ProgressNotifierTemporarySwitchOff(downloadNotifier, job);
+			downloadMainFile(jobType, mainFile, stillRunningTemporarySwitch,
+				progressNotifierTemporarySwitchOff).thenCompose(x -> {
+					try {
+						return job.startDownload(downloadFileNameExtractDecorator(
+							downloadCSVDecorator(getOtherFilesFilterForDownload(jobType, mainFile))));
+					}
+					catch (IOException e) {
+						throw new RuntimeException(e);
+					}
+					finally {
+						progressNotifierTemporarySwitchOff.switchOn();
+						stillRunningTemporarySwitch.switchBack();
+					}
+				}).whenComplete((x, e) -> {
+					if (e != null) {
+						log.error(e.getMessage(), e);
+						downloadNotifier.addItem(FAILED_ITEM);
+					}
+					result.complete(null);
+				});
+		}
 
-			job.startDownload(downloadFileNameExtractDecorator(
-				fileName -> enableDownload(fileName, mainFile))).exceptionally(temp -> {
+		private Predicate<String> getOtherFilesFilterForDownload(WorkflowType jobType,
+			String mainFile)
+		{
+			if (jobType == WorkflowType.MACRO_WORKFLOW) {
+				return x -> true;
+			}
+			Set<String> otherFiles = extractNames(getOutputDirectory().resolve(
+				mainFile));
+			return otherFiles::contains;
+		}
+
+		private CompletableFuture<?> downloadMainFile(final WorkflowType jobType,
+			final String mainFile,
+			final StillRunningDownloadSwitcher stillRunningTemporarySwitch,
+			final ProgressNotifierTemporarySwitchOff progressNotifierTemporarySwitchOff)
+			throws IOException
+		{
+			if (jobType == WorkflowType.MACRO_WORKFLOW) {
+				return CompletableFuture.completedFuture(null);
+			}
+			return job.startDownload(downloadFileNameExtractDecorator(
+				fileName -> fileName.equals(mainFile))).exceptionally(
+					x -> {
 					progressNotifierTemporarySwitchOff.switchOn();
 					stillRunningTemporarySwitch.switchBack();
 					return null;
-				}).thenCompose(x -> {
-					if (jobType == WorkflowType.SPIM_WORKFLOW) {
-						Set<String> otherFiles = extractNames(getOutputDirectory().resolve(
-							mainFile));
-
-						try {
-							return job.startDownload(downloadFileNameExtractDecorator(
-								downloadCSVDecorator(otherFiles::contains)));
-						}
-						catch (IOException e) {
-							throw new RuntimeException(e);
-						}
-						finally {
-							progressNotifierTemporarySwitchOff.switchOn();
-							stillRunningTemporarySwitch.switchBack();
-						}
-					}
-					return null;
-				}).whenComplete((x, e) -> {
-					if (e != null) {
-						if (!(e.getCause() instanceof NullPointerException)) {
-							log.error(e.getMessage(), e);
-							downloadNotifier.addItem(FAILED_ITEM);
-						}
-						else {
-							job.setProperty("job.downloaded", true);
-							downloadNotifier.done();
-						}
-					}
-					result.complete(null);
 				});
 		}
 
