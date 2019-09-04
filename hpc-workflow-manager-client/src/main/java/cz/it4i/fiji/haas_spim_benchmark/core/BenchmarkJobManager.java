@@ -124,14 +124,22 @@ public class BenchmarkJobManager implements Closeable {
 		}
 
 		public synchronized void startJob(Progress progress) throws IOException {
-			job.uploadFile(Constants.CONFIG_YAML, new ProgressNotifierAdapter(
+			
+			LoadedYAML yaml = null;
+			if(job.getHaasTemplateId() == 4) {
+				job.uploadFile(Constants.CONFIG_YAML, new ProgressNotifierAdapter(
 				progress));
-			LoadedYAML yaml = new LoadedYAML(job.openLocalFile(
+				yaml = new LoadedYAML(job.openLocalFile(
 				Constants.CONFIG_YAML));
+			}
+	
 			verifiedStateProcessed = false;
 			running = null;
-			String message = "Submitting job id #" + getId();
-			progress.addItem(message);
+			String message = "";
+			if(job.getHaasTemplateId() == 4) {
+				message = "Submitting job id #" + getId();
+				progress.addItem(message);
+			}
 			job.updateInfo();
 			JobState oldState = updateAndGetState();
 			job.submit();
@@ -145,9 +153,13 @@ public class BenchmarkJobManager implements Closeable {
 					Thread.currentThread().interrupt();
 				}
 			}
-			progress.itemDone(message);
-			job.setProperty(SPIM_OUTPUT_FILENAME_PATTERN, yaml.getCommonProperty(
+			if(job.getHaasTemplateId() == 4) {
+				progress.itemDone(message);
+			
+				job.setProperty(SPIM_OUTPUT_FILENAME_PATTERN, yaml.getCommonProperty(
 				FUSION_SWITCH) + "_" + yaml.getCommonProperty(HDF5_XML_FILENAME));
+			}
+
 		}
 
 		public boolean delete() {
@@ -281,7 +293,7 @@ public class BenchmarkJobManager implements Closeable {
 			return downloadingStatus.isDownloaded();
 		}
 
-		public boolean isDownloading() {			
+		public boolean isDownloading() {
 			return job.isDownloading();
 		}
 
@@ -549,11 +561,11 @@ public class BenchmarkJobManager implements Closeable {
 			job.updateInfo();
 			return job.getState();
 		}
-		
+
 		public List<String> getFileContents(List<String> files) {
-			return job.getFileContents(files);		
+			return job.getFileContents(files);
 		}
-		
+
 		public WorkflowType getWorkflowType() {
 			return WorkflowType.forLong(job.getHaasTemplateId());
 		}
@@ -613,7 +625,7 @@ public class BenchmarkJobManager implements Closeable {
 		jobManager.setUploadFilter(this::canUpload);
 	}
 
-	public BenchmarkJob createJob(UnaryOperator<Path>  inputDirectoryProvider,
+	public BenchmarkJob createJob(UnaryOperator<Path> inputDirectoryProvider,
 		UnaryOperator<Path> outputDirectoryProvider, int numberOfNodes,
 		int haasTemplateId) throws IOException
 	{

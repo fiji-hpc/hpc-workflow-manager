@@ -58,6 +58,7 @@ import cz.it4i.fiji.haas_spim_benchmark.core.Constants;
 import cz.it4i.fiji.haas_spim_benchmark.core.FXFrameExecutorService;
 import cz.it4i.fiji.haas_spim_benchmark.core.ObservableBenchmarkJob;
 import cz.it4i.fiji.haas_spim_benchmark.core.ObservableBenchmarkJob.TransferProgress;
+import cz.it4i.fiji.haas_spim_benchmark.ui.NewJobController.WorkflowType;
 import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
@@ -224,8 +225,8 @@ public class BenchmarkSPIMControl extends BorderPane implements
 					if (job.isUseDemoData()) {
 						job.storeDataInWorkdirectory(getConfigYamlFile());
 					}
-					else if ((job.getInputDirectory().resolve(CONFIG_YAML)).toFile()
-						.exists())
+					else if (job.getWorkflowType() == WorkflowType.SPIM_WORKFLOW && (job
+						.getInputDirectory().resolve(CONFIG_YAML)).toFile().exists())
 			{
 				executorServiceFX.execute(() -> {
 
