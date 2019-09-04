@@ -6,11 +6,37 @@ import cz.it4i.fiji.haas_java_client.ProgressNotifier;
 public class ProgressNotifierTemporarySwitchOff {
 
 	private ProgressNotifier notifier;
-	private ProgressNotifier innerProgressNotifier = new ProgressNotifier() {
-		
+
+	private final Job job;
+
+	public ProgressNotifierTemporarySwitchOff(ProgressNotifier downloadNotifier,
+		Job job)
+	{
+		this.notifier = downloadNotifier;
+		this.job = job;
+		if (this.notifier != null) {
+			job.setDownloadNotifier(new PInnerProgressNotifier(this.notifier));
+		}
+	}
+
+	public synchronized void switchOn() {
+		if (notifier != null) {
+			this.job.setDownloadNotifier(notifier);
+		}
+		notifier = null;
+	}
+
+	private static class PInnerProgressNotifier implements ProgressNotifier {
+
+		private final ProgressNotifier innerNotifier;
+
+		public PInnerProgressNotifier(ProgressNotifier innerNotifier) {
+			this.innerNotifier = innerNotifier;
+		}
+
 		@Override
 		public void setTitle(String title) {
-			notifier.setTitle(title);
+			innerNotifier.setTitle(title);
 		}
 		
 		@Override
@@ -26,7 +52,7 @@ public class ProgressNotifierTemporarySwitchOff {
 		
 		@Override
 		public void itemDone(Object item) {
-			notifier.itemDone(item);
+			innerNotifier.itemDone(item);
 		}
 		
 		@Override
@@ -36,24 +62,7 @@ public class ProgressNotifierTemporarySwitchOff {
 		
 		@Override
 		public void addItem(Object item) {
-			notifier.addItem(item);
-		}
-	};
-	private final Job job;
-	
-	public ProgressNotifierTemporarySwitchOff(ProgressNotifier downloadNotifier, Job job) {
-		this.notifier = downloadNotifier;
-		this.job = job;
-		if(this.notifier != null) {
-			job.setDownloadNotifier(innerProgressNotifier);
+			innerNotifier.addItem(item);
 		}
 	}
-
-	public synchronized void switchOn() {
-		if(notifier != null) {
-			this.job.setDownloadNotifier(notifier);
-		}
-		notifier = null;
-	}
-
 }
