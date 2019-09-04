@@ -5,8 +5,12 @@ import static cz.it4i.fiji.haas_spim_benchmark.core.Configuration.getHaasUpdateT
 import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.CONFIG_YAML;
 
 import java.awt.Window;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.EnumSet;
@@ -179,13 +183,14 @@ public class BenchmarkSPIMControl extends BorderPane implements
 
 		menu.addSeparator();
 
-		menu.addItem("Upload data", job -> executeWSCallAsync("Uploading data",
-			p -> job.getValue().startUpload()), job -> executeWSCallAsync(
-				"Stop uploading data", p -> job.getValue().stopUpload()),
-			job -> JavaFXRoutines.notNullValue(job, j -> !j.isUseDemoData() &&
-				!EnumSet.of(JobState.Running, JobState.Disposed).contains(j
-					.getState())), job -> job != null && job.getUploadProgress()
-						.isWorking());
+		menu.addItem("Upload data", job -> {
+			createTheMacroScript(job);
+			executeWSCallAsync("Uploading data", p -> job.getValue().startUpload());
+		}, job -> executeWSCallAsync("Stop uploading data", p -> job.getValue()
+			.stopUpload()), job -> JavaFXRoutines.notNullValue(job, j -> !j
+				.isUseDemoData() && !EnumSet.of(JobState.Running, JobState.Disposed)
+					.contains(j.getState())), job -> job != null && job
+						.getUploadProgress().isWorking());
 		menu.addItem("Download result", job -> executeWSCallAsync(
 			"Downloading data", p -> job.getValue().startDownload()),
 			job -> executeWSCallAsync("Stop downloading data", p -> job.getValue()
@@ -203,6 +208,51 @@ public class BenchmarkSPIMControl extends BorderPane implements
 		menu.addItem("Delete job", j -> deleteJob(j.getValue()), x -> JavaFXRoutines
 			.notNullValue(x, j -> j.getState() != JobState.Running));
 
+	}
+
+	private void createTheMacroScript(ObservableBenchmarkJob job) {
+		if (job.getWorkflowType() == WorkflowType.MACRO_WORKFLOW) {
+			String userScriptFilePath = job.getInputDirectory().toString() +
+				File.separator + "user.ijm";
+
+			String resourceFilePath = getClass().getClassLoader().getResource(
+				"MacroWrapper.ijm").getPath();
+
+			try (PrintWriter pw = new PrintWriter(job.getInputDirectory().toString() +
+				File.separator + Constants.DEFAULT_MACRO_FILE))
+			{
+				
+				// Write the MPI wrapper script's contents into the new script:
+				copyLineByLine(pw, resourceFilePath);
+				
+				// Write user's script contents to the new script:
+				copyLineByLine(pw, userScriptFilePath);
+				
+			}
+			catch (FileNotFoundException exc) {
+				log.error(exc.getMessage());
+				System.out.println(exc.getMessage());
+			}
+
+			log.info(
+				"Merged user's script and fiji macro MPI wrapper into mpitest.txt");
+		}
+	}
+
+	private void copyLineByLine(PrintWriter pw, String filePath) {
+		try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
+
+			String line = br.readLine();
+
+			// Copy line by line:
+			while (line != null) {
+				pw.println(line);
+				line = br.readLine();
+			}
+		}
+		catch (IOException exc) {
+			log.error(exc.toString());
+		}
 	}
 
 	private void deleteJob(BenchmarkJob bj) {

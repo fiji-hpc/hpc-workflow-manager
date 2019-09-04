@@ -2,6 +2,7 @@
 package cz.it4i.fiji.haas_spim_benchmark.core;
 
 import java.io.Closeable;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Executor;
@@ -233,6 +234,10 @@ public class ObservableBenchmarkJob extends
 	
 	public WorkflowType getWorkflowType() {
 		return benchmarkJob.getWorkflowType();
+	}
+
+	public Path getInputDirectory() {
+		return benchmarkJob.getInputDirectory();
 	}
 
 }
