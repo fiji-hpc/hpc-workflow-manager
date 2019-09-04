@@ -173,9 +173,9 @@ public class BenchmarkSPIMControl extends BorderPane implements
 			x -> JavaFXRoutines.notNullValue(x, j -> j
 				.getState() == JobState.Finished && j.isVisibleInBDV()));
 		menu.addItem("Open macro in Editor", j -> openEditor(j.getValue()),
-				x -> JavaFXRoutines.notNullValue(x, j -> j
-						.getJob().getHaasTemplateId() == NewJobController.WorkflowType.MACRO_WORKFLOW.getHaasTemplateID()));
-		
+			x -> JavaFXRoutines.notNullValue(x, j -> j
+				.getWorkflowType() == NewJobController.WorkflowType.MACRO_WORKFLOW));
+
 		menu.addSeparator();
 
 		menu.addItem("Upload data", job -> executeWSCallAsync("Uploading data",
@@ -224,33 +224,32 @@ public class BenchmarkSPIMControl extends BorderPane implements
 					if (job.isUseDemoData()) {
 						job.storeDataInWorkdirectory(getConfigYamlFile());
 					}
-					else if ((job.getInputDirectory().resolve(CONFIG_YAML)).toFile().exists()) {
-						executorServiceFX.execute(() -> {
+					else if ((job.getInputDirectory().resolve(CONFIG_YAML)).toFile()
+						.exists())
+			{
+				executorServiceFX.execute(() -> {
 
-						
-								Alert al = new Alert(AlertType.CONFIRMATION, "The file \"" +
-									CONFIG_YAML +
-									"\" found in the defined data input directory \"" + job
-										.getInputDirectory() +
-									"\". Would you like to copy it into the job working directory \"" +
-									job.getDirectory() + "\"?", ButtonType.YES, ButtonType.NO);
+					Alert al = new Alert(AlertType.CONFIRMATION, "The file \"" +
+						CONFIG_YAML + "\" found in the defined data input directory \"" +
+						job.getInputDirectory() +
+						"\". Would you like to copy it into the job working directory \"" +
+						job.getDirectory() + "\"?", ButtonType.YES, ButtonType.NO);
 
-								al.setHeaderText(null);
-								al.setTitle("Copy " + CONFIG_YAML + "?");
-								al.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
-								if (al.showAndWait().get() == ButtonType.YES) {
-									try {
-										Files.copy(job.getInputDirectory().resolve(CONFIG_YAML), job
-											.getDirectory().resolve(CONFIG_YAML));
-									}
-									catch (IOException e) {
-										log.error(e.getMessage(), e);
-									}
-								}
-							}
-						);
-
+					al.setHeaderText(null);
+					al.setTitle("Copy " + CONFIG_YAML + "?");
+					al.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
+					if (al.showAndWait().get() == ButtonType.YES) {
+						try {
+							Files.copy(job.getInputDirectory().resolve(CONFIG_YAML), job
+								.getDirectory().resolve(CONFIG_YAML));
+						}
+						catch (IOException e) {
+							log.error(e.getMessage(), e);
+						}
 					}
+				});
+
+			}
 				}
 			}));
 
@@ -261,9 +260,11 @@ public class BenchmarkSPIMControl extends BorderPane implements
 	}
 
 	private BenchmarkJob doCreateJob(UnaryOperator<Path> inputProvider,
-		UnaryOperator<Path> outputProvider, int numberOfNodes, int haasTemplateId) throws IOException
+		UnaryOperator<Path> outputProvider, int numberOfNodes, int haasTemplateId)
+		throws IOException
 	{
-		BenchmarkJob bj = manager.createJob(inputProvider, outputProvider, numberOfNodes, haasTemplateId);
+		BenchmarkJob bj = manager.createJob(inputProvider, outputProvider,
+			numberOfNodes, haasTemplateId);
 		ObservableBenchmarkJob obj = registry.addIfAbsent(bj);
 		addJobToItems(obj);
 		jobs.refresh();
@@ -380,20 +381,22 @@ public class BenchmarkSPIMControl extends BorderPane implements
 	}
 
 	private String decorateTransfer(TransferProgress progress) {
+		String stateMessage = "N/A";
 		if (progress.isFailed()) {
-			return "Failed";
-		} else	if (!progress.isWorking() && !progress.isDone()) {
-			return "";
+			stateMessage = "Failed";
+		}
+		else if (!progress.isWorking() && !progress.isDone()) {
+			stateMessage = "";
 		}
 		else if (progress.isWorking()) {
 			Long msecs = progress.getRemainingMiliseconds();
-			return "Time remains " + (msecs != null ? RemainingTimeFormater.format(
-				msecs) : "N/A");
+			stateMessage = "Time remains " + (msecs != null ? RemainingTimeFormater
+				.format(msecs) : "N/A");
 		}
 		else if (progress.isDone()) {
-			return "Done";
+			stateMessage = "Done";
 		}
-		return "N/A";
+		return stateMessage;
 	}
 
 	private void remove(BenchmarkJob bj) {
@@ -444,10 +447,12 @@ public class BenchmarkSPIMControl extends BorderPane implements
 			log.error(e.getMessage(), e);
 		}
 	}
-	
+
 	private void openEditor(BenchmarkJob job) {
-		TextEditor txt = new TextEditor(new Context());   //TODO Context handling is wrong
-		File editFile = new File(job.getJob().getInputDirectory().toString(), Constants.DEFAULT_MACRO_FILE);
+		TextEditor txt = new TextEditor(new Context()); // TODO Context handling is
+																										// wrong
+		File editFile = new File(job.getInputDirectory().toString(),
+			Constants.DEFAULT_MACRO_FILE);
 		txt.open(editFile);
 		txt.setVisible(true);
 	}

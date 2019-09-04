@@ -549,9 +549,13 @@ public class BenchmarkJobManager implements Closeable {
 			job.updateInfo();
 			return job.getState();
 		}
-
-		public Job getJob() {
-			return job;
+		
+		public List<String> getFileContents(List<String> files) {
+			return job.getFileContents(files);		
+		}
+		
+		public WorkflowType getWorkflowType() {
+			return WorkflowType.forLong(job.getHaasTemplateId());
 		}
 
 		public String getHaasTemplateName() {

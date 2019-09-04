@@ -2,6 +2,7 @@
 package cz.it4i.fiji.haas_spim_benchmark.core;
 
 import java.io.Closeable;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Executor;
 import java.util.function.BooleanSupplier;
@@ -12,12 +13,13 @@ import net.imagej.updater.util.Progress;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import cz.it4i.fiji.haas.Job;
 import cz.it4i.fiji.haas.data_transfer.PersistentSynchronizationProcess;
 import cz.it4i.fiji.haas.ui.UpdatableObservableValue;
 import cz.it4i.fiji.haas_java_client.FileTransferInfo;
+import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
 import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.BenchmarkJob;
+import cz.it4i.fiji.haas_spim_benchmark.ui.NewJobController.WorkflowType;
 
 public class ObservableBenchmarkJob extends
 	UpdatableObservableValue<BenchmarkJob> implements Closeable
@@ -221,8 +223,16 @@ public class ObservableBenchmarkJob extends
 		}
 	}
 	
-	public Job getJob() {
-		return benchmarkJob.getJob();
+	public List<String> getFileContents(List<String> files) {
+		return benchmarkJob.getFileContents(files);		
+	}
+	
+	public JobState getState() {
+		return benchmarkJob.getState();
+	}
+	
+	public WorkflowType getWorkflowType() {
+		return benchmarkJob.getWorkflowType();
 	}
 
 }

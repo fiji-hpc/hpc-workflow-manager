@@ -13,12 +13,12 @@ import java.util.concurrent.TimeUnit;
 
 import org.python.jline.internal.Log;
 
-import cz.it4i.fiji.haas.Job;
 import cz.it4i.fiji.haas.ui.CloseableControl;
 import cz.it4i.fiji.haas.ui.InitiableControl;
 import cz.it4i.fiji.haas.ui.JavaFXRoutines;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_spim_benchmark.core.MacroTask;
+import cz.it4i.fiji.haas_spim_benchmark.core.ObservableBenchmarkJob;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleLongProperty;
 import javafx.collections.FXCollections;
@@ -42,7 +42,7 @@ public class MacroTaskProgressViewController extends BorderPane implements
 	@FXML
 	private TableColumn<MacroTask, String> descriptionColumn;
 
-	private Job job;
+	private ObservableBenchmarkJob job;
 
 	private ObservableList<MacroTask> tableData = FXCollections
 		.observableArrayList();
@@ -101,7 +101,7 @@ public class MacroTaskProgressViewController extends BorderPane implements
 		exec.shutdown();
 	}
 
-	public void setJobParameter(Job newJob) {
+	public void setJobParameter(ObservableBenchmarkJob newJob) {
 		this.job = newJob;
 
 		// Initialize table columns:
@@ -116,10 +116,12 @@ public class MacroTaskProgressViewController extends BorderPane implements
 			if (this.storedNumberOfNodes == 0) {
 				files = generateProgressFileNames();
 				this.storedNumberOfNodes = files.size();
+
 				Platform.runLater(() -> {
 					createColumnsForEachNode(this.storedNumberOfNodes);
 					latchToWaitForJavaFx.countDown();
 				});
+				
 				try {
 					latchToWaitForJavaFx.await();
 				}
@@ -128,10 +130,8 @@ public class MacroTaskProgressViewController extends BorderPane implements
 					Thread.currentThread().interrupt();
 				}
 			}
-			else {
-				getAndParseFileUpdateTasks(files);
-			}
-
+			getAndParseFileUpdateTasks(files);
+			
 			if (job.getState() != JobState.Queued && job
 				.getState() != JobState.Running && job.getState() != JobState.Submitted)
 			{

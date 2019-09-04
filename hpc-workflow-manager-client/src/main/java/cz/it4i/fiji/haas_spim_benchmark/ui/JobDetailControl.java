@@ -123,8 +123,7 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 		executorServiceWS.execute(() -> {
 
 			try {
-				WorkflowType jobType = WorkflowType.forLong(job.getJob()
-					.getHaasTemplateId());
+				WorkflowType jobType = job.getWorkflowType();
 
 				if (jobType == WorkflowType.SPIM_WORKFLOW) {
 					setTabAvailability(macroProgressTab, true);
@@ -151,7 +150,7 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 					
 					// Macro-only related initializations:
 					macroProgressControl.init(parameter);
-					macroProgressControl.setJobParameter(job.getJob());
+					macroProgressControl.setJobParameter(job);
 
 					progress.done();
 				}
@@ -169,12 +168,10 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 					fileTransferList.isEmpty());
 				dataUploadControl.setObservable(fileTransferList);
 
-				if (job.getValue().getState() == JobState.Disposed && log
-					.isInfoEnabled())
+				if (job.getValue().getState() == JobState.Disposed)
 				{
-					// TODO: Handle this?
-					log.info("Job " + job.getValue().getId() +
-						" state has been resolved as Disposed.");
+					log.info("Job {} state has been resolved as Disposed.", job.getValue()
+						.getId());
 				}
 
 				setActiveFirstVisibleTab(true);
@@ -190,8 +187,7 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 							progress.done();
 						}
 					};
-				WorkflowType jobType = WorkflowType.forLong(job.getJob()
-					.getHaasTemplateId());
+				WorkflowType jobType = job.getWorkflowType();
 				if (jobType == WorkflowType.SPIM_WORKFLOW) {
 					taskList.subscribe(localListener);
 				}
@@ -204,8 +200,7 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 
 	@Override
 	public void close() {
-		WorkflowType jobType = WorkflowType.forLong(job.getJob()
-			.getHaasTemplateId());
+		WorkflowType jobType = job.getWorkflowType();
 
 		executorServiceWS.shutdown();
 
