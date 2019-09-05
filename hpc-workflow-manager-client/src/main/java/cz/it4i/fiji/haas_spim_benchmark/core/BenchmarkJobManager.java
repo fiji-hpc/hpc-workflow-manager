@@ -615,6 +615,10 @@ public class BenchmarkJobManager implements Closeable {
 			};
 
 		}
+
+		public String getProperty(String name) {
+			return job.getProperty(name);
+		}
 	}
 
 	public BenchmarkJobManager(BenchmarkSPIMParameters params) {

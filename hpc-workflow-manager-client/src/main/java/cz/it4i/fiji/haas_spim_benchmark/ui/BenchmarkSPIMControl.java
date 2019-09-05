@@ -13,7 +13,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -166,7 +165,7 @@ public class BenchmarkSPIMControl extends BorderPane implements
 		}, job -> JavaFXRoutines.notNullValue(job, j -> (j
 			.getState() == JobState.Configuring || j
 				.getState() == JobState.Finished || j.getState() == JobState.Failed || j
-					.getState() == JobState.Canceled) && checkIfMacroScriptIsUploaded(
+					.getState() == JobState.Canceled) && checkIfAnythingHasBeenUploaded(
 						j)));
 
 		menu.addItem("Cancel job", job -> executeWSCallAsync("Canceling job", p -> {
@@ -189,8 +188,9 @@ public class BenchmarkSPIMControl extends BorderPane implements
 		menu.addSeparator();
 
 		menu.addItem("Upload data", job -> {
-			createTheMacroScript(job);
-			executeWSCallAsync("Uploading data", p -> job.getValue().startUpload());
+			boolean wasSuccessfull = createTheMacroScript(job);
+			if (wasSuccessfull) executeWSCallAsync("Uploading data", p -> job
+				.getValue().startUpload());
 		}, job -> executeWSCallAsync("Stop uploading data", p -> job.getValue()
 			.stopUpload()), job -> JavaFXRoutines.notNullValue(job, j -> !j
 				.isUseDemoData() && !EnumSet.of(JobState.Running, JobState.Disposed)
@@ -216,22 +216,26 @@ public class BenchmarkSPIMControl extends BorderPane implements
 
 	}
 
-	private boolean checkIfMacroScriptIsUploaded(BenchmarkJob job) {
+	private boolean checkIfAnythingHasBeenUploaded(BenchmarkJob job) {
 		if (job.getWorkflowType() == WorkflowType.MACRO_WORKFLOW) {
-			// If the script file does not exist return false:
-			List<String> files = new ArrayList<>();
-			files.add(Constants.DEFAULT_MACRO_FILE);
-			String file = job.getFileContents(files).get(0);
-			if (file.isEmpty()) {
+			// If the user has not uploaded anything return false:
+			try {
+				String property = job.getProperty("job.uploaded");
+				if (property.equals("true")) {
+					return true;
+				}
+			}
+			catch (Exception exc) {
 				return false;
 			}
-		}	
+		}
 		// If it is not a Macro Workflow then this method should have no impact
 		// therefore it returns true:
 		return true;
 	}
 
-	private void createTheMacroScript(ObservableBenchmarkJob job) {
+	private boolean createTheMacroScript(ObservableBenchmarkJob job) {
+		boolean isSuccessfull = true;
 		if (job.getWorkflowType() == WorkflowType.MACRO_WORKFLOW) {
 			String userScriptFilePath = job.getInputDirectory().toString() +
 				File.separator + "user.ijm";
@@ -244,22 +248,24 @@ public class BenchmarkSPIMControl extends BorderPane implements
 			{
 
 				// Write the MPI wrapper script's contents into the new script:
-				copyLineByLine(pw, resourceFilePath);
+				isSuccessfull = copyLineByLine(pw, resourceFilePath);
 
 				// Write user's script contents to the new script:
-				copyLineByLine(pw, userScriptFilePath);
+				isSuccessfull = isSuccessfull && copyLineByLine(pw, userScriptFilePath);
 
 			}
 			catch (FileNotFoundException exc) {
 				log.error(exc.getMessage());
+				isSuccessfull = false;
 			}
 
 			log.info(
 				"Merged user's script and fiji macro MPI wrapper into mpitest.txt");
 		}
+		return isSuccessfull;
 	}
 
-	private void copyLineByLine(PrintWriter pw, String filePath) {
+	private boolean copyLineByLine(PrintWriter pw, String filePath) {
 		try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
 
 			String line = br.readLine();
@@ -272,7 +278,9 @@ public class BenchmarkSPIMControl extends BorderPane implements
 		}
 		catch (IOException exc) {
 			log.error(exc.toString());
+			return false;
 		}
+		return true;
 	}
 
 	private void deleteJob(BenchmarkJob bj) {
