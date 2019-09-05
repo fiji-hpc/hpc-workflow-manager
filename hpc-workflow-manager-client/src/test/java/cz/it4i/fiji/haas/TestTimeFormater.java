@@ -3,7 +3,7 @@ package cz.it4i.fiji.haas;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import cz.it4i.fiji.haas_spim_benchmark.ui.RemainingTimeFormater;
+import cz.it4i.fiji.hpc_workflow.ui.RemainingTimeFormater;
 
 
 public class TestTimeFormater {

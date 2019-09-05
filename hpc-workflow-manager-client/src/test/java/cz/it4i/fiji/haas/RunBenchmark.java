@@ -11,9 +11,9 @@ import org.slf4j.LoggerFactory;
 import cz.it4i.fiji.haas.ui.DummyProgress;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
-import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager;
-import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.BenchmarkJob;
-import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkSPIMParameters;
+import cz.it4i.fiji.hpc_workflow.core.BenchmarkJobManager;
+import cz.it4i.fiji.hpc_workflow.core.HPCWorkflowParameters;
+import cz.it4i.fiji.hpc_workflow.core.BenchmarkJobManager.BenchmarkJob;
 
 public class RunBenchmark {
 	private static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas.RunBenchmark.class);
@@ -47,7 +47,7 @@ public class RunBenchmark {
 		}
 	}
 
-	private static BenchmarkSPIMParameters getBenchmarkSPIMParameters() throws IOException {
+	private static HPCWorkflowParameters getBenchmarkSPIMParameters() throws IOException {
 		Path p = Paths.get("/tmp/benchmark");
 		if (!Files.exists(p)) {
 			Files.createDirectory(p);

@@ -5,7 +5,7 @@ import java.util.concurrent.Executors;
 import javax.swing.JFrame;
 
 import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
-import cz.it4i.fiji.haas_spim_benchmark.ui.JobOutputView;
+import cz.it4i.fiji.hpc_workflow.ui.JobOutputView;
 
 public class RunView {
 	public static void main(String[] args) {

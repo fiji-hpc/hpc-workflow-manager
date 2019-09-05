@@ -3,9 +3,9 @@ package cz.it4i.fiji.haas;
 import java.nio.file.Path;
 
 import cz.it4i.fiji.haas_java_client.Configuration;
-import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkSPIMParameters;
+import cz.it4i.fiji.hpc_workflow.core.HPCWorkflowParameters;
 
-class TestBenchmarkSPIMParametersImpl extends Configuration implements BenchmarkSPIMParameters{
+class TestBenchmarkSPIMParametersImpl extends Configuration implements HPCWorkflowParameters{
 
 	private final Path workingDirectory;
 	

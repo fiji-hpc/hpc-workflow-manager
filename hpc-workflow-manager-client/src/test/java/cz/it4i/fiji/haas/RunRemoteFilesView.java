@@ -4,8 +4,8 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
-import cz.it4i.fiji.haas_spim_benchmark.ui.RemoteFileInfo;
-import cz.it4i.fiji.haas_spim_benchmark.ui.RemoteFilesInfoControl;
+import cz.it4i.fiji.hpc_workflow.ui.RemoteFileInfo;
+import cz.it4i.fiji.hpc_workflow.ui.RemoteFilesInfoControl;
 import javafx.beans.value.ObservableValue;
 import javafx.beans.value.ObservableValueBase;
 
