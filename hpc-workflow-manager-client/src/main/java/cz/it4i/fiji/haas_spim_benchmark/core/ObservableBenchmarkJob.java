@@ -2,12 +2,13 @@
 package cz.it4i.fiji.haas_spim_benchmark.core;
 
 import java.io.Closeable;
+import java.nio.file.Path;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Executor;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Supplier;
-
 import net.imagej.updater.util.Progress;
 
 import org.slf4j.Logger;
@@ -16,8 +17,10 @@ import org.slf4j.LoggerFactory;
 import cz.it4i.fiji.haas.data_transfer.PersistentSynchronizationProcess;
 import cz.it4i.fiji.haas.ui.UpdatableObservableValue;
 import cz.it4i.fiji.haas_java_client.FileTransferInfo;
+import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
 import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.BenchmarkJob;
+import cz.it4i.fiji.haas_spim_benchmark.ui.NewJobController.WorkflowType;
 
 public class ObservableBenchmarkJob extends
 	UpdatableObservableValue<BenchmarkJob> implements Closeable
@@ -27,11 +30,10 @@ public class ObservableBenchmarkJob extends
 		cz.it4i.fiji.haas_spim_benchmark.core.ObservableBenchmarkJob.class);
 
 	private final P_TransferProgress downloadProgress = new P_TransferProgress(
-		val -> getValue().setDownloaded(val), () -> getValue().isDownloaded(),
-		() -> getValue().isDownloading());
+		getValue()::setDownloaded, getValue()::isDownloaded,
+		getValue()::isDownloading);
 	private final P_TransferProgress uploadProgress = new P_TransferProgress(
-		val -> getValue().setUploaded(val), () -> getValue().isUploaded(),
-		() -> getValue().isUploading());
+		getValue()::setUploaded, getValue()::isUploaded, getValue()::isUploading);
 	private final Executor executor;
 
 	private final HaasOutputObservableValueRegistry haasOutputRegistry;
@@ -39,7 +41,9 @@ public class ObservableBenchmarkJob extends
 	private final TaskObservableValueRegistry taskRegistry;
 
 	private final SimpleObservableList<FileTransferInfo> fileTransferList;
-
+	
+	private BenchmarkJob benchmarkJob;
+	
 	public interface TransferProgress {
 
 		public Long getRemainingMiliseconds();
@@ -52,12 +56,13 @@ public class ObservableBenchmarkJob extends
 
 		public Float getRemainingPercents();
 	}
-
+	
 	public ObservableBenchmarkJob(BenchmarkJob wrapped,
 		Function<BenchmarkJob, UpdateStatus> updateFunction,
 		Function<BenchmarkJob, Object> stateProvider, Executor executorUI)
-	{
+	{		
 		super(wrapped, updateFunction, stateProvider);
+		this.benchmarkJob = wrapped;
 		this.executor = executorUI;
 		wrapped.setDownloadNotifier(downloadProgress);
 		wrapped.setUploadNotifier(uploadProgress);
@@ -104,25 +109,23 @@ public class ObservableBenchmarkJob extends
 
 	@Override
 	protected void fireValueChangedEvent() {
-		executor.execute(() -> {
-			super.fireValueChangedEvent();
-		});
+		executor.execute(super::fireValueChangedEvent);
 	}
 
 	// -- Private classes --
 
 	private class P_TransferProgress implements Progress, TransferProgress {
 
-		private final Supplier<Boolean> doneStatusSupplier;
+		private final BooleanSupplier doneStatusSupplier;
 		private final Consumer<Boolean> doneStatusConsumer;
-		private final Supplier<Boolean> workingSupplier;
+		private final BooleanSupplier workingSupplier;
 		private Long start;
 		private Long remainingMiliseconds;
 		private Float remainingPercents;
 		private boolean failed = false;
 
 		public P_TransferProgress(Consumer<Boolean> doneStatusConsumer,
-			Supplier<Boolean> doneStatusSupplier, Supplier<Boolean> workingSupplier)
+			BooleanSupplier doneStatusSupplier, BooleanSupplier workingSupplier)
 		{
 			this.doneStatusConsumer = doneStatusConsumer;
 			this.doneStatusSupplier = doneStatusSupplier;
@@ -168,7 +171,7 @@ public class ObservableBenchmarkJob extends
 
 		@Override
 		public synchronized boolean isWorking() {
-			return workingSupplier.get();
+			return workingSupplier.getAsBoolean();
 		}
 		
 		@Override
@@ -187,7 +190,9 @@ public class ObservableBenchmarkJob extends
 		}
 
 		@Override
-		public void setItemCount(int count, int total) {}
+		public void setItemCount(int count, int total) {
+			
+		}
 
 		@Override
 		public void itemDone(final Object item) {
@@ -195,11 +200,13 @@ public class ObservableBenchmarkJob extends
 		}
 
 		@Override
-		public void setTitle(String title) {}
+		public void setTitle(String title) {
+			
+		}
 
 		@Override
 		public boolean isDone() {
-			return doneStatusSupplier.get();
+			return doneStatusSupplier.getAsBoolean();
 		}
 
 		private void reloadFileTransferList() {
@@ -215,6 +222,22 @@ public class ObservableBenchmarkJob extends
 			failed = false;
 			doneStatusConsumer.accept(val);
 		}
+	}
+	
+	public List<String> getFileContents(List<String> files) {
+		return benchmarkJob.getFileContents(files);		
+	}
+	
+	public JobState getState() {
+		return benchmarkJob.getState();
+	}
+	
+	public WorkflowType getWorkflowType() {
+		return benchmarkJob.getWorkflowType();
+	}
+
+	public Path getInputDirectory() {
+		return benchmarkJob.getInputDirectory();
 	}
 
 }

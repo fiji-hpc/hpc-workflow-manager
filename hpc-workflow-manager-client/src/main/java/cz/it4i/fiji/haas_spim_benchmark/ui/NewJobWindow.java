@@ -11,9 +11,7 @@ public class NewJobWindow extends FXFrame<NewJobController> {
 	private static final long serialVersionUID = 1L;
 
 	public NewJobWindow(Window parentWindow) {
-		super(parentWindow, () -> {
-			return new NewJobController();
-		});
+		super(parentWindow, NewJobController::new);
 		setTitle("Create job");
 	}
 
@@ -28,4 +26,13 @@ public class NewJobWindow extends FXFrame<NewJobController> {
 	public void setCreatePressedNotifier(Runnable runnable) {
 		getFxPanel().getControl().setCreatePressedNotifier(runnable);
 	}
+	
+	public int getNumberOfNodes() {
+		return getFxPanel().getControl().getNumberOfNodes();
+	}
+	
+	public int getHaasTemplateId() {
+		return getFxPanel().getControl().getWorkflowType().getHaasTemplateID();
+	}
+	
 }

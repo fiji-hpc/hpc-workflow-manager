@@ -73,7 +73,7 @@ class SnakemakeOutputHelper implements HaaSOutputHolder {
 		SPIMComputationAccessor result = new SPIMComputationAccessor() {
 
 			private final HaaSOutputHolder outputOfSnakemake =
-				new HaaSOutputHolderImpl(list -> job.getOutput(list));
+				new HaaSOutputHolderImpl(job::getOutput);
 
 			@Override
 			public List<String> getActualOutput(
@@ -137,15 +137,16 @@ class SnakemakeOutputHelper implements HaaSOutputHolder {
 				currentLine = scanner.nextLine().trim();
 				if (currentLine.contains(OUTPUT_PARSING_WORKFLOW_ERROR) //
 					|| currentLine.contains(OUTPUT_PARSING_VALUE_ERROR)) {
-					String errorMessage = "";
+					StringBuilder errorMessageStringBuilder = new StringBuilder();
 					while (!currentLine.isEmpty()) {
-						errorMessage += currentLine;
+						errorMessageStringBuilder.append(currentLine);
 						if (!scanner.hasNextLine()) {
 							break;
 						}
 						currentLine = scanner.nextLine().trim();
 					}
-					nonTaskSpecificErrors.add(new BenchmarkError(errorMessage));
+					nonTaskSpecificErrors.add(new BenchmarkError(errorMessageStringBuilder
+						.toString()));
 				}
 			}
 			scanner.close();

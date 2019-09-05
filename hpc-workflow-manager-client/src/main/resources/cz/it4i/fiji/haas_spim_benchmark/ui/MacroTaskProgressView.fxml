@@ -6,17 +6,13 @@
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 
-<fx:root type="BorderPane"
-	xmlns="http://javafx.com/javafx/8.0.65"
-	xmlns:fx="http://javafx.com/fxml/1"
-	fx:controller="cz.it4i.fiji.haas_spim_benchmark.ui.SPIMPipelineProgressViewController">
+<fx:root type="BorderPane" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="cz.it4i.fiji.haas_spim_benchmark.ui.MacroTaskProgressViewController">
 	<center>
-		<HBox>
+		<HBox prefHeight="100.0" prefWidth="200.0">
 			<children>
-				<TableView fx:id="tasks" stylesheets="@style.css"
-					HBox.hgrow="ALWAYS">
+				<TableView fx:id="tasksTableView" stylesheets="@style.css" HBox.hgrow="ALWAYS">
 					<columns>
-						<TableColumn prefWidth="179.0" text="Task name" />
+						<TableColumn fx:id="descriptionColumn" text="Task name" />
 					</columns>
 				</TableView>
 			</children>

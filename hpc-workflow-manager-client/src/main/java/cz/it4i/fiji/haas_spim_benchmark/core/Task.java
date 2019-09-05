@@ -3,6 +3,7 @@ package cz.it4i.fiji.haas_spim_benchmark.core;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import cz.it4i.fiji.haas_java_client.JobState;
@@ -33,9 +34,14 @@ public class Task {
 	 * @return success flag
 	 */
 	public boolean populateTaskComputationParameters(int positionInOutput) {
-		TaskComputation tc = computations.stream().filter(c -> c.getState().equals(JobState.Unknown))
-				.min(Comparator.comparingInt(c -> c.getTimepoint())).get();
-		if (null == tc) {
+		Optional<TaskComputation> otc = computations.stream().filter(c -> c
+			.getState().equals(JobState.Unknown)).min(Comparator.comparingInt(
+				TaskComputation::getTimepoint));
+		TaskComputation tc = null;
+		if (otc.isPresent()) {
+			tc = otc.get();
+		}
+		if (tc == null) {
 			return false;
 		}
 		return tc.populateParameters(positionInOutput);
@@ -53,11 +59,6 @@ public class Task {
 	 */
 	public List<TaskComputation> getComputations() {
 		return computations;
-	}
-
-	// TODO: Method stub
-	public void update() {
-
 	}
 	
 	/**

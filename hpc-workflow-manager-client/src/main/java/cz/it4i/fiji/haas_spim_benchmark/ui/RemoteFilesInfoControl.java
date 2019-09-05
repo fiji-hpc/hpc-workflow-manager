@@ -44,11 +44,11 @@ public class RemoteFilesInfoControl extends BorderPane implements CloseableContr
 
 	@Override
 	public void close() {
-
+		// There is nothing to close.
 	}
 
 	private void initTable() {
-		JavaFXRoutines.setCellValueFactory(files, 0, file -> file.getName());
+		JavaFXRoutines.setCellValueFactory(files, 0, RemoteFileInfo::getName);
 		JavaFXRoutines.setCellValueFactory(files, 1,
 				(Function<RemoteFileInfo, String>) file -> file.getSize() >= 0 ? formatSize(file.getSize())
 						: "Not exists");

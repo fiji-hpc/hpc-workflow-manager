@@ -2,7 +2,7 @@
 package cz.it4i.fiji.haas_spim_benchmark.ui;
 
 import java.awt.Window;
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -28,6 +28,7 @@ import cz.it4i.fiji.haas_spim_benchmark.core.SimpleObservableValue;
 import cz.it4i.fiji.haas_spim_benchmark.core.Task;
 import cz.it4i.fiji.haas_spim_benchmark.core.TaskComputation;
 import javafx.collections.ListChangeListener;
+import javafx.collections.ListChangeListener.Change;
 import javafx.fxml.FXML;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -37,14 +38,15 @@ import javafx.scene.paint.Color;
 public class SPIMPipelineProgressViewController extends BorderPane implements CloseableControl, InitiableControl {
 
 
-	public final static Logger log = LoggerFactory
+	public static final Logger log = LoggerFactory
 			.getLogger(cz.it4i.fiji.haas_spim_benchmark.ui.SPIMPipelineProgressViewController.class);
 	
 	private static final String EMPTY_VALUE = "";
 
 	private static final int PREFERRED_WIDTH = 900;
 
-	private static final Map<JobState, Color> taskExecutionState2Color = new HashMap<>();
+	private static final Map<JobState, Color> taskExecutionState2Color =
+		new EnumMap<>(JobState.class);
 
 	private static final double TIMEPOINT_TABLE_COLUMN_WIDTH_RATIO = 6;
 	static {
@@ -77,12 +79,8 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 	private boolean closed;
 
 	private final ListChangeListener<Task> taskChangeListener =
-		new ListChangeListener<Task>()
+		(Change<? extends Task> c) ->
 		{
-
-			@Override
-			public void onChanged(Change<? extends Task> c) {
-
 				// We are assuming that once the table has been filled,
 				// it cannot be "unfilled", i.e. the tasks cannot be
 				// changed or removed at runtime.
@@ -92,8 +90,6 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 				else {
 					tasks.refresh();
 				}
-
-			}
 		};
 
 	public SPIMPipelineProgressViewController() {
@@ -121,14 +117,12 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 		tasks.setPrefWidth(PREFERRED_WIDTH);
 
 		TableViewContextMenu<Task> menu = new TableViewContextMenu<>(this.tasks);
-		menu.addItem("Open view", (task, columnIndex) -> proof(task, columnIndex), (
-			x, columnIndex) -> check(x, columnIndex));
+		menu.addItem("Open view", this::proof, this::check);
 	}
 
 	private boolean check(Task x, Integer columnIndex) {
-		boolean result = x != null && 0 < columnIndex && columnIndex - 1 < x
-			.getComputations().size();
-		return result;
+		return (x != null && 0 < columnIndex && columnIndex - 1 < x
+			.getComputations().size());
 	}
 
 	private void proof(Task task, int columnIndex) {
@@ -144,7 +138,7 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 		final Optional<List<TaskComputation>> optional = getComputations(
 			observedList);
 
-		if (!optional.isPresent() || optional.get().size() < 1) {
+		if (!optional.isPresent() || optional.get().isEmpty()) {
 			return;
 		}
 
@@ -160,8 +154,8 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 			final double tableColumnWidth = computeTableColumnWidth(computations);
 			for (TaskComputation tc : computations) {
 				TableColumn<Task, String> tableCol;
-				this.tasks.getColumns().add(tableCol = new TableColumn<>(columnHeader(
-					tc)));
+				tableCol = new TableColumn<>(columnHeader(tc));
+				this.tasks.getColumns().add(tableCol);
 				int index = i++;
 				tableCol.setPrefWidth(tableColumnWidth);
 				constructCellFactory(index);
@@ -175,13 +169,13 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 	private long computeTableColumnWidth(List<TaskComputation> computations) {
 		return Math.round(this.tasks.getColumns().get(0).getWidth() /
 			TIMEPOINT_TABLE_COLUMN_WIDTH_RATIO * (1 + Math.max(0,
-				computeMaxColumnHeaderTextLength(computations) - 1) / 2));
+				computeMaxColumnHeaderTextLength(computations) - 1) / (double)2));
 	}
 
 	private int computeMaxColumnHeaderTextLength(
 		List<TaskComputation> computations)
 	{
-		return computations != null && computations.size() > 0 ? columnHeader(
+		return computations != null && !computations.isEmpty() ? columnHeader(
 			computations.get(computations.size() - 1)).length() : 1;
 	}
 
@@ -190,7 +184,7 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 	}
 
 	private Optional<List<TaskComputation>> getComputations(List<Task> taskList) {
-		return taskList.stream().map(task -> task.getComputations()).collect(
+		return taskList.stream().map(Task::getComputations).collect(
 			Collectors.<List<TaskComputation>> maxBy((a, b) -> a.size() - b.size()));
 
 	}

@@ -48,13 +48,13 @@ public class SimpleObservableList<T> extends ModifiableObservableListBase<T> {
 		return innerList.remove(index);
 	}
 
-	synchronized public boolean hasAnyListeners() {
+	public synchronized boolean hasAnyListeners() {
 		assert numberOfSubscribedListeners >= 0;
 		return numberOfSubscribedListeners > 0;
 	}
 
 	
-	synchronized public void subscribe(ListChangeListener<? super T> listener) {
+	public synchronized void subscribe(ListChangeListener<? super T> listener) {
 		super.addListener(listener);
 		numberOfSubscribedListeners++;
 		if (numberOfListenersChangedCallback != null) {
@@ -62,7 +62,7 @@ public class SimpleObservableList<T> extends ModifiableObservableListBase<T> {
 		}
 	}
 
-	synchronized public void unsubscribe(ListChangeListener<? super T> listener) {
+	public synchronized void unsubscribe(ListChangeListener<? super T> listener) {
 		super.removeListener(listener);
 		numberOfSubscribedListeners--;
 		if (numberOfListenersChangedCallback != null) {

@@ -22,7 +22,7 @@ import javafx.beans.value.ObservableValueBase;
 
 public class TaskComputationAdapter implements Closeable {
 
-	public final static Logger log = LoggerFactory.getLogger(
+	public static final Logger log = LoggerFactory.getLogger(
 		cz.it4i.fiji.haas_spim_benchmark.ui.TaskComputationAdapter.class);
 
 	private final TaskComputation computation;
@@ -149,7 +149,7 @@ public class TaskComputationAdapter implements Closeable {
 		public void run() {
 			Map<String, Long> sizes = computation.getOutFileSizes();
 			Map<String, Log> computationLogs = computation.getLogs().stream().collect(
-				Collectors.<Log, String, Log> toMap((Log l) -> l.getName(), (
+				Collectors.<Log, String, Log> toMap(Log::getName, (
 					Log l) -> l));
 			TaskComputationAdapter.this.logs.forEach(processedLog -> processedLog
 				.setContentValue(computationLogs.get(processedLog.getName())));

@@ -24,9 +24,11 @@ import cz.it4i.fiji.haas_spim_benchmark.core.ObservableBenchmarkJob;
 import cz.it4i.fiji.haas_spim_benchmark.core.SimpleObservableList;
 import cz.it4i.fiji.haas_spim_benchmark.core.SimpleObservableValue;
 import cz.it4i.fiji.haas_spim_benchmark.core.Task;
+import cz.it4i.fiji.haas_spim_benchmark.ui.NewJobController.WorkflowType;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
+import javafx.collections.ListChangeListener.Change;
 import javafx.fxml.FXML;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
@@ -39,7 +41,13 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 		cz.it4i.fiji.haas_spim_benchmark.ui.JobDetailControl.class);
 
 	@FXML
+	private MacroTaskProgressViewController macroProgressControl;
+
+	@FXML
 	private SPIMPipelineProgressViewController progressControl;
+
+	@FXML
+	private Tab macroProgressTab;
 
 	@FXML
 	private Tab progressTab;
@@ -74,50 +82,29 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 
 	private SimpleObservableList<Task> taskList;
 
-	private final ListChangeListener<Task> taskListListener =
-		new ListChangeListener<Task>()
-		{
-
-			@Override
-			public void onChanged(Change<? extends Task> c) {
-				setTabAvailability(progressTab, taskList == null || taskList.isEmpty());
-			}
-
-		};
+	private final ListChangeListener<Task> taskListListener = (
+		Change<? extends Task> c) -> setTabAvailability(progressTab,
+			taskList == null || taskList.isEmpty());
 
 	private SimpleObservableValue<String> errorOutput;
 
-	private final ChangeListener<String> errorOutputListener =
-		new ChangeListener<String>()
-		{
-
-			@Override
-			public void changed(ObservableValue<? extends String> observable,
-				String oldValue, String newValue)
-		{
-				if (newValue != null) {
-					setTabAvailability(snakemakeOutputTab, newValue.isEmpty());
-				}
-			}
-
-		};
+	private final ChangeListener<String> errorOutputListener = (
+		ObservableValue<? extends String> observable, String oldValue,
+		String newValue) -> {
+		if (newValue != null) {
+			setTabAvailability(snakemakeOutputTab, newValue.isEmpty());
+		}
+	};
 
 	private SimpleObservableValue<String> standardOutput;
 
-	private final ChangeListener<String> standardOutputListener =
-		new ChangeListener<String>()
-		{
-
-			@Override
-			public void changed(ObservableValue<? extends String> observable,
-				String oldValue, String newValue)
-		{
-				if (newValue != null) {
-					setTabAvailability(otherOutputTab, newValue.isEmpty());
-				}
-			}
-
-		};
+	private final ChangeListener<String> standardOutputListener = (
+		ObservableValue<? extends String> observable, String oldValue,
+		String newValue) -> {
+		if (newValue != null) {
+			setTabAvailability(otherOutputTab, newValue.isEmpty());
+		}
+	};
 
 	public JobDetailControl(final ObservableBenchmarkJob job) {
 		executorServiceWS = Executors.newSingleThreadExecutor();
@@ -136,16 +123,38 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 		executorServiceWS.execute(() -> {
 
 			try {
-				progressControl.init(parameter);
-				taskList = job.getObservableTaskList();
-				taskList.subscribe(taskListListener);
-				progressControl.setObservable(taskList);
+				WorkflowType jobType = job.getWorkflowType();
 
-				errorOutput = job.getObservableSnakemakeOutput(
-					SynchronizableFileType.StandardErrorFile);
-				errorOutput.addListener(errorOutputListener);
-				snakemakeOutputControl.setObservable(errorOutput);
+				if (jobType == WorkflowType.SPIM_WORKFLOW) {
+					setTabAvailability(macroProgressTab, true);
+					removeTab(macroProgressTab);
+					
+					// SPIM-only related initializations:
+					progressControl.init(parameter);
+					taskList = job.getObservableTaskList();
+					taskList.subscribe(taskListListener);
+					progressControl.setObservable(taskList);
+					
+					errorOutput = job.getObservableSnakemakeOutput(
+						SynchronizableFileType.StandardErrorFile);
+					errorOutput.addListener(errorOutputListener);
+					snakemakeOutputControl.setObservable(errorOutput);
+				}
+				else {
+					setTabAvailability(macroProgressTab, false);
+					setTabAvailability(progressTab, true);
+					setTabAvailability(snakemakeOutputTab, true);
 
+					removeTab(progressTab);
+					removeTab(snakemakeOutputTab);
+					
+					// Macro-only related initializations:
+					macroProgressControl.init(parameter);
+					macroProgressControl.setJobParameter(job);
+
+					progress.done();
+				}
+				
 				standardOutput = job.getObservableSnakemakeOutput(
 					SynchronizableFileType.StandardOutputFile);
 				standardOutput.addListener(standardOutputListener);
@@ -156,29 +165,32 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 				SimpleObservableList<FileTransferInfo> fileTransferList = job
 					.getFileTransferList();
 				setTabAvailability(dataUploadTab, fileTransferList == null ||
-					fileTransferList.size() == 0);
+					fileTransferList.isEmpty());
 				dataUploadControl.setObservable(fileTransferList);
 
-				if (job.getValue().getState() == JobState.Disposed) {
-					// TODO: Handle this?
-					if (log.isInfoEnabled()) {
-						log.info("Job " + job.getValue().getId() +
-							" state has been resolved as Disposed.");
-					}
+				if (job.getValue().getState() == JobState.Disposed)
+				{
+					log.info("Job {} state has been resolved as Disposed.", job.getValue()
+						.getId());
 				}
 
 				setActiveFirstVisibleTab(true);
 			}
 			finally {
-				final ListChangeListener<Task> localListener = new ListChangeListener<Task>() {
+				final ListChangeListener<Task> localListener =
+					new ListChangeListener<Task>()
+					{
 
-					@Override
-					public void onChanged(Change<? extends Task> c) {
-						taskList.unsubscribe(this);
-						progress.done();
-					}
-				};
-				taskList.subscribe(localListener);
+						@Override
+						public void onChanged(Change<? extends Task> c) {
+							taskList.unsubscribe(this);
+							progress.done();
+						}
+					};
+				WorkflowType jobType = job.getWorkflowType();
+				if (jobType == WorkflowType.SPIM_WORKFLOW) {
+					taskList.subscribe(localListener);
+				}
 			}
 		});
 
@@ -188,14 +200,20 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 
 	@Override
 	public void close() {
+		WorkflowType jobType = job.getWorkflowType();
 
 		executorServiceWS.shutdown();
 
 		// Close controllers
-		taskList.unsubscribe(taskListListener);
-		progressControl.close();
-		errorOutput.removeListener(errorOutputListener);
-		snakemakeOutputControl.close();
+		if (jobType == WorkflowType.SPIM_WORKFLOW) {
+			taskList.unsubscribe(taskListListener);
+			progressControl.close();
+			errorOutput.removeListener(errorOutputListener);
+			snakemakeOutputControl.close();
+		}
+		else {
+			macroProgressControl.close();
+		}
 		standardOutput.removeListener(standardOutputListener);
 		otherOutputControl.close();
 		jobProperties.close();
@@ -204,9 +222,13 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 
 	// -- Helper methods --
 
-	private void setTabAvailability(final Tab tab, final boolean disabled) {
-		tab.setDisable(disabled);
+	private void setTabAvailability(final Tab tab, final boolean isDisabled) {
+		tab.setDisable(isDisabled);
 		setActiveFirstVisibleTab(false);
+	}
+	
+	private void removeTab(final Tab tab) {
+		JavaFXRoutines.runOnFxThread( () -> this.getTabs().remove(tab));
 	}
 
 	private void setActiveFirstVisibleTab(final boolean force) {

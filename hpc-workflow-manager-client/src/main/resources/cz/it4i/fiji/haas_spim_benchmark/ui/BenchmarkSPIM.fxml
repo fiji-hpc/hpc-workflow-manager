@@ -12,7 +12,7 @@
 		<HBox>
 			<children>
 
-				<TableView fx:id="jobs" prefHeight="400.0" prefWidth="1410.0" HBox.hgrow="ALWAYS">
+				<TableView fx:id="jobs" prefHeight="400.0" prefWidth="1580.0" HBox.hgrow="ALWAYS">
 					<columns>
 						<TableColumn prefWidth="70.0" text="Job ID" />
 						<TableColumn prefWidth="149.0" text="Status" />
@@ -21,6 +21,7 @@
 						<TableColumn prefWidth="230.0" text="End time" />
 						<TableColumn prefWidth="250.0" text="Upload" />
                         <TableColumn prefWidth="250.0" text="Download" />
+                        <TableColumn prefWidth="150.0" text="Workflow Type" />
 					</columns>
 				</TableView>
 			</children>

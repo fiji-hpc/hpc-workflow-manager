@@ -5,7 +5,7 @@ haas_project_ID=open-15-12
 
 haas_cluster_node_type=7
 
-haas_template_ID=4
+haas_template_ID=8
 
 #seconds
 walltime=3600

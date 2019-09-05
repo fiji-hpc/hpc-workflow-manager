@@ -9,7 +9,7 @@ import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.UI_TO_HAAS_FREQUEN
 import com.google.common.collect.Streams;
 
 import java.io.Closeable;
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -23,7 +23,7 @@ class HaasOutputObservableValueRegistry implements Closeable {
 
 	private final BenchmarkJob job;
 	private final Map<SynchronizableFileType, SimpleObservableValue<String>> observableValues =
-		new HashMap<>();
+		new EnumMap<>(SynchronizableFileType.class);
 	private Timer timer;
 	private boolean isRunning = false;
 	private int numberOfListeners = 0;
@@ -84,7 +84,7 @@ class HaasOutputObservableValueRegistry implements Closeable {
 
 					Streams.zip(types.stream(), job.getComputationOutput(types).stream(),
 						(type, value) -> (Runnable) (() -> observableValues.get(type)
-							.update(value))).forEach(r -> r.run());
+							.update(value))).forEach(Runnable::run);
 				}
 			}, 0, getHaasUpdateTimeout() / UI_TO_HAAS_FREQUENCY_UPDATE_RATIO);
 			isRunning = true;

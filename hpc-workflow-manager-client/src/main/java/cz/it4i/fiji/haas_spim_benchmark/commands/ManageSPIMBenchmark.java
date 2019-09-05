@@ -77,7 +77,7 @@ public class ManageSPIMBenchmark implements Command {
 		uehd.activate();
 		try {
 			final Path workingDirPath = Paths.get(workingDirectory.getPath());
-			if (!Files.isDirectory(workingDirPath)) {
+			if (!workingDirPath.toFile().isDirectory()) {
 				Files.createDirectories(workingDirPath);
 			}
 			final FileLock fl = new FileLock(workingDirPath.resolve(LOCK_FILE_NAME));

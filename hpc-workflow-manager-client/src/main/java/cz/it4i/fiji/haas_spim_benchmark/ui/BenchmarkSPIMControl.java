@@ -5,7 +5,12 @@ import static cz.it4i.fiji.haas_spim_benchmark.core.Configuration.getHaasUpdateT
 import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.CONFIG_YAML;
 
 import java.awt.Window;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.EnumSet;
@@ -22,11 +27,14 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 import javax.swing.WindowConstants;
 
 import net.imagej.updater.util.Progress;
 
+import org.scijava.Context;
+import org.scijava.ui.swing.script.TextEditor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,6 +62,7 @@ import cz.it4i.fiji.haas_spim_benchmark.core.Constants;
 import cz.it4i.fiji.haas_spim_benchmark.core.FXFrameExecutorService;
 import cz.it4i.fiji.haas_spim_benchmark.core.ObservableBenchmarkJob;
 import cz.it4i.fiji.haas_spim_benchmark.core.ObservableBenchmarkJob.TransferProgress;
+import cz.it4i.fiji.haas_spim_benchmark.ui.NewJobController.WorkflowType;
 import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
@@ -130,7 +139,7 @@ public class BenchmarkSPIMControl extends BorderPane implements
 	}
 
 	@Override
-	synchronized public void close() {
+	public synchronized void close() {
 		if (!closed) {
 			executorServiceShell.shutdown();
 			executorServiceWS.shutdown();
@@ -147,13 +156,17 @@ public class BenchmarkSPIMControl extends BorderPane implements
 			new TableViewContextMenu<>(jobs);
 		menu.addItem("Create a new job", x -> askForCreateJob(), j -> true);
 		menu.addSeparator();
-		menu.addItem("Start job", job -> executeWSCallAsync("Starting job", p -> {
-			job.getValue().startJob(p);
-			job.getValue().update();
-		}), job -> JavaFXRoutines.notNullValue(job, j -> j
+
+		menu.addItem("Start job", job -> {
+			executeWSCallAsync("Starting job", p -> {
+				job.getValue().startJob(p);
+				job.getValue().update();
+			});
+		}, job -> JavaFXRoutines.notNullValue(job, j -> (j
 			.getState() == JobState.Configuring || j
 				.getState() == JobState.Finished || j.getState() == JobState.Failed || j
-					.getState() == JobState.Canceled));
+					.getState() == JobState.Canceled) && checkIfAnythingHasBeenUploaded(
+						j)));
 
 		menu.addItem("Cancel job", job -> executeWSCallAsync("Canceling job", p -> {
 			job.getValue().cancelJob();
@@ -161,22 +174,29 @@ public class BenchmarkSPIMControl extends BorderPane implements
 		}), job -> JavaFXRoutines.notNullValue(job, j -> j
 			.getState() == JobState.Running || j.getState() == JobState.Queued));
 
-		menu.addItem("Job dashboard", obsBenchmarkJob -> openJobDetailsWindow(
-			obsBenchmarkJob), job -> JavaFXRoutines.notNullValue(job, j -> true));
+		menu.addItem("Job dashboard", this::openJobDetailsWindow,
+			job -> JavaFXRoutines.notNullValue(job, j -> true));
 		menu.addItem("Open job subdirectory", j -> openJobSubdirectory(j
 			.getValue()), x -> JavaFXRoutines.notNullValue(x, j -> true));
 		menu.addItem("Open in BigDataViewer", j -> openBigDataViewer(j.getValue()),
 			x -> JavaFXRoutines.notNullValue(x, j -> j
 				.getState() == JobState.Finished && j.isVisibleInBDV()));
+		menu.addItem("Open macro in Editor", j -> openEditor(j.getValue()),
+			x -> JavaFXRoutines.notNullValue(x, j -> j
+				.getWorkflowType() == NewJobController.WorkflowType.MACRO_WORKFLOW));
+
 		menu.addSeparator();
 
-		menu.addItem("Upload data", job -> executeWSCallAsync("Uploading data",
-			p -> job.getValue().startUpload()), job -> executeWSCallAsync(
-				"Stop uploading data", p -> job.getValue().stopUpload()),
-			job -> JavaFXRoutines.notNullValue(job, j -> !j.isUseDemoData() &&
-				!EnumSet.of(JobState.Running, JobState.Disposed).contains(j
-					.getState())), job -> job != null && job.getUploadProgress()
-						.isWorking());
+		menu.addItem("Upload data", job -> {
+			boolean wasSuccessfull = createTheMacroScript(job);
+			if (wasSuccessfull) executeWSCallAsync("Uploading data", p -> job
+				.getValue().startUpload());
+		}, job -> executeWSCallAsync("Stop uploading data", p -> job.getValue()
+			.stopUpload()), job -> JavaFXRoutines.notNullValue(job, j -> !j
+				.isUseDemoData() && !EnumSet.of(JobState.Running, JobState.Disposed)
+					.contains(j.getState())), job -> job != null && job
+						.getUploadProgress().isWorking());
+
 		menu.addItem("Download result", job -> executeWSCallAsync(
 			"Downloading data", p -> job.getValue().startDownload()),
 			job -> executeWSCallAsync("Stop downloading data", p -> job.getValue()
@@ -196,6 +216,73 @@ public class BenchmarkSPIMControl extends BorderPane implements
 
 	}
 
+	private boolean checkIfAnythingHasBeenUploaded(BenchmarkJob job) {
+		if (job.getWorkflowType() == WorkflowType.MACRO_WORKFLOW) {
+			// If the user has not uploaded anything return false:
+			try {
+				String property = job.getProperty("job.uploaded");
+				if (property.equals("true")) {
+					return true;
+				}
+			}
+			catch (Exception exc) {
+				return false;
+			}
+		}
+		// If it is not a Macro Workflow then this method should have no impact
+		// therefore it returns true:
+		return true;
+	}
+
+	private boolean createTheMacroScript(ObservableBenchmarkJob job) {
+		boolean isSuccessfull = true;
+		if (job.getWorkflowType() == WorkflowType.MACRO_WORKFLOW) {
+			String userScriptFilePath = job.getInputDirectory().toString() +
+				File.separator + "user.ijm";
+
+			String resourceFilePath = getClass().getClassLoader().getResource(
+				"MacroWrapper.ijm").getPath();
+
+			try (PrintWriter pw = new PrintWriter(job.getInputDirectory().toString() +
+				File.separator + Constants.DEFAULT_MACRO_FILE))
+			{
+
+				// Write the MPI wrapper script's contents into the new script:
+				isSuccessfull = copyLineByLine(pw, resourceFilePath);
+
+				// Write user's script contents to the new script:
+				isSuccessfull = isSuccessfull && copyLineByLine(pw, userScriptFilePath);
+
+			}
+			catch (FileNotFoundException exc) {
+				log.error(exc.getMessage());
+				isSuccessfull = false;
+			}
+
+			log.info(
+				"Merged user's script and fiji macro MPI wrapper into mpitest.txt");
+		}
+		return isSuccessfull;
+	}
+
+	private boolean copyLineByLine(PrintWriter pw, String filePath) {
+		try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
+
+			String line = br.readLine();
+
+			// Copy line by line:
+			while (line != null) {
+				pw.println(line);
+				line = br.readLine();
+			}
+		}
+		catch (IOException exc) {
+			log.error(exc.toString());
+			return false;
+		}
+		return true;
+	}
+
 	private void deleteJob(BenchmarkJob bj) {
 		bj.delete();
 		jobs.getItems().remove(registry.remove(bj));
@@ -210,39 +297,38 @@ public class BenchmarkSPIMControl extends BorderPane implements
 
 				@Override
 				public void doAction(Progress p) throws IOException {
-					BenchmarkJob job = doCreateJob(wd -> newJobWindow.getInputDirectory(
-						wd), wd -> newJobWindow.getOutputDirectory(wd));
+					BenchmarkJob job = doCreateJob(newJobWindow::getInputDirectory,
+						newJobWindow::getOutputDirectory, newJobWindow.getNumberOfNodes(),
+						newJobWindow.getHaasTemplateId());
 					if (job.isUseDemoData()) {
 						job.storeDataInWorkdirectory(getConfigYamlFile());
 					}
-					else if (Files.exists(job.getInputDirectory().resolve(CONFIG_YAML))) {
-						executorServiceFX.execute(new Runnable() {
+					else if (job.getWorkflowType() == WorkflowType.SPIM_WORKFLOW && (job
+						.getInputDirectory().resolve(CONFIG_YAML)).toFile().exists())
+			{
+				executorServiceFX.execute(() -> {
 
-							@Override
-							public void run() {
-								Alert al = new Alert(AlertType.CONFIRMATION, "The file \"" +
-									CONFIG_YAML +
-									"\" found in the defined data input directory \"" + job
-										.getInputDirectory() +
-									"\". Would you like to copy it into the job working directory \"" +
-									job.getDirectory() + "\"?", ButtonType.YES, ButtonType.NO);
+					Alert al = new Alert(AlertType.CONFIRMATION, "The file \"" +
+						CONFIG_YAML + "\" found in the defined data input directory \"" +
+						job.getInputDirectory() +
+						"\". Would you like to copy it into the job working directory \"" +
+						job.getDirectory() + "\"?", ButtonType.YES, ButtonType.NO);
 
-								al.setHeaderText(null);
-								al.setTitle("Copy " + CONFIG_YAML + "?");
-								al.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
-								if (al.showAndWait().get() == ButtonType.YES) {
-									try {
-										Files.copy(job.getInputDirectory().resolve(CONFIG_YAML), job
-											.getDirectory().resolve(CONFIG_YAML));
-									}
-									catch (IOException e) {
-										log.error(e.getMessage(), e);
-									}
-								}
-							}
-						});
-
+					al.setHeaderText(null);
+					al.setTitle("Copy " + CONFIG_YAML + "?");
+					al.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
+					if (al.showAndWait().get() == ButtonType.YES) {
+						try {
+							Files.copy(job.getInputDirectory().resolve(CONFIG_YAML), job
+								.getDirectory().resolve(CONFIG_YAML));
+						}
+						catch (IOException e) {
+							log.error(e.getMessage(), e);
+						}
 					}
+				});
+
+			}
 				}
 			}));
 
@@ -252,10 +338,12 @@ public class BenchmarkSPIMControl extends BorderPane implements
 		return new UploadingFileFromResource("", Constants.CONFIG_YAML);
 	}
 
-	private BenchmarkJob doCreateJob(Function<Path, Path> inputProvider,
-		Function<Path, Path> outputProvider) throws IOException
+	private BenchmarkJob doCreateJob(UnaryOperator<Path> inputProvider,
+		UnaryOperator<Path> outputProvider, int numberOfNodes, int haasTemplateId)
+		throws IOException
 	{
-		BenchmarkJob bj = manager.createJob(inputProvider, outputProvider);
+		BenchmarkJob bj = manager.createJob(inputProvider, outputProvider,
+			numberOfNodes, haasTemplateId);
 		ObservableBenchmarkJob obj = registry.addIfAbsent(bj);
 		addJobToItems(obj);
 		jobs.refresh();
@@ -353,40 +441,41 @@ public class BenchmarkSPIMControl extends BorderPane implements
 	}
 
 	private void initTable() {
-		registry = new ObservableBenchmarkJobRegistry(bj -> remove(bj),
+		registry = new ObservableBenchmarkJobRegistry(this::remove,
 			executorServiceJobState, executorServiceFX);
 		setCellValueFactory(0, j -> j.getId() + "");
 		setCellValueFactoryCompletable(1, j -> j.getStateAsync(
 			executorServiceJobState).thenApply(state -> "" + provider.getName(
 				state)));
-		setCellValueFactory(2, j -> j.getCreationTime().toString());
-		setCellValueFactory(3, j -> j.getStartTime().toString());
-		setCellValueFactory(4, j -> j.getEndTime().toString());
+		setCellValueFactory(2, BenchmarkJob::getCreationTime);
+		setCellValueFactory(3, BenchmarkJob::getStartTime);
+		setCellValueFactory(4, BenchmarkJob::getEndTime);
 		setCellValueFactory(5, j -> decorateTransfer(registry.get(j)
 			.getUploadProgress()));
 		setCellValueFactory(6, j -> decorateTransfer(registry.get(j)
 			.getDownloadProgress()));
+		setCellValueFactory(7, BenchmarkJob::getHaasTemplateName);
 		JavaFXRoutines.setOnDoubleClickAction(jobs, executorServiceJobState,
-			openJobDetailsWindow -> true, obsBenchmarkJob -> openJobDetailsWindow(
-				obsBenchmarkJob));
+			openJobDetailsWindow -> true, this::openJobDetailsWindow);
 	}
 
 	private String decorateTransfer(TransferProgress progress) {
+		String stateMessage = "N/A";
 		if (progress.isFailed()) {
-			return "Failed";
+			stateMessage = "Failed";
 		}
-		if (!progress.isWorking() && !progress.isDone()) {
-			return "";
+		else if (!progress.isWorking() && !progress.isDone()) {
+			stateMessage = "";
 		}
 		else if (progress.isWorking()) {
 			Long msecs = progress.getRemainingMiliseconds();
-			return "Time remains " + (msecs != null ? RemainingTimeFormater.format(
-				msecs) : "N/A");
+			stateMessage = "Time remains " + (msecs != null ? RemainingTimeFormater
+				.format(msecs) : "N/A");
 		}
 		else if (progress.isDone()) {
-			return "Done";
+			stateMessage = "Done";
 		}
-		return "N/A";
+		return stateMessage;
 	}
 
 	private void remove(BenchmarkJob bj) {
@@ -423,7 +512,7 @@ public class BenchmarkSPIMControl extends BorderPane implements
 	private void openBigDataViewer(BenchmarkJob job) {
 		Path localPathToResultXML = job.getLocalPathToResultXML();
 		String openFile;
-		if (Files.exists(localPathToResultXML)) {
+		if (localPathToResultXML.toFile().exists()) {
 			openFile = localPathToResultXML.toString();
 		}
 		else {
@@ -436,6 +525,15 @@ public class BenchmarkSPIMControl extends BorderPane implements
 		catch (SpimDataException e) {
 			log.error(e.getMessage(), e);
 		}
+	}
+
+	private void openEditor(BenchmarkJob job) {
+		TextEditor txt = new TextEditor(new Context()); // TODO Context handling is
+																										// wrong
+		File editFile = new File(job.getInputDirectory().toString(),
+			Constants.DEFAULT_MACRO_FILE);
+		txt.open(editFile);
+		txt.setVisible(true);
 	}
 
 	private interface P_JobAction {

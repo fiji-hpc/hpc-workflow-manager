@@ -51,8 +51,8 @@ public class JobPropertiesControl extends BorderPane implements Closeable {
 	}
 
 	private void initTable() {
-		setCellValueFactory(0, s -> s.getName());
-		setCellValueFactory(1, s -> s.getValueAsString());
+		setCellValueFactory(0, P_Value::getName);
+		setCellValueFactory(1, P_Value::getValueAsString);
 		JavaFXRoutines.setOnDoubleClickAction(properties, executorServiceUI,
 			rowData -> rowData.getValue().isOpenAllowed(), rowData -> {
 				try {
@@ -96,7 +96,7 @@ public class JobPropertiesControl extends BorderPane implements Closeable {
 		}
 
 		public String getValueAsString() {
-			return Optional.ofNullable(path).map(p -> p.toString()).orElse(textIfNull);
+			return Optional.ofNullable(path).map(Path::toString).orElse(textIfNull);
 		}
 
 		public boolean isOpenAllowed() {

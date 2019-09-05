@@ -6,7 +6,6 @@ import static cz.it4i.fiji.haas_java_client.JobState.Canceled;
 import static cz.it4i.fiji.haas_java_client.JobState.Failed;
 import static cz.it4i.fiji.haas_java_client.JobState.Finished;
 import static cz.it4i.fiji.haas_spim_benchmark.core.Configuration.getHaasClusterNodeType;
-import static cz.it4i.fiji.haas_spim_benchmark.core.Configuration.getHaasTemplateID;
 import static cz.it4i.fiji.haas_spim_benchmark.core.Configuration.getWalltime;
 import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.BENCHMARK_TASK_NAME_MAP;
 import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.CORES_PER_NODE;
@@ -43,8 +42,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
-import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -77,6 +76,8 @@ import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.ProgressNotifier;
 import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
 import cz.it4i.fiji.haas_java_client.UploadingFile;
+import cz.it4i.fiji.haas_spim_benchmark.ui.NewJobController;
+import cz.it4i.fiji.haas_spim_benchmark.ui.NewJobController.WorkflowType;
 
 public class BenchmarkJobManager implements Closeable {
 
@@ -123,29 +124,42 @@ public class BenchmarkJobManager implements Closeable {
 		}
 
 		public synchronized void startJob(Progress progress) throws IOException {
-			job.uploadFile(Constants.CONFIG_YAML, new ProgressNotifierAdapter(
+			
+			LoadedYAML yaml = null;
+			if(job.getHaasTemplateId() == 4) {
+				job.uploadFile(Constants.CONFIG_YAML, new ProgressNotifierAdapter(
 				progress));
-			LoadedYAML yaml = new LoadedYAML(job.openLocalFile(
+				yaml = new LoadedYAML(job.openLocalFile(
 				Constants.CONFIG_YAML));
+			}
+	
 			verifiedStateProcessed = false;
 			running = null;
-			String message = "Submitting job id #" + getId();
-			progress.addItem(message);
+			String message = "";
+			if(job.getHaasTemplateId() == 4) {
+				message = "Submitting job id #" + getId();
+				progress.addItem(message);
+			}
 			job.updateInfo();
 			JobState oldState = updateAndGetState();
 			job.submit();
 			setVerifiedState(null);
 			while (oldState == updateAndGetState()) {
 				try {
-					Thread.sleep(Constants.WAIT_FOR_SUBMISSION_TIMEOUT);
+					wait(Constants.WAIT_FOR_SUBMISSION_TIMEOUT);
 				}
 				catch (InterruptedException exc) {
 					log.error(exc.getMessage(), exc);
+					Thread.currentThread().interrupt();
 				}
 			}
-			progress.itemDone(message);
-			job.setProperty(SPIM_OUTPUT_FILENAME_PATTERN, yaml.getCommonProperty(
+			if(job.getHaasTemplateId() == 4) {
+				progress.itemDone(message);
+			
+				job.setProperty(SPIM_OUTPUT_FILENAME_PATTERN, yaml.getCommonProperty(
 				FUSION_SWITCH) + "_" + yaml.getCommonProperty(HDF5_XML_FILENAME));
+			}
+
 		}
 
 		public boolean delete() {
@@ -157,7 +171,7 @@ public class BenchmarkJobManager implements Closeable {
 		}
 
 		public JobState getState() {
-			return getStateAsync(r -> r.run()).getNow(JobState.Unknown);
+			return getStateAsync(Runnable::run).getNow(JobState.Unknown);
 		}
 
 		public synchronized CompletableFuture<JobState> getStateAsync(
@@ -178,10 +192,11 @@ public class BenchmarkJobManager implements Closeable {
 		public void update() {
 			job.updateInfo();
 			try {
-				visibleInBDV = Files.exists(getLocalPathToResultXML()) || WebRoutines
-					.doesURLExist(new URL(getPathToToResultXMLOnBDS()));
+				visibleInBDV = getLocalPathToResultXML().toFile().exists() ||
+					WebRoutines.doesURLExist(new URL(getPathToToResultXMLOnBDS()));
 				if (log.isDebugEnabled()) {
-					log.debug("job #" + getId() + " is visible in BDV " + visibleInBDV);
+					log.debug("job # ".concat(Long.toString(getId())).concat(
+						" is visible in BDV ").concat(Boolean.toString(visibleInBDV)));
 				}
 			}
 			catch (MalformedURLException exc) {
@@ -244,7 +259,7 @@ public class BenchmarkJobManager implements Closeable {
 
 		public CompletableFuture<?> startDownload() throws IOException {
 			if (job.getState() == Finished) {
-				CompletableFuture<?> result = new CompletableFuture<Void>();
+				CompletableFuture<?> result = new CompletableFuture<>();
 				startDownloadResults(result);
 				return result;
 			}
@@ -261,9 +276,9 @@ public class BenchmarkJobManager implements Closeable {
 		}
 
 		public void setDownloadNotifier(Progress progress) {
-			job.setDownloadNotifier(downloadNotifier =
-				createDownloadNotifierProcessingResultCSV(convertToProgressNotifier(
-					progress)));
+			downloadNotifier = createDownloadNotifierProcessingResultCSV(
+				convertToProgressNotifier(progress));
+			job.setDownloadNotifier(downloadNotifier);
 		}
 
 		public boolean canBeDownloaded() {
@@ -317,7 +332,7 @@ public class BenchmarkJobManager implements Closeable {
 
 		public void exploreErrors() {
 			for (BenchmarkError error : snakemakeOutputHelper.getErrors()) {
-				System.out.println(error.getPlainDescription());
+				log.error(error.getPlainDescription());
 			}
 		}
 
@@ -393,7 +408,7 @@ public class BenchmarkJobManager implements Closeable {
 					JobState workVerifiedState = Stream.concat(Arrays.asList(state)
 						.stream(), getTasks().stream().filter(task -> !task.getDescription()
 							.equals(DONE_TASK)).flatMap(task -> task.getComputations()
-								.stream()).map(tc -> tc.getState())).max(
+								.stream()).map(TaskComputation::getState)).max(
 									new JobStateComparator()).get();
 
 					if (workVerifiedState != Finished && workVerifiedState != Canceled) {
@@ -403,7 +418,7 @@ public class BenchmarkJobManager implements Closeable {
 						// test whether job was restarted - it sets running to null
 						if (!verifiedStateProcessed) {
 							workVerifiedState = null;
-							return doGetStateAsync(r -> r.run()).getNow(null);
+							return doGetStateAsync(Runnable::run).getNow(null);
 						}
 						running = null;
 						setVerifiedState(workVerifiedState);
@@ -427,23 +442,21 @@ public class BenchmarkJobManager implements Closeable {
 		private void startDownloadResults(CompletableFuture<?> result)
 			throws IOException
 		{
-			String mainFile = job.getProperty(SPIM_OUTPUT_FILENAME_PATTERN) + ".xml";
+
+			final WorkflowType jobType = WorkflowType.forLong(job
+				.getHaasTemplateId());
+			final String mainFile = job.getProperty(SPIM_OUTPUT_FILENAME_PATTERN) +
+				".xml";
 			final StillRunningDownloadSwitcher stillRunningTemporarySwitch =
 				new StillRunningDownloadSwitcher(() -> downloadingStatus,
 					val -> downloadingStatus = val);
 			final ProgressNotifierTemporarySwitchOff progressNotifierTemporarySwitchOff =
 				new ProgressNotifierTemporarySwitchOff(downloadNotifier, job);
-			job.startDownload(downloadFileNameExtractDecorator(fileName -> fileName
-				.equals(mainFile))).exceptionally(__ -> {
-					progressNotifierTemporarySwitchOff.switchOn();
-					stillRunningTemporarySwitch.switchBack();
-					return null;
-				}).thenCompose(X -> {
-					Set<String> otherFiles = extractNames(getOutputDirectory().resolve(
-						mainFile));
+			downloadMainFile(jobType, mainFile, stillRunningTemporarySwitch,
+				progressNotifierTemporarySwitchOff).thenCompose(x -> {
 					try {
 						return job.startDownload(downloadFileNameExtractDecorator(
-							downloadCSVDecorator(name -> otherFiles.contains(name))));
+							downloadCSVDecorator(getOtherFilesFilterForDownload(jobType, mainFile))));
 					}
 					catch (IOException e) {
 						throw new RuntimeException(e);
@@ -452,12 +465,41 @@ public class BenchmarkJobManager implements Closeable {
 						progressNotifierTemporarySwitchOff.switchOn();
 						stillRunningTemporarySwitch.switchBack();
 					}
-				}).whenComplete((X, e) -> {
+				}).whenComplete((x, e) -> {
 					if (e != null) {
 						log.error(e.getMessage(), e);
 						downloadNotifier.addItem(FAILED_ITEM);
 					}
 					result.complete(null);
+				});
+		}
+
+		private Predicate<String> getOtherFilesFilterForDownload(WorkflowType jobType,
+			String mainFile)
+		{
+			if (jobType == WorkflowType.MACRO_WORKFLOW) {
+				return x -> true;
+			}
+			Set<String> otherFiles = extractNames(getOutputDirectory().resolve(
+				mainFile));
+			return otherFiles::contains;
+		}
+
+		private CompletableFuture<?> downloadMainFile(final WorkflowType jobType,
+			final String mainFile,
+			final StillRunningDownloadSwitcher stillRunningTemporarySwitch,
+			final ProgressNotifierTemporarySwitchOff progressNotifierTemporarySwitchOff)
+			throws IOException
+		{
+			if (jobType == WorkflowType.MACRO_WORKFLOW) {
+				return CompletableFuture.completedFuture(null);
+			}
+			return job.startDownload(downloadFileNameExtractDecorator(
+				fileName -> fileName.equals(mainFile))).exceptionally(
+					x -> {
+					progressNotifierTemporarySwitchOff.switchOn();
+					stillRunningTemporarySwitch.switchBack();
+					return null;
 				});
 		}
 
@@ -517,6 +559,66 @@ public class BenchmarkJobManager implements Closeable {
 			job.updateInfo();
 			return job.getState();
 		}
+
+		public List<String> getFileContents(List<String> files) {
+			return job.getFileContents(files);
+		}
+
+		public WorkflowType getWorkflowType() {
+			return WorkflowType.forLong(job.getHaasTemplateId());
+		}
+
+		public String getHaasTemplateName() {
+			return NewJobController.WorkflowType.forLong(job.getHaasTemplateId())
+				.toString();
+		}
+
+		private Predicate<String> downloadFailedData() {
+			return name -> {
+				Path path = getPathSafely(name);
+				if (path == null) return false;
+				return path.getFileName().toString().startsWith("snakejob.") || path
+					.getParent() != null && path.getParent().getFileName() != null && path
+						.getParent().getFileName().toString().equals("logs");
+			};
+		}
+
+		private Predicate<String> downloadFileNameExtractDecorator(
+			Predicate<String> decorated)
+		{
+			return name -> {
+				Path path = getPathSafely(name);
+				if (path == null) return false;
+
+				String fileName = path.getFileName().toString();
+				return decorated.test(fileName);
+			};
+		}
+
+		private Path getPathSafely(String name) {
+			try {
+				return Paths.get(name);
+			}
+			catch (InvalidPathException ex) {
+				return null;
+			}
+		}
+
+		private Predicate<String> downloadCSVDecorator(
+			Predicate<String> decorated)
+		{
+			return name -> {
+				if (name.toLowerCase().endsWith(".csv")) {
+					return true;
+				}
+				return decorated.test(name);
+			};
+
+		}
+
+		public String getProperty(String name) {
+			return job.getProperty(name);
+		}
 	}
 
 	public BenchmarkJobManager(BenchmarkSPIMParameters params) {
@@ -525,11 +627,12 @@ public class BenchmarkJobManager implements Closeable {
 		jobManager.setUploadFilter(this::canUpload);
 	}
 
-	public BenchmarkJob createJob(Function<Path, Path> inputDirectoryProvider,
-		Function<Path, Path> outputDirectoryProvider) throws IOException
+	public BenchmarkJob createJob(UnaryOperator<Path> inputDirectoryProvider,
+		UnaryOperator<Path> outputDirectoryProvider, int numberOfNodes,
+		int haasTemplateId) throws IOException
 	{
-		Job job = jobManager.createJob(getJobSettings(), inputDirectoryProvider,
-			outputDirectoryProvider);
+		Job job = jobManager.createJob(getJobSettings(numberOfNodes,
+			haasTemplateId), inputDirectoryProvider, outputDirectoryProvider);
 		if (job.getInputDirectory() == null) {
 			job.createEmptyFile(Constants.DEMO_DATA_SIGNAL_FILE_NAME);
 		}
@@ -549,13 +652,12 @@ public class BenchmarkJobManager implements Closeable {
 
 		List<ResultFileTask> identifiedTasks = new LinkedList<>();
 
-		try {
+		try (BufferedReader reader = Files.newBufferedReader(filename)) {
 			String line = null;
 
 			ResultFileTask processedTask = null;
 			List<ResultFileJob> jobs = new LinkedList<>();
 
-			BufferedReader reader = Files.newBufferedReader(filename);
 			while (null != (line = reader.readLine())) {
 
 				line = line.trim();
@@ -616,10 +718,10 @@ public class BenchmarkJobManager implements Closeable {
 		Collections.sort(identifiedTasks, Comparator.comparingInt(
 			t -> chronologicList.indexOf(t.getName())));
 
-		FileWriter fileWriter = null;
-		try {
-			fileWriter = new FileWriter(filename.getParent().toString() +
-				Constants.FORWARD_SLASH + Constants.STATISTICS_SUMMARY_FILENAME);
+		try (FileWriter fileWriter = new FileWriter(filename.getParent()
+			.toString() + Constants.FORWARD_SLASH +
+			Constants.STATISTICS_SUMMARY_FILENAME))
+		{
 			fileWriter.append(Constants.SUMMARY_FILE_HEADER).append(
 				Constants.NEW_LINE_SEPARATOR);
 
@@ -639,10 +741,11 @@ public class BenchmarkJobManager implements Closeable {
 			}
 
 			Double pipelineStart = identifiedTasks.stream() //
-				.mapToDouble(t -> t.getEarliestStartInSeconds()).min().getAsDouble();
+				.mapToDouble(ResultFileTask::getEarliestStartInSeconds).min()
+				.getAsDouble();
 
 			Double pipelineEnd = identifiedTasks.stream() //
-				.mapToDouble(t -> t.getLatestEndInSeconds()).max().getAsDouble();
+				.mapToDouble(ResultFileTask::getLatestEndInSeconds).max().getAsDouble();
 
 			fileWriter.append(Constants.NEW_LINE_SEPARATOR);
 			fileWriter.append("Pipeline duration: " + (pipelineEnd - pipelineStart));
@@ -650,17 +753,6 @@ public class BenchmarkJobManager implements Closeable {
 		}
 		catch (Exception e) {
 			log.error(e.getMessage(), e);
-		}
-		finally {
-			try {
-				if (fileWriter != null) {
-					fileWriter.flush();
-					fileWriter.close();
-				}
-			}
-			catch (Exception e) {
-				log.error(e.getMessage(), e);
-			}
 		}
 	}
 
@@ -678,53 +770,13 @@ public class BenchmarkJobManager implements Closeable {
 		return new BenchmarkJob(job);
 	}
 
-	private static JobSettings getJobSettings() {
+	private static JobSettings getJobSettings(int numberOfNodes,
+		int haasTemplateId)
+	{
 		return new JobSettingsBuilder().jobName(HAAS_JOB_NAME).clusterNodeType(
-			getHaasClusterNodeType()).templateId(getHaasTemplateID()).walltimeLimit(
-				getWalltime()).numberOfCoresPerNode(CORES_PER_NODE).build();
-	}
-
-	static private Predicate<String> downloadFileNameExtractDecorator(
-		Predicate<String> decorated)
-	{
-		return name -> {
-			Path path = getPathSafely(name);
-			if (path == null) return false;
-
-			String fileName = path.getFileName().toString();
-			return decorated.test(fileName);
-		};
-	}
-
-	static private Predicate<String> downloadCSVDecorator(
-		Predicate<String> decorated)
-	{
-		return name -> {
-			if (name.toLowerCase().endsWith(".csv")) {
-				return true;
-			}
-			return decorated.test(name);
-		};
-
-	}
-
-	static private Predicate<String> downloadFailedData() {
-		return name -> {
-			Path path = getPathSafely(name);
-			if (path == null) return false;
-			return path.getFileName().toString().startsWith("snakejob.") || path
-				.getParent() != null && path.getParent().getFileName() != null && path
-					.getParent().getFileName().toString().equals("logs");
-		};
-	}
-
-	private static Path getPathSafely(String name) {
-		try {
-			return Paths.get(name);
-		}
-		catch (InvalidPathException ex) {
-			return null;
-		}
+			getHaasClusterNodeType()).templateId(haasTemplateId).walltimeLimit(
+				getWalltime()).numberOfCoresPerNode(CORES_PER_NODE).numberOfNodes(
+					numberOfNodes).build();
 	}
 
 	private static HaaSClientSettings constructSettingsFromParams(

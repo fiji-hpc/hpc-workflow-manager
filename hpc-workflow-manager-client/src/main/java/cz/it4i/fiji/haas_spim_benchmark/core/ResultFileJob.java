@@ -7,9 +7,6 @@ public class ResultFileJob {
 	
 	private final Map<String, String> values = new HashMap<>();
 
-	public ResultFileJob() {
-	}
-
 	public String getValue(String key) {
 		return values.get(key);
 	}

@@ -15,7 +15,7 @@ public class WindowCloseableAdapter implements Closeable {
 		this.window = window;
 	}
 
-	synchronized public void setWindowAndShowIt(final Window window) {
+	public synchronized void setWindowAndShowIt(final Window window) {
 		if (!closed) {
 			this.window = window;
 			this.window.setVisible(true);
@@ -26,7 +26,7 @@ public class WindowCloseableAdapter implements Closeable {
 	}
 
 	@Override
-	synchronized public void close() {
+	public synchronized void close() {
 		if (!closed) {
 			if (window != null) {
 				window.dispose();

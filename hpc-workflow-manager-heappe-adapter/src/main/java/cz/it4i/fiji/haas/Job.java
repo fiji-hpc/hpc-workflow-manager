@@ -51,7 +51,7 @@ public class Job {
 		} catch (NumberFormatException e) {
 			return false;
 		}
-		return Files.isRegularFile(path.resolve(JOB_INFO_FILENAME));
+		return path.resolve(JOB_INFO_FILENAME).toFile().isFile();
 	}
 
 	private static final String JOB_NAME = "job.name";
@@ -67,6 +67,8 @@ public class Job {
 	private static final String JOB_IS_DOWNLOADED = "job.downloaded";
 
 	private static final String JOB_IS_UPLOADED = "job.uploaded";
+	
+	private static final String JOB_HAAS_TEMPLATE_ID = "job.haas_template_id";
 
 	private static final String JOB_OUTPUT_DIRECTORY_PATH = "job.output_directory_path";
 
@@ -109,7 +111,7 @@ public class Job {
 		Files.createDirectory(this.jobDir);
 		storeInputOutputDirectory();
 		setName(jobSettings.getJobName());
-
+		setHaasTemplateId(jobSettings.getTemplateId());
 	}
 
 	public Job(JobManager4Job jobManager, Path jobDirectory, Supplier<HaaSClient> haasClientSupplier) {
@@ -180,7 +182,7 @@ public class Job {
 	public boolean canBeDownloaded() {
 		return true;//Boolean.parseBoolean(getProperty(JOB_CAN_BE_DOWNLOADED));
 	}
-
+	
 	public void setUploaded(boolean b) {
 		setProperty(JOB_IS_UPLOADED, b);
 	}
@@ -342,6 +344,14 @@ public class Job {
 		propertyHolder.setValue(name, "" + value);
 	}
 
+	public void setProperty(String name, int value) {
+		propertyHolder.setValue(name, "" + value);
+	}
+	
+	public void setProperty(String name, long value) {
+		propertyHolder.setValue(name, "" + value);
+	}
+	
 	public String getProperty(String name) {
 		return propertyHolder.getValue(name);
 	}
@@ -516,4 +526,20 @@ public class Job {
 		setProperty(JOB_CAN_BE_DOWNLOADED, b);
 	}
 
+	public void setHaasTemplateId(long id) {
+		setProperty(JOB_HAAS_TEMPLATE_ID, id);
+	}
+
+	public long getHaasTemplateId() {
+		return getSafeTemplateId(getProperty(JOB_HAAS_TEMPLATE_ID));
+	}
+
+	private long getSafeTemplateId(final String value) {
+		if (value != null) {
+			return Long.parseLong(value);
+		} 
+		
+		return 4;  // FIXME enum defined somewhere else in SPIM_WORKFLOW(4) hpc-workflow-manager-client/src/main/java/cz/it4i/fiji/haas_spim_benchmark/ui/NewJobController.java
+	}
+	
 }

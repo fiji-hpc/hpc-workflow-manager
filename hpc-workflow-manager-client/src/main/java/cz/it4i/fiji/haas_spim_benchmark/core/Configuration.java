@@ -10,18 +10,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class Configuration {
+	
+	private Configuration(){
+		// Private constructor.
+	}
 
-	private final static Logger log = LoggerFactory.getLogger(
+	private static final Logger log = LoggerFactory.getLogger(
 		Configuration.class);
 
 	private static Properties properties;
 
-	private static int HAAS_UPDATE_TIMEOUT = 30000;
-	private static int HAAS_CLUSTER_NODE_TYPE = 7;
-	private static int HAAS_TEMPLATE_ID = 4;
-	private static String HAAS_PROJECT_ID = "DD-18-42";
-	private static int WALLTIME = 3600; // Walltime in seconds
-	private static String BDS_ADDRESS = "http://julius2.it4i.cz/";
+	private static final int HAAS_UPDATE_TIMEOUT = 30000;
+	private static final int HAAS_CLUSTER_NODE_TYPE = 7;
+	private static final int HAAS_TEMPLATE_ID = 4;
+	private static final String HAAS_PROJECT_ID = "DD-18-42";
+	private static final int WALLTIME = 3600; // Walltime in seconds
+	private static final String BDS_ADDRESS = "http://julius2.it4i.cz/";
 
 	private static Properties getProperties() throws IOException {
 		if (properties == null) {
@@ -72,7 +76,7 @@ public class Configuration {
 	private static int getOrDefault(String name, int def) {
 		try {
 			return Optional.ofNullable(getProperties().getProperty(name)).map(
-				val -> Integer.parseInt(val)).orElse(def);
+				Integer::parseInt).orElse(def);
 		}
 		catch (IOException e) {
 			log.error(e.getMessage(), e);
