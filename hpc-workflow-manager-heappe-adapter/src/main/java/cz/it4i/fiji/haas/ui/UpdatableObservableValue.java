@@ -1,3 +1,4 @@
+
 package cz.it4i.fiji.haas.ui;
 
 import java.util.function.Function;
@@ -10,22 +11,24 @@ import javafx.beans.value.ObservableValueBase;
 public class UpdatableObservableValue<T> extends ObservableValueBase<T> {
 
 	@SuppressWarnings("unused")
-	private static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas.ui.UpdatableObservableValue.class);
-	
+	private static Logger log = LoggerFactory.getLogger(
+		cz.it4i.fiji.haas.ui.UpdatableObservableValue.class);
+
 	public enum UpdateStatus {
-		Deleted, Updated, NotUpdated
+			DELETED, UPDATED, NOT_UPDATED
 	}
 
 	private final T wrapped;
-	
+
 	private final Function<T, UpdateStatus> updateFunction;
-	
+
 	private final Function<T, Object> stateProvider;
-	
+
 	private Object oldState;
 
-	public UpdatableObservableValue(T wrapped, Function<T, UpdateStatus> updateFunction,
-			Function<T, Object> stateProvider) {
+	public UpdatableObservableValue(T wrapped,
+		Function<T, UpdateStatus> updateFunction, Function<T, Object> stateProvider)
+	{
 		this.wrapped = wrapped;
 		this.updateFunction = updateFunction;
 		this.stateProvider = stateProvider;
@@ -43,20 +46,22 @@ public class UpdatableObservableValue<T> extends ObservableValueBase<T> {
 		Object state = stateProvider.apply(wrapped);
 		boolean fire = true;
 		switch (status) {
-		case NotUpdated:
-			fire = false;
-			if (oldState == null && state != null || oldState != null && (state == null || !oldState.equals(state))) {
-				fire = true;
-			}
+			case NOT_UPDATED:
+				fire = false;
+				if (oldState == null && state != null || oldState != null &&
+					(state == null || !oldState.equals(state)))
+				{
+					fire = true;
+				}
 				//$FALL-THROUGH$
-			case Updated:
-			oldState = state;
-			if (fire) {
-				fireValueChangedEvent();
-			}
+			case UPDATED:
+				oldState = state;
+				if (fire) {
+					fireValueChangedEvent();
+				}
 				//$FALL-THROUGH$
 			default:
-			return status;
+				return status;
 		}
 
 	}
@@ -68,19 +73,15 @@ public class UpdatableObservableValue<T> extends ObservableValueBase<T> {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
+		if (this == obj) return true;
+		if (obj == null) return false;
+		if (getClass() != obj.getClass()) return false;
 		@SuppressWarnings("unchecked")
 		UpdatableObservableValue<T> other = (UpdatableObservableValue<T>) obj;
 		if (wrapped == null) {
-			if (other.wrapped != null)
-				return false;
-		} else if (!wrapped.equals(other.wrapped))
-			return false;
+			if (other.wrapped != null) return false;
+		}
+		else if (!wrapped.equals(other.wrapped)) return false;
 		return true;
 	}
 

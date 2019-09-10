@@ -15,7 +15,7 @@ import javafx.stage.Stage;
 public class LoginViewWindow extends FXFrame<LoginViewController> {
 
 	private PrefService prefService;
-	
+
 	private LoginViewController controller;
 
 	private static final long serialVersionUID = 1L;
@@ -29,36 +29,36 @@ public class LoginViewWindow extends FXFrame<LoginViewController> {
 	public void openWindow() {
 		// Get the previously entered login settings if any:
 		LastFormLoader<BenchmarkSPIMParametersImpl> storeLastForm =
-				new LastFormLoader<>(prefService, "loginSettingsForm", this.getClass());
+			new LastFormLoader<>(prefService, "loginSettingsForm", this.getClass());
 		BenchmarkSPIMParametersImpl oldLoginSettings = storeLastForm.loadLastForm();
-		
+
 		// Open the login window:
 		this.controller = new LoginViewController();
 		final Scene formScene = new Scene(this.controller);
-		final Stage parentStage = new Stage();
-		parentStage.initModality(Modality.APPLICATION_MODAL);
-		parentStage.setResizable(false);
-		parentStage.setTitle("Local ImageJ Server Settings");
-		parentStage.setScene(formScene);
+		final Stage stage = new Stage();
+		stage.initModality(Modality.APPLICATION_MODAL);
+		stage.setResizable(false);
+		stage.setTitle("Local ImageJ Server Settings");
+		stage.setScene(formScene);
 
 		this.controller.setInitialFormValues(oldLoginSettings);
-		
-		parentStage.showAndWait();
-		
+
+		stage.showAndWait();
+
 		BenchmarkSPIMParametersImpl newSettings = this.controller.getParameters();
-		
+
 		// Save the new settings:
 		storeLastForm.storeLastForm(newSettings);
 	}
 
-	public BenchmarkSPIMParametersImpl getParameters(){
+	public BenchmarkSPIMParametersImpl getParameters() {
 		return this.controller.getParameters();
 	}
-	
+
 	public void startJobDetailIfPossible() {
 		this.controller.startJobDetailIfPossible();
 	}
-	
+
 	public void initialize(PrefService newPrefService) {
 		if (this.prefService == null) {
 			this.prefService = newPrefService;

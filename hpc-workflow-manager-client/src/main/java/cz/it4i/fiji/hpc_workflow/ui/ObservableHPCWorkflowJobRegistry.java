@@ -45,17 +45,17 @@ public class ObservableHPCWorkflowJobRegistry extends ObservableValueRegistry<Be
 
 	private static UpdateStatus update(BenchmarkJob t, Executor executor) {
 		if (!t.getDirectory().toFile().isDirectory()) {
-			return UpdateStatus.Deleted;
+			return UpdateStatus.DELETED;
 		}
 		JobState oldState = t.getStateAsync(executor).getNow(null);
 		t.update();
 		JobState newState = t.getStateAsync(executor).getNow(null);
 		if (newState == null) {
-			return UpdateStatus.Updated;
+			return UpdateStatus.UPDATED;
 		}
 
 		UpdateStatus result;
-		result = oldState != newState ? UpdateStatus.Updated : UpdateStatus.NotUpdated;
+		result = oldState != newState ? UpdateStatus.UPDATED : UpdateStatus.NOT_UPDATED;
 		return result;
 	}
 

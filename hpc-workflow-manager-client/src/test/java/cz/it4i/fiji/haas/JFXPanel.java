@@ -15,7 +15,7 @@ public class JFXPanel<T extends Parent> extends javafx.embed.swing.JFXPanel {
 	private static final long serialVersionUID = 1L;
 
 	@SuppressWarnings("unused")
-	private static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas.ui.JFXPanel.class);
+	private static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas.ui.SwingAndJavaFXLinker.class);
 
 	private final T control;
 	

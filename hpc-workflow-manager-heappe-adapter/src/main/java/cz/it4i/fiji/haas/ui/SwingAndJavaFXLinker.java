@@ -1,3 +1,4 @@
+
 package cz.it4i.fiji.haas.ui;
 
 import java.awt.Dimension;
@@ -15,18 +16,21 @@ import javafx.scene.Scene;
  * JFXPanel makes the link between Swing (IJ) and JavaFX plugin.
  */
 
-public class JFXPanel<T extends Parent> extends javafx.embed.swing.JFXPanel {
+public class SwingAndJavaFXLinker<T extends Parent> extends javafx.embed.swing.JFXPanel {
+
 	private static final long serialVersionUID = 1L;
 
 	@SuppressWarnings("unused")
-	private static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas.ui.JFXPanel.class);
+	private static Logger log = LoggerFactory.getLogger(
+		cz.it4i.fiji.haas.ui.SwingAndJavaFXLinker.class);
 
 	private final T control;
 
-	public JFXPanel(Supplier<T> fxSupplier) {
+	public SwingAndJavaFXLinker(Supplier<T> fxSupplier) {
 		Platform.setImplicitExit(false);
 		control = fxSupplier.get();
-		// The call to runLater() avoid a mix between JavaFX thread and Swing thread.
+		// The call to runLater() avoid a mix between JavaFX thread and Swing
+		// thread.
 		try {
 			JavaFXRoutines.runOnFxThread(() -> initFX()).get();
 		}
@@ -43,12 +47,13 @@ public class JFXPanel<T extends Parent> extends javafx.embed.swing.JFXPanel {
 		this.setVisible(true);
 
 		// Resize the JFrame to the JavaFX scene
-		Dimension dim = new Dimension((int) scene.getWidth(), (int) scene.getHeight());
+		Dimension dim = new Dimension((int) scene.getWidth(), (int) scene
+			.getHeight());
 		this.setMinimumSize(dim);
 		this.setMaximumSize(dim);
 		this.setPreferredSize(dim);
 	}
-	
+
 	public T getControl() {
 		return control;
 	}

@@ -1,3 +1,4 @@
+
 package cz.it4i.fiji.haas.ui;
 
 import java.util.HashMap;
@@ -14,9 +15,12 @@ public class ObservableValueAdapter<S, T> implements ObservableValue<T> {
 
 	private final Function<S, T> transformation;
 
-	private final Map<ChangeListener<? super T>, ChangeListener<? super S>> mapOfListeners = new HashMap<>();
+	private final Map<ChangeListener<? super T>, ChangeListener<? super S>> mapOfListeners =
+		new HashMap<>();
 
-	public ObservableValueAdapter(ObservableValue<S> decorated, Function<S, T> map) {
+	public ObservableValueAdapter(ObservableValue<S> decorated,
+		Function<S, T> map)
+	{
 		this.adapted = decorated;
 		this.transformation = map;
 	}
@@ -35,14 +39,9 @@ public class ObservableValueAdapter<S, T> implements ObservableValue<T> {
 
 	@Override
 	public void addListener(ChangeListener<? super T> listener) {
-		ChangeListener<S> wrapped = new ChangeListener<S>() {
-
-			@Override
-			public void changed(ObservableValue<? extends S> observable, S oldValue, S newValue) {
-				listener.changed(ObservableValueAdapter.this, transformation.apply(oldValue),
-						transformation.apply(newValue));
-			}
-		};
+		ChangeListener<S> wrapped = (ObservableValue<? extends S> observable,
+			S oldValue, S newValue) -> listener.changed(ObservableValueAdapter.this,
+				transformation.apply(oldValue), transformation.apply(newValue));
 		mapOfListeners.put(listener, wrapped);
 		adapted.addListener(wrapped);
 

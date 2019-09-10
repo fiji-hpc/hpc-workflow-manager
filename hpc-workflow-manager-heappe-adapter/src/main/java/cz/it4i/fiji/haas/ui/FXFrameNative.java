@@ -14,7 +14,7 @@ public abstract class FXFrameNative<T extends Parent&CloseableControl> {
 
 	@SuppressWarnings("unused")
 	private static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas.ui.FXFrameNative.class);
-	private JFXPanel<T> fxPanel;
+	private SwingAndJavaFXLinker<T> fxPanel;
 	private Stage stage;
 
 
@@ -41,7 +41,7 @@ public abstract class FXFrameNative<T extends Parent&CloseableControl> {
 	
 
 
-	public JFXPanel<T> getFxPanel() {
+	public SwingAndJavaFXLinker<T> getFxPanel() {
 		return fxPanel;
 	}
 }

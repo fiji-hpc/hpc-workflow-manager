@@ -14,9 +14,9 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -35,20 +35,21 @@ import cz.it4i.fiji.haas_java_client.ProgressNotifier;
 import cz.it4i.fiji.haas_java_client.TransferFileProgressForHaaSClient;
 import cz.it4i.fiji.haas_java_client.UploadingFile;
 import cz.it4i.fiji.haas_java_client.UploadingFileData;
+import cz.it4i.fiji.haas_java_client.proxy.JobFileContentExt;
 import cz.it4i.fiji.scpclient.TransferFileProgress;
 
 /***
  * TASK - napojit na UI
  * 
  * @author koz01
- *
  */
 public class Job {
 
 	public static boolean isValidJobPath(Path path) {
 		try {
 			getJobId(path);
-		} catch (NumberFormatException e) {
+		}
+		catch (NumberFormatException e) {
 			return false;
 		}
 		return path.resolve(JOB_INFO_FILENAME).toFile().isFile();
@@ -67,16 +68,19 @@ public class Job {
 	private static final String JOB_IS_DOWNLOADED = "job.downloaded";
 
 	private static final String JOB_IS_UPLOADED = "job.uploaded";
-	
+
 	private static final String JOB_HAAS_TEMPLATE_ID = "job.haas_template_id";
 
-	private static final String JOB_OUTPUT_DIRECTORY_PATH = "job.output_directory_path";
+	private static final String JOB_OUTPUT_DIRECTORY_PATH =
+		"job.output_directory_path";
 
-	private static final String JOB_INPUT_DIRECTORY_PATH = "job.input_directory_path";
+	private static final String JOB_INPUT_DIRECTORY_PATH =
+		"job.input_directory_path";
 
 	private static final String JOB_USE_DEMO_DATA = "job.use_demo_data";
 
-	private static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas.Job.class);
+	private static Logger log = LoggerFactory.getLogger(
+		cz.it4i.fiji.haas.Job.class);
 
 	private Path jobDir;
 
@@ -98,15 +102,16 @@ public class Job {
 
 	private boolean useDemoData;
 
-	
-
-	public Job(JobManager4Job jobManager, JobSettings jobSettings, Path basePath, Supplier<HaaSClient> haasClientSupplier,
-			Function<Path, Path> inputDirectoryProvider, Function<Path, Path> outputDirectoryProvider)
-			throws IOException {
+	public Job(JobManager4Job jobManager, JobSettings jobSettings, Path basePath,
+		Supplier<HaaSClient> haasClientSupplier,
+		UnaryOperator<Path> inputDirectoryProvider,
+		UnaryOperator<Path> outputDirectoryProvider) throws IOException
+	{
 		this(jobManager, haasClientSupplier);
 		HaaSClient client = getHaaSClient();
 		long id = client.createJob(jobSettings, Collections.emptyList());
-		setJobDirectory(basePath.resolve("" + id), inputDirectoryProvider, outputDirectoryProvider);
+		setJobDirectory(basePath.resolve("" + id), inputDirectoryProvider,
+			outputDirectoryProvider);
 		propertyHolder = new PropertyHolder(jobDir.resolve(JOB_INFO_FILENAME));
 		Files.createDirectory(this.jobDir);
 		storeInputOutputDirectory();
@@ -114,15 +119,21 @@ public class Job {
 		setHaasTemplateId(jobSettings.getTemplateId());
 	}
 
-	public Job(JobManager4Job jobManager, Path jobDirectory, Supplier<HaaSClient> haasClientSupplier) {
+	public Job(JobManager4Job jobManager, Path jobDirectory,
+		Supplier<HaaSClient> haasClientSupplier)
+	{
 		this(jobManager, haasClientSupplier);
-		propertyHolder = new PropertyHolder(jobDirectory.resolve(JOB_INFO_FILENAME));
+		propertyHolder = new PropertyHolder(jobDirectory.resolve(
+			JOB_INFO_FILENAME));
 		useDemoData = getSafeBoolean(propertyHolder.getValue(JOB_USE_DEMO_DATA));
-		setJobDirectory(jobDirectory, jd -> useDemoData ? null : getDataDirectory(JOB_INPUT_DIRECTORY_PATH, jd),
-				jd -> getDataDirectory(JOB_OUTPUT_DIRECTORY_PATH, jd));
+		setJobDirectory(jobDirectory, jd -> useDemoData ? null : getDataDirectory(
+			JOB_INPUT_DIRECTORY_PATH, jd), jd -> getDataDirectory(
+				JOB_OUTPUT_DIRECTORY_PATH, jd));
 	}
 
-	private Job(JobManager4Job jobManager, Supplier<HaaSClient> haasClientSupplier) {
+	private Job(JobManager4Job jobManager,
+		Supplier<HaaSClient> haasClientSupplier)
+	{
 		this.haasClientSupplier = haasClientSupplier;
 		this.jobManager = jobManager;
 	}
@@ -131,7 +142,8 @@ public class Job {
 		setProperty(JOB_NEEDS_UPLOAD, true);
 		try {
 			this.synchronization.startUpload();
-		} catch (IOException e) {
+		}
+		catch (IOException e) {
 			log.error(e.getMessage(), e);
 			throw new RuntimeException(e);
 		}
@@ -141,16 +153,19 @@ public class Job {
 		setProperty(JOB_NEEDS_UPLOAD, false);
 		try {
 			this.synchronization.stopUpload();
-		} catch (IOException e) {
+		}
+		catch (IOException e) {
 			log.error(e.getMessage(), e);
 			throw new RuntimeException(e);
 		}
 	}
 
-	public CompletableFuture<?> startDownload(Predicate<String> predicate) throws IOException {
-		Collection<String> files = getHaaSClient().getChangedFiles(jobId).stream().filter(predicate)
-				.collect(Collectors.toList());
-		if(files.isEmpty()) {
+	public CompletableFuture<?> startDownload(Predicate<String> predicate)
+		throws IOException
+	{
+		Collection<String> files = getHaaSClient().getChangedFiles(jobId).stream()
+			.filter(predicate).collect(Collectors.toList());
+		if (files.isEmpty()) {
 			return CompletableFuture.completedFuture(null);
 		}
 		setProperty(JOB_NEEDS_DOWNLOAD, true);
@@ -161,7 +176,8 @@ public class Job {
 		setProperty(JOB_NEEDS_DOWNLOAD, false);
 		try {
 			this.synchronization.stopDownload();
-		} catch (IOException e) {
+		}
+		catch (IOException e) {
 			log.error(e.getMessage(), e);
 			throw new RuntimeException(e);
 		}
@@ -180,9 +196,10 @@ public class Job {
 	}
 
 	public boolean canBeDownloaded() {
-		return true;//Boolean.parseBoolean(getProperty(JOB_CAN_BE_DOWNLOADED));
+		return true; // FIXME
+									// Boolean.parseBoolean(getProperty(JOB_CAN_BE_DOWNLOADED));
 	}
-	
+
 	public void setUploaded(boolean b) {
 		setProperty(JOB_IS_UPLOADED, b);
 	}
@@ -219,29 +236,37 @@ public class Job {
 		uploadFiles(Arrays.asList(file), notifier);
 	}
 
-	public void uploadFiles(Collection<String> filesNames, ProgressNotifier notifier) {
-		Collection<UploadingFile> files = filesNames.stream()
-				.map(file -> HaaSClient.getUploadingFile(jobDir.resolve(file))).collect(Collectors.toList());
+	public void uploadFiles(Collection<String> filesNames,
+		ProgressNotifier notifier)
+	{
+		Collection<UploadingFile> files = filesNames.stream().map(file -> HaaSClient
+			.getUploadingFile(jobDir.resolve(file))).collect(Collectors.toList());
 		List<Long> totalSizes = files.stream().map(f -> {
 			try {
 				return f.getLength();
-			} catch (IOException e1) {
-				throw new RuntimeException(e1);
+			}
+			catch (IOException exception) {
+				throw new RuntimeException(exception);
 			}
 		}).collect(Collectors.toList());
-		long totalSize = totalSizes.stream().mapToLong(l -> l.longValue()).sum();
-		TransferFileProgressForHaaSClient progress = new TransferFileProgressForHaaSClient(totalSize, notifier);
+		long totalSize = totalSizes.stream().mapToLong(Long::longValue).sum();
+		TransferFileProgressForHaaSClient progress =
+			new TransferFileProgressForHaaSClient(totalSize, notifier);
 
 		HaaSClient client = getHaaSClient();
-		try (HaaSFileTransfer transfer = client.startFileTransfer(getId(), progress)) {
+		try (HaaSFileTransfer transfer = client.startFileTransfer(getId(),
+			progress))
+		{
 			int index = 0;
 			for (UploadingFile file : files) {
 				String item;
 				progress.startNewFile(totalSizes.get(index));
-				notifier.addItem(item = "Uploading file: " + file.getName());
+				item = "Uploading file: " + file.getName();
+				notifier.addItem(item);
 				try {
 					transfer.upload(file);
-				} catch (InterruptedIOException e) {
+				}
+				catch (InterruptedIOException e) {
 					notifier.itemDone(item);
 					return;
 				}
@@ -258,47 +283,58 @@ public class Job {
 		setCanBeDownloaded(true);
 	}
 
-	synchronized public long getId() {
+	public synchronized long getId() {
 		if (jobId == null) {
 			jobId = getJobId(jobDir);
 		}
 		return jobId;
 	}
-	
+
 	public boolean isUseDemoData() {
 		return useDemoData;
 	}
 
-	public Path storeDataInWorkdirectory(UploadingFile uploadingFile) throws IOException {
+	public Path storeDataInWorkdirectory(UploadingFile uploadingFile)
+		throws IOException
+	{
 		Path result;
 		try (InputStream is = uploadingFile.getInputStream()) {
-			Files.copy(is, result = jobDir.resolve(uploadingFile.getName()));
+			result = jobDir.resolve(uploadingFile.getName());
+			Files.copy(is, result);
 		}
 		return result;
 	}
 
-	synchronized public void download(Predicate<String> predicate, ProgressNotifier notifier) {
-		List<String> files = getHaaSClient().getChangedFiles(jobId).stream().filter(predicate)
-				.collect(Collectors.toList());
-		try (HaaSFileTransfer transfer = haasClientSupplier.get().startFileTransfer(getId(),
-				HaaSClient.DUMMY_TRANSFER_FILE_PROGRESS)) {
+	public synchronized void download(Predicate<String> predicate,
+		ProgressNotifier notifier)
+	{
+		List<String> files = getHaaSClient().getChangedFiles(jobId).stream().filter(
+			predicate).collect(Collectors.toList());
+		try (HaaSFileTransfer transfer = haasClientSupplier.get().startFileTransfer(
+			getId(), HaaSClient.DUMMY_TRANSFER_FILE_PROGRESS))
+		{
 			List<Long> fileSizes;
 			try {
 				fileSizes = transfer.obtainSize(files);
-			} catch (InterruptedIOException e1) {
+			}
+			catch (InterruptedIOException e1) {
 				return;
 			}
-			final long totalFileSize = fileSizes.stream().mapToLong(i -> i.longValue()).sum();
-			TransferFileProgressForHaaSClient progress = new TransferFileProgressForHaaSClient(totalFileSize, notifier);
+			final long totalFileSize = fileSizes.stream().mapToLong(Long::longValue)
+				.sum();
+			TransferFileProgressForHaaSClient progress =
+				new TransferFileProgressForHaaSClient(totalFileSize, notifier);
 			transfer.setProgress(progress);
 			int idx = 0;
 			for (String fileName : files) {
 				String item;
-				progress.addItem(item = fileName);
+				item = fileName;
+				progress.addItem(item);
 				progress.startNewFile(fileSizes.get(idx));
 				try {
 					transfer.download(fileName, jobDir);
-				} catch (InterruptedIOException e) {
+				}
+				catch (InterruptedIOException e) {
 					progress.itemDone(item);
 					return;
 				}
@@ -325,11 +361,13 @@ public class Job {
 	}
 
 	public List<String> getOutput(Iterable<JobSynchronizableFile> output) {
-		HaaSClient.SynchronizableFiles taskFileOffset = new HaaSClient.SynchronizableFiles();
+		HaaSClient.SynchronizableFiles taskFileOffset =
+			new HaaSClient.SynchronizableFiles();
 		long taskId = (Long) getJobInfo().getTasks().toArray()[0];
-		output.forEach(file -> taskFileOffset.addFile(taskId, file.getType(), file.getOffset()));
-		return getHaaSClient().downloadPartsOfJobFiles(jobId, taskFileOffset).stream().map(f -> f.getContent())
-				.collect(Collectors.toList());
+		output.forEach(file -> taskFileOffset.addFile(taskId, file.getType(), file
+			.getOffset()));
+		return getHaaSClient().downloadPartsOfJobFiles(jobId, taskFileOffset)
+			.stream().map(JobFileContentExt::getContent).collect(Collectors.toList());
 	}
 
 	public InputStream openLocalFile(String name) throws IOException {
@@ -347,11 +385,11 @@ public class Job {
 	public void setProperty(String name, int value) {
 		propertyHolder.setValue(name, "" + value);
 	}
-	
+
 	public void setProperty(String name, long value) {
 		propertyHolder.setValue(name, "" + value);
 	}
-	
+
 	public String getProperty(String name) {
 		return propertyHolder.getValue(name);
 	}
@@ -365,15 +403,17 @@ public class Job {
 	}
 
 	public boolean delete() {
-		boolean result;
-		if ((result = jobManager.deleteJob(this)) && Files.isDirectory(jobDir)) {
+		boolean result = jobManager.deleteJob(this);
+		if ((result) && jobDir.toFile().isDirectory()) {
 			List<Path> pathsToDelete;
 			try {
-				pathsToDelete = Files.walk(jobDir).sorted(Comparator.reverseOrder()).collect(Collectors.toList());
+				pathsToDelete = Files.walk(jobDir).sorted(Comparator.reverseOrder())
+					.collect(Collectors.toList());
 				for (Path path : pathsToDelete) {
 					Files.deleteIfExists(path);
 				}
-			} catch (IOException e) {
+			}
+			catch (IOException e) {
 				log.error(e.getMessage(), e);
 			}
 
@@ -392,10 +432,12 @@ public class Job {
 	public List<Long> getFileSizes(List<String> names) {
 
 		try (HaaSFileTransfer transfer = getHaaSClient().startFileTransfer(getId(),
-				HaaSClient.DUMMY_TRANSFER_FILE_PROGRESS)) {
+			HaaSClient.DUMMY_TRANSFER_FILE_PROGRESS))
+		{
 			try {
 				return transfer.obtainSize(names);
-			} catch (InterruptedIOException e) {
+			}
+			catch (InterruptedIOException e) {
 				return Collections.emptyList();
 			}
 		}
@@ -403,7 +445,8 @@ public class Job {
 
 	public List<String> getFileContents(List<String> logs) {
 		try (HaaSFileTransfer transfer = getHaaSClient().startFileTransfer(getId(),
-				HaaSClient.DUMMY_TRANSFER_FILE_PROGRESS)) {
+			HaaSClient.DUMMY_TRANSFER_FILE_PROGRESS))
+		{
 			return transfer.getContent(logs);
 		}
 	}
@@ -433,7 +476,9 @@ public class Job {
 	}
 
 	public void createEmptyFile(String fileName) throws InterruptedIOException {
-		try(HaaSFileTransfer transfer = haasClientSupplier.get().startFileTransfer(getId())) {
+		try (HaaSFileTransfer transfer = haasClientSupplier.get().startFileTransfer(
+			getId()))
+		{
 			transfer.upload(new UploadingFileData(fileName));
 		}
 	}
@@ -469,23 +514,24 @@ public class Job {
 	}
 
 	private void setJobDirectory(final Path jobDirectory,
-		final Function<Path, Path> inputDirectoryProvider,
-		final Function<Path, Path> outputDirectoryProvider)
+		final UnaryOperator<Path> inputDirectoryProvider,
+		final UnaryOperator<Path> outputDirectoryProvider)
 	{
 		this.jobDir = jobDirectory;
 
 		try {
+			this.inputDirectory = inputDirectoryProvider.apply(jobDir);
+			this.outputDirectory = outputDirectoryProvider.apply(jobDir);
 			this.synchronization = new Synchronization(() -> startFileTransfer(
-				HaaSClient.DUMMY_TRANSFER_FILE_PROGRESS), jobDir, this.inputDirectory =
-					inputDirectoryProvider.apply(jobDir), this.outputDirectory =
-						outputDirectoryProvider.apply(jobDir), () -> {
-							setProperty(JOB_NEEDS_UPLOAD, false);
-							setUploaded(true);
-						}, () -> {
-							setDownloaded(true);
-							setProperty(JOB_NEEDS_DOWNLOAD, false);
-							setCanBeDownloaded(false);
-						}, p -> jobManager.canUpload(Job.this, p));
+				HaaSClient.DUMMY_TRANSFER_FILE_PROGRESS), jobDir, this.inputDirectory,
+				this.outputDirectory, () -> {
+					setProperty(JOB_NEEDS_UPLOAD, false);
+					setUploaded(true);
+				}, () -> {
+					setDownloaded(true);
+					setProperty(JOB_NEEDS_DOWNLOAD, false);
+					setCanBeDownloaded(false);
+				}, p -> jobManager.canUpload(Job.this, p));
 		}
 		catch (final IOException e) {
 			log.error(e.getMessage(), e);
@@ -537,9 +583,10 @@ public class Job {
 	private long getSafeTemplateId(final String value) {
 		if (value != null) {
 			return Long.parseLong(value);
-		} 
-		
-		return 4;  // FIXME enum defined somewhere else in SPIM_WORKFLOW(4) hpc-workflow-manager-client/src/main/java/cz/it4i/fiji/hpc_workflow/ui/NewJobController.java
+		}
+
+		return 4; // FIXME enum defined somewhere else in SPIM_WORKFLOW(4)
+							// hpc-workflow-manager-client/src/main/java/cz/it4i/fiji/haas_spim_benchmark/ui/NewJobController.java
 	}
-	
+
 }

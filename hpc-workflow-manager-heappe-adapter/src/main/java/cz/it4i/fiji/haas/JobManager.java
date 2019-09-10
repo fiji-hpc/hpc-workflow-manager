@@ -1,3 +1,4 @@
+
 package cz.it4i.fiji.haas;
 
 import java.io.Closeable;
@@ -8,7 +9,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.function.BiPredicate;
-import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,14 +23,17 @@ import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
 public class JobManager implements Closeable {
 
 	interface JobManager4Job {
+
 		boolean deleteJob(Job job);
 
 		boolean canUpload(Job j, Path p);
 	}
 
-	private static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas.JobManager.class);
+	private static Logger log = LoggerFactory.getLogger(
+		cz.it4i.fiji.haas.JobManager.class);
 
-	private static final BiPredicate<Job, Path> DUMMY_UPLOAD_FILTER = (X, Y) -> true;
+	private static final BiPredicate<Job, Path> DUMMY_UPLOAD_FILTER = (X,
+		Y) -> true;
 
 	private final Path workDirectory;
 
@@ -45,9 +49,9 @@ public class JobManager implements Closeable {
 
 		@Override
 		public boolean deleteJob(Job job) {
-			//do not remove Job from server according to issue #1125
+			// do not remove Job from server according to issue #1125
 			job.updateInfo();
-			if(job.getState() == JobState.Running) {
+			if (job.getState() == JobState.Running) {
 				job.cancelJob();
 			}
 			return jobs.remove(job);
@@ -64,12 +68,15 @@ public class JobManager implements Closeable {
 		this.settings = settings;
 	}
 
-	public Job createJob(JobSettings jobSettings ,Function<Path, Path> inputDirectoryProvider, Function<Path, Path> outputDirectoryProvider)
-			throws IOException {
+	public Job createJob(JobSettings jobSettings,
+		UnaryOperator<Path> inputDirectoryProvider,
+		UnaryOperator<Path> outputDirectoryProvider) throws IOException
+	{
 		Job result;
 		initJobsIfNecessary();
-		jobs.add(result = new Job(remover, jobSettings, workDirectory, this::getHaasClient,
-				inputDirectoryProvider, outputDirectoryProvider));
+		result = new Job(remover, jobSettings, workDirectory, this::getHaasClient,
+			inputDirectoryProvider, outputDirectoryProvider);
+		jobs.add(result);
 		return result;
 	}
 
@@ -87,9 +94,9 @@ public class JobManager implements Closeable {
 	}
 
 	@Override
-	synchronized public void close() {
-		if(jobs != null) {
-			jobs.forEach(job -> job.close());
+	public synchronized void close() {
+		if (jobs != null) {
+			jobs.forEach(Job::close);
 		}
 	}
 
@@ -100,20 +107,22 @@ public class JobManager implements Closeable {
 		return haasClient;
 	}
 
-	synchronized private void initJobsIfNecessary() {
+	private synchronized void initJobsIfNecessary() {
 		if (jobs == null) {
 			jobs = new LinkedList<>();
 			try {
-				Files.list(this.workDirectory).filter(p -> Files.isDirectory(p) && Job.isValidJobPath(p)).forEach(p -> {
-					jobs.add(new Job(remover, p, this::getHaasClient));
-				});
-			} catch (IOException e) {
+				Files.list(this.workDirectory).filter(p -> p.toFile().isDirectory() &&
+					Job.isValidJobPath(p)).forEach(p -> jobs.add(new Job(remover, p,
+						this::getHaasClient)));
+			}
+			catch (IOException e) {
 				log.error(e.getMessage(), e);
 			}
 		}
 	}
 
 	public static class JobSynchronizableFile {
+
 		private final SynchronizableFileType type;
 		private final long offset;
 

@@ -35,8 +35,7 @@ public abstract class ObservableValueRegistry<K, V extends UpdatableObservableVa
 	}
 	
 	public synchronized V addIfAbsent(K key) {
-		V uov = map.computeIfAbsent(key, k -> constructObservableValue(k));
-		return uov;
+		return map.computeIfAbsent(key, k -> constructObservableValue(k));
 	}
 	
 	public synchronized V get(K key) {
@@ -49,13 +48,13 @@ public abstract class ObservableValueRegistry<K, V extends UpdatableObservableVa
 	
 	public void update() {
 		for (V value : new LinkedList<>(map.values())) {
-			if (value.update() == UpdateStatus.Deleted) {
+			if (value.update() == UpdateStatus.DELETED) {
 				removeConsumer.accept(value.getValue());
 			}
 		}
 	}
 	
-	abstract protected V constructObservableValue(K k);
+	protected abstract V constructObservableValue(K k);
 
 	protected V remove(K key) {
 		return map.remove(key);

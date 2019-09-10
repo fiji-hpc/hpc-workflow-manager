@@ -110,8 +110,10 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 
 	@Override
 	public void init(final Window parameter) {
-		ProgressDialogViewWindow progressDialogViewWindow = new ProgressDialogViewWindow();
-		JavaFXRoutines.runOnFxThread(() -> progressDialogViewWindow.openWindow("Downloading tasks", true));
+		ProgressDialogViewWindow progressDialogViewWindow =
+			new ProgressDialogViewWindow();
+		JavaFXRoutines.runOnFxThread(() -> progressDialogViewWindow.openWindow(
+			"Downloading tasks", null, true));
 		executorServiceWS.execute(() -> {
 
 			try {
@@ -120,13 +122,13 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 				if (jobType == WorkflowType.SPIM_WORKFLOW) {
 					setTabAvailability(macroProgressTab, true);
 					removeTab(macroProgressTab);
-					
+
 					// SPIM-only related initializations:
 					progressControl.init(parameter);
 					taskList = job.getObservableTaskList();
 					taskList.subscribe(taskListListener);
 					progressControl.setObservable(taskList);
-					
+
 					errorOutput = job.getObservableSnakemakeOutput(
 						SynchronizableFileType.StandardErrorFile);
 					errorOutput.addListener(errorOutputListener);
@@ -137,15 +139,16 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 					setTabAvailability(progressTab, true);
 
 					removeTab(progressTab);
-					JavaFXRoutines.runOnFxThread(() -> snakemakeOutputTab.setText("Error output"));
-					
+					JavaFXRoutines.runOnFxThread(() -> snakemakeOutputTab.setText(
+						"Error output"));
+
 					// Macro-only related initializations:
 					macroProgressControl.init(parameter);
 					macroProgressControl.setJobParameter(job);
 
 					JavaFXRoutines.runOnFxThread(progressDialogViewWindow::closeWindow);
 				}
-				
+
 				standardOutput = job.getObservableSnakemakeOutput(
 					SynchronizableFileType.StandardOutputFile);
 				standardOutput.addListener(standardOutputListener);
@@ -159,8 +162,7 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 					fileTransferList.isEmpty());
 				dataUploadControl.setObservable(fileTransferList);
 
-				if (job.getValue().getState() == JobState.Disposed)
-				{
+				if (job.getValue().getState() == JobState.Disposed) {
 					log.info("Job {} state has been resolved as Disposed.", job.getValue()
 						.getId());
 				}
@@ -175,7 +177,8 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 						@Override
 						public void onChanged(Change<? extends Task> c) {
 							taskList.unsubscribe(this);
-							JavaFXRoutines.runOnFxThread(progressDialogViewWindow::closeWindow);
+							JavaFXRoutines.runOnFxThread(
+								progressDialogViewWindow::closeWindow);
 						}
 					};
 				WorkflowType jobType = job.getWorkflowType();
@@ -217,9 +220,9 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 		tab.setDisable(isDisabled);
 		setActiveFirstVisibleTab(false);
 	}
-	
+
 	private void removeTab(final Tab tab) {
-		JavaFXRoutines.runOnFxThread( () -> this.getTabs().remove(tab));
+		JavaFXRoutines.runOnFxThread(() -> this.getTabs().remove(tab));
 	}
 
 	private void setActiveFirstVisibleTab(final boolean force) {

@@ -1,8 +1,8 @@
 
-package cz.it4i.fiji.hpc_workflow.ui;
+package cz.it4i.fiji.haas_spim_benchmark.ui;
 
-import static cz.it4i.fiji.hpc_workflow.core.Configuration.getHaasUpdateTimeout;
-import static cz.it4i.fiji.hpc_workflow.core.Constants.CONFIG_YAML;
+import static cz.it4i.fiji.haas_spim_benchmark.core.Configuration.getHaasUpdateTimeout;
+import static cz.it4i.fiji.haas_spim_benchmark.core.Constants.CONFIG_YAML;
 
 import java.awt.Window;
 import java.io.BufferedReader;
@@ -52,13 +52,13 @@ import cz.it4i.fiji.haas.ui.TableCellAdapter.TableCellUpdater;
 import cz.it4i.fiji.haas.ui.TableViewContextMenu;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.UploadingFile;
-import cz.it4i.fiji.hpc_workflow.core.BenchmarkJobManager;
-import cz.it4i.fiji.hpc_workflow.core.Constants;
-import cz.it4i.fiji.hpc_workflow.core.FXFrameExecutorService;
-import cz.it4i.fiji.hpc_workflow.core.ObservableHPCWorkflowJob;
-import cz.it4i.fiji.hpc_workflow.core.BenchmarkJobManager.BenchmarkJob;
-import cz.it4i.fiji.hpc_workflow.core.ObservableHPCWorkflowJob.TransferProgress;
-import cz.it4i.fiji.hpc_workflow.ui.NewJobController.WorkflowType;
+import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager;
+import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.BenchmarkJob;
+import cz.it4i.fiji.haas_spim_benchmark.core.Constants;
+import cz.it4i.fiji.haas_spim_benchmark.core.FXFrameExecutorService;
+import cz.it4i.fiji.haas_spim_benchmark.core.ObservableBenchmarkJob;
+import cz.it4i.fiji.haas_spim_benchmark.core.ObservableBenchmarkJob.TransferProgress;
+import cz.it4i.fiji.haas_spim_benchmark.ui.NewJobController.WorkflowType;
 import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
@@ -71,14 +71,15 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Region;
+import javafx.stage.Stage;
 import mpicbg.spim.data.SpimDataException;
 
-public class HPCWorkflowControl extends BorderPane implements
+public class BenchmarkSPIMControl extends BorderPane implements
 	CloseableControl, InitiableControl
 {
 
 	@FXML
-	private TableView<ObservableHPCWorkflowJob> jobs;
+	private TableView<ObservableBenchmarkJob> jobs;
 
 	private final BenchmarkJobManager manager;
 
@@ -95,16 +96,16 @@ public class HPCWorkflowControl extends BorderPane implements
 
 	private Timer timer;
 
-	private ObservableHPCWorkflowJobRegistry registry;
+	private ObservableBenchmarkJobRegistry registry;
 
 	private final JobStateNameProvider provider = new JobStateNameProvider();
 
 	private boolean closed;
 
 	private static Logger log = LoggerFactory.getLogger(
-		cz.it4i.fiji.hpc_workflow.ui.HPCWorkflowControl.class);
+		cz.it4i.fiji.haas_spim_benchmark.ui.BenchmarkSPIMControl.class);
 
-	public HPCWorkflowControl(BenchmarkJobManager manager) {
+	public BenchmarkSPIMControl(BenchmarkJobManager manager) {
 		this.manager = manager;
 		JavaFXRoutines.initRootAndController("BenchmarkSPIM.fxml", this);
 		jobs.setPlaceholder(new Label(
@@ -148,15 +149,17 @@ public class HPCWorkflowControl extends BorderPane implements
 	}
 
 	private void initMenu() {
-		TableViewContextMenu<ObservableHPCWorkflowJob> menu =
+		TableViewContextMenu<ObservableBenchmarkJob> menu =
 			new TableViewContextMenu<>(jobs);
 		menu.addItem("Create a new job", x -> askForCreateJob(), j -> true);
 		menu.addSeparator();
 
-		menu.addItem("Start job", job -> executeWSCallAsync("Starting job", p -> {
-			job.getValue().startJob(p);
-			job.getValue().update();
-		}), job -> JavaFXRoutines.notNullValue(job, j -> (j
+		menu.addItem("Start job", job -> {
+			executeWSCallAsync("Starting job", p -> {
+				job.getValue().startJob(p);
+				job.getValue().update();
+			});
+		}, job -> JavaFXRoutines.notNullValue(job, j -> (j
 			.getState() == JobState.Configuring || j
 				.getState() == JobState.Finished || j.getState() == JobState.Failed || j
 					.getState() == JobState.Canceled) && checkIfAnythingHasBeenUploaded(
@@ -228,7 +231,7 @@ public class HPCWorkflowControl extends BorderPane implements
 		return true;
 	}
 
-	private boolean createTheMacroScript(ObservableHPCWorkflowJob job) {
+	private boolean createTheMacroScript(ObservableBenchmarkJob job) {
 		boolean isSuccessfull = true;
 		if (job.getWorkflowType() == WorkflowType.MACRO_WORKFLOW) {
 			String userScriptFilePath = job.getInputDirectory().toString() +
@@ -286,7 +289,7 @@ public class HPCWorkflowControl extends BorderPane implements
 		NewJobWindow newJobWindow = new NewJobWindow(null);
 		ModalDialogs.doModal(newJobWindow, WindowConstants.DISPOSE_ON_CLOSE);
 		newJobWindow.setCreatePressedNotifier(() -> executeWSCallAsync(
-			"Creating job", false, new PJobAction()
+			"Creating job", false, new P_JobAction()
 			{
 
 				@Override
@@ -338,13 +341,13 @@ public class HPCWorkflowControl extends BorderPane implements
 	{
 		BenchmarkJob bj = manager.createJob(inputProvider, outputProvider,
 			numberOfNodes, haasTemplateId);
-		ObservableHPCWorkflowJob obj = registry.addIfAbsent(bj);
+		ObservableBenchmarkJob obj = registry.addIfAbsent(bj);
 		addJobToItems(obj);
 		jobs.refresh();
 		return bj;
 	}
 
-	private synchronized void addJobToItems(ObservableHPCWorkflowJob obj) {
+	private synchronized void addJobToItems(ObservableBenchmarkJob obj) {
 		jobs.getItems().add(obj);
 	}
 
@@ -360,12 +363,12 @@ public class HPCWorkflowControl extends BorderPane implements
 		});
 	}
 
-	private void executeWSCallAsync(String title, PJobAction action) {
+	private void executeWSCallAsync(String title, P_JobAction action) {
 		executeWSCallAsync(title, true, action);
 	}
 
 	private void executeWSCallAsync(String title, boolean update,
-		PJobAction action)
+		P_JobAction action)
 	{
 		ProgressDialogViewWindow progressDialogViewWindow =
 			new ProgressDialogViewWindow();
@@ -392,7 +395,7 @@ public class HPCWorkflowControl extends BorderPane implements
 		ProgressDialogViewWindow progressDialogViewWindow =
 			new ProgressDialogViewWindow();
 		JavaFXRoutines.runOnFxThread(() -> progressDialogViewWindow.openWindow(
-			"Connecting to HPC", null, true));
+			"Connecting to HPC", null , true));
 
 		final CountDownLatch latch = new CountDownLatch(1);
 		executorServiceWS.execute(() -> {
@@ -431,7 +434,7 @@ public class HPCWorkflowControl extends BorderPane implements
 				.getItems());
 
 			executorServiceFX.execute(() -> {
-				for (ObservableHPCWorkflowJob value : registry.getAllItems()) {
+				for (ObservableBenchmarkJob value : registry.getAllItems()) {
 					if (!actual.contains(value)) {
 						addJobToItems(value);
 					}
@@ -442,7 +445,7 @@ public class HPCWorkflowControl extends BorderPane implements
 	}
 
 	private void initTable() {
-		registry = new ObservableHPCWorkflowJobRegistry(this::remove,
+		registry = new ObservableBenchmarkJobRegistry(this::remove,
 			executorServiceJobState, executorServiceFX);
 		setCellValueFactory(0, j -> j.getId() + "");
 		setCellValueFactoryCompletable(1, j -> j.getStateAsync(
@@ -494,19 +497,19 @@ public class HPCWorkflowControl extends BorderPane implements
 		Function<BenchmarkJob, CompletableFuture<String>> mapper)
 	{
 		JavaFXRoutines.setCellValueFactory(jobs, index, mapper);
-		((TableColumn<ObservableHPCWorkflowJob, CompletableFuture<String>>) jobs
+		((TableColumn<ObservableBenchmarkJob, CompletableFuture<String>>) jobs
 			.getColumns().get(index)).setCellFactory(column -> new TableCellAdapter<> //
 		(//
-			new PTableCellUpdaterDecoratorWithToolTip<>//
+			new P_TableCellUpdaterDecoratorWithToolTip<>//
 			(//
 				new FutureValueUpdater<>//
 				(//
-					new StringValueUpdater<ObservableHPCWorkflowJob>(), executorServiceFX//
+					new StringValueUpdater(), executorServiceFX//
 				), //
 				"Doubleclick to open Dashboard")));
 	}
 
-	private void openJobDetailsWindow(ObservableHPCWorkflowJob job) {
+	private void openJobDetailsWindow(ObservableBenchmarkJob job) {
 		new JobDetailWindow(root, job).setVisible(true);
 	}
 
@@ -537,22 +540,22 @@ public class HPCWorkflowControl extends BorderPane implements
 		txt.setVisible(true);
 	}
 
-	private interface PJobAction {
+	private interface P_JobAction {
 
 		public void doAction(ProgressDialogViewWindow progressDialogViewWindow)
 			throws IOException;
 	}
 
-	private class PTableCellUpdaterDecoratorWithToolTip<S, T> implements
-		TableCellUpdater<S, T>
+	private class P_TableCellUpdaterDecoratorWithToolTip<S, T> implements
+		TableCellUpdater<T>
 	{
 
-		private final TableCellUpdater<S, T> decorated;
+		private final TableCellUpdater<T> decorated;
 
 		private final String toolTipText;
 
-		public PTableCellUpdaterDecoratorWithToolTip(
-			TableCellUpdater<S, T> decorated, String toolTipText)
+		public P_TableCellUpdaterDecoratorWithToolTip(TableCellUpdater<T> decorated,
+			String toolTipText)
 		{
 			this.decorated = decorated;
 			this.toolTipText = toolTipText;

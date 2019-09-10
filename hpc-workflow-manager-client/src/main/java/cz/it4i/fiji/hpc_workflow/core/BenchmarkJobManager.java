@@ -135,11 +135,9 @@ public class BenchmarkJobManager implements Closeable {
 
 			verifiedStateProcessed = false;
 			running = null;
-			String message = "";
-			if (job.getHaasTemplateId() == 4) {
-				message = "Submitting job id #" + getId();
-				progress.addItem(message);
-			}
+			String message = "Submitting job id #" + getId();
+			progress.addItem(message);
+
 			job.updateInfo();
 			JobState oldState = updateAndGetState();
 			job.submit();
@@ -153,9 +151,8 @@ public class BenchmarkJobManager implements Closeable {
 					Thread.currentThread().interrupt();
 				}
 			}
+			progress.itemDone(message);
 			if (job.getHaasTemplateId() == 4) {
-				progress.itemDone(message);
-
 				job.setProperty(SPIM_OUTPUT_FILENAME_PATTERN, yaml.getCommonProperty(
 					FUSION_SWITCH) + "_" + yaml.getCommonProperty(HDF5_XML_FILENAME));
 			}

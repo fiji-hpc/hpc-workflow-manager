@@ -63,7 +63,7 @@ public class TaskComputationControl extends TabPane implements CloseableControl,
 			ProgressDialogViewWindow progressDialogViewWindow =
 				new ProgressDialogViewWindow();
 			JavaFXRoutines.runOnFxThread(() -> progressDialogViewWindow.openWindow(
-				"Updating information...", true));
+				"Updating information...", null, true));
 			try {
 				adapter = new TaskComputationAdapter(computation);
 				adapter.init();

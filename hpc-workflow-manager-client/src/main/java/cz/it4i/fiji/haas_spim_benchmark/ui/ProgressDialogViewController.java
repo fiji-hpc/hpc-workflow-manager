@@ -1,3 +1,4 @@
+
 package cz.it4i.fiji.haas_spim_benchmark.ui;
 
 import java.awt.Window;
@@ -13,11 +14,13 @@ import javafx.scene.control.ProgressBar;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
 
-public class ProgressDialogViewController extends AnchorPane implements CloseableControl,
-InitiableControl{
+public class ProgressDialogViewController extends AnchorPane implements
+	CloseableControl, InitiableControl
+{
+
 	@FXML
 	Label taskDescriptionLabel;
-	
+
 	@FXML
 	ProgressBar taskProgressBar;
 
@@ -27,10 +30,10 @@ InitiableControl{
 		JavaFXRoutines.initRootAndController("ProgressDialogView.fxml", this);
 		this.taskDescriptionLabel.setText(description);
 	}
-	
+
 	@Override
 	public void init(Window parameter) {
-		// Nothing to initialize.		
+		// Nothing to initialize.
 	}
 
 	@Override
@@ -38,13 +41,22 @@ InitiableControl{
 		Stage stage = (Stage) taskDescriptionLabel.getScene().getWindow();
 		stage.close();
 	}
-	
-	public void newItem(String itemDescription) {
+
+	public void addItem(String itemDescription) {
 		items.putIfAbsent(itemDescription, false);
 	}
 
-	public void updateItem(String itemDescription) {
+	public void doneItem(String itemDescription) {
 		items.put(itemDescription, true);
 	}
-	
+
+	public String getFirstNonCompletedTask() {
+		return items.entrySet().stream().filter(entry -> entry.getValue().equals(false)).map(
+			Map.Entry::getKey).findFirst().orElse(null);
+	}
+
+	public void setMessage(String message) {
+		this.taskDescriptionLabel.setText(message);
+	}
+
 }

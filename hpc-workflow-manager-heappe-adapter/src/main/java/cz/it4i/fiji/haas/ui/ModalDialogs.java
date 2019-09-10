@@ -17,7 +17,10 @@ public class ModalDialogs {
 		dialog.setModalityType(ModalityType.DOCUMENT_MODAL);
 		dialog.setDefaultCloseOperation(operation);
 		CompletableFuture.runAsync(()->dialog.setVisible(true));
-		System.out.println("Dialog");
 		return dialog;
+	}
+	
+	private ModalDialogs(){
+		// Private constructor to hide the implicit public one.
 	}
 }

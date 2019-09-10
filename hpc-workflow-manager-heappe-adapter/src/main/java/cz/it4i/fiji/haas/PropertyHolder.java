@@ -48,7 +48,7 @@ public class PropertyHolder {
 
 	private Properties loadPropertiesIfExists() throws IOException {
 		Properties prop = new Properties();
-		if (Files.exists(storage)) {
+		if (storage.toFile().exists()) {
 			try (InputStream is = Files.newInputStream(storage)) {
 				prop.load(is);
 			}

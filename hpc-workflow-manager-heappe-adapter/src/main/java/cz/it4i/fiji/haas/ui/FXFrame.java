@@ -22,7 +22,7 @@ public abstract class FXFrame<T extends Parent & CloseableControl> extends
 	private static Logger log = LoggerFactory.getLogger(
 		cz.it4i.fiji.haas.ui.FXFrame.class);
 	private static final long serialVersionUID = 1L;
-	private final JFXPanel<T> fxPanel;
+	private final SwingAndJavaFXLinker<T> fxPanel;
 	
 	private boolean controlClosed;
 
@@ -32,7 +32,7 @@ public abstract class FXFrame<T extends Parent & CloseableControl> extends
 
 	public FXFrame(Window parent, Supplier<T> fxSupplier) {
 		super(parent, ModalityType.MODELESS);
-		fxPanel = new JFXPanel<>(fxSupplier);
+		fxPanel = new SwingAndJavaFXLinker<>(fxSupplier);
 		init();
 		if (fxPanel.getControl() instanceof InitiableControl) {
 			InitiableControl control = (InitiableControl) fxPanel.getControl();
@@ -40,14 +40,12 @@ public abstract class FXFrame<T extends Parent & CloseableControl> extends
 		}
 	}
 
-	public JFXPanel<T> getFxPanel() {
+	public SwingAndJavaFXLinker<T> getFxPanel() {
 		return fxPanel;
 	}
 
 	public void executeAdjustment(Runnable command) {
-		JavaFXRoutines.runOnFxThread(() -> {
-			command.run();
-		});
+		JavaFXRoutines.runOnFxThread(command::run);
 	}
 	
 	@Override
@@ -56,7 +54,7 @@ public abstract class FXFrame<T extends Parent & CloseableControl> extends
 		super.dispose();
 	}
 
-	synchronized private void closeControlIfNotClosed() {
+	private synchronized void closeControlIfNotClosed() {
 	 if(!controlClosed) {
 			getFxPanel().getControl().close();
 			controlClosed = true;

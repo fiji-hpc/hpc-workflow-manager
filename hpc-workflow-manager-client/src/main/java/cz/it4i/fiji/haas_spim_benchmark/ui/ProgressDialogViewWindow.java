@@ -5,30 +5,35 @@ import cz.it4i.fiji.haas_java_client.ProgressNotifier;
 import javafx.scene.Scene;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 
 public class ProgressDialogViewWindow implements ProgressNotifier {
 
 	private ProgressDialogViewController controller;
 
-	public void openWindow(String message, boolean show) {
+	private Stage stage;
+
+	public void openWindow(String message, Stage parentStage, boolean show) {
 		this.controller = new ProgressDialogViewController(message);
 		final Scene formScene = new Scene(this.controller);
-		Stage parentStage = new Stage();
-		parentStage.initModality(Modality.APPLICATION_MODAL);
-		parentStage.setResizable(false);
-		parentStage.setTitle(message);
-		parentStage.setScene(formScene);
+		stage = new Stage();
+		stage.initOwner(parentStage);
+		stage.initModality(Modality.APPLICATION_MODAL);
+		stage.initStyle(StageStyle.UNDECORATED);
+		stage.setResizable(false);
+		stage.setTitle(message);
+		stage.setScene(formScene);
 		if (show) {
-			parentStage.show();
+			stage.show();
 		}
 	}
 
 	public void addItem(String itemDescription) {
-		this.controller.newItem(itemDescription);
+		this.controller.addItem(itemDescription);
 	}
 
 	public void itemDone(String itemDescription) {
-		this.controller.updateItem(itemDescription);
+		this.controller.doneItem(itemDescription);
 	}
 
 	public void closeWindow() {
@@ -37,7 +42,7 @@ public class ProgressDialogViewWindow implements ProgressNotifier {
 
 	@Override
 	public void setTitle(String title) {
-		throw new UnsupportedOperationException();
+		this.stage.setTitle(title);
 	}
 
 	@Override
@@ -47,9 +52,15 @@ public class ProgressDialogViewWindow implements ProgressNotifier {
 
 	@Override
 	public void addItem(Object item) {
-		if(item instanceof String) {
+		if (item instanceof String) {
 			addItem(item.toString());
-		} else {
+
+			setTitleToNextIncompleteTask();
+
+			// Remove this line:
+			System.out.println("Added item: " + item.toString());
+		}
+		else {
 			throw new UnsupportedOperationException();
 		}
 	}
@@ -63,6 +74,10 @@ public class ProgressDialogViewWindow implements ProgressNotifier {
 	public void itemDone(Object item) {
 		if (item instanceof String) {
 			itemDone(item.toString());
+
+			setTitleToNextIncompleteTask();
+
+			System.out.println("Done with item: " + item.toString());
 		}
 		else {
 			throw new UnsupportedOperationException();
@@ -72,5 +87,13 @@ public class ProgressDialogViewWindow implements ProgressNotifier {
 	@Override
 	public void done() {
 		closeWindow();
+	}
+
+	private void setTitleToNextIncompleteTask() {
+		String taskDescription = this.controller.getFirstNonCompletedTask();
+		if (taskDescription != null) {
+			setTitle(taskDescription);
+			this.controller.setMessage(taskDescription);
+		}
 	}
 }
