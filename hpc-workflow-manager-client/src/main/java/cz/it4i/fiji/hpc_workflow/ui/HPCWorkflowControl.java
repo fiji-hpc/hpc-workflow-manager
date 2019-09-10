@@ -31,8 +31,6 @@ import java.util.function.UnaryOperator;
 
 import javax.swing.WindowConstants;
 
-import net.imagej.updater.util.Progress;
-
 import org.scijava.Context;
 import org.scijava.ui.swing.script.TextEditor;
 import org.slf4j.Logger;
@@ -43,12 +41,10 @@ import bdv.export.ProgressWriterConsole;
 import bdv.viewer.ViewerOptions;
 import cz.it4i.fiji.haas.UploadingFileFromResource;
 import cz.it4i.fiji.haas.ui.CloseableControl;
-import cz.it4i.fiji.haas.ui.DummyProgress;
 import cz.it4i.fiji.haas.ui.FutureValueUpdater;
 import cz.it4i.fiji.haas.ui.InitiableControl;
 import cz.it4i.fiji.haas.ui.JavaFXRoutines;
 import cz.it4i.fiji.haas.ui.ModalDialogs;
-import cz.it4i.fiji.haas.ui.ProgressDialog;
 import cz.it4i.fiji.haas.ui.ShellRoutines;
 import cz.it4i.fiji.haas.ui.StringValueUpdater;
 import cz.it4i.fiji.haas.ui.TableCellAdapter;
@@ -294,7 +290,7 @@ public class HPCWorkflowControl extends BorderPane implements
 			{
 
 				@Override
-				public void doAction(Progress p) throws IOException {
+				public void doAction(ProgressDialogViewWindow p) throws IOException {
 					BenchmarkJob job = doCreateJob(newJobWindow::getInputDirectory,
 						newJobWindow::getOutputDirectory, newJobWindow.getNumberOfNodes(),
 						newJobWindow.getHaasTemplateId());
@@ -371,14 +367,17 @@ public class HPCWorkflowControl extends BorderPane implements
 	private void executeWSCallAsync(String title, boolean update,
 		PJobAction action)
 	{
+		ProgressDialogViewWindow progressDialogViewWindow =
+			new ProgressDialogViewWindow();
+		JavaFXRoutines.runOnFxThread(() -> progressDialogViewWindow.openWindow(
+			title, true));
+
 		JavaFXRoutines.executeAsync(executorServiceWS, (Callable<Void>) () -> {
-			ProgressDialog dialog = ModalDialogs.doModal(new ProgressDialog(root,
-				title), WindowConstants.DO_NOTHING_ON_CLOSE);
 			try {
-				action.doAction(dialog);
+				action.doAction(progressDialogViewWindow);
 			}
 			finally {
-				dialog.done();
+				JavaFXRoutines.runOnFxThread(progressDialogViewWindow::closeWindow);
 			}
 			return null;
 		}, x -> {
@@ -390,8 +389,11 @@ public class HPCWorkflowControl extends BorderPane implements
 
 	private boolean checkConnection() {
 		boolean[] result = { false };
-		Progress progress = ModalDialogs.doModal(new ProgressDialog(root,
-			"Connecting to HPC"), WindowConstants.DO_NOTHING_ON_CLOSE);
+		ProgressDialogViewWindow progressDialogViewWindow =
+			new ProgressDialogViewWindow();
+		JavaFXRoutines.runOnFxThread(() -> progressDialogViewWindow.openWindow(
+			"Connecting to HPC", true));
+
 		final CountDownLatch latch = new CountDownLatch(1);
 		executorServiceWS.execute(() -> {
 			try {
@@ -399,7 +401,7 @@ public class HPCWorkflowControl extends BorderPane implements
 				result[0] = true;
 			}
 			finally {
-				progress.done();
+				JavaFXRoutines.runOnFxThread(progressDialogViewWindow::closeWindow);
 				latch.countDown();
 			}
 		});
@@ -413,9 +415,10 @@ public class HPCWorkflowControl extends BorderPane implements
 	}
 
 	private void updateJobs(boolean showProgress) {
-		Progress progress = showProgress ? ModalDialogs.doModal(new ProgressDialog(
-			root, "Updating jobs"), WindowConstants.DO_NOTHING_ON_CLOSE)
-			: new DummyProgress();
+		final ProgressDialogViewWindow progressDialogViewController;
+		progressDialogViewController = new ProgressDialogViewWindow();
+		JavaFXRoutines.runOnFxThread(() -> progressDialogViewController.openWindow(
+			"Updating jobs", showProgress));
 
 		executorServiceWS.execute(() -> {
 			List<BenchmarkJob> inspectedJobs = new LinkedList<>(manager.getJobs());
@@ -434,7 +437,7 @@ public class HPCWorkflowControl extends BorderPane implements
 					}
 				}
 			});
-			progress.done();
+			JavaFXRoutines.runOnFxThread(progressDialogViewController::closeWindow);
 		});
 	}
 
@@ -536,7 +539,7 @@ public class HPCWorkflowControl extends BorderPane implements
 
 	private interface PJobAction {
 
-		public void doAction(Progress p) throws IOException;
+		public void doAction(ProgressDialogViewWindow progressDialogViewWindow) throws IOException;
 	}
 
 	private class PTableCellUpdaterDecoratorWithToolTip<S, T> implements

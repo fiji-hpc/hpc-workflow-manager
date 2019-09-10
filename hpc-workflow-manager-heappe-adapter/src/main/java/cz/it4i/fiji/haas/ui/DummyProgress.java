@@ -1,8 +1,8 @@
 package cz.it4i.fiji.haas.ui;
 
-import net.imagej.updater.util.Progress;
+import cz.it4i.fiji.haas_java_client.ProgressNotifier;
 
-public class DummyProgress implements Progress {
+public class DummyProgress implements ProgressNotifier {
 
 	@Override
 	public void setTitle(String title) {

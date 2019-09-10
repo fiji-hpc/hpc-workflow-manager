@@ -123,20 +123,20 @@ public class BenchmarkJobManager implements Closeable {
 			snakemakeOutputHelper = new SnakemakeOutputHelper(job);
 		}
 
-		public synchronized void startJob(Progress progress) throws IOException {
-			
+		public synchronized void startJob(ProgressNotifier progress)
+			throws IOException
+		{
+
 			LoadedYAML yaml = null;
-			if(job.getHaasTemplateId() == 4) {
-				job.uploadFile(Constants.CONFIG_YAML, new ProgressNotifierAdapter(
-				progress));
-				yaml = new LoadedYAML(job.openLocalFile(
-				Constants.CONFIG_YAML));
+			if (job.getHaasTemplateId() == 4) {
+				job.uploadFile(Constants.CONFIG_YAML, progress);
+				yaml = new LoadedYAML(job.openLocalFile(Constants.CONFIG_YAML));
 			}
-	
+
 			verifiedStateProcessed = false;
 			running = null;
 			String message = "";
-			if(job.getHaasTemplateId() == 4) {
+			if (job.getHaasTemplateId() == 4) {
 				message = "Submitting job id #" + getId();
 				progress.addItem(message);
 			}
@@ -153,11 +153,11 @@ public class BenchmarkJobManager implements Closeable {
 					Thread.currentThread().interrupt();
 				}
 			}
-			if(job.getHaasTemplateId() == 4) {
+			if (job.getHaasTemplateId() == 4) {
 				progress.itemDone(message);
-			
+
 				job.setProperty(SPIM_OUTPUT_FILENAME_PATTERN, yaml.getCommonProperty(
-				FUSION_SWITCH) + "_" + yaml.getCommonProperty(HDF5_XML_FILENAME));
+					FUSION_SWITCH) + "_" + yaml.getCommonProperty(HDF5_XML_FILENAME));
 			}
 
 		}
@@ -456,7 +456,8 @@ public class BenchmarkJobManager implements Closeable {
 				progressNotifierTemporarySwitchOff).thenCompose(x -> {
 					try {
 						return job.startDownload(downloadFileNameExtractDecorator(
-							downloadCSVDecorator(getOtherFilesFilterForDownload(jobType, mainFile))));
+							downloadCSVDecorator(getOtherFilesFilterForDownload(jobType,
+								mainFile))));
 					}
 					catch (IOException e) {
 						throw new RuntimeException(e);
@@ -474,8 +475,8 @@ public class BenchmarkJobManager implements Closeable {
 				});
 		}
 
-		private Predicate<String> getOtherFilesFilterForDownload(WorkflowType jobType,
-			String mainFile)
+		private Predicate<String> getOtherFilesFilterForDownload(
+			WorkflowType jobType, String mainFile)
 		{
 			if (jobType == WorkflowType.MACRO_WORKFLOW) {
 				return x -> true;
@@ -495,8 +496,7 @@ public class BenchmarkJobManager implements Closeable {
 				return CompletableFuture.completedFuture(null);
 			}
 			return job.startDownload(downloadFileNameExtractDecorator(
-				fileName -> fileName.equals(mainFile))).exceptionally(
-					x -> {
+				fileName -> fileName.equals(mainFile))).exceptionally(x -> {
 					progressNotifierTemporarySwitchOff.switchOn();
 					stillRunningTemporarySwitch.switchBack();
 					return null;

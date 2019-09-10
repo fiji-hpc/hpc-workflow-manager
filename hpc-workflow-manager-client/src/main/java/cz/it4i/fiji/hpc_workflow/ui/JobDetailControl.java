@@ -5,18 +5,12 @@ import java.awt.Window;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import javax.swing.WindowConstants;
-
-import net.imagej.updater.util.Progress;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import cz.it4i.fiji.haas.ui.CloseableControl;
 import cz.it4i.fiji.haas.ui.InitiableControl;
 import cz.it4i.fiji.haas.ui.JavaFXRoutines;
-import cz.it4i.fiji.haas.ui.ModalDialogs;
-import cz.it4i.fiji.haas.ui.ProgressDialog;
 import cz.it4i.fiji.haas_java_client.FileTransferInfo;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
@@ -116,10 +110,8 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 
 	@Override
 	public void init(final Window parameter) {
-
-		Progress progress = ModalDialogs.doModal(new ProgressDialog(parameter,
-			"Downloading tasks"), WindowConstants.DO_NOTHING_ON_CLOSE);
-
+		ProgressDialogViewWindow progressDialogViewWindow = new ProgressDialogViewWindow();
+		JavaFXRoutines.runOnFxThread(() -> progressDialogViewWindow.openWindow("Downloading tasks", true));
 		executorServiceWS.execute(() -> {
 
 			try {
@@ -143,16 +135,15 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 				else {
 					setTabAvailability(macroProgressTab, false);
 					setTabAvailability(progressTab, true);
-					setTabAvailability(snakemakeOutputTab, true);
 
 					removeTab(progressTab);
-					removeTab(snakemakeOutputTab);
+					JavaFXRoutines.runOnFxThread(() -> snakemakeOutputTab.setText("Error output"));
 					
 					// Macro-only related initializations:
 					macroProgressControl.init(parameter);
 					macroProgressControl.setJobParameter(job);
 
-					progress.done();
+					JavaFXRoutines.runOnFxThread(progressDialogViewWindow::closeWindow);
 				}
 				
 				standardOutput = job.getObservableSnakemakeOutput(
@@ -184,7 +175,7 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 						@Override
 						public void onChanged(Change<? extends Task> c) {
 							taskList.unsubscribe(this);
-							progress.done();
+							JavaFXRoutines.runOnFxThread(progressDialogViewWindow::closeWindow);
 						}
 					};
 				WorkflowType jobType = job.getWorkflowType();
