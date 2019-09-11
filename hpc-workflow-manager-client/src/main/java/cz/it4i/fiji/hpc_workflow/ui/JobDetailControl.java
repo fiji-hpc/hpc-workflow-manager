@@ -111,9 +111,7 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 	@Override
 	public void init(final Window parameter) {
 		ProgressDialogViewWindow progressDialogViewWindow =
-			new ProgressDialogViewWindow();
-		JavaFXRoutines.runOnFxThread(() -> progressDialogViewWindow.openWindow(
-			"Downloading tasks", null, true));
+			new ProgressDialogViewWindow("Downloading tasks", null);
 		executorServiceWS.execute(() -> {
 
 			try {
@@ -146,7 +144,7 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 					macroProgressControl.init(parameter);
 					macroProgressControl.setJobParameter(job);
 
-					JavaFXRoutines.runOnFxThread(progressDialogViewWindow::closeWindow);
+					progressDialogViewWindow.done();
 				}
 
 				standardOutput = job.getObservableSnakemakeOutput(
@@ -177,8 +175,7 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 						@Override
 						public void onChanged(Change<? extends Task> c) {
 							taskList.unsubscribe(this);
-							JavaFXRoutines.runOnFxThread(
-								progressDialogViewWindow::closeWindow);
+							progressDialogViewWindow.done();
 						}
 					};
 				WorkflowType jobType = job.getWorkflowType();

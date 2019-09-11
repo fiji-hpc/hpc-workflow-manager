@@ -51,6 +51,7 @@ import cz.it4i.fiji.haas.ui.TableCellAdapter;
 import cz.it4i.fiji.haas.ui.TableCellAdapter.TableCellUpdater;
 import cz.it4i.fiji.haas.ui.TableViewContextMenu;
 import cz.it4i.fiji.haas_java_client.JobState;
+import cz.it4i.fiji.haas_java_client.ProgressNotifier;
 import cz.it4i.fiji.haas_java_client.UploadingFile;
 import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager;
 import cz.it4i.fiji.haas_spim_benchmark.core.BenchmarkJobManager.BenchmarkJob;
@@ -71,7 +72,6 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Region;
-import javafx.stage.Stage;
 import mpicbg.spim.data.SpimDataException;
 
 public class BenchmarkSPIMControl extends BorderPane implements
@@ -154,12 +154,10 @@ public class BenchmarkSPIMControl extends BorderPane implements
 		menu.addItem("Create a new job", x -> askForCreateJob(), j -> true);
 		menu.addSeparator();
 
-		menu.addItem("Start job", job -> {
-			executeWSCallAsync("Starting job", p -> {
-				job.getValue().startJob(p);
-				job.getValue().update();
-			});
-		}, job -> JavaFXRoutines.notNullValue(job, j -> (j
+		menu.addItem("Start job", job -> executeWSCallAsync("Starting job", p -> {
+			job.getValue().startJob(p);
+			job.getValue().update();
+		}), job -> JavaFXRoutines.notNullValue(job, j -> (j
 			.getState() == JobState.Configuring || j
 				.getState() == JobState.Finished || j.getState() == JobState.Failed || j
 					.getState() == JobState.Canceled) && checkIfAnythingHasBeenUploaded(
@@ -293,7 +291,7 @@ public class BenchmarkSPIMControl extends BorderPane implements
 			{
 
 				@Override
-				public void doAction(ProgressDialogViewWindow p) throws IOException {
+				public void doAction(ProgressNotifier p) throws IOException {
 					BenchmarkJob job = doCreateJob(newJobWindow::getInputDirectory,
 						newJobWindow::getOutputDirectory, newJobWindow.getNumberOfNodes(),
 						newJobWindow.getHaasTemplateId());
@@ -370,17 +368,15 @@ public class BenchmarkSPIMControl extends BorderPane implements
 	private void executeWSCallAsync(String title, boolean update,
 		P_JobAction action)
 	{
-		ProgressDialogViewWindow progressDialogViewWindow =
-			new ProgressDialogViewWindow();
-		JavaFXRoutines.runOnFxThread(() -> progressDialogViewWindow.openWindow(
-			title, null, true));
+		ProgressDialogViewWindow progress = new ProgressDialogViewWindow(title,
+			null);
 
 		JavaFXRoutines.executeAsync(executorServiceWS, (Callable<Void>) () -> {
 			try {
-				action.doAction(progressDialogViewWindow);
+				action.doAction(progress);
 			}
 			finally {
-				JavaFXRoutines.runOnFxThread(progressDialogViewWindow::closeWindow);
+				progress.done();
 			}
 			return null;
 		}, x -> {
@@ -392,10 +388,8 @@ public class BenchmarkSPIMControl extends BorderPane implements
 
 	private boolean checkConnection() {
 		boolean[] result = { false };
-		ProgressDialogViewWindow progressDialogViewWindow =
-			new ProgressDialogViewWindow();
-		JavaFXRoutines.runOnFxThread(() -> progressDialogViewWindow.openWindow(
-			"Connecting to HPC", null , true));
+		ProgressDialogViewWindow progress = new ProgressDialogViewWindow(
+			"Connecting to HPC", null);
 
 		final CountDownLatch latch = new CountDownLatch(1);
 		executorServiceWS.execute(() -> {
@@ -404,7 +398,7 @@ public class BenchmarkSPIMControl extends BorderPane implements
 				result[0] = true;
 			}
 			finally {
-				JavaFXRoutines.runOnFxThread(progressDialogViewWindow::closeWindow);
+				progress.done();
 				latch.countDown();
 			}
 		});
@@ -418,10 +412,8 @@ public class BenchmarkSPIMControl extends BorderPane implements
 	}
 
 	private void updateJobs(boolean showProgress) {
-		final ProgressDialogViewWindow progressDialogViewController;
-		progressDialogViewController = new ProgressDialogViewWindow();
-		JavaFXRoutines.runOnFxThread(() -> progressDialogViewController.openWindow(
-			"Updating jobs", null, showProgress));
+		final ProgressDialogViewWindow progress = new ProgressDialogViewWindow(
+			"Updating jobs", null, showProgress);
 
 		executorServiceWS.execute(() -> {
 			List<BenchmarkJob> inspectedJobs = new LinkedList<>(manager.getJobs());
@@ -440,7 +432,7 @@ public class BenchmarkSPIMControl extends BorderPane implements
 					}
 				}
 			});
-			JavaFXRoutines.runOnFxThread(progressDialogViewController::closeWindow);
+			progress.done();
 		});
 	}
 
@@ -542,8 +534,7 @@ public class BenchmarkSPIMControl extends BorderPane implements
 
 	private interface P_JobAction {
 
-		public void doAction(ProgressDialogViewWindow progressDialogViewWindow)
-			throws IOException;
+		public void doAction(ProgressNotifier progress) throws IOException;
 	}
 
 	private class P_TableCellUpdaterDecoratorWithToolTip<S, T> implements

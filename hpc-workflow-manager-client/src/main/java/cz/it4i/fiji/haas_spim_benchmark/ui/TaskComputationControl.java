@@ -60,16 +60,14 @@ public class TaskComputationControl extends TabPane implements CloseableControl,
 				new AuthFailExceptionHandler(new WindowCloseableAdapter(rootWindow))));
 
 		wsExecutorService.execute(() -> {
-			ProgressDialogViewWindow progressDialogViewWindow =
-				new ProgressDialogViewWindow();
-			JavaFXRoutines.runOnFxThread(() -> progressDialogViewWindow.openWindow(
-				"Updating information...", null, true));
+			ProgressDialogViewWindow progress = new ProgressDialogViewWindow(
+				"Updating information...", null);
 			try {
 				adapter = new TaskComputationAdapter(computation);
 				adapter.init();
 			}
 			finally {
-				JavaFXRoutines.runOnFxThread(progressDialogViewWindow::closeWindow);
+				progress.done();
 			}
 			remoteFilesInfo.setFiles(adapter.getOutputs());
 			remoteFilesInfo.init(rootWindow);
