@@ -136,7 +136,7 @@ public class MacroTaskProgressViewController extends BorderPane implements
 				exec.shutdown();
 			}
 
-		}, 0, 1, TimeUnit.SECONDS);
+		}, 0, 2, TimeUnit.SECONDS);
 
 	}
 
@@ -156,7 +156,7 @@ public class MacroTaskProgressViewController extends BorderPane implements
 				numberOfNodes = Integer.parseInt(lines[0]);
 			}
 			catch (NumberFormatException exc) {
-				Log.error("Incorrect progress log file!" + exc);
+				setStatusMessage("Progress log does not list node size, yet!");
 			}
 		}
 

@@ -374,8 +374,6 @@ public class BenchmarkSPIMControl extends BorderPane implements
 		JavaFXRoutines.executeAsync(executorServiceWS, (Callable<Void>) () -> {
 			try {
 				action.doAction(progress);
-			} catch (Exception exc) {
-				System.out.println("Exception: "+exc.getStackTrace());
 			}
 			finally {
 				progress.done();
