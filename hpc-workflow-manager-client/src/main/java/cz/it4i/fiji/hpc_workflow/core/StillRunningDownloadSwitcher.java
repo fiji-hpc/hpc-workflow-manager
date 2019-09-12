@@ -3,7 +3,7 @@ package cz.it4i.fiji.hpc_workflow.core;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-import cz.it4i.fiji.hpc_workflow.core.BenchmarkJobManager.DownloadingStatusProvider;
+import cz.it4i.fiji.hpc_workflow.core.HPCWorkflowJobManager.DownloadingStatusProvider;
 
 public class StillRunningDownloadSwitcher {
 

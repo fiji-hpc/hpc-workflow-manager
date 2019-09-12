@@ -8,8 +8,6 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import javax.swing.WindowConstants;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,8 +15,6 @@ import cz.it4i.fiji.commons.UncaughtExceptionHandlerDecorator;
 import cz.it4i.fiji.haas.ui.CloseableControl;
 import cz.it4i.fiji.haas.ui.InitiableControl;
 import cz.it4i.fiji.haas.ui.JavaFXRoutines;
-import cz.it4i.fiji.haas.ui.ModalDialogs;
-import cz.it4i.fiji.haas.ui.ProgressDialog;
 import cz.it4i.fiji.hpc_workflow.core.AuthFailExceptionHandler;
 import cz.it4i.fiji.hpc_workflow.core.FXFrameExecutorService;
 import cz.it4i.fiji.hpc_workflow.core.TaskComputation;
@@ -64,15 +60,14 @@ public class TaskComputationControl extends TabPane implements CloseableControl,
 				new AuthFailExceptionHandler(new WindowCloseableAdapter(rootWindow))));
 
 		wsExecutorService.execute(() -> {
-			final ProgressDialog dialog = ModalDialogs.doModal(new ProgressDialog(
-				rootWindow, "Updating information..."),
-				WindowConstants.DO_NOTHING_ON_CLOSE);
+			ProgressDialogViewWindow progress = new ProgressDialogViewWindow(
+				"Updating information...", null);
 			try {
 				adapter = new TaskComputationAdapter(computation);
 				adapter.init();
 			}
 			finally {
-				dialog.done();
+				progress.done();
 			}
 			remoteFilesInfo.setFiles(adapter.getOutputs());
 			remoteFilesInfo.init(rootWindow);

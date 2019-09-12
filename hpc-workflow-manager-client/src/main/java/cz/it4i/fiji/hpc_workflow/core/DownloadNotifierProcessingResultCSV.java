@@ -7,7 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import cz.it4i.fiji.haas_java_client.ProgressNotifier;
-import cz.it4i.fiji.hpc_workflow.core.BenchmarkJobManager.BenchmarkJob;
+import cz.it4i.fiji.hpc_workflow.core.HPCWorkflowJobManager.BenchmarkJob;
 
 class DownloadNotifierProcessingResultCSV implements ProgressNotifier {
 
@@ -50,7 +50,7 @@ class DownloadNotifierProcessingResultCSV implements ProgressNotifier {
 		if (item instanceof String && ((String)item).endsWith(Constants.BENCHMARK_RESULT_FILE)) {
 			final Path resultFile = job.getDirectory().resolve(Constants.BENCHMARK_RESULT_FILE);
 			try {
-				if (resultFile != null) BenchmarkJobManager.formatResultFile(resultFile);
+				if (resultFile != null) HPCWorkflowJobManager.formatResultFile(resultFile);
 			} 
 			catch (RuntimeException e) {
 				log.warn("parsing result file failed", e);

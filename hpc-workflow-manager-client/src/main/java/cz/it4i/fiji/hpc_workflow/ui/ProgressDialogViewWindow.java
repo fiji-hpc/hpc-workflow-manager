@@ -1,5 +1,5 @@
 
-package cz.it4i.fiji.haas_spim_benchmark.ui;
+package cz.it4i.fiji.hpc_workflow.ui;
 
 import net.imagej.updater.util.UpdateCanceledException;
 

@@ -585,7 +585,7 @@ public class Job {
 		}
 
 		return 4; // FIXME enum defined somewhere else in SPIM_WORKFLOW(4)
-							// hpc-workflow-manager-client/src/main/java/cz/it4i/fiji/haas_spim_benchmark/ui/NewJobController.java
+							// hpc-workflow-manager-client/src/main/java/cz/it4i/fiji/hpc_workflow/ui/NewJobController.java
 	}
 
 }

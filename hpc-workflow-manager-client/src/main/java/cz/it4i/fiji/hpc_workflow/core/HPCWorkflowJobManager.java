@@ -79,7 +79,7 @@ import cz.it4i.fiji.haas_java_client.UploadingFile;
 import cz.it4i.fiji.hpc_workflow.ui.NewJobController;
 import cz.it4i.fiji.hpc_workflow.ui.NewJobController.WorkflowType;
 
-public class BenchmarkJobManager implements Closeable {
+public class HPCWorkflowJobManager implements Closeable {
 
 	public interface DownloadingStatusProvider {
 
@@ -89,7 +89,7 @@ public class BenchmarkJobManager implements Closeable {
 	}
 
 	private static Logger log = LoggerFactory.getLogger(
-		cz.it4i.fiji.hpc_workflow.core.BenchmarkJobManager.class);
+		cz.it4i.fiji.hpc_workflow.core.HPCWorkflowJobManager.class);
 
 	private final JobManager jobManager;
 
@@ -618,7 +618,7 @@ public class BenchmarkJobManager implements Closeable {
 		}
 	}
 
-	public BenchmarkJobManager(HPCWorkflowParameters params) {
+	public HPCWorkflowJobManager(HPCWorkflowParameters params) {
 		jobManager = new JobManager(params.workingDirectory(),
 			constructSettingsFromParams(params));
 		jobManager.setUploadFilter(this::canUpload);

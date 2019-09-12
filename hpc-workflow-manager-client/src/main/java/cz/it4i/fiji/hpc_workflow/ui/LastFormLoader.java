@@ -1,4 +1,5 @@
-package cz.it4i.fiji.haas_spim_benchmark.ui;
+
+package cz.it4i.fiji.hpc_workflow.ui;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -9,20 +10,22 @@ import java.util.Base64;
 import org.python.jline.internal.Log;
 import org.scijava.prefs.PrefService;
 
-import cz.it4i.fiji.haas_spim_benchmark.commands.BenchmarkSPIMParametersImpl;
+import cz.it4i.fiji.hpc_workflow.commands.HPCWorkflowParametersImpl;
 import groovy.util.logging.Slf4j;
 
 //Code responsible for loading and storing the last used form values:
 @Slf4j
-class LastFormLoader<S extends BenchmarkSPIMParametersImpl> {
-	
+class LastFormLoader<S extends HPCWorkflowParametersImpl> {
+
 	private String formStorage;
-	
+
 	private PrefService prefService;
-	
+
 	private Class<?> formClass;
-	
-	public LastFormLoader(PrefService newPrefService, String newFormName, Class<?> newFormClass) {
+
+	public LastFormLoader(PrefService newPrefService, String newFormName,
+		Class<?> newFormClass)
+	{
 		this.prefService = newPrefService;
 		this.formStorage = newFormName;
 		this.formClass = newFormClass;
@@ -58,9 +61,7 @@ class LastFormLoader<S extends BenchmarkSPIMParametersImpl> {
 		return null;
 	}
 
-	private S deserializeForm(
-		final String serializedForm)
-	{
+	private S deserializeForm(final String serializedForm) {
 		try {
 			final byte[] data = Base64.getDecoder().decode(serializedForm);
 			try (final ObjectInputStream ois = new ObjectInputStream(
@@ -72,9 +73,9 @@ class LastFormLoader<S extends BenchmarkSPIMParametersImpl> {
 			}
 		}
 		catch (final Exception e) {
-			Log.error("deserialization " + e.getMessage());
+			SimpleDialog.showException("Excception", "Deserialization", e);
 		}
 		return null;
 	}
-	
+
 }

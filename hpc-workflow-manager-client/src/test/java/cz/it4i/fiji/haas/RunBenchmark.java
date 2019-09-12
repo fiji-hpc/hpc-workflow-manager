@@ -11,16 +11,16 @@ import org.slf4j.LoggerFactory;
 import cz.it4i.fiji.haas.ui.DummyProgress;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
-import cz.it4i.fiji.hpc_workflow.core.BenchmarkJobManager;
+import cz.it4i.fiji.hpc_workflow.core.HPCWorkflowJobManager;
 import cz.it4i.fiji.hpc_workflow.core.HPCWorkflowParameters;
-import cz.it4i.fiji.hpc_workflow.core.BenchmarkJobManager.BenchmarkJob;
+import cz.it4i.fiji.hpc_workflow.core.HPCWorkflowJobManager.BenchmarkJob;
 
 public class RunBenchmark {
 	private static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas.RunBenchmark.class);
 
 	public static class CreateJob {
 		public static void main(String[] args) throws IOException {
-			try(BenchmarkJobManager benchmarkJobManager = new BenchmarkJobManager(getBenchmarkSPIMParameters())) {
+			try(HPCWorkflowJobManager benchmarkJobManager = new HPCWorkflowJobManager(getBenchmarkSPIMParameters())) {
 				BenchmarkJob ji = benchmarkJobManager.createJob(jd -> jd, jd -> jd, 2, 4);
 				log.info("job: " + ji.getId() + " created.");
 			}
@@ -29,7 +29,7 @@ public class RunBenchmark {
 
 	public static class ProcessJobs {
 		public static void main(String[] args) throws IOException {
-			try( BenchmarkJobManager benchmarkJobManager = new BenchmarkJobManager(getBenchmarkSPIMParameters())) {
+			try( HPCWorkflowJobManager benchmarkJobManager = new HPCWorkflowJobManager(getBenchmarkSPIMParameters())) {
 				for (BenchmarkJob job : benchmarkJobManager.getJobs()) {
 					JobState state;
 					log.info("job: " + job.getId() + " hasStatus " + (state = job.getState()));

@@ -19,7 +19,7 @@ import cz.it4i.fiji.haas.ui.UpdatableObservableValue;
 import cz.it4i.fiji.haas_java_client.FileTransferInfo;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
-import cz.it4i.fiji.hpc_workflow.core.BenchmarkJobManager.BenchmarkJob;
+import cz.it4i.fiji.hpc_workflow.core.HPCWorkflowJobManager.BenchmarkJob;
 import cz.it4i.fiji.hpc_workflow.ui.NewJobController.WorkflowType;
 
 public class ObservableHPCWorkflowJob extends

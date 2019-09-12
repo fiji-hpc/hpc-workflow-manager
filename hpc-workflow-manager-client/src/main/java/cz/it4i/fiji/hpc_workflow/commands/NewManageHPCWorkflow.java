@@ -1,5 +1,5 @@
 
-package cz.it4i.fiji.haas_spim_benchmark.commands;
+package cz.it4i.fiji.hpc_workflow.commands;
 
 import net.imagej.ImageJ;
 
@@ -13,8 +13,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import cz.it4i.fiji.haas.ui.JavaFXRoutines;
-import cz.it4i.fiji.haas_spim_benchmark.core.Constants;
-import cz.it4i.fiji.haas_spim_benchmark.ui.LoginViewWindow;
+import cz.it4i.fiji.hpc_workflow.core.Constants;
+import cz.it4i.fiji.hpc_workflow.ui.LoginViewWindow;
 import groovy.util.logging.Slf4j;
 
 @Slf4j
@@ -23,8 +23,7 @@ import groovy.util.logging.Slf4j;
 		Constants.SUBMENU_ITEM_NAME)
 public class NewManageHPCWorkflow implements Command {
 
-	private static Logger log = LoggerFactory.getLogger(
-		cz.it4i.fiji.haas_spim_benchmark.commands.ManageSPIMBenchmark.class);
+	private static Logger log = LoggerFactory.getLogger(ManageHPCWorkflow.class);
 
 	@Parameter
 	private Context context;
@@ -35,7 +34,7 @@ public class NewManageHPCWorkflow implements Command {
 		LoginViewWindow loginViewWindow = new LoginViewWindow(null);
 		JavaFXRoutines.runOnFxThread(() -> {
 			loginViewWindow.initialize(context.getService(PrefService.class));
-			loginViewWindow.openWindow();			
+			loginViewWindow.openWindow();
 			loginViewWindow.startJobDetailIfPossible();
 		});
 	}

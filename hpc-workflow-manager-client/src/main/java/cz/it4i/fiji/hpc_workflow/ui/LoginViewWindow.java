@@ -1,13 +1,13 @@
 
-package cz.it4i.fiji.haas_spim_benchmark.ui;
+package cz.it4i.fiji.hpc_workflow.ui;
 
 import java.awt.Window;
 
 import org.scijava.prefs.PrefService;
 
 import cz.it4i.fiji.haas.ui.FXFrame;
-import cz.it4i.fiji.haas_spim_benchmark.commands.BenchmarkSPIMParametersImpl;
-import cz.it4i.fiji.haas_spim_benchmark.core.Constants;
+import cz.it4i.fiji.hpc_workflow.core.Constants;
+import cz.it4i.fiji.hpc_workflow.commands.HPCWorkflowParametersImpl;
 import javafx.scene.Scene;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -28,9 +28,9 @@ public class LoginViewWindow extends FXFrame<LoginViewController> {
 
 	public void openWindow() {
 		// Get the previously entered login settings if any:
-		LastFormLoader<BenchmarkSPIMParametersImpl> storeLastForm =
+		LastFormLoader<HPCWorkflowParametersImpl> storeLastForm =
 			new LastFormLoader<>(prefService, "loginSettingsForm", this.getClass());
-		BenchmarkSPIMParametersImpl oldLoginSettings = storeLastForm.loadLastForm();
+		HPCWorkflowParametersImpl oldLoginSettings = storeLastForm.loadLastForm();
 
 		// Open the login window:
 		this.controller = new LoginViewController();
@@ -45,13 +45,13 @@ public class LoginViewWindow extends FXFrame<LoginViewController> {
 
 		stage.showAndWait();
 
-		BenchmarkSPIMParametersImpl newSettings = this.controller.getParameters();
+		HPCWorkflowParametersImpl newSettings = this.controller.getParameters();
 
 		// Save the new settings:
 		storeLastForm.storeLastForm(newSettings);
 	}
 
-	public BenchmarkSPIMParametersImpl getParameters() {
+	public HPCWorkflowParametersImpl getParameters() {
 		return this.controller.getParameters();
 	}
 

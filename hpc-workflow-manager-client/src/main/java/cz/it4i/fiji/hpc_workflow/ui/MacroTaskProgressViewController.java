@@ -24,6 +24,7 @@ import javafx.beans.property.SimpleLongProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
@@ -41,6 +42,9 @@ public class MacroTaskProgressViewController extends BorderPane implements
 
 	@FXML
 	private TableColumn<MacroTask, String> descriptionColumn;
+
+	@FXML
+	private Label statusLabel;
 
 	private ObservableHPCWorkflowJob job;
 
@@ -127,12 +131,12 @@ public class MacroTaskProgressViewController extends BorderPane implements
 			if (job.getState() != JobState.Queued && job
 				.getState() != JobState.Running && job.getState() != JobState.Submitted)
 			{
-				Log.info("Stoped updating progress because state is: " + job.getState()
-					.toString());
+				setStatusMessage("Stopped updating progress because state is: " + job
+					.getState().toString());
 				exec.shutdown();
 			}
 
-		}, 0, 1, TimeUnit.SECONDS);
+		}, 0, 2, TimeUnit.SECONDS);
 
 	}
 
@@ -152,14 +156,14 @@ public class MacroTaskProgressViewController extends BorderPane implements
 				numberOfNodes = Integer.parseInt(lines[0]);
 			}
 			catch (NumberFormatException exc) {
-				Log.error("Incorrect progress log file!" + exc);
+				setStatusMessage("Progress log does not list node size, yet!");
 			}
 		}
 
 		// File names of the progress files for each node:
 		for (int i = 1; i < numberOfNodes; i++) {
 			String filename = "progress_".concat(String.valueOf(i)).concat(".plog");
-			Log.info("Adding file: " + filename);
+			setStatusMessage("Adding file: " + filename);
 			files.add(filename);
 		}
 		return files;
@@ -206,11 +210,11 @@ public class MacroTaskProgressViewController extends BorderPane implements
 	}
 
 	private void getAndParseFileUpdateTasks(List<String> files) {
-		Log.info("Getting the files...");
+		setStatusMessage("Downloading the macro progress files...");
 		List<String> progressLogs = job.getFileContents(files);
-		Log.info("Parsing the files...");
+		setStatusMessage("Parsing the macro progress files...");
 		parseProgressLogs(progressLogs);
-		Log.info("Done.");
+		setStatusMessage("Done parsing the macro progress files.");
 	}
 
 	private void parseProgressLogs(List<String> progressLogs) {
@@ -273,5 +277,9 @@ public class MacroTaskProgressViewController extends BorderPane implements
 		String delimiter)
 	{
 		return stringToSplit.split(delimiter);
+	}
+
+	private void setStatusMessage(String message) {
+		JavaFXRoutines.runOnFxThread(() -> this.statusLabel.setText(message));
 	}
 }

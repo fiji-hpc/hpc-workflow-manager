@@ -17,7 +17,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
-import cz.it4i.fiji.hpc_workflow.core.BenchmarkJobManager.BenchmarkJob;
+import cz.it4i.fiji.hpc_workflow.core.HPCWorkflowJobManager.BenchmarkJob;
 
 class HaasOutputObservableValueRegistry implements Closeable {
 

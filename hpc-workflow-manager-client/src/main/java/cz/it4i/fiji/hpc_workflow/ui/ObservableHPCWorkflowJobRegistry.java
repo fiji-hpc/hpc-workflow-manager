@@ -10,7 +10,7 @@ import cz.it4i.fiji.haas.ui.ObservableValueRegistry;
 import cz.it4i.fiji.haas.ui.UpdatableObservableValue.UpdateStatus;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.hpc_workflow.core.ObservableHPCWorkflowJob;
-import cz.it4i.fiji.hpc_workflow.core.BenchmarkJobManager.BenchmarkJob;
+import cz.it4i.fiji.hpc_workflow.core.HPCWorkflowJobManager.BenchmarkJob;
 
 public class ObservableHPCWorkflowJobRegistry extends ObservableValueRegistry<BenchmarkJob,ObservableHPCWorkflowJob> {
 

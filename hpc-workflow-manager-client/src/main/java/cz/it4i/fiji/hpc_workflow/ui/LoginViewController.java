@@ -1,5 +1,5 @@
 
-package cz.it4i.fiji.haas_spim_benchmark.ui;
+package cz.it4i.fiji.hpc_workflow.ui;
 
 import java.awt.Window;
 import java.io.File;
@@ -13,13 +13,14 @@ import cz.it4i.fiji.commons.UncaughtExceptionHandlerDecorator;
 import cz.it4i.fiji.haas.ui.CloseableControl;
 import cz.it4i.fiji.haas.ui.InitiableControl;
 import cz.it4i.fiji.haas.ui.JavaFXRoutines;
-import cz.it4i.fiji.haas_spim_benchmark.commands.BenchmarkSPIMParametersImpl;
-import cz.it4i.fiji.haas_spim_benchmark.commands.FileLock;
-import cz.it4i.fiji.haas_spim_benchmark.core.AuthFailExceptionHandler;
-import cz.it4i.fiji.haas_spim_benchmark.core.AuthenticationExceptionHandler;
-import cz.it4i.fiji.haas_spim_benchmark.core.Constants;
-import cz.it4i.fiji.haas_spim_benchmark.core.NotConnectedExceptionHandler;
-import cz.it4i.fiji.haas_spim_benchmark.core.WindowCloseableAdapter;
+import cz.it4i.fiji.hpc_workflow.commands.FileLock;
+import cz.it4i.fiji.hpc_workflow.core.AuthFailExceptionHandler;
+import cz.it4i.fiji.hpc_workflow.core.AuthenticationExceptionHandler;
+import cz.it4i.fiji.hpc_workflow.core.Constants;
+import cz.it4i.fiji.hpc_workflow.core.HPCWorkflowParameters;
+import cz.it4i.fiji.hpc_workflow.core.NotConnectedExceptionHandler;
+import cz.it4i.fiji.hpc_workflow.core.WindowCloseableAdapter;
+import cz.it4i.fiji.hpc_workflow.commands.HPCWorkflowParametersImpl;
 import groovy.util.logging.Slf4j;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -70,7 +71,7 @@ public class LoginViewController extends AnchorPane implements CloseableControl,
 		}
 	}
 
-	private BenchmarkSPIMParametersImpl parameters;
+	private HPCWorkflowParameters parameters;
 
 	@FXML
 	private void okAction() {
@@ -96,7 +97,7 @@ public class LoginViewController extends AnchorPane implements CloseableControl,
 			uehd.registerHandler(new AuthFailExceptionHandler());
 			uehd.activate();
 
-			BenchmarkSPIMWindow dialog = new BenchmarkSPIMWindow(null, parameters);
+			HPCWorkflowWindow dialog = new HPCWorkflowWindow(null, parameters);
 
 			dialog.executeAdjustment(() -> {
 				dialog.setTitle(Constants.SUBMENU_ITEM_NAME);
@@ -157,19 +158,19 @@ public class LoginViewController extends AnchorPane implements CloseableControl,
 		// Nothing to do.
 	}
 
-	public BenchmarkSPIMParametersImpl getParameters() {
+	public HPCWorkflowParametersImpl getParameters() {
 		String userName = this.userNameTextField.getText();
 		String password = this.passwordPasswordField.getText();
 		String email = this.emailTextFiled.getText();
 		Path workingDirPath = new File(this.workingDirectoryTextField.getText())
 			.toPath();
 
-		return new BenchmarkSPIMParametersImpl(userName, password, Constants.PHONE,
+		return new HPCWorkflowParametersImpl(userName, password, Constants.PHONE,
 			email, workingDirPath);
 	}
 
 	public void setInitialFormValues(
-		BenchmarkSPIMParametersImpl oldLoginSettings)
+		HPCWorkflowParametersImpl oldLoginSettings)
 	{
 		if (oldLoginSettings != null) {
 			this.userNameTextField.setText(oldLoginSettings.username());
