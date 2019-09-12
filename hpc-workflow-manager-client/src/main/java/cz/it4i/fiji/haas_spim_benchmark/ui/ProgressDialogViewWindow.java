@@ -9,26 +9,20 @@ import javafx.scene.Scene;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+import javafx.stage.WindowEvent;
 
 public class ProgressDialogViewWindow implements ProgressNotifier {
 
 	private ProgressDialogViewController controller;
 
-	private Stage stage;
+	private boolean isCanceled;
 
-	// Properties transfered from ProgressDialog class.
-	protected long itemLatestUpdate;
-
-	protected long latestUpdate;
-
-	boolean isCanceled;
-
-	String windowTitle = null;
+	private String windowTitle = null;
 
 	private void openWindow(String message, Stage parentStage, boolean show) {
 		this.controller = new ProgressDialogViewController(message);
 		final Scene formScene = new Scene(this.controller);
-		stage = new Stage();
+		Stage stage = new Stage();
 		stage.initOwner(parentStage);
 		stage.initModality(Modality.APPLICATION_MODAL);
 		stage.initStyle(StageStyle.DECORATED);
@@ -39,6 +33,11 @@ public class ProgressDialogViewWindow implements ProgressNotifier {
 		if (show) {
 			stage.show();
 		}
+
+		// Prevent user from closing with the x button on the window decoration,
+		// JavaFX does not provide a method to remove all buttons from the
+		// decoration but keep the decoration to have a handle to move the window.
+		stage.setOnCloseRequest(WindowEvent::consume);
 	}
 
 	private void closeWindow() {
@@ -48,9 +47,14 @@ public class ProgressDialogViewWindow implements ProgressNotifier {
 	private void setTitleToNextIncompleteTask() {
 		String taskDescription = this.controller.getFirstNonCompletedTask();
 		if (taskDescription != null) {
-			
 			JavaFXRoutines.runOnFxThread(() -> this.controller.setMessage(
-				this.windowTitle + " : " +taskDescription));
+				this.windowTitle + " : " + taskDescription));
+		}
+	}
+
+	private void checkIfCanceled() {
+		if (isCanceled) {
+			throw new UpdateCanceledException();
 		}
 	}
 
@@ -69,33 +73,21 @@ public class ProgressDialogViewWindow implements ProgressNotifier {
 	}
 
 	public void itemDone(String itemDescription) {
-		this.controller.doneItem(itemDescription);
+		this.controller.itemDone(itemDescription);
 	}
 
 	@Override
 	public void setTitle(final String title) {
-		if(this.windowTitle == null) {
+		if (this.windowTitle == null) {
 			this.windowTitle = title;
 		}
 		checkIfCanceled();
 	}
 
-	protected void setTitle() {
-	
-		String latestTask = this.controller.getFirstNonCompletedTask();
-		if (this.controller.detailsScrollPaneIsVisible() || latestTask == null) {
-			JavaFXRoutines.runOnFxThread(() -> this.controller.setMessage(
-				this.windowTitle));
-		}
-		else {
-			JavaFXRoutines.runOnFxThread(() -> this.controller.setMessage(
-				this.windowTitle + " : " + latestTask));
-		}
-	}
-
+	// Overall progress bar progress:
 	@Override
 	public void setCount(int count, int total) {
-		//
+		this.controller.setProgress(count, total);
 	}
 
 	@Override
@@ -104,17 +96,16 @@ public class ProgressDialogViewWindow implements ProgressNotifier {
 			addItem(item.toString());
 
 			setTitleToNextIncompleteTask();
-
-			// Remove this line:
 		}
 		else {
 			throw new UnsupportedOperationException();
 		}
 	}
 
+	// Item specific sub-progress bar in detail scroll pane:
 	@Override
 	public void setItemCount(int count, int total) {
-		this.controller.setDoneOutOf(count, total);
+		this.controller.setCurrentItemProgress(count, total);
 	}
 
 	@Override
@@ -131,33 +122,6 @@ public class ProgressDialogViewWindow implements ProgressNotifier {
 
 	@Override
 	public void done() {
-		JavaFXRoutines.runOnFxThread(() -> closeWindow());
-	}
-
-	// Method transfered from ProgressDialog class.
-	public void cancel() {
-		isCanceled = true;
-	}
-
-	protected void checkIfCanceled() {
-		if (isCanceled) {
-			throw new UpdateCanceledException();
-		}
-	}
-
-	protected boolean updatesTooFast() {
-		if (System.currentTimeMillis() - latestUpdate < 50) {
-			return true;
-		}
-		latestUpdate = System.currentTimeMillis();
-		return false;
-	}
-
-	protected boolean itemUpdatesTooFast() {
-		if (System.currentTimeMillis() - itemLatestUpdate < 50) {
-			return true;
-		}
-		itemLatestUpdate = System.currentTimeMillis();
-		return false;
+		JavaFXRoutines.runOnFxThread(this::closeWindow);
 	}
 }

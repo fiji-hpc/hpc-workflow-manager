@@ -9,14 +9,14 @@ import cz.it4i.fiji.haas.ui.CloseableControl;
 import cz.it4i.fiji.haas.ui.InitiableControl;
 import cz.it4i.fiji.haas.ui.JavaFXRoutines;
 import javafx.fxml.FXML;
-import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.layout.AnchorPane;
+import javafx.scene.control.ToggleButton;
+import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
 
-public class ProgressDialogViewController extends AnchorPane implements
+public class ProgressDialogViewController extends GridPane implements
 	CloseableControl, InitiableControl
 {
 
@@ -27,12 +27,26 @@ public class ProgressDialogViewController extends AnchorPane implements
 	ProgressBar taskProgressBar;
 
 	@FXML
-	Button detailsButton;
+	ToggleButton detailsToggleButton;
 
 	@FXML
 	ScrollPane detailsScrollPane;
 
+	@FXML
+	GridPane subProgressGridPane;
+
 	private Map<String, Boolean> items = new HashMap<>();
+
+	private Map<String, ProgressBar> itemsProgress = new HashMap<>();
+
+	@FXML
+	private void toggleDetailsAction() {
+		JavaFXRoutines.runOnFxThread(() -> {
+			boolean show = detailsScrollPane.isVisible();
+			detailsScrollPane.setVisible(!show);
+			detailsToggleButton.setText(!show ? "Hide Details" : "Show Details");
+		});
+	}
 
 	public ProgressDialogViewController(String description) {
 		JavaFXRoutines.initRootAndController("ProgressDialogView.fxml", this);
@@ -52,10 +66,29 @@ public class ProgressDialogViewController extends AnchorPane implements
 
 	public void addItem(String itemDescription) {
 		items.putIfAbsent(itemDescription, false);
+
+		JavaFXRoutines.runOnFxThread(() -> addSubProgress(itemDescription));
 	}
 
-	public void doneItem(String itemDescription) {
+	public void addSubProgress(String itemDescription) {
+		Label tempLabel = new Label(itemDescription);
+		ProgressBar tempProgressBar = new ProgressBar();
+		int rowIndex = items.size() - 1;
+
+		// If it is not the first item add a new row to the GridPane first:
+		if (items.size() == 1) {
+			this.subProgressGridPane.add(tempLabel, 0, 0);
+			this.subProgressGridPane.add(tempProgressBar, 1, 0);
+		}
+		else {
+			this.subProgressGridPane.addRow(rowIndex, tempLabel, tempProgressBar);
+		}
+		itemsProgress.put(itemDescription, tempProgressBar);
+	}
+
+	public void itemDone(String itemDescription) {
 		items.put(itemDescription, true);
+		setCurrentItemProgress(100, 100);
 	}
 
 	public String getFirstNonCompletedTask() {
@@ -67,19 +100,15 @@ public class ProgressDialogViewController extends AnchorPane implements
 		this.taskDescriptionLabel.setText(message);
 	}
 
-	public void setDoneOutOf(int current, int total) {
-		this.taskProgressBar.setProgress(current / (double) total);
+	public void setProgress(int current, int total) {
+		JavaFXRoutines.runOnFxThread(() -> this.taskProgressBar.setProgress(
+			current / (double) total));
 	}
 
-	public boolean detailsScrollPaneIsVisible() {
-		return detailsScrollPane.isVisible();
-	}
-
-	@FXML
-	private void toggleDetailsAction() {
-		boolean show = detailsScrollPane.isVisible();
-		detailsScrollPane.setVisible(show);
-		detailsButton.setText(show ? "Hide Details" : "Show Details");
+	public void setCurrentItemProgress(int currentlyDone, int total) {
+		String itemDescription = getFirstNonCompletedTask();
+		JavaFXRoutines.runOnFxThread(() -> itemsProgress.get(itemDescription)
+			.setProgress(currentlyDone / (double) total));
 	}
 
 }
