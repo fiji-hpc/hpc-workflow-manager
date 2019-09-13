@@ -1,15 +1,12 @@
 
 package cz.it4i.fiji.hpc_workflow.ui;
 
-import java.awt.Window;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import cz.it4i.fiji.haas.ui.CloseableControl;
-import cz.it4i.fiji.haas.ui.InitiableControl;
 import cz.it4i.fiji.haas_java_client.FileTransferInfo;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
@@ -26,9 +23,9 @@ import javafx.collections.ListChangeListener.Change;
 import javafx.fxml.FXML;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
+import javafx.stage.Stage;
 
-public class JobDetailControl extends TabPane implements CloseableControl,
-	InitiableControl
+public class JobDetailControl extends TabPane
 {
 
 	private static Logger log = LoggerFactory.getLogger(
@@ -75,6 +72,8 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 	private final ObservableHPCWorkflowJob job;
 
 	private SimpleObservableList<Task> taskList;
+	
+	private Stage stage;
 
 	private final ListChangeListener<Task> taskListListener = (
 		Change<? extends Task> c) -> setTabAvailability(progressTab,
@@ -108,10 +107,11 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 
 	// -- InitiableControl methods --
 
-	@Override
-	public void init(final Window rootWindow) {
+	public void init(Stage newStage) {
+		this.stage = newStage;
+		
 		ProgressDialogViewWindow progressDialogViewWindow =
-			new ProgressDialogViewWindow("Downloading tasks", null);
+			new ProgressDialogViewWindow("Downloading tasks", this.stage);
 		executorServiceWS.execute(() -> {
 
 			try {
@@ -122,7 +122,7 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 					removeTab(macroProgressTab);
 
 					// SPIM-only related initializations:
-					progressControl.init(rootWindow);
+					JavaFXRoutines.runOnFxThread(() -> progressControl.init());
 					taskList = job.getObservableTaskList();
 					taskList.subscribe(taskListListener);
 					progressControl.setObservable(taskList);
@@ -141,7 +141,7 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 						"Error output"));
 
 					// Macro-only related initializations:
-					macroProgressControl.init(rootWindow);
+					JavaFXRoutines.runOnFxThread(()-> macroProgressControl.init());
 					macroProgressControl.setJobParameter(job);
 
 					progressDialogViewWindow.done();
@@ -189,7 +189,6 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 
 	// -- CloseableControl methods --
 
-	@Override
 	public void close() {
 		WorkflowType jobType = job.getWorkflowType();
 

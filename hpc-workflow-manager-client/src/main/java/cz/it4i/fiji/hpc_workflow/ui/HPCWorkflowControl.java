@@ -4,7 +4,6 @@ package cz.it4i.fiji.hpc_workflow.ui;
 import static cz.it4i.fiji.hpc_workflow.core.Configuration.getHaasUpdateTimeout;
 import static cz.it4i.fiji.hpc_workflow.core.Constants.CONFIG_YAML;
 
-import java.awt.Window;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -73,8 +72,7 @@ import javafx.scene.layout.Region;
 import javafx.stage.Stage;
 import mpicbg.spim.data.SpimDataException;
 
-public class HPCWorkflowControl extends BorderPane
-{
+public class HPCWorkflowControl extends BorderPane {
 
 	@FXML
 	private TableView<ObservableHPCWorkflowJob> jobs;
@@ -85,8 +83,6 @@ public class HPCWorkflowControl extends BorderPane
 		.newWorkStealingPool();
 
 	private final Executor executorServiceFX = new FXFrameExecutorService();
-
-	private Window root;
 
 	private ExecutorService executorServiceShell;
 
@@ -104,16 +100,17 @@ public class HPCWorkflowControl extends BorderPane
 		cz.it4i.fiji.hpc_workflow.ui.HPCWorkflowControl.class);
 
 	private Stage stage;
-	
-	public HPCWorkflowControl(HPCWorkflowJobManager manager, Stage stage) {
+
+	public HPCWorkflowControl(HPCWorkflowJobManager manager) {
 		this.manager = manager;
-		this.stage = stage;
 		JavaFXRoutines.initRootAndController("BenchmarkSPIM.fxml", this);
 		jobs.setPlaceholder(new Label(
 			"No content in table. Right click to create new one."));
 	}
 
-	public void init() {
+	public void init(Stage newStage) {
+		this.stage = newStage;
+		
 		executorServiceWS = Executors.newSingleThreadExecutor();
 		executorServiceShell = Executors.newSingleThreadExecutor();
 		timer = new Timer();
@@ -500,7 +497,7 @@ public class HPCWorkflowControl extends BorderPane
 	}
 
 	private void openJobDetailsWindow(ObservableHPCWorkflowJob job) {
-		new JobDetailWindow(root, job).setVisible(true);
+		new JobDetailWindow(this.stage, job);
 	}
 
 	private void openBigDataViewer(BenchmarkJob job) {

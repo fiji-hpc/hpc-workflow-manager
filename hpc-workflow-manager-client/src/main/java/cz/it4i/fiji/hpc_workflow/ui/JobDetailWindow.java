@@ -1,18 +1,43 @@
 
 package cz.it4i.fiji.hpc_workflow.ui;
 
-import java.awt.Window;
-
-import cz.it4i.fiji.haas.ui.FXFrame;
 import cz.it4i.fiji.hpc_workflow.core.ObservableHPCWorkflowJob;
+import cz.it4i.swing_javafx_ui.JavaFXRoutines;
+import javafx.scene.Scene;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 
-public class JobDetailWindow extends FXFrame<JobDetailControl> {
+public class JobDetailWindow {
 
-	private static final long serialVersionUID = 1L;
+	private Stage stage;
 
-	public JobDetailWindow(Window parentWindow, ObservableHPCWorkflowJob job) {
-		super(parentWindow, () -> new JobDetailControl(job));
-		setTitle("Job dashboard for job #" + job.getValue().getId());
-		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+	private JobDetailControl controller;
+
+	public JobDetailWindow(Stage parentStage, ObservableHPCWorkflowJob job) {
+		JavaFXRoutines.runOnFxThread(() -> openWindow(job, parentStage));
+	}
+
+	public void openWindow(ObservableHPCWorkflowJob job, Stage parentStage) {
+		// Open the the window:
+		this.controller = new JobDetailControl(job);
+		final Scene formScene = new Scene(controller);
+		stage = new Stage();
+		// Disable modal in order to allow the user to open detailed views of
+		// multiple jobs.
+		stage.initOwner(null);
+		stage.initModality(Modality.APPLICATION_MODAL);
+		stage.setResizable(true);
+		stage.setTitle("Job dashboard for job #" + job.getValue().getId());
+		stage.setScene(formScene);
+
+		finalizeOnStageClose();
+		controller.init(stage);
+
+		stage.showAndWait();
+	}
+
+	public void finalizeOnStageClose() {
+		this.stage.setOnCloseRequest((WindowEvent we) -> this.controller.close());
 	}
 }

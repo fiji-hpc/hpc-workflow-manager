@@ -112,7 +112,7 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 		observedList.subscribe(taskChangeListener);
 	}
 
-	private void init() {
+	void init() {
 		JavaFXRoutines.initRootAndController("SPIMPipelineProgressView.fxml", this);
 		tasks.setPrefWidth(PREFERRED_WIDTH);
 

@@ -69,7 +69,7 @@ public class MacroTaskProgressViewController extends BorderPane implements
 		init();
 	}
 
-	private void init() {
+	void init() {
 		JavaFXRoutines.initRootAndController("MacroTaskProgressView.fxml", this);
 	}
 

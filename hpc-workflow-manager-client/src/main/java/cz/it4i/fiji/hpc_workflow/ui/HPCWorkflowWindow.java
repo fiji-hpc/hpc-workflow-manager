@@ -26,23 +26,23 @@ public class HPCWorkflowWindow {
 		FileLock fl, UncaughtExceptionHandlerDecorator uehd)
 	{
 		// Open the the window:
-		this.controller = new HPCWorkflowControl(
-			hpcWorkflowJobManager, stage);
+		this.controller = new HPCWorkflowControl(hpcWorkflowJobManager);
 		final Scene formScene = new Scene(controller);
 		stage = new Stage();
+		stage.initOwner(null);
 		stage.initModality(Modality.APPLICATION_MODAL);
-		stage.setResizable(false);
+		stage.setResizable(true);
 		stage.setTitle(Constants.SUBMENU_ITEM_NAME);
 		stage.setScene(formScene);
 
 		// Remember to close the file lock and exceptions:
-		lockAndOther(fl, uehd);
-		controller.init();
+		finalizeOnStageClose(fl, uehd);
+		controller.init(stage);
 
 		stage.showAndWait();
 	}
 
-	public void lockAndOther(FileLock fl,
+	public void finalizeOnStageClose(FileLock fl,
 		UncaughtExceptionHandlerDecorator uehd)
 	{
 		// On close dispose fl and uehd:
@@ -51,6 +51,6 @@ public class HPCWorkflowWindow {
 			uehd.close();
 			controller.close();
 		});
-		
+
 	}
 }
