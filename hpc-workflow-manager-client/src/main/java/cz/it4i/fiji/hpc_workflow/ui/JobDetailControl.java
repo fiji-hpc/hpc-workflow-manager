@@ -109,7 +109,7 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 	// -- InitiableControl methods --
 
 	@Override
-	public void init(final Window parameter) {
+	public void init(final Window rootWindow) {
 		ProgressDialogViewWindow progressDialogViewWindow =
 			new ProgressDialogViewWindow("Downloading tasks", null);
 		executorServiceWS.execute(() -> {
@@ -122,7 +122,7 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 					removeTab(macroProgressTab);
 
 					// SPIM-only related initializations:
-					progressControl.init(parameter);
+					progressControl.init(rootWindow);
 					taskList = job.getObservableTaskList();
 					taskList.subscribe(taskListListener);
 					progressControl.setObservable(taskList);
@@ -141,7 +141,7 @@ public class JobDetailControl extends TabPane implements CloseableControl,
 						"Error output"));
 
 					// Macro-only related initializations:
-					macroProgressControl.init(parameter);
+					macroProgressControl.init(rootWindow);
 					macroProgressControl.setJobParameter(job);
 
 					progressDialogViewWindow.done();

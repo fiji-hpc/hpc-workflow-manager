@@ -40,9 +40,7 @@ import bdv.BigDataViewer;
 import bdv.export.ProgressWriterConsole;
 import bdv.viewer.ViewerOptions;
 import cz.it4i.fiji.haas.UploadingFileFromResource;
-import cz.it4i.fiji.haas.ui.CloseableControl;
 import cz.it4i.fiji.haas.ui.FutureValueUpdater;
-import cz.it4i.fiji.haas.ui.InitiableControl;
 import cz.it4i.fiji.haas.ui.ModalDialogs;
 import cz.it4i.fiji.haas.ui.ShellRoutines;
 import cz.it4i.fiji.haas.ui.StringValueUpdater;
@@ -72,10 +70,10 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Region;
+import javafx.stage.Stage;
 import mpicbg.spim.data.SpimDataException;
 
-public class HPCWorkflowControl extends BorderPane implements
-	CloseableControl, InitiableControl
+public class HPCWorkflowControl extends BorderPane
 {
 
 	@FXML
@@ -105,16 +103,17 @@ public class HPCWorkflowControl extends BorderPane implements
 	private static Logger log = LoggerFactory.getLogger(
 		cz.it4i.fiji.hpc_workflow.ui.HPCWorkflowControl.class);
 
-	public HPCWorkflowControl(HPCWorkflowJobManager manager) {
+	private Stage stage;
+	
+	public HPCWorkflowControl(HPCWorkflowJobManager manager, Stage stage) {
 		this.manager = manager;
+		this.stage = stage;
 		JavaFXRoutines.initRootAndController("BenchmarkSPIM.fxml", this);
 		jobs.setPlaceholder(new Label(
 			"No content in table. Right click to create new one."));
 	}
 
-	@Override
-	public void init(Window rootWindow) {
-		this.root = rootWindow;
+	public void init() {
 		executorServiceWS = Executors.newSingleThreadExecutor();
 		executorServiceShell = Executors.newSingleThreadExecutor();
 		timer = new Timer();
@@ -135,7 +134,6 @@ public class HPCWorkflowControl extends BorderPane implements
 		}
 	}
 
-	@Override
 	public synchronized void close() {
 		if (!closed) {
 			executorServiceShell.shutdown();
@@ -369,7 +367,7 @@ public class HPCWorkflowControl extends BorderPane implements
 		PJobAction action)
 	{
 		ProgressDialogViewWindow progress = new ProgressDialogViewWindow(title,
-			null);
+			this.stage);
 
 		JavaFXRoutines.executeAsync(executorServiceWS, (Callable<Void>) () -> {
 			try {
@@ -389,7 +387,7 @@ public class HPCWorkflowControl extends BorderPane implements
 	private boolean checkConnection() {
 		boolean[] result = { false };
 		ProgressDialogViewWindow progress = new ProgressDialogViewWindow(
-			"Connecting to HPC", null);
+			"Connecting to HPC", this.stage);
 
 		final CountDownLatch latch = new CountDownLatch(1);
 		executorServiceWS.execute(() -> {
@@ -413,7 +411,7 @@ public class HPCWorkflowControl extends BorderPane implements
 
 	private void updateJobs(boolean showProgress) {
 		final ProgressDialogViewWindow progress = new ProgressDialogViewWindow(
-			"Updating jobs", null, showProgress);
+			"Updating jobs", this.stage, showProgress);
 
 		executorServiceWS.execute(() -> {
 			List<BenchmarkJob> inspectedJobs = new LinkedList<>(manager.getJobs());

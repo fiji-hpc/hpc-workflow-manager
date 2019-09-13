@@ -1,30 +1,18 @@
 
 package cz.it4i.fiji.hpc_workflow.ui;
 
-import java.awt.Window;
-
 import org.scijava.prefs.PrefService;
 
-import cz.it4i.fiji.haas.ui.FXFrame;
-import cz.it4i.fiji.hpc_workflow.core.Constants;
 import cz.it4i.fiji.hpc_workflow.commands.HPCWorkflowParametersImpl;
 import javafx.scene.Scene;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
-public class LoginViewWindow extends FXFrame<LoginViewController> {
+public class LoginViewWindow {
 
 	private PrefService prefService;
 
 	private LoginViewController controller;
-
-	private static final long serialVersionUID = 1L;
-
-	public LoginViewWindow(Window parentWindow) {
-		super(parentWindow, LoginViewController::new);
-		setTitle(Constants.SUBMENU_ITEM_NAME);
-		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-	}
 
 	public void openWindow() {
 		// Get the previously entered login settings if any:
@@ -38,7 +26,7 @@ public class LoginViewWindow extends FXFrame<LoginViewController> {
 		final Stage stage = new Stage();
 		stage.initModality(Modality.APPLICATION_MODAL);
 		stage.setResizable(false);
-		stage.setTitle("Local ImageJ Server Settings");
+		stage.setTitle("Login");
 		stage.setScene(formScene);
 
 		this.controller.setInitialFormValues(oldLoginSettings);

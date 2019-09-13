@@ -7,8 +7,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import javax.swing.WindowConstants;
-
 import cz.it4i.fiji.commons.UncaughtExceptionHandlerDecorator;
 import cz.it4i.fiji.haas.ui.CloseableControl;
 import cz.it4i.fiji.haas.ui.InitiableControl;
@@ -56,6 +54,8 @@ public class LoginViewController extends AnchorPane implements CloseableControl,
 	private static final String LOCK_FILE_NAME = ".lock";
 
 	private static final String ERROR_HEADER = "Error";
+	
+	private FileLock fl;
 
 	public LoginViewController() {
 		JavaFXRoutines.initRootAndController("LoginView.fxml", this);
@@ -98,13 +98,7 @@ public class LoginViewController extends AnchorPane implements CloseableControl,
 			uehd.registerHandler(new AuthFailExceptionHandler());
 			uehd.activate();
 
-			HPCWorkflowWindow dialog = new HPCWorkflowWindow(null, parameters);
-
-			dialog.executeAdjustment(() -> {
-				dialog.setTitle(Constants.SUBMENU_ITEM_NAME);
-				dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-				wca.setWindowAndShowIt(dialog);
-			});
+			new HPCWorkflowWindow(parameters, fl, uehd);
 		}
 	}
 
@@ -137,7 +131,7 @@ public class LoginViewController extends AnchorPane implements CloseableControl,
 	private boolean workingDirectoryIsUsedBySomeoneElse(File workingDirectory) {
 		try {
 			final Path workingDirPath = Paths.get(workingDirectory.getPath());
-			final FileLock fl = new FileLock(workingDirPath.resolve(LOCK_FILE_NAME));
+			fl = new FileLock(workingDirPath.resolve(LOCK_FILE_NAME));
 			if (!fl.tryLock()) {
 				return true;
 			}

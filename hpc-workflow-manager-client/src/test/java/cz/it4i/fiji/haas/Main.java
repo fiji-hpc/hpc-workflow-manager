@@ -2,7 +2,7 @@ package cz.it4i.fiji.haas;
 
 import net.imagej.ImageJ;
 
-import cz.it4i.fiji.hpc_workflow.commands.ManageHPCWorkflow;
+import cz.it4i.fiji.hpc_workflow.commands.NewManageHPCWorkflow;
 
 public class Main {
 	public static void main(final String... args) throws Exception {
@@ -11,6 +11,6 @@ public class Main {
 		ij.ui().showUI();
 
 		// invoke the plugin
-		ij.command().run(ManageHPCWorkflow.class, true);
+		ij.command().run(NewManageHPCWorkflow.class, true);
 	}
 }

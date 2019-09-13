@@ -23,7 +23,7 @@ import groovy.util.logging.Slf4j;
 		Constants.SUBMENU_ITEM_NAME)
 public class NewManageHPCWorkflow implements Command {
 
-	private static Logger log = LoggerFactory.getLogger(ManageHPCWorkflow.class);
+	private static Logger log = LoggerFactory.getLogger(NewManageHPCWorkflow.class);
 
 	@Parameter
 	private Context context;
@@ -31,7 +31,7 @@ public class NewManageHPCWorkflow implements Command {
 	@Override
 	public void run() {
 		// Display window:
-		LoginViewWindow loginViewWindow = new LoginViewWindow(null);
+		LoginViewWindow loginViewWindow = new LoginViewWindow();
 		JavaFXRoutines.runOnFxThread(() -> {
 			loginViewWindow.initialize(context.getService(PrefService.class));
 			loginViewWindow.openWindow();
