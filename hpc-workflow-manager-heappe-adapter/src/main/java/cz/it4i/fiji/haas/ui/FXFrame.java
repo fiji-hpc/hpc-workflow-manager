@@ -12,6 +12,7 @@ import javax.swing.JDialog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import cz.it4i.swing_javafx_ui.JavaFXRoutines;
 import javafx.scene.Parent;
 
 public abstract class FXFrame<T extends Parent & CloseableControl> extends

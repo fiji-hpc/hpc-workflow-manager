@@ -8,6 +8,7 @@ import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import cz.it4i.swing_javafx_ui.JavaFXRoutines;
 import javafx.application.Platform;
 import javafx.scene.Parent;
 import javafx.scene.Scene;

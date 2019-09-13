@@ -12,9 +12,9 @@ import org.scijava.prefs.PrefService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import cz.it4i.fiji.haas.ui.JavaFXRoutines;
 import cz.it4i.fiji.hpc_workflow.core.Constants;
 import cz.it4i.fiji.hpc_workflow.ui.LoginViewWindow;
+import cz.it4i.swing_javafx_ui.JavaFXRoutines;
 import groovy.util.logging.Slf4j;
 
 @Slf4j

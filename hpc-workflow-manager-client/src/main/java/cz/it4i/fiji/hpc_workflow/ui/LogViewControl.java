@@ -5,7 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import cz.it4i.fiji.haas.ui.CloseableControl;
-import cz.it4i.fiji.haas.ui.JavaFXRoutines;
+import cz.it4i.swing_javafx_ui.JavaFXRoutines;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;

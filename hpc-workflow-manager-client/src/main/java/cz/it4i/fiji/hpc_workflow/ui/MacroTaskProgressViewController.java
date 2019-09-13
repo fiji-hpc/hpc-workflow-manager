@@ -15,10 +15,10 @@ import org.python.jline.internal.Log;
 
 import cz.it4i.fiji.haas.ui.CloseableControl;
 import cz.it4i.fiji.haas.ui.InitiableControl;
-import cz.it4i.fiji.haas.ui.JavaFXRoutines;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.hpc_workflow.core.MacroTask;
 import cz.it4i.fiji.hpc_workflow.core.ObservableHPCWorkflowJob;
+import cz.it4i.swing_javafx_ui.JavaFXRoutines;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleLongProperty;
 import javafx.collections.FXCollections;

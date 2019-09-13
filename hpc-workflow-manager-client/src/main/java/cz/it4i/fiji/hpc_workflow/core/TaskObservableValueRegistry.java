@@ -10,8 +10,8 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import cz.it4i.fiji.haas.ui.JavaFXRoutines;
 import cz.it4i.fiji.hpc_workflow.core.HPCWorkflowJobManager.BenchmarkJob;
+import cz.it4i.swing_javafx_ui.JavaFXRoutines;
 
 class TaskObservableValueRegistry implements Closeable {
 
