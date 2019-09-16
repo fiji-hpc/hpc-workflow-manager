@@ -4,7 +4,6 @@ package cz.it4i.fiji.hpc_workflow.ui;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import cz.it4i.fiji.haas.ui.CloseableControl;
 import cz.it4i.swing_javafx_ui.JavaFXRoutines;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -12,7 +11,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.BorderPane;
 
-public class LogViewControl extends BorderPane implements CloseableControl {
+public class LogViewControl extends BorderPane {
 
 	@FXML
 	private TextArea otherOutputTextArea;
@@ -39,7 +38,6 @@ public class LogViewControl extends BorderPane implements CloseableControl {
 		observedValue.addListener(outputChangeListener);
 	}
 
-	@Override
 	public void close() {
 		observedValue.removeListener(outputChangeListener);
 	}

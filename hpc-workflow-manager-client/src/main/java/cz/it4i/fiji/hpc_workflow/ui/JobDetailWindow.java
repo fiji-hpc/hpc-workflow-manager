@@ -18,7 +18,7 @@ public class JobDetailWindow {
 		JavaFXRoutines.runOnFxThread(() -> openWindow(job, parentStage));
 	}
 
-	public void openWindow(ObservableHPCWorkflowJob job, Stage parentStage) {
+	private void openWindow(ObservableHPCWorkflowJob job, Stage parentStage) {
 		// Open the the window:
 		this.controller = new JobDetailControl(job);
 		final Scene formScene = new Scene(controller);

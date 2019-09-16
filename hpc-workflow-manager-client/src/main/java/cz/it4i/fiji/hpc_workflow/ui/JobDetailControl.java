@@ -141,7 +141,6 @@ public class JobDetailControl extends TabPane
 						"Error output"));
 
 					// Macro-only related initializations:
-					JavaFXRoutines.runOnFxThread(()-> macroProgressControl.init());
 					macroProgressControl.setJobParameter(job);
 
 					progressDialogViewWindow.done();

@@ -1,7 +1,6 @@
 
 package cz.it4i.fiji.hpc_workflow.ui;
 
-import java.awt.Window;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -13,8 +12,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.python.jline.internal.Log;
 
-import cz.it4i.fiji.haas.ui.CloseableControl;
-import cz.it4i.fiji.haas.ui.InitiableControl;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.hpc_workflow.core.MacroTask;
 import cz.it4i.fiji.hpc_workflow.core.ObservableHPCWorkflowJob;
@@ -33,9 +30,7 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
 
-public class MacroTaskProgressViewController extends BorderPane implements
-	CloseableControl, InitiableControl
-{
+public class MacroTaskProgressViewController extends BorderPane {
 
 	@FXML
 	private TableView<MacroTask> tasksTableView;
@@ -51,7 +46,7 @@ public class MacroTaskProgressViewController extends BorderPane implements
 	private ObservableList<MacroTask> tableData = FXCollections
 		.observableArrayList();
 
-	ScheduledExecutorService exec = Executors.newSingleThreadScheduledExecutor();
+	private ScheduledExecutorService exec = Executors.newSingleThreadScheduledExecutor();
 
 	// Maps task id of a specific node to description:
 	private List<Map<Integer, String>> nodeTaskToDescription = new ArrayList<>();
@@ -63,19 +58,14 @@ public class MacroTaskProgressViewController extends BorderPane implements
 	private Map<String, Map<Integer, SimpleLongProperty>> descriptionToProperty =
 		new HashMap<>();
 
-	final CountDownLatch latchToWaitForJavaFx = new CountDownLatch(1);
+	private final CountDownLatch latchToWaitForJavaFx = new CountDownLatch(1);
 
 	public MacroTaskProgressViewController() {
 		init();
 	}
 
-	void init() {
+	private void init() {
 		JavaFXRoutines.initRootAndController("MacroTaskProgressView.fxml", this);
-	}
-
-	@Override
-	public void init(Window parameter) {
-		// This is empty as the parameter is not used.
 	}
 
 	private class ProgressCell extends TableCell<MacroTask, Long> {
@@ -98,7 +88,6 @@ public class MacroTaskProgressViewController extends BorderPane implements
 		}
 	}
 
-	@Override
 	public void close() {
 		exec.shutdown();
 	}
