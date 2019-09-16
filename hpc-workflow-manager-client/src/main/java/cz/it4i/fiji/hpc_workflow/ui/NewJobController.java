@@ -73,6 +73,9 @@ public class NewJobController extends BorderPane {
 	private RadioButton ownInputRadioButton;
 
 	@FXML
+	private RadioButton demoInputDataRadioButton;
+
+	@FXML
 	private RadioButton ownOutputRadioButton;
 
 	@FXML
@@ -243,13 +246,18 @@ public class NewJobController extends BorderPane {
 			.setDisable(n != disableIfNotSelected));
 	}
 
-	private void selectedSpimWorkflow(Boolean n) {
-		if (n) {
+	private void selectedSpimWorkflow(Boolean spimWorkflowIsSelected) {
+		if (spimWorkflowIsSelected) {
 			numberOfNodesTextField.setText("1");
 			numberOfNodesTextField.setDisable(true);
+			demoInputDataRadioButton.setDisable(false);
 		}
 		else {
 			numberOfNodesTextField.setDisable(false);
+			demoInputDataRadioButton.setDisable(true);
+			if (demoInputDataRadioButton.isSelected()) {
+				ownInputRadioButton.setSelected(true);
+			}
 		}
 	}
 
