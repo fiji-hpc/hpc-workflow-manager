@@ -15,6 +15,8 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.RadioButton;
+import javafx.scene.control.Spinner;
+import javafx.scene.control.SpinnerValueFactory;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleGroup;
@@ -88,7 +90,7 @@ public class NewJobController extends BorderPane {
 	private TextField outputDirectoryTextField;
 
 	@FXML
-	private TextField numberOfNodesTextField;
+	private Spinner<Integer> numberOfNodesSpinner;
 
 	@FXML
 	private Button selectInputButton;
@@ -119,6 +121,12 @@ public class NewJobController extends BorderPane {
 			n) -> selectedSpimWorkflow(n));
 		initSelectButton(inputDirectoryTextField, selectInputButton);
 		initSelectButton(outputDirectoryTextField, selectOutputButton);
+
+		// Spinner value factory:
+		SpinnerValueFactory<Integer> valueFactory =
+			new SpinnerValueFactory.IntegerSpinnerValueFactory(1, Integer.MAX_VALUE,
+				1);
+		numberOfNodesSpinner.setValueFactory(valueFactory);
 	}
 
 	public void close() {
@@ -140,7 +148,7 @@ public class NewJobController extends BorderPane {
 	}
 
 	public int getNumberOfNodes() {
-		return Integer.parseInt(numberOfNodesTextField.getText());
+		return numberOfNodesSpinner.getValue();
 	}
 
 	public WorkflowType getWorkflowType() {
@@ -248,12 +256,12 @@ public class NewJobController extends BorderPane {
 
 	private void selectedSpimWorkflow(Boolean spimWorkflowIsSelected) {
 		if (spimWorkflowIsSelected) {
-			numberOfNodesTextField.setText("1");
-			numberOfNodesTextField.setDisable(true);
+			numberOfNodesSpinner.getValueFactory().setValue(1);
+			numberOfNodesSpinner.setDisable(true);
 			demoInputDataRadioButton.setDisable(false);
 		}
 		else {
-			numberOfNodesTextField.setDisable(false);
+			numberOfNodesSpinner.setDisable(false);
 			demoInputDataRadioButton.setDisable(true);
 			if (demoInputDataRadioButton.isSelected()) {
 				ownInputRadioButton.setSelected(true);

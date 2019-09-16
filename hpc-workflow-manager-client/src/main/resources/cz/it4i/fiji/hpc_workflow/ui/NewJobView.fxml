@@ -4,6 +4,7 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.RadioButton?>
+<?import javafx.scene.control.Spinner?>
 <?import javafx.scene.control.SplitPane?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.TitledPane?>
@@ -22,6 +23,30 @@
 	<center>
 		<VBox BorderPane.alignment="CENTER">
 			<children>
+				<TitledPane animated="false" collapsible="false"
+					text="Workflow Type">
+					<content>
+						<AnchorPane>
+							<children>
+								<VBox layoutX="35.0" layoutY="-27.0" />
+								<RadioButton fx:id="workflowSpimRadioButton"
+									layoutY="5.0" mnemonicParsing="false" selected="true"
+									text="SPIM Workflow">
+									<toggleGroup>
+										<ToggleGroup fx:id="workflowSelectorToggleGroup" />
+									</toggleGroup>
+								</RadioButton>
+								<RadioButton layoutY="23.0" mnemonicParsing="false"
+									text="Macro Execution"
+									toggleGroup="$workflowSelectorToggleGroup">
+									<padding>
+										<Insets top="5.0" />
+									</padding>
+								</RadioButton>
+							</children>
+						</AnchorPane>
+					</content>
+				</TitledPane>
 				<TitledPane animated="false" collapsible="false"
 					text="Input data location">
 					<content>
@@ -81,6 +106,24 @@
 					</content>
 				</TitledPane>
 				<TitledPane animated="false" collapsible="false"
+					text="Node Configuration">
+					<content>
+						<SplitPane dividerPositions="0.5">
+							<items>
+								<Label prefWidth="220.0" text="Number of nodes">
+									<opaqueInsets>
+										<Insets />
+									</opaqueInsets>
+									<padding>
+										<Insets right="20.0" />
+									</padding>
+								</Label>
+								<Spinner fx:id="numberOfNodesSpinner" disable="true" />
+							</items>
+						</SplitPane>
+					</content>
+				</TitledPane>
+				<TitledPane animated="false" collapsible="false"
 					text="Output data location">
 					<content>
 						<AnchorPane minHeight="0.0" minWidth="0.0">
@@ -122,50 +165,6 @@
 										</HBox>
 									</children>
 								</VBox>
-							</children>
-						</AnchorPane>
-					</content>
-				</TitledPane>
-				<TitledPane animated="false" collapsible="false"
-					text="Node Configuration">
-					<content>
-						<SplitPane dividerPositions="0.5">
-							<items>
-								<Label prefWidth="220.0" text="Number of nodes">
-									<opaqueInsets>
-										<Insets />
-									</opaqueInsets>
-									<padding>
-										<Insets right="20.0" />
-									</padding>
-								</Label>
-								<TextField fx:id="numberOfNodesTextField"
-									alignment="CENTER" disable="true"
-									maxWidth="1.7976931348623157E308" text="1" />
-							</items>
-						</SplitPane>
-					</content>
-				</TitledPane>
-				<TitledPane animated="false" collapsible="false"
-					text="Workflow Type">
-					<content>
-						<AnchorPane>
-							<children>
-								<VBox layoutX="35.0" layoutY="-27.0" />
-								<RadioButton fx:id="workflowSpimRadioButton"
-									layoutY="5.0" mnemonicParsing="false" selected="true"
-									text="SPIM Workflow">
-									<toggleGroup>
-										<ToggleGroup fx:id="workflowSelectorToggleGroup" />
-									</toggleGroup>
-								</RadioButton>
-								<RadioButton layoutY="23.0" mnemonicParsing="false"
-									text="Macro Execution"
-									toggleGroup="$workflowSelectorToggleGroup">
-									<padding>
-										<Insets top="5.0" />
-									</padding>
-								</RadioButton>
 							</children>
 						</AnchorPane>
 					</content>
