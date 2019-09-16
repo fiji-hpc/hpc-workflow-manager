@@ -25,6 +25,7 @@ public class ProgressDialogViewWindow implements ProgressNotifier {
 		Stage stage = new Stage();
 		stage.initOwner(parentStage);
 		stage.initModality(Modality.APPLICATION_MODAL);
+		stage.setAlwaysOnTop(true);
 		stage.initStyle(StageStyle.DECORATED);
 		stage.setResizable(false);
 		this.windowTitle = message;

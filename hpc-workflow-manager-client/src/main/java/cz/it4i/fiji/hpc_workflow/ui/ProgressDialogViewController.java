@@ -1,12 +1,9 @@
 
 package cz.it4i.fiji.hpc_workflow.ui;
 
-import java.awt.Window;
 import java.util.HashMap;
 import java.util.Map;
 
-import cz.it4i.fiji.haas.ui.CloseableControl;
-import cz.it4i.fiji.haas.ui.InitiableControl;
 import cz.it4i.swing_javafx_ui.JavaFXRoutines;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
@@ -16,9 +13,7 @@ import javafx.scene.control.ToggleButton;
 import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
 
-public class ProgressDialogViewController extends GridPane implements
-	CloseableControl, InitiableControl
-{
+public class ProgressDialogViewController extends GridPane {
 
 	@FXML
 	Label taskDescriptionLabel;
@@ -51,20 +46,22 @@ public class ProgressDialogViewController extends GridPane implements
 	public ProgressDialogViewController(String description) {
 		JavaFXRoutines.initRootAndController("ProgressDialogView.fxml", this);
 		this.taskDescriptionLabel.setText(description);
+
+		// Make the details button visible only when there are details to display:
+		this.detailsToggleButton.setVisible(false);
 	}
 
-	@Override
-	public void init(Window parameter) {
-		// Nothing to initialize.
-	}
-
-	@Override
 	public void close() {
 		Stage stage = (Stage) taskDescriptionLabel.getScene().getWindow();
 		stage.close();
 	}
 
 	public void addItem(String itemDescription) {
+		// Now that there is at least an item enable the details button:
+		if (!this.detailsToggleButton.isVisible()) {
+			this.detailsToggleButton.setVisible(true);
+		}
+
 		items.putIfAbsent(itemDescription, false);
 
 		JavaFXRoutines.runOnFxThread(() -> addSubProgress(itemDescription));
