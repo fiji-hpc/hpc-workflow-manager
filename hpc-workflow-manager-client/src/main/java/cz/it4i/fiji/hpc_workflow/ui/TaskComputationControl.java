@@ -1,7 +1,6 @@
 
 package cz.it4i.fiji.hpc_workflow.ui;
 
-import java.awt.Window;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.concurrent.Executor;
@@ -12,12 +11,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import cz.it4i.fiji.commons.UncaughtExceptionHandlerDecorator;
-import cz.it4i.fiji.haas.ui.CloseableControl;
-import cz.it4i.fiji.haas.ui.InitiableControl;
 import cz.it4i.fiji.hpc_workflow.core.AuthFailExceptionHandler;
 import cz.it4i.fiji.hpc_workflow.core.FXFrameExecutorService;
 import cz.it4i.fiji.hpc_workflow.core.TaskComputation;
-import cz.it4i.fiji.hpc_workflow.core.WindowCloseableAdapter;
 import cz.it4i.fiji.hpc_workflow.ui.TaskComputationAdapter.ObservableLog;
 import cz.it4i.swing_javafx_ui.JavaFXRoutines;
 import javafx.fxml.FXML;
@@ -26,9 +22,9 @@ import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.stage.Stage;
 
-public class TaskComputationControl extends TabPane implements CloseableControl,
-	InitiableControl
+public class TaskComputationControl extends TabPane
 {
 
 	public static final Logger log = LoggerFactory.getLogger(
@@ -52,12 +48,11 @@ public class TaskComputationControl extends TabPane implements CloseableControl,
 
 	// -- InitiableControl methods --
 
-	@Override
-	public void init(final Window rootWindow) {
+	public void init(final Stage parentStage) {
 
 		wsExecutorService = Executors.newSingleThreadExecutor(
 			UncaughtExceptionHandlerDecorator.createThreadFactory(
-				new AuthFailExceptionHandler(new WindowCloseableAdapter(rootWindow))));
+				new AuthFailExceptionHandler()));
 
 		wsExecutorService.execute(() -> {
 			ProgressDialogViewWindow progress = new ProgressDialogViewWindow(
@@ -70,7 +65,7 @@ public class TaskComputationControl extends TabPane implements CloseableControl,
 				progress.done();
 			}
 			remoteFilesInfo.setFiles(adapter.getOutputs());
-			remoteFilesInfo.init(rootWindow);
+			remoteFilesInfo.init(parentStage);
 			final Collection<Runnable> runnables = new LinkedList<>();
 			for (final ObservableLog observableLog : adapter.getLogs()) {
 				final LogViewControl logViewControl = new LogViewControl();
@@ -83,7 +78,6 @@ public class TaskComputationControl extends TabPane implements CloseableControl,
 
 	// -- CloseableControl methods --
 
-	@Override
 	public void close() {
 		adapter.close();
 		wsExecutorService.shutdown();

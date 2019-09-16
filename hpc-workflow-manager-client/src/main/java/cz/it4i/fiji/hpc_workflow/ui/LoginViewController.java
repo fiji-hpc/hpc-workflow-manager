@@ -1,15 +1,12 @@
 
 package cz.it4i.fiji.hpc_workflow.ui;
 
-import java.awt.Window;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import cz.it4i.fiji.commons.UncaughtExceptionHandlerDecorator;
-import cz.it4i.fiji.haas.ui.CloseableControl;
-import cz.it4i.fiji.haas.ui.InitiableControl;
 import cz.it4i.fiji.hpc_workflow.commands.FileLock;
 import cz.it4i.fiji.hpc_workflow.core.AuthFailExceptionHandler;
 import cz.it4i.fiji.hpc_workflow.core.AuthenticationExceptionHandler;
@@ -29,8 +26,7 @@ import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
 
 @Slf4j
-public class LoginViewController extends AnchorPane implements CloseableControl,
-	InitiableControl
+public class LoginViewController extends AnchorPane
 {
 
 	@FXML
@@ -141,16 +137,6 @@ public class LoginViewController extends AnchorPane implements CloseableControl,
 				"Problem encountered while attempting to read file.", e);
 		}
 		return false;
-	}
-
-	@Override
-	public void init(Window parameter) {
-		// Nothing to do.
-	}
-
-	@Override
-	public void close() {
-		// Nothing to do.
 	}
 
 	public HPCWorkflowParametersImpl getParameters() {

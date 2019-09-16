@@ -12,19 +12,19 @@ import javafx.beans.value.ObservableValueBase;
 public class RunRemoteFilesView {
 
 	
-	public static void main(String[] args) {
-		List<ObservableValue<RemoteFileInfo>> files = new LinkedList<>();
-		add(files, "Some file.txt", 100025456);
-		
-		@SuppressWarnings("serial")
-		class Window extends cz.it4i.fiji.haas.ui.FXFrame<RemoteFilesInfoControl>{
-			public Window() {
-				super(()-> new RemoteFilesInfoControl());
-			}
-		}
-		
-		new Window().setVisible(true);
-	}
+//	public static void main(String[] args) {
+//		List<ObservableValue<RemoteFileInfo>> files = new LinkedList<>();
+//		add(files, "Some file.txt", 100025456);
+//		
+//		@SuppressWarnings("serial")
+//		class Window extends cz.it4i.fiji.haas.ui.FXFrame<RemoteFilesInfoControl>{
+//			public Window() {
+//				super(()-> new RemoteFilesInfoControl());
+//			}
+//		}
+//		
+//		new Window().setVisible(true);
+//	}
 	
 	static void add(Collection<ObservableValue<RemoteFileInfo>> files, String name, long size) {
 		RemoteFileInfo file = new RemoteFileInfo() {

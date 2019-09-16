@@ -1,6 +1,5 @@
 package cz.it4i.fiji.hpc_workflow.ui;
 
-import java.awt.Window;
 import java.util.List;
 import java.util.function.Function;
 
@@ -8,22 +7,21 @@ import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import cz.it4i.fiji.haas.ui.CloseableControl;
-import cz.it4i.fiji.haas.ui.InitiableControl;
 import cz.it4i.swing_javafx_ui.JavaFXRoutines;
 import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
 import javafx.scene.control.TableView;
 import javafx.scene.layout.BorderPane;
+import javafx.stage.Stage;
 
-public class RemoteFilesInfoControl extends BorderPane implements CloseableControl, InitiableControl {
+public class RemoteFilesInfoControl extends BorderPane {
 
 	@SuppressWarnings("unused")
 	private static Logger log = LoggerFactory
 			.getLogger(cz.it4i.fiji.hpc_workflow.ui.RemoteFilesInfoControl.class);
 
 	@SuppressWarnings("unused")
-	private Window root;
+	private Stage root;
 
 	@FXML
 	private TableView<ObservableValue<RemoteFileInfo>> files;
@@ -36,15 +34,9 @@ public class RemoteFilesInfoControl extends BorderPane implements CloseableContr
 		files.forEach(file -> this.files.getItems().add(file));
 	}
 
-	@Override
-	public void init(Window parameter) {
-		this.root = parameter;
+	public void init(Stage parentStage) {
+		this.root = parentStage;
 		initTable();
-	}
-
-	@Override
-	public void close() {
-		// There is nothing to close.
 	}
 
 	private void initTable() {

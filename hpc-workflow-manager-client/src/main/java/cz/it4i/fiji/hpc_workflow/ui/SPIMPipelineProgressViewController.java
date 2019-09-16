@@ -1,7 +1,6 @@
 
 package cz.it4i.fiji.hpc_workflow.ui;
 
-import java.awt.Window;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -9,14 +8,9 @@ import java.util.Optional;
 import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 
-import javax.swing.WindowConstants;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import cz.it4i.fiji.haas.ui.CloseableControl;
-import cz.it4i.fiji.haas.ui.InitiableControl;
-import cz.it4i.fiji.haas.ui.ModalDialogs;
 import cz.it4i.fiji.haas.ui.TableCellAdapter;
 import cz.it4i.fiji.haas.ui.TableViewContextMenu;
 import cz.it4i.fiji.haas_java_client.JobState;
@@ -34,13 +28,14 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.paint.Color;
+import javafx.stage.Stage;
 
-public class SPIMPipelineProgressViewController extends BorderPane implements CloseableControl, InitiableControl {
+public class SPIMPipelineProgressViewController extends BorderPane
+{
 
+	public static final Logger log = LoggerFactory.getLogger(
+		cz.it4i.fiji.hpc_workflow.ui.SPIMPipelineProgressViewController.class);
 
-	public static final Logger log = LoggerFactory
-			.getLogger(cz.it4i.fiji.hpc_workflow.ui.SPIMPipelineProgressViewController.class);
-	
 	private static final String EMPTY_VALUE = "";
 
 	private static final int PREFERRED_WIDTH = 900;
@@ -51,7 +46,8 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 	private static final double TIMEPOINT_TABLE_COLUMN_WIDTH_RATIO = 6;
 	static {
 		taskExecutionState2Color.put(JobState.Running, Color.rgb(0xF2, 0xD5, 0x39));
-		taskExecutionState2Color.put(JobState.Finished, Color.rgb(0x41, 0xB2, 0x80));
+		taskExecutionState2Color.put(JobState.Finished, Color.rgb(0x41, 0xB2,
+			0x80));
 		taskExecutionState2Color.put(JobState.Failed, Color.rgb(0xFF, 0x51, 0x3D));
 		taskExecutionState2Color.put(JobState.Queued, Color.rgb(0x30, 0xA2, 0xCC));
 		taskExecutionState2Color.put(JobState.Unknown, Color.GRAY);
@@ -61,7 +57,8 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 		Color result = null;
 		if (jobState == null) {
 			result = Color.GRAY;
-		} else {
+		}
+		else {
 			result = taskExecutionState2Color.get(jobState);
 		}
 		return JavaFXRoutines.toCss(result != null ? result : Color.ORANGE);
@@ -73,37 +70,35 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 	private SimpleObservableList<Task> observedList;
 
 	private final Executor executorFx = new FXFrameExecutorService();
-	private Window root;
+	private Stage root;
 
 	private boolean filled = false;
 	private boolean closed;
 
-	private final ListChangeListener<Task> taskChangeListener =
-		(Change<? extends Task> c) ->
-		{
-				// We are assuming that once the table has been filled,
-				// it cannot be "unfilled", i.e. the tasks cannot be
-				// changed or removed at runtime.
-				if (!filled) {
-					fillTable();
-				} 
-				else {
-					tasks.refresh();
-				}
+	private final ListChangeListener<Task> taskChangeListener = (
+		Change<? extends Task> c) -> {
+			// We are assuming that once the table has been filled,
+			// it cannot be "unfilled", i.e. the tasks cannot be
+			// changed or removed at runtime.
+			if (!filled)
+			{
+			fillTable();
+		}
+		else {
+			tasks.refresh();
+		}
 		};
 
 	public SPIMPipelineProgressViewController() {
 		init();
 	}
 
-	@Override
 	public synchronized void close() {
 		observedList.unsubscribe(taskChangeListener);
 		closed = true;
 	}
 
-	@Override
-	public void init(Window parameter) {
+	public void init(Stage parameter) {
 		this.root = parameter;
 	}
 
@@ -126,15 +121,15 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 	}
 
 	private void proof(Task task, int columnIndex) {
-		ModalDialogs.doModal(new TaskComputationWindow(root, task.getComputations()
-			.get(columnIndex - 1)), WindowConstants.DISPOSE_ON_CLOSE);
+		new TaskComputationWindow(root, task.getComputations().get(columnIndex -
+			1));
 	}
 
 	private synchronized void fillTable() {
 		if (closed || filled) {
 			return;
 		}
-		
+
 		final Optional<List<TaskComputation>> optional = getComputations(
 			observedList);
 
@@ -169,7 +164,7 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 	private long computeTableColumnWidth(List<TaskComputation> computations) {
 		return Math.round(this.tasks.getColumns().get(0).getWidth() /
 			TIMEPOINT_TABLE_COLUMN_WIDTH_RATIO * (1 + Math.max(0,
-				computeMaxColumnHeaderTextLength(computations) - 1) / (double)2));
+				computeMaxColumnHeaderTextLength(computations) - 1) / (double) 2));
 	}
 
 	private int computeMaxColumnHeaderTextLength(
@@ -184,8 +179,8 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 	}
 
 	private Optional<List<TaskComputation>> getComputations(List<Task> taskList) {
-		return taskList.stream().map(Task::getComputations).collect(
-			Collectors.<List<TaskComputation>> maxBy((a, b) -> a.size() - b.size()));
+		return taskList.stream().map(Task::getComputations).collect(Collectors
+			.<List<TaskComputation>> maxBy((a, b) -> a.size() - b.size()));
 
 	}
 
@@ -199,16 +194,18 @@ public class SPIMPipelineProgressViewController extends BorderPane implements Cl
 			return null;
 		});
 		((TableColumn<Task, TaskComputation>) this.tasks.getColumns().get(index))
-				.setCellFactory(column -> new TableCellAdapter<>((cell, val, empty) -> {
-					if (val == null || empty) {
-						cell.setText(EMPTY_VALUE);
-						cell.setStyle("");
-					} else {
-						cell.setText(EMPTY_VALUE);
-						cell.getStyleClass().add("bordered-class");
-						cell.setStyle("-fx-background-color: " + getColorTaskExecState(val.getState()));
-					}
-				}));
+			.setCellFactory(column -> new TableCellAdapter<>((cell, val, empty) -> {
+				if (val == null || empty) {
+					cell.setText(EMPTY_VALUE);
+					cell.setStyle("");
+				}
+				else {
+					cell.setText(EMPTY_VALUE);
+					cell.getStyleClass().add("bordered-class");
+					cell.setStyle("-fx-background-color: " + getColorTaskExecState(val
+						.getState()));
+				}
+			}));
 	}
 
 }

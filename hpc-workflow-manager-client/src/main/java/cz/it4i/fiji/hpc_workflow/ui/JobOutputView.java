@@ -1,3 +1,4 @@
+
 package cz.it4i.fiji.hpc_workflow.ui;
 
 import java.awt.BorderLayout;
@@ -22,8 +23,10 @@ import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
 import cz.it4i.fiji.hpc_workflow.core.HPCWorkflowJobManager.BenchmarkJob;
 
 public class JobOutputView {
+
 	@SuppressWarnings("unused")
-	private static final  Logger log = LoggerFactory.getLogger(cz.it4i.fiji.hpc_workflow.ui.JobOutputView.class);
+	private static final Logger log = LoggerFactory.getLogger(
+		cz.it4i.fiji.hpc_workflow.ui.JobOutputView.class);
 
 	private final Timer timer;
 	private final BenchmarkJob job;
@@ -35,16 +38,18 @@ public class JobOutputView {
 	private JTextArea theText;
 
 	private long numberOfReadChars = 0;
-	
-	
 
-	public JobOutputView(Window parent, ExecutorService executor, BenchmarkJob job, SynchronizableFileType fileType, Function<BenchmarkJob,String> outputProvider,long refreshTimeout) {
+	public JobOutputView(Window parent, ExecutorService executor,
+		BenchmarkJob job, SynchronizableFileType fileType,
+		Function<BenchmarkJob, String> outputProvider, long refreshTimeout)
+	{
 		this.job = job;
 		this.executor = executor;
 		this.fileType = fileType;
 		this.outputProvider = outputProvider;
 		constructFrame(parent);
 		parent.addWindowListener(new WindowAdapter() {
+
 			@Override
 			public void windowClosed(WindowEvent e) {
 				dispose();
@@ -52,6 +57,7 @@ public class JobOutputView {
 		});
 		timer = new Timer();
 		timer.schedule(new TimerTask() {
+
 			@Override
 			public void run() {
 				updateView();
@@ -66,23 +72,25 @@ public class JobOutputView {
 	}
 
 	private void constructFrame(Window parent) {
-		theDialog = new JDialog(parent, "Output of job: " + (job!=null?job.getId():"N/A") + " - " + fileType);
+		theDialog = new JDialog(parent, "Output of job: " + (job != null ? job
+			.getId() : "N/A") + " - " + fileType);
 		theDialog.setPreferredSize(new Dimension(500, 500));
 		theDialog.setLocation(550, 400);
 		JPanel jPanel = new JPanel(new BorderLayout());
 		theDialog.setContentPane(jPanel);
-        //Create the text area used for output.  Request
-        //enough space for 5 rows and 30 columns.
-        theText = new JTextArea(5, 30);
-        theText.setEditable(false);
-        JScrollPane scrollPane = new JScrollPane(theText);
+		// Create the text area used for output. Request
+		// enough space for 5 rows and 30 columns.
+		theText = new JTextArea(5, 30);
+		theText.setEditable(false);
+		JScrollPane scrollPane = new JScrollPane(theText);
 
-        //Lay out the main panel.
-        jPanel.setPreferredSize(new Dimension(450, 130));
-        jPanel.add(scrollPane, BorderLayout.CENTER);
-		
+		// Lay out the main panel.
+		jPanel.setPreferredSize(new Dimension(450, 130));
+		jPanel.add(scrollPane, BorderLayout.CENTER);
+
 		theDialog.pack();
 		theDialog.addWindowListener(new WindowAdapter() {
+
 			@Override
 			public void windowClosing(WindowEvent e) {
 				super.windowClosing(e);
@@ -97,7 +105,8 @@ public class JobOutputView {
 			String output;
 			if (job != null) {
 				output = outputProvider.apply(job);
-			} else {
+			}
+			else {
 				output = "This is testing line\n";
 			}
 			theText.append(output.substring((int) numberOfReadChars));
