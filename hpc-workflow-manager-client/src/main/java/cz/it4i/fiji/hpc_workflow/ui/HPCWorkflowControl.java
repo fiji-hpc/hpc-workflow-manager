@@ -101,7 +101,7 @@ public class HPCWorkflowControl extends BorderPane {
 
 	public HPCWorkflowControl(HPCWorkflowJobManager manager) {
 		this.manager = manager;
-		JavaFXRoutines.initRootAndController("BenchmarkSPIM.fxml", this);
+		JavaFXRoutines.initRootAndController("HPCWorkflow.fxml", this);
 		jobs.setPlaceholder(new Label(
 			"No content in table. Right click to create new one."));
 	}
