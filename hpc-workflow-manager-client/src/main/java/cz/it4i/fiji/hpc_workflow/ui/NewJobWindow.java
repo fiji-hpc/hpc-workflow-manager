@@ -1,38 +1,60 @@
 
 package cz.it4i.fiji.hpc_workflow.ui;
 
-import java.awt.Window;
 import java.nio.file.Path;
 
-import cz.it4i.fiji.haas.ui.FXFrame;
+import javafx.scene.Scene;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 
-public class NewJobWindow extends FXFrame<NewJobController> {
+public class NewJobWindow {
 
-	private static final long serialVersionUID = 1L;
+	private NewJobController controller;
+	private Stage stage;
 
-	public NewJobWindow(Window parentWindow) {
-		super(parentWindow, NewJobController::new);
-		setTitle("Create job");
+	public NewJobWindow(Stage stage) {
+		this.stage = stage;
+		this.controller = new NewJobController();
 	}
 
 	public Path getInputDirectory(Path workingDirectory) {
-		return getFxPanel().getControl().getInputDirectory(workingDirectory);
+		return this.controller.getInputDirectory(workingDirectory);
 	}
 
 	public Path getOutputDirectory(Path workingDirectory) {
-		return getFxPanel().getControl().getOutputDirectory(workingDirectory);
+		return this.controller.getOutputDirectory(workingDirectory);
 	}
 
 	public void setCreatePressedNotifier(Runnable runnable) {
-		getFxPanel().getControl().setCreatePressedNotifier(runnable);
+		this.controller.setCreatePressedNotifier(runnable);
 	}
-	
+
 	public int getNumberOfNodes() {
-		return getFxPanel().getControl().getNumberOfNodes();
+		return this.controller.getNumberOfNodes();
 	}
-	
+
 	public int getHaasTemplateId() {
-		return getFxPanel().getControl().getWorkflowType().getHaasTemplateID();
+		return this.controller.getWorkflowType().getHaasTemplateID();
 	}
-	
+
+	public void openWindow(Stage parentStage) {
+		// Open the the window:		
+		final Scene formScene = new Scene(controller);
+		this.stage = new Stage();
+		this.stage.initOwner(parentStage);
+		this.stage.initModality(Modality.APPLICATION_MODAL);
+		this.stage.setResizable(false);
+		this.stage.setTitle("Create job");
+		this.stage.setScene(formScene);
+
+		finalizeOnStageClose();
+		controller.init(stage);
+
+		this.stage.showAndWait();
+	}
+
+	public void finalizeOnStageClose() {
+		this.stage.setOnCloseRequest((WindowEvent we) -> this.controller.close());
+	}
 }

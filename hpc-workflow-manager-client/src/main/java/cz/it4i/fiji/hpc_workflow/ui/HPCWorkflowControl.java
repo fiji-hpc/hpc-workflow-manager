@@ -28,8 +28,6 @@ import java.util.concurrent.Executors;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
-import javax.swing.WindowConstants;
-
 import org.scijava.Context;
 import org.scijava.ui.swing.script.TextEditor;
 import org.slf4j.Logger;
@@ -40,7 +38,6 @@ import bdv.export.ProgressWriterConsole;
 import bdv.viewer.ViewerOptions;
 import cz.it4i.fiji.haas.UploadingFileFromResource;
 import cz.it4i.fiji.haas.ui.FutureValueUpdater;
-import cz.it4i.fiji.haas.ui.ModalDialogs;
 import cz.it4i.fiji.haas.ui.ShellRoutines;
 import cz.it4i.fiji.haas.ui.StringValueUpdater;
 import cz.it4i.fiji.haas.ui.TableCellAdapter;
@@ -57,6 +54,7 @@ import cz.it4i.fiji.hpc_workflow.core.ObservableHPCWorkflowJob;
 import cz.it4i.fiji.hpc_workflow.core.ObservableHPCWorkflowJob.TransferProgress;
 import cz.it4i.fiji.hpc_workflow.ui.NewJobController.WorkflowType;
 import cz.it4i.swing_javafx_ui.JavaFXRoutines;
+import cz.it4i.swing_javafx_ui.SimpleDialog;
 import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
@@ -110,7 +108,7 @@ public class HPCWorkflowControl extends BorderPane {
 
 	public void init(Stage newStage) {
 		this.stage = newStage;
-		
+
 		executorServiceWS = Executors.newSingleThreadExecutor();
 		executorServiceShell = Executors.newSingleThreadExecutor();
 		timer = new Timer();
@@ -279,8 +277,7 @@ public class HPCWorkflowControl extends BorderPane {
 	}
 
 	private void askForCreateJob() {
-		NewJobWindow newJobWindow = new NewJobWindow(null);
-		ModalDialogs.doModal(newJobWindow, WindowConstants.DISPOSE_ON_CLOSE);
+		NewJobWindow newJobWindow = new NewJobWindow(this.stage);
 		newJobWindow.setCreatePressedNotifier(() -> executeWSCallAsync(
 			"Creating job", false, new PJobAction()
 			{
@@ -313,7 +310,8 @@ public class HPCWorkflowControl extends BorderPane {
 								.getDirectory().resolve(CONFIG_YAML));
 						}
 						catch (IOException e) {
-							log.error(e.getMessage(), e);
+							SimpleDialog.showException("Exception",
+								"Exception occurred while trying to create job.", e);
 						}
 					}
 				});
@@ -321,7 +319,7 @@ public class HPCWorkflowControl extends BorderPane {
 			}
 				}
 			}));
-
+		newJobWindow.openWindow(this.stage);
 	}
 
 	private UploadingFile getConfigYamlFile() {

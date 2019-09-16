@@ -26,7 +26,7 @@ public class JobDetailWindow {
 		// Disable modal in order to allow the user to open detailed views of
 		// multiple jobs.
 		stage.initOwner(null);
-		stage.initModality(Modality.APPLICATION_MODAL);
+		stage.initModality(Modality.NONE);
 		stage.setResizable(true);
 		stage.setTitle("Job dashboard for job #" + job.getValue().getId());
 		stage.setScene(formScene);
@@ -34,7 +34,7 @@ public class JobDetailWindow {
 		finalizeOnStageClose();
 		controller.init(stage);
 
-		stage.showAndWait();
+		stage.show();
 	}
 
 	public void finalizeOnStageClose() {
