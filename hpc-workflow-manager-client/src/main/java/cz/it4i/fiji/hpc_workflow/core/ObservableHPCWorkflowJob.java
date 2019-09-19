@@ -41,9 +41,9 @@ public class ObservableHPCWorkflowJob extends
 	private final TaskObservableValueRegistry taskRegistry;
 
 	private final SimpleObservableList<FileTransferInfo> fileTransferList;
-	
+
 	private BenchmarkJob benchmarkJob;
-	
+
 	public interface TransferProgress {
 
 		public Long getRemainingMiliseconds();
@@ -51,16 +51,16 @@ public class ObservableHPCWorkflowJob extends
 		public boolean isDone();
 
 		public boolean isWorking();
-		
+
 		public boolean isFailed();
 
 		public Float getRemainingPercents();
 	}
-	
+
 	public ObservableHPCWorkflowJob(BenchmarkJob wrapped,
 		Function<BenchmarkJob, UpdateStatus> updateFunction,
 		Function<BenchmarkJob, Object> stateProvider, Executor executorUI)
-	{		
+	{
 		super(wrapped, updateFunction, stateProvider);
 		this.benchmarkJob = wrapped;
 		this.executor = executorUI;
@@ -109,6 +109,8 @@ public class ObservableHPCWorkflowJob extends
 
 	@Override
 	protected void fireValueChangedEvent() {
+		// Do not change the lambda function bellow to method reference!
+		// JDK Bug: https://bugs.openjdk.java.net/browse/JDK-8139836
 		executor.execute(() -> super.fireValueChangedEvent());
 	}
 
@@ -153,7 +155,8 @@ public class ObservableHPCWorkflowJob extends
 				doneStatusConsumer.accept(false);
 				reloadFileTransferList();
 				fireValueChangedEvent();
-			} else if (start == null) {
+			}
+			else if (start == null) {
 				setDone(false);
 				clearProgress();
 				start = System.currentTimeMillis();
@@ -173,10 +176,10 @@ public class ObservableHPCWorkflowJob extends
 		public synchronized boolean isWorking() {
 			return workingSupplier.getAsBoolean();
 		}
-		
+
 		@Override
 		public boolean isFailed() {
-			return failed ;
+			return failed;
 		}
 
 		@Override
@@ -191,7 +194,7 @@ public class ObservableHPCWorkflowJob extends
 
 		@Override
 		public void setItemCount(int count, int total) {
-			
+
 		}
 
 		@Override
@@ -201,7 +204,7 @@ public class ObservableHPCWorkflowJob extends
 
 		@Override
 		public void setTitle(String title) {
-			
+
 		}
 
 		@Override
@@ -223,15 +226,15 @@ public class ObservableHPCWorkflowJob extends
 			doneStatusConsumer.accept(val);
 		}
 	}
-	
+
 	public List<String> getFileContents(List<String> files) {
-		return benchmarkJob.getFileContents(files);		
+		return benchmarkJob.getFileContents(files);
 	}
-	
+
 	public JobState getState() {
 		return benchmarkJob.getState();
 	}
-	
+
 	public WorkflowType getWorkflowType() {
 		return benchmarkJob.getWorkflowType();
 	}
