@@ -4,12 +4,12 @@ package cz.it4i.fiji.hpc_workflow.ui;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import cz.it4i.fiji.haas.ui.CloseableControl;
 import cz.it4i.fiji.haas.ui.TableCellAdapter;
 import cz.it4i.fiji.haas_java_client.FileTransferInfo;
 import cz.it4i.fiji.haas_java_client.FileTransferState;
 import cz.it4i.fiji.hpc_workflow.core.SimpleObservableList;
 import cz.it4i.fiji.hpc_workflow.core.SimpleObservableValue;
+import cz.it4i.swing_javafx_ui.CloseableControl;
 import cz.it4i.swing_javafx_ui.JavaFXRoutines;
 import javafx.fxml.FXML;
 import javafx.scene.control.TableColumn;

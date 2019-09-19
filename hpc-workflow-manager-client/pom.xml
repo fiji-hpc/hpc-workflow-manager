@@ -68,12 +68,6 @@
 	<dependencies>
 
 		<dependency>
-			<groupId>it4i-fiji</groupId>
-			<artifactId>swing-javafx-ui</artifactId>
-			<version>0.3.0</version>
-		</dependency>
-
-		<dependency>
 			<groupId>cz.it4i.fiji</groupId>
 			<artifactId>hpc-workflow-manager-heappe-adapter</artifactId>
 			<version>1.0.2-SNAPSHOT</version>

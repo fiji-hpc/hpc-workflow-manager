@@ -9,10 +9,10 @@ import javax.swing.WindowConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import cz.it4i.fiji.haas.ui.CloseableControl;
-import cz.it4i.fiji.haas.ui.FXFrame;
 import cz.it4i.fiji.haas.ui.InitiableControl;
 import cz.it4i.fiji.haas.ui.TableViewContextMenu;
+import cz.it4i.swing_javafx_ui.CloseableControl;
+import cz.it4i.swing_javafx_ui.FXFrame;
 import cz.it4i.swing_javafx_ui.JavaFXRoutines;
 import javafx.beans.value.ObservableValue;
 import javafx.beans.value.ObservableValueBase;
