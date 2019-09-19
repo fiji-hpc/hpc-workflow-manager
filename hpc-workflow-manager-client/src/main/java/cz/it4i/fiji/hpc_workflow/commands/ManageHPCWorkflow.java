@@ -21,9 +21,9 @@ import groovy.util.logging.Slf4j;
 @Plugin(type = Command.class, headless = false, priority = Priority.HIGH,
 	menuPath = "Plugins>" + Constants.MENU_ITEM_NAME + ">" +
 		Constants.SUBMENU_ITEM_NAME)
-public class NewManageHPCWorkflow implements Command {
+public class ManageHPCWorkflow implements Command {
 
-	private static Logger log = LoggerFactory.getLogger(NewManageHPCWorkflow.class);
+	private static Logger log = LoggerFactory.getLogger(ManageHPCWorkflow.class);
 
 	@Parameter
 	private Context context;
@@ -46,6 +46,6 @@ public class NewManageHPCWorkflow implements Command {
 		if (log.isDebugEnabled()) {
 			log.debug("run NewManageHPCWorkflow");
 		}
-		ij.command().run(NewManageHPCWorkflow.class, true);
+		ij.command().run(ManageHPCWorkflow.class, true);
 	}
 }

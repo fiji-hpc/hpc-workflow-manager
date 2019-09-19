@@ -152,7 +152,7 @@ public class HPCWorkflowJobManager implements Closeable {
 				}
 			}
 			progress.itemDone(message);
-			if (job.getHaasTemplateId() == 4) {
+			if (job.getHaasTemplateId() == 4 && yaml != null) {
 				job.setProperty(SPIM_OUTPUT_FILENAME_PATTERN, yaml.getCommonProperty(
 					FUSION_SWITCH) + "_" + yaml.getCommonProperty(HDF5_XML_FILENAME));
 			}

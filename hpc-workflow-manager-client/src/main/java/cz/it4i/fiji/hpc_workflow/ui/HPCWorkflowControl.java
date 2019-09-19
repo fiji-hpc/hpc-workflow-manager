@@ -495,7 +495,7 @@ public class HPCWorkflowControl extends BorderPane {
 	}
 
 	private void openJobDetailsWindow(ObservableHPCWorkflowJob job) {
-		new JobDetailWindow(this.stage, job);
+		new JobDetailWindow(job);
 	}
 
 	private void openBigDataViewer(BenchmarkJob job) {

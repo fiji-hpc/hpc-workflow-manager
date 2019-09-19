@@ -13,7 +13,6 @@ import cz.it4i.fiji.hpc_workflow.core.AuthenticationExceptionHandler;
 import cz.it4i.fiji.hpc_workflow.core.Constants;
 import cz.it4i.fiji.hpc_workflow.core.HPCWorkflowParameters;
 import cz.it4i.fiji.hpc_workflow.core.NotConnectedExceptionHandler;
-import cz.it4i.fiji.hpc_workflow.core.WindowCloseableAdapter;
 import cz.it4i.swing_javafx_ui.JavaFXRoutines;
 import cz.it4i.swing_javafx_ui.SimpleDialog;
 import cz.it4i.fiji.hpc_workflow.commands.HPCWorkflowParametersImpl;
@@ -26,8 +25,7 @@ import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
 
 @Slf4j
-public class LoginViewController extends AnchorPane
-{
+public class LoginViewController extends AnchorPane {
 
 	@FXML
 	Button okButton;
@@ -50,7 +48,7 @@ public class LoginViewController extends AnchorPane
 	private static final String LOCK_FILE_NAME = ".lock";
 
 	private static final String ERROR_HEADER = "Error";
-	
+
 	private FileLock fl;
 
 	public LoginViewController() {
@@ -88,9 +86,8 @@ public class LoginViewController extends AnchorPane
 		if (this.parameters != null) {
 			final UncaughtExceptionHandlerDecorator uehd =
 				UncaughtExceptionHandlerDecorator.setDefaultHandler();
-			final WindowCloseableAdapter wca = new WindowCloseableAdapter();
-			uehd.registerHandler(new AuthenticationExceptionHandler(wca));
-			uehd.registerHandler(new NotConnectedExceptionHandler(wca));
+			uehd.registerHandler(new AuthenticationExceptionHandler());
+			uehd.registerHandler(new NotConnectedExceptionHandler());
 			uehd.registerHandler(new AuthFailExceptionHandler());
 			uehd.activate();
 
@@ -150,9 +147,7 @@ public class LoginViewController extends AnchorPane
 			email, workingDirPath);
 	}
 
-	public void setInitialFormValues(
-		HPCWorkflowParametersImpl oldLoginSettings)
-	{
+	public void setInitialFormValues(HPCWorkflowParametersImpl oldLoginSettings) {
 		if (oldLoginSettings != null) {
 			this.userNameTextField.setText(oldLoginSettings.username());
 			this.passwordPasswordField.setText(oldLoginSettings.password());

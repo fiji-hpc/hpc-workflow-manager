@@ -6,7 +6,11 @@ import java.nio.file.Path;
 
 import cz.it4i.fiji.hpc_workflow.core.HPCWorkflowParameters;
 
-public class HPCWorkflowParametersImpl implements HPCWorkflowParameters, Serializable {
+public class HPCWorkflowParametersImpl implements HPCWorkflowParameters,
+	Serializable
+{
+
+	private static final long serialVersionUID = 1L;
 
 	private final String userName;
 
@@ -15,7 +19,7 @@ public class HPCWorkflowParametersImpl implements HPCWorkflowParameters, Seriali
 	private final String phone;
 
 	private final String email;
-	
+
 	private final String workingDirectoryString;
 
 	private final transient Path workingDirectory;
@@ -55,7 +59,7 @@ public class HPCWorkflowParametersImpl implements HPCWorkflowParameters, Seriali
 	public Path workingDirectory() {
 		return workingDirectory;
 	}
-	
+
 	public String workingDirectoryString() {
 		return this.workingDirectoryString;
 	}
