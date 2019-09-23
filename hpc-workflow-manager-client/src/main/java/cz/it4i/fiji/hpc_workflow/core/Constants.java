@@ -12,7 +12,7 @@ public class Constants {
 
 	public static final String MENU_ITEM_NAME = "Multiview Reconstruction";
 	public static final String SUBMENU_ITEM_NAME =
-		"SPIM Workflow Manager for HPC";
+		"HPC Workflow Manager";
 
 	public static final String PHONE = "123456789";
 

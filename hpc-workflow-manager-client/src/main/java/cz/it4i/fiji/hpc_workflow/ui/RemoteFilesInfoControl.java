@@ -1,3 +1,4 @@
+
 package cz.it4i.fiji.hpc_workflow.ui;
 
 import java.util.List;
@@ -10,15 +11,17 @@ import org.slf4j.LoggerFactory;
 import cz.it4i.swing_javafx_ui.JavaFXRoutines;
 import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
+import javafx.scene.Scene;
 import javafx.scene.control.TableView;
 import javafx.scene.layout.BorderPane;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 public class RemoteFilesInfoControl extends BorderPane {
 
 	@SuppressWarnings("unused")
-	private static Logger log = LoggerFactory
-			.getLogger(cz.it4i.fiji.hpc_workflow.ui.RemoteFilesInfoControl.class);
+	private static Logger log = LoggerFactory.getLogger(
+		cz.it4i.fiji.hpc_workflow.ui.RemoteFilesInfoControl.class);
 
 	@SuppressWarnings("unused")
 	private Stage root;
@@ -42,13 +45,31 @@ public class RemoteFilesInfoControl extends BorderPane {
 	private void initTable() {
 		JavaFXRoutines.setCellValueFactory(files, 0, RemoteFileInfo::getName);
 		JavaFXRoutines.setCellValueFactory(files, 1,
-				(Function<RemoteFileInfo, String>) file -> file.getSize() >= 0 ? formatSize(file.getSize())
-						: "Not exists");
-
+			(Function<RemoteFileInfo, String>) file -> file.getSize() >= 0
+				? formatSize(file.getSize()) : "Not exists");
 	}
 
 	private String formatSize(long size) {
 		return FileUtils.byteCountToDisplaySize(size);
 	}
 
+	// This method is used only for testing:
+	public void openWindow(Stage parentStage) {
+		this.init(parentStage);
+
+		RemoteFilesInfoControl controller = new RemoteFilesInfoControl();
+
+		// Open the the window:
+		final Scene formScene = new Scene(controller);
+		Stage stage = new Stage();
+		stage.initOwner(parentStage);
+		stage.initModality(Modality.APPLICATION_MODAL);
+		stage.setResizable(false);
+		stage.setTitle("Remote files Info Control");
+		stage.setScene(formScene);
+
+		controller.init(stage);
+
+		stage.showAndWait();
+	}
 }

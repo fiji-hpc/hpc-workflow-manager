@@ -40,6 +40,15 @@ public class ProgressDialogViewController extends GridPane {
 			boolean show = detailsScrollPane.isVisible();
 			detailsScrollPane.setVisible(!show);
 			detailsToggleButton.setText(!show ? "Hide Details" : "Show Details");
+			
+			// Increase the stage size to fit the details:
+			Stage stage = (Stage) taskDescriptionLabel.getScene().getWindow();
+			double originalHeight = 150.0;
+			if (!show) {
+				stage.setHeight(originalHeight + 200.0);
+			} else {
+				stage.setHeight(originalHeight);
+			}
 		});
 	}
 
