@@ -57,10 +57,8 @@ public class RemoteFilesInfoControl extends BorderPane {
 	public void openWindow(Stage parentStage) {
 		this.init(parentStage);
 
-		RemoteFilesInfoControl controller = new RemoteFilesInfoControl();
-
 		// Open the the window:
-		final Scene formScene = new Scene(controller);
+		final Scene formScene = new Scene(this);
 		Stage stage = new Stage();
 		stage.initOwner(parentStage);
 		stage.initModality(Modality.APPLICATION_MODAL);
@@ -68,7 +66,7 @@ public class RemoteFilesInfoControl extends BorderPane {
 		stage.setTitle("Remote files Info Control");
 		stage.setScene(formScene);
 
-		controller.init(stage);
+		this.init(stage);
 
 		stage.showAndWait();
 	}
