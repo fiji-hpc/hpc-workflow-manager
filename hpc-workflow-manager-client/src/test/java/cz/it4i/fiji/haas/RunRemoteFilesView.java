@@ -16,10 +16,10 @@ public class RunRemoteFilesView {
 	public static void main(String[] args) {
 		List<ObservableValue<RemoteFileInfo>> files = new LinkedList<>();
 		add(files, "Some file.txt", 100025456);
-		
+
 		RemoteFilesInfoControl remoteFilesInfoControl =
 			new RemoteFilesInfoControl();
-		
+
 		JavaFXRoutines.runOnFxThread(() -> {
 			remoteFilesInfoControl.setFiles(files);
 			remoteFilesInfoControl.openWindow(null);

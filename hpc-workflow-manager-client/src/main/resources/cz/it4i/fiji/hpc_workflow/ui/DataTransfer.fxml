@@ -6,7 +6,7 @@
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 
-<fx:root type="BorderPane" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="cz.it4i.fiji.hpc_workflow.ui.DataTransferController">
+<fx:root type="BorderPane" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="cz.it4i.fiji.hpc_workflow.ui.DataTransferController">
    <center>
       <HBox>
          <children>
@@ -15,6 +15,9 @@
 					<TableColumn prefWidth="400.0" text="File" />
 					<TableColumn prefWidth="100.0" text="Status" />
 				</columns>
+               <columnResizePolicy>
+                  <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+               </columnResizePolicy>
 			</TableView>
          </children>
          <padding>
