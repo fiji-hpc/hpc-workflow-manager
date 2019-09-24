@@ -32,11 +32,17 @@ public class MacroTask {
 	public void setProgress(int nodeId, long newProgress) {
 		try {
 			long oldProgress = this.progress.get(nodeId);
-			if(newProgress > oldProgress) {
+			if (newProgress > oldProgress) {
 				this.progress.set(nodeId, newProgress);
 			}
 		}
 		catch (Exception exc) {
+			// Add progress to specific index in array list, fill with null all
+			// non-existing items that are before and including the index of the new
+			// item:
+			for (int i = this.progress.size(); i <= nodeId; i++) {
+				this.progress.add(null);
+			}
 			this.progress.add(nodeId, newProgress);
 		}
 	}

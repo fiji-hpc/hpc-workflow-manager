@@ -16,6 +16,7 @@ import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.hpc_workflow.core.MacroTask;
 import cz.it4i.fiji.hpc_workflow.core.ObservableHPCWorkflowJob;
 import cz.it4i.swing_javafx_ui.JavaFXRoutines;
+import cz.it4i.swing_javafx_ui.SimpleDialog;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleLongProperty;
 import javafx.collections.FXCollections;
@@ -46,7 +47,8 @@ public class MacroTaskProgressViewController extends BorderPane {
 	private ObservableList<MacroTask> tableData = FXCollections
 		.observableArrayList();
 
-	private ScheduledExecutorService exec = Executors.newSingleThreadScheduledExecutor();
+	private ScheduledExecutorService exec = Executors
+		.newSingleThreadScheduledExecutor();
 
 	// Maps task id of a specific node to description:
 	private List<Map<Integer, String>> nodeTaskToDescription = new ArrayList<>();
@@ -59,6 +61,8 @@ public class MacroTaskProgressViewController extends BorderPane {
 		new HashMap<>();
 
 	private final CountDownLatch latchToWaitForJavaFx = new CountDownLatch(1);
+
+	private boolean isFirstTime = true;
 
 	public MacroTaskProgressViewController() {
 		init();
@@ -246,6 +250,13 @@ public class MacroTaskProgressViewController extends BorderPane {
 					tableData.add(new MacroTask(description));
 				}
 				nodeTaskToDescription.get(nodeId).put(taskIdForNode, description);
+			}
+			catch (Exception exc) {
+				if (isFirstTime) {
+					isFirstTime = false;
+					JavaFXRoutines.runOnFxThread(() -> SimpleDialog.showException(
+						"Exception", "Exception occured while parsing progress file", exc));
+				}
 			}
 		}
 		return taskIdCounter;
