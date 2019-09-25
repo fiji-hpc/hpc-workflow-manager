@@ -37,7 +37,7 @@
 			fx:id="snakemakeOutputTab">
 			<content>
 				<HBox>
-					<LogViewControl fx:id="snakemakeOutputControl"
+					<LogViewControl fx:id="logViewControl"
 						HBox.hgrow="ALWAYS" />
 
 				</HBox>

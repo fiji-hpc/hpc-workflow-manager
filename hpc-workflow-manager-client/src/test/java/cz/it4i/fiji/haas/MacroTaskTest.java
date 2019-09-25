@@ -10,7 +10,7 @@ import cz.it4i.fiji.hpc_workflow.core.MacroTask;
 class MacroTaskTest {
 
 	@Test
-	void setAndgetDescriptionTest() {
+	void setAndGetDescriptionTest() {
 		MacroTask macroTask = new MacroTask("Sample task");
 
 		// Get description task

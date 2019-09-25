@@ -25,8 +25,7 @@ import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.stage.Stage;
 
-public class JobDetailControl extends TabPane
-{
+public class JobDetailControl extends TabPane {
 
 	private static Logger log = LoggerFactory.getLogger(
 		cz.it4i.fiji.hpc_workflow.ui.JobDetailControl.class);
@@ -44,7 +43,7 @@ public class JobDetailControl extends TabPane
 	private Tab progressTab;
 
 	@FXML
-	private LogViewControl snakemakeOutputControl;
+	private LogViewControl logViewControl;
 
 	@FXML
 	private Tab snakemakeOutputTab;
@@ -72,7 +71,7 @@ public class JobDetailControl extends TabPane
 	private final ObservableHPCWorkflowJob job;
 
 	private SimpleObservableList<Task> taskList;
-	
+
 	private Stage stage;
 
 	private final ListChangeListener<Task> taskListListener = (
@@ -109,13 +108,19 @@ public class JobDetailControl extends TabPane
 
 	public void init(Stage newStage) {
 		this.stage = newStage;
-		
+
 		ProgressDialogViewWindow progressDialogViewWindow =
 			new ProgressDialogViewWindow("Downloading tasks", this.stage);
 		executorServiceWS.execute(() -> {
 
 			try {
 				WorkflowType jobType = job.getWorkflowType();
+
+				// Display errors, this is for both workflow types:
+				errorOutput = job.getObservableSnakemakeOutput(
+					SynchronizableFileType.StandardErrorFile);
+				errorOutput.addListener(errorOutputListener);
+				logViewControl.setObservable(errorOutput);
 
 				if (jobType == WorkflowType.SPIM_WORKFLOW) {
 					setTabAvailability(macroProgressTab, true);
@@ -126,11 +131,6 @@ public class JobDetailControl extends TabPane
 					taskList = job.getObservableTaskList();
 					taskList.subscribe(taskListListener);
 					progressControl.setObservable(taskList);
-
-					errorOutput = job.getObservableSnakemakeOutput(
-						SynchronizableFileType.StandardErrorFile);
-					errorOutput.addListener(errorOutputListener);
-					snakemakeOutputControl.setObservable(errorOutput);
 				}
 				else {
 					setTabAvailability(macroProgressTab, false);
@@ -197,12 +197,13 @@ public class JobDetailControl extends TabPane
 		if (jobType == WorkflowType.SPIM_WORKFLOW) {
 			taskList.unsubscribe(taskListListener);
 			progressControl.close();
-			errorOutput.removeListener(errorOutputListener);
-			snakemakeOutputControl.close();
+			logViewControl.close();
 		}
 		else {
 			macroProgressControl.close();
 		}
+		// Common close for both workflow types:
+		errorOutput.removeListener(errorOutputListener);
 		standardOutput.removeListener(standardOutputListener);
 		otherOutputControl.close();
 		jobProperties.close();
