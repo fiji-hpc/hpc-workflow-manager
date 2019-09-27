@@ -72,8 +72,6 @@ public class JobDetailControl extends TabPane {
 
 	private SimpleObservableList<Task> taskList;
 
-	private Stage stage;
-
 	private final ListChangeListener<Task> taskListListener = (
 		Change<? extends Task> c) -> setTabAvailability(progressTab,
 			taskList == null || taskList.isEmpty());
@@ -107,10 +105,8 @@ public class JobDetailControl extends TabPane {
 	// -- InitiableControl methods --
 
 	public void init(Stage newStage) {
-		this.stage = newStage;
-
 		ProgressDialogViewWindow progressDialogViewWindow =
-			new ProgressDialogViewWindow("Downloading tasks", this.stage);
+			new ProgressDialogViewWindow("Downloading tasks", newStage);
 		executorServiceWS.execute(() -> {
 
 			try {

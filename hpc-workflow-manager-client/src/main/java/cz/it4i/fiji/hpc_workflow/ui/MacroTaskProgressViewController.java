@@ -62,8 +62,6 @@ public class MacroTaskProgressViewController extends BorderPane {
 
 	private final CountDownLatch latchToWaitForJavaFx = new CountDownLatch(1);
 
-	private boolean isFirstTime = true;
-
 	public MacroTaskProgressViewController() {
 		init();
 	}
@@ -224,6 +222,11 @@ public class MacroTaskProgressViewController extends BorderPane {
 				String[] elements = splitStringByDelimiter(line, ",");
 				taskIdCounter = setTaskProgressOrDescriptionFromElements(nodeId,
 					elements, taskIdCounter);
+
+				// Task counter -1 means parsing the progress log files failed.
+				if (taskIdCounter == -1) {
+					break;
+				}
 			}
 			nodeId++;
 		}
@@ -252,11 +255,14 @@ public class MacroTaskProgressViewController extends BorderPane {
 				nodeTaskToDescription.get(nodeId).put(taskIdForNode, description);
 			}
 			catch (Exception exc) {
-				if (isFirstTime) {
-					isFirstTime = false;
-					JavaFXRoutines.runOnFxThread(() -> SimpleDialog.showException(
-						"Exception", "Exception occured while parsing progress file", exc));
-				}
+				// A catastrophic exception must have occurred, the executor must be
+				// stopped:
+				JavaFXRoutines.runOnFxThread(() -> SimpleDialog.showException(
+					"Exception occurred while parsing progress file!",
+					"Progress logs for this Macro Workflow type job appear" +
+						" to be corrupted and parsing them caused an exception.", exc));
+				exec.shutdown();
+				return -1;
 			}
 		}
 		return taskIdCounter;

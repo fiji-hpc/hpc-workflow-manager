@@ -30,6 +30,10 @@ public class ProgressDialogViewController extends GridPane {
 	@FXML
 	GridPane subProgressGridPane;
 
+	private static final double ORIGINAL_DIALOG_HEIGHT = 150.0;
+
+	private static final double EXPAND_DIALOG_BY = 200.0;
+
 	private Map<String, Boolean> items = new HashMap<>();
 
 	private Map<String, ProgressBar> itemsProgress = new HashMap<>();
@@ -40,14 +44,15 @@ public class ProgressDialogViewController extends GridPane {
 			boolean show = detailsScrollPane.isVisible();
 			detailsScrollPane.setVisible(!show);
 			detailsToggleButton.setText(!show ? "Hide Details" : "Show Details");
-			
+
 			// Increase the stage size to fit the details:
 			Stage stage = (Stage) taskDescriptionLabel.getScene().getWindow();
-			double originalHeight = 150.0;
+
 			if (!show) {
-				stage.setHeight(originalHeight + 200.0);
-			} else {
-				stage.setHeight(originalHeight);
+				stage.setHeight(ORIGINAL_DIALOG_HEIGHT + EXPAND_DIALOG_BY);
+			}
+			else {
+				stage.setHeight(ORIGINAL_DIALOG_HEIGHT);
 			}
 		});
 	}

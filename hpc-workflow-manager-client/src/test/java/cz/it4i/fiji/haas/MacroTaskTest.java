@@ -1,16 +1,21 @@
 
 package cz.it4i.fiji.haas;
 
-import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.jupiter.api.Test;
+import static org.junit.Assert.assertEquals;
+
+import org.junit.Test;
 
 import cz.it4i.fiji.hpc_workflow.core.MacroTask;
 
-class MacroTaskTest {
+public class MacroTaskTest {
 
+	public MacroTaskTest() {
+		// Nothing to do here.
+	}
+	
 	@Test
-	void setAndGetDescriptionTest() {
+	public void setAndGetDescriptionTest() {
 		MacroTask macroTask = new MacroTask("Sample task");
 
 		// Get description task
@@ -19,7 +24,7 @@ class MacroTaskTest {
 	}
 
 	@Test
-	void setAndGetProgressTest() {
+	public void setAndGetProgressTest() {
 		MacroTask macroTask = new MacroTask("Sample task");
 
 		// This should set the progress for task of node id 0 to 50%:
@@ -45,7 +50,7 @@ class MacroTaskTest {
 	}
 	
 	@Test
-	void progressCorrectness() {
+	public void progressCorrectness() {
 		MacroTask macroTask = new MacroTask("Sample Task");
 		
 		// Progress should never decrease: 
