@@ -66,5 +66,9 @@ public class MacroTaskTest {
 		// Progress should increase:
 		macroTask.setProgress(0, 100);
 		assertEquals(100, macroTask.getProgress(0));
+		
+		// Progress should not exceed 100%:
+		macroTask.setProgress(0, 150);
+		assertEquals(100, macroTask.getProgress(0));
 	}
 }

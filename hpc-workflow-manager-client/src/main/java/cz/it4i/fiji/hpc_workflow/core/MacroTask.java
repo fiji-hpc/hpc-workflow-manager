@@ -30,6 +30,13 @@ public class MacroTask {
 	}
 
 	public void setProgress(int nodeId, long newProgress) {
+		// Impossible percentages should not be allowed:
+		if (newProgress > 100 || newProgress < 0) {
+			return;
+		}
+
+		// Add new progress percentage if it is greater than the old one and the
+		// node exists:
 		try {
 			long oldProgress = this.progress.get(nodeId);
 			if (newProgress > oldProgress) {
