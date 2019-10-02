@@ -38,49 +38,12 @@ function reportTasks(){
 	ret = call("MPIWrapper.reportTasks");
 }
 
-function parGetMySubList(list) {
-	rank = parGetRank();
-	size = parGetSize();
-	lastRank = round(size)-1;
-	if (rank == lastRank) 
-		subList = Array.slice(list, (rank) * round(list.length / size) , list.length);
-	else
-        subList = Array.slice(list, (rank) * round(list.length / size) , (rank + 1) * round(list.length / size));
-	return subList;
+function parScatterEqually(sendBuffer, root) {
+	receivedBuffer = call("MPIWrapper.scatterEqually", sendBuffer, root);
+	return receivedBuffer;
 }
 
-function countFiles(path) {
-  list = getFileList(path); 
-  for (i=0; i<list.length; i++) {
-	  if (endsWith(list[i], "/"))
-		  countFiles(""+path+list[i]);
-	  else
-		  count++;
-  }
-}
-
-function processFiles(dir) {
-  list = getFileList(dir);
-  subList = parGetMySubList(list);
-
-  for (i=0; i<subList.length; i++) {
-	  if (endsWith(subList[i], "/"))
-		  processFiles(""+dir+subList[i]);
-	  else {
-		 //showProgress(n++, count);
-		 path = dir+subList[i];
-		 processFile(path);
-	  }
-  }
-}
-
-function processFile(path) {
-   if (endsWith(path, ".tif")) {
-	   print("#" + rank + " node processing " + path);
-	   processed++;
-	   //open(path);
-	   //run("Subtract Background...", "rolling=50 white");
-	   //save(path);
-	   //close();
-  }
+function parScatter(sendBuffer, sendCount, receiveCount, root) {
+	receivedBuffer = call("MPIWrapper.scatter", sendBuffer, sendCount, receiveCount, root);
+	return receivedBuffer;
 }
