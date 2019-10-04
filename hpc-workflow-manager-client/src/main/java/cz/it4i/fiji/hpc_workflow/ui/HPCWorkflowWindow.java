@@ -30,7 +30,7 @@ public class HPCWorkflowWindow {
 		final Scene formScene = new Scene(controller);
 		stage = new Stage();
 		stage.initOwner(null);
-		stage.initModality(Modality.APPLICATION_MODAL);
+		stage.initModality(Modality.NONE);
 		stage.setResizable(true);
 		stage.setTitle(Constants.SUBMENU_ITEM_NAME);
 		stage.setScene(formScene);
@@ -39,7 +39,7 @@ public class HPCWorkflowWindow {
 		finalizeOnStageClose(fl, uehd);
 		controller.init(stage);
 
-		stage.showAndWait();
+		stage.show();
 	}
 
 	public void finalizeOnStageClose(FileLock fl,

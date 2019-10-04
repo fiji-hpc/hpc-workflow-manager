@@ -9,10 +9,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import cz.it4i.swing_javafx_ui.JavaFXRoutines;
+import cz.it4i.swing_javafx_ui.SimpleDialog;
 import javafx.fxml.FXML;
 import javafx.scene.Parent;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.Spinner;
@@ -216,14 +215,10 @@ public class NewJobController extends BorderPane {
 		if (dataLocation == DataLocation.CUSTOM_DIRECTORY && (!directoryPath
 			.toFile().exists() || directory.isEmpty()))
 		{
-			Alert alert = new Alert(AlertType.WARNING);
-			alert.setTitle("Invalid input provided");
-			alert.setHeaderText(null);
 			String message = !directory.isEmpty() ? "Directory %s for %s not exists"
 				: "Directory for %2$s is not selected.";
-			alert.setContentText(String.format(message, directoryPath
-				.toAbsolutePath(), type));
-			alert.showAndWait();
+			SimpleDialog.showWarning("Invalid input provided", String.format(message,
+				directoryPath.toAbsolutePath(), type));
 			return false;
 		}
 		return true;
