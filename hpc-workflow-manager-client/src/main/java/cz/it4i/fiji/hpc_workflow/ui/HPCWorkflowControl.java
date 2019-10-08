@@ -169,7 +169,7 @@ public class HPCWorkflowControl extends BorderPane {
 		menu.addItem("Open in BigDataViewer", j -> openBigDataViewer(j.getValue()),
 			x -> JavaFXRoutines.notNullValue(x, j -> j
 				.getState() == JobState.Finished && j.isVisibleInBDV()));
-		menu.addItem("Open macro in Editor", j -> openEditor(j.getValue()),
+		menu.addItem("Open Macro in editor", j -> openEditor(j.getValue()),
 			x -> JavaFXRoutines.notNullValue(x, j -> j
 				.getWorkflowType() == NewJobController.WorkflowType.MACRO_WORKFLOW));
 
