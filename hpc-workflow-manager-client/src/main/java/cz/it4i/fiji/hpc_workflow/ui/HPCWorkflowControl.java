@@ -13,6 +13,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -47,10 +48,11 @@ import cz.it4i.fiji.haas.ui.TableViewContextMenu;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.ProgressNotifier;
 import cz.it4i.fiji.haas_java_client.UploadingFile;
-import cz.it4i.fiji.hpc_workflow.core.HPCWorkflowJobManager;
-import cz.it4i.fiji.hpc_workflow.core.HPCWorkflowJobManager.BenchmarkJob;
+import cz.it4i.fiji.hpc_workflow.WorkflowJob;
 import cz.it4i.fiji.hpc_workflow.core.Constants;
 import cz.it4i.fiji.hpc_workflow.core.FXFrameExecutorService;
+import cz.it4i.fiji.hpc_workflow.core.HPCWorkflowJobManager;
+import cz.it4i.fiji.hpc_workflow.core.HPCWorkflowJobManager.BenchmarkJob;
 import cz.it4i.fiji.hpc_workflow.core.ObservableHPCWorkflowJob;
 import cz.it4i.fiji.hpc_workflow.core.ObservableHPCWorkflowJob.TransferProgress;
 import cz.it4i.fiji.hpc_workflow.ui.NewJobController.WorkflowType;
@@ -181,8 +183,8 @@ public class HPCWorkflowControl extends BorderPane {
 			if (wasSuccessfull) executeWSCallAsync("Uploading data", p -> job
 				.getValue().startUpload());
 		}, job -> executeWSCallAsync("Stop uploading data", p -> job.getValue()
-			.stopUpload()), job -> JavaFXRoutines.notNullValue(job, j -> !j
-				.isUseDemoData() && !EnumSet.of(JobState.Running, JobState.Disposed)
+			.stopUpload()), job -> JavaFXRoutines.notNullValue(job, j -> j
+				.canBeUploaded() && !EnumSet.of(JobState.Running, JobState.Disposed)
 					.contains(j.getState())), job -> job != null && job
 						.getUploadProgress().isWorking());
 
@@ -205,12 +207,11 @@ public class HPCWorkflowControl extends BorderPane {
 
 	}
 
-	private boolean checkIfAnythingHasBeenUploaded(BenchmarkJob job) {
+	private boolean checkIfAnythingHasBeenUploaded(WorkflowJob job) {
 		if (job.getWorkflowType() == WorkflowType.MACRO_WORKFLOW) {
 			// If the user has not uploaded anything return false:
 			try {
-				String property = job.getProperty("job.uploaded");
-				if (property.equals("true")) {
+				if (job.isUploaded()) {
 					return true;
 				}
 			}
@@ -288,7 +289,7 @@ public class HPCWorkflowControl extends BorderPane {
 		}
 	}
 
-	private void deleteJob(BenchmarkJob bj) {
+	private void deleteJob(WorkflowJob bj) {
 		bj.delete();
 		jobs.getItems().remove(registry.remove(bj));
 	}
@@ -301,53 +302,48 @@ public class HPCWorkflowControl extends BorderPane {
 
 				@Override
 				public void doAction(ProgressNotifier p) throws IOException {
-					BenchmarkJob job = doCreateJob(newJobWindow::getInputDirectory,
+					WorkflowJob job = doCreateJob(newJobWindow::getInputDirectory,
 						newJobWindow::getOutputDirectory, newJobWindow.getNumberOfNodes(),
 						newJobWindow.getHaasTemplateId());
-					if (job.isUseDemoData()) {
-						job.storeDataInWorkdirectory(getConfigYamlFile());
-					}
-					else if (job.getWorkflowType() == WorkflowType.SPIM_WORKFLOW && (job
-						.getInputDirectory().resolve(CONFIG_YAML)).toFile().exists())
+					if (newJobWindow.getInputDirectory(job.getDirectory()) != null && job
+						.getWorkflowType() == WorkflowType.SPIM_WORKFLOW && (job
+							.getInputDirectory().resolve(CONFIG_YAML)).toFile().exists())
 			{
-				executorServiceFX.execute(() -> {
+						executorServiceFX.execute(() -> {
 
-					Alert al = new Alert(AlertType.CONFIRMATION, "The file \"" +
-						CONFIG_YAML + "\" found in the defined data input directory \"" +
-						job.getInputDirectory() +
-						"\". Would you like to copy it into the job working directory \"" +
-						job.getDirectory() + "\"?", ButtonType.YES, ButtonType.NO);
+							Alert al = new Alert(AlertType.CONFIRMATION, "The file \"" +
+								CONFIG_YAML +
+								"\" found in the defined data input directory \"" + job
+									.getInputDirectory() +
+								"\". Would you like to copy it into the job working directory \"" +
+								job.getDirectory() + "\"?", ButtonType.YES, ButtonType.NO);
 
-					al.setHeaderText(null);
-					al.setTitle("Copy " + CONFIG_YAML + "?");
-					al.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
-					if (al.showAndWait().get() == ButtonType.YES) {
-						try {
-							Files.copy(job.getInputDirectory().resolve(CONFIG_YAML), job
-								.getDirectory().resolve(CONFIG_YAML));
-						}
-						catch (IOException e) {
-							SimpleDialog.showException("Exception",
-								"Exception occurred while trying to create job.", e);
-						}
+							al.setHeaderText(null);
+							al.setTitle("Copy " + CONFIG_YAML + "?");
+							al.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
+							if (al.showAndWait().get() == ButtonType.YES) {
+								try {
+									Files.copy(job.getInputDirectory().resolve(CONFIG_YAML), job
+										.getDirectory().resolve(CONFIG_YAML));
+								}
+								catch (IOException e) {
+									SimpleDialog.showException("Exception",
+										"Exception occurred while trying to create job.", e);
+								}
+							}
+						});
+
 					}
-				});
-
-			}
 				}
 			}));
 		newJobWindow.openWindow(this.stage);
 	}
 
-	private UploadingFile getConfigYamlFile() {
-		return new UploadingFileFromResource("", Constants.CONFIG_YAML);
-	}
-
-	private BenchmarkJob doCreateJob(UnaryOperator<Path> inputProvider,
+	private WorkflowJob doCreateJob(UnaryOperator<Path> inputProvider,
 		UnaryOperator<Path> outputProvider, int numberOfNodes, int haasTemplateId)
 		throws IOException
 	{
-		BenchmarkJob bj = manager.createJob(inputProvider, outputProvider,
+		WorkflowJob bj = manager.createJob(inputProvider, outputProvider,
 			numberOfNodes, haasTemplateId);
 		ObservableHPCWorkflowJob obj = registry.addIfAbsent(bj);
 		addJobToItems(obj);
@@ -359,7 +355,7 @@ public class HPCWorkflowControl extends BorderPane {
 		jobs.getItems().add(obj);
 	}
 
-	private void openJobSubdirectory(BenchmarkJob j) {
+	private void openJobSubdirectory(WorkflowJob j) {
 		executorServiceShell.execute(() -> {
 			try {
 				ShellRoutines.openDirectoryInBrowser(j.getDirectory());
@@ -426,13 +422,13 @@ public class HPCWorkflowControl extends BorderPane {
 			"Updating jobs", this.stage, showProgress);
 
 		executorServiceWS.execute(() -> {
-			List<BenchmarkJob> inspectedJobs = new LinkedList<>(manager.getJobs());
-			inspectedJobs.sort((bj1, bj2) -> (int) (bj1.getId() - bj2.getId()));
-			for (BenchmarkJob bj : inspectedJobs) {
+			List<WorkflowJob> inspectedJobs = new LinkedList<>(manager.getJobs());
+			inspectedJobs.sort((j1, j2) -> (int) (j1.getId() - j2.getId()));
+			for (WorkflowJob bj : inspectedJobs) {
 				registry.addIfAbsent(bj);
 			}
 			registry.update();
-			Set<ObservableValue<BenchmarkJob>> actual = new HashSet<>(this.jobs
+			Set<ObservableValue<WorkflowJob>> actual = new HashSet<>(this.jobs
 				.getItems());
 
 			executorServiceFX.execute(() -> {
@@ -453,14 +449,14 @@ public class HPCWorkflowControl extends BorderPane {
 		setCellValueFactoryCompletable(1, j -> j.getStateAsync(
 			executorServiceJobState).thenApply(state -> "" + provider.getName(
 				state)));
-		setCellValueFactory(2, BenchmarkJob::getCreationTime);
-		setCellValueFactory(3, BenchmarkJob::getStartTime);
-		setCellValueFactory(4, BenchmarkJob::getEndTime);
+		setCellValueFactory(2, WorkflowJob::getCreationTime);
+		setCellValueFactory(3, WorkflowJob::getStartTime);
+		setCellValueFactory(4, WorkflowJob::getEndTime);
 		setCellValueFactory(5, j -> decorateTransfer(registry.get(j)
 			.getUploadProgress()));
 		setCellValueFactory(6, j -> decorateTransfer(registry.get(j)
 			.getDownloadProgress()));
-		setCellValueFactory(7, BenchmarkJob::getHaasTemplateName);
+		setCellValueFactory(7, WorkflowJob::getWorkflowTypeName);
 		JavaFXRoutines.setOnDoubleClickAction(jobs, executorServiceJobState,
 			openJobDetailsWindow -> true, this::openJobDetailsWindow);
 	}
@@ -484,19 +480,19 @@ public class HPCWorkflowControl extends BorderPane {
 		return stateMessage;
 	}
 
-	private void remove(BenchmarkJob bj) {
+	private void remove(WorkflowJob bj) {
 		jobs.getItems().remove(registry.get(bj));
 	}
 
 	private void setCellValueFactory(int index,
-		Function<BenchmarkJob, String> mapper)
+		Function<WorkflowJob, String> mapper)
 	{
 		JavaFXRoutines.setCellValueFactory(jobs, index, mapper);
 	}
 
 	@SuppressWarnings("unchecked")
 	private void setCellValueFactoryCompletable(int index,
-		Function<BenchmarkJob, CompletableFuture<String>> mapper)
+		Function<WorkflowJob, CompletableFuture<String>> mapper)
 	{
 		JavaFXRoutines.setCellValueFactory(jobs, index, mapper);
 		((TableColumn<ObservableHPCWorkflowJob, CompletableFuture<String>>) jobs
@@ -515,14 +511,14 @@ public class HPCWorkflowControl extends BorderPane {
 		new JobDetailWindow(job);
 	}
 
-	private void openBigDataViewer(BenchmarkJob job) {
-		Path localPathToResultXML = job.getLocalPathToResultXML();
+	private void openBigDataViewer(WorkflowJob job) {
+		Path localPathToResultXML = job.getPathToLocalResultFile();
 		String openFile;
 		if (localPathToResultXML.toFile().exists()) {
 			openFile = localPathToResultXML.toString();
 		}
 		else {
-			openFile = job.getPathToToResultXMLOnBDS();
+			openFile = job.getPathToRemoteResultFile();
 		}
 		try {
 			BigDataViewer.open(openFile, "Result of job " + job.getId(),
@@ -533,7 +529,7 @@ public class HPCWorkflowControl extends BorderPane {
 		}
 	}
 
-	private void openEditor(BenchmarkJob job) {
+	private void openEditor(WorkflowJob job) {
 		TextEditor txt = new TextEditor(new Context()); // TODO Context handling is
 																										// wrong
 		File editFile = new File(job.getInputDirectory().toString(),

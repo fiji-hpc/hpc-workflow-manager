@@ -9,7 +9,6 @@ import java.util.concurrent.Executor;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import net.imagej.updater.util.Progress;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,12 +17,14 @@ import cz.it4i.fiji.haas.data_transfer.PersistentSynchronizationProcess;
 import cz.it4i.fiji.haas.ui.UpdatableObservableValue;
 import cz.it4i.fiji.haas_java_client.FileTransferInfo;
 import cz.it4i.fiji.haas_java_client.JobState;
+import cz.it4i.fiji.haas_java_client.ProgressNotifier;
 import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
-import cz.it4i.fiji.hpc_workflow.core.HPCWorkflowJobManager.BenchmarkJob;
+import cz.it4i.fiji.hpc_workflow.Task;
+import cz.it4i.fiji.hpc_workflow.WorkflowJob;
 import cz.it4i.fiji.hpc_workflow.ui.NewJobController.WorkflowType;
 
 public class ObservableHPCWorkflowJob extends
-	UpdatableObservableValue<BenchmarkJob> implements Closeable
+	UpdatableObservableValue<WorkflowJob> implements Closeable
 {
 
 	public static final Logger log = LoggerFactory.getLogger(
@@ -42,7 +43,7 @@ public class ObservableHPCWorkflowJob extends
 
 	private final SimpleObservableList<FileTransferInfo> fileTransferList;
 
-	private BenchmarkJob benchmarkJob;
+	private WorkflowJob workflowkJob;
 
 	public interface TransferProgress {
 
@@ -57,12 +58,12 @@ public class ObservableHPCWorkflowJob extends
 		public Float getRemainingPercents();
 	}
 
-	public ObservableHPCWorkflowJob(BenchmarkJob wrapped,
-		Function<BenchmarkJob, UpdateStatus> updateFunction,
-		Function<BenchmarkJob, Object> stateProvider, Executor executorUI)
+	public ObservableHPCWorkflowJob(WorkflowJob wrapped,
+		Function<WorkflowJob, UpdateStatus> updateFunction,
+		Function<WorkflowJob, Object> stateProvider, Executor executorUI)
 	{
 		super(wrapped, updateFunction, stateProvider);
-		this.benchmarkJob = wrapped;
+		this.workflowkJob = wrapped;
 		this.executor = executorUI;
 		wrapped.setDownloadNotifier(downloadProgress);
 		wrapped.setUploadNotifier(uploadProgress);
@@ -116,7 +117,9 @@ public class ObservableHPCWorkflowJob extends
 
 	// -- Private classes --
 
-	private class PTransferProgress implements Progress, TransferProgress {
+	private class PTransferProgress implements TransferProgress,
+		ProgressNotifier
+	{
 
 		private final BooleanSupplier doneStatusSupplier;
 		private final Consumer<Boolean> doneStatusConsumer;
@@ -228,19 +231,19 @@ public class ObservableHPCWorkflowJob extends
 	}
 
 	public List<String> getFileContents(List<String> files) {
-		return benchmarkJob.getFileContents(files);
+		return workflowkJob.getFileContents(files);
 	}
 
 	public JobState getState() {
-		return benchmarkJob.getState();
+		return workflowkJob.getState();
 	}
 
 	public WorkflowType getWorkflowType() {
-		return benchmarkJob.getWorkflowType();
+		return workflowkJob.getWorkflowType();
 	}
 
 	public Path getInputDirectory() {
-		return benchmarkJob.getInputDirectory();
+		return workflowkJob.getInputDirectory();
 	}
 
 }

@@ -55,8 +55,6 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
-import net.imagej.updater.util.Progress;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -67,6 +65,7 @@ import org.xml.sax.SAXException;
 import cz.it4i.fiji.commons.WebRoutines;
 import cz.it4i.fiji.haas.Job;
 import cz.it4i.fiji.haas.JobManager;
+import cz.it4i.fiji.haas.UploadingFileFromResource;
 import cz.it4i.fiji.haas_java_client.FileTransferInfo;
 import cz.it4i.fiji.haas_java_client.HaaSClientException;
 import cz.it4i.fiji.haas_java_client.HaaSClientSettings;
@@ -76,6 +75,9 @@ import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.ProgressNotifier;
 import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
 import cz.it4i.fiji.haas_java_client.UploadingFile;
+import cz.it4i.fiji.hpc_workflow.Task;
+import cz.it4i.fiji.hpc_workflow.TaskComputation;
+import cz.it4i.fiji.hpc_workflow.WorkflowJob;
 import cz.it4i.fiji.hpc_workflow.ui.NewJobController;
 import cz.it4i.fiji.hpc_workflow.ui.NewJobController.WorkflowType;
 
@@ -93,7 +95,7 @@ public class HPCWorkflowJobManager implements Closeable {
 
 	private final JobManager jobManager;
 
-	public final class BenchmarkJob {
+	public final class BenchmarkJob implements WorkflowJob {
 
 		private final Job job;
 		private final SnakemakeOutputHelper snakemakeOutputHelper;
@@ -123,6 +125,7 @@ public class HPCWorkflowJobManager implements Closeable {
 			snakemakeOutputHelper = new SnakemakeOutputHelper(job);
 		}
 
+		@Override
 		public synchronized void startJob(ProgressNotifier progress)
 			throws IOException
 		{
@@ -159,18 +162,22 @@ public class HPCWorkflowJobManager implements Closeable {
 
 		}
 
+		@Override
 		public boolean delete() {
 			return job.delete();
 		}
 
+		@Override
 		public void cancelJob() {
 			job.cancelJob();
 		}
 
+		@Override
 		public JobState getState() {
 			return getStateAsync(Runnable::run).getNow(JobState.Unknown);
 		}
 
+		@Override
 		public synchronized CompletableFuture<JobState> getStateAsync(
 			Executor executor)
 		{
@@ -186,13 +193,14 @@ public class HPCWorkflowJobManager implements Closeable {
 			return result;
 		}
 
+		@Override
 		public void update() {
 			job.updateInfo();
 			try {
-				visibleInBDV = getLocalPathToResultXML().toFile().exists() ||
-					WebRoutines.doesURLExist(new URL(getPathToToResultXMLOnBDS()));
+				visibleInBDV = getPathToLocalResultFile().toFile().exists() ||
+					WebRoutines.doesURLExist(new URL(getPathToRemoteResultFile()));
 				if (log.isDebugEnabled()) {
-					log.debug("job # ".concat(Long.toString(getId())).concat(
+					log.debug("job # ".concat(getId().toString()).concat(
 						" is visible in BDV ").concat(Boolean.toString(visibleInBDV)));
 				}
 			}
@@ -202,11 +210,13 @@ public class HPCWorkflowJobManager implements Closeable {
 			}
 		}
 
-		public Path getLocalPathToResultXML() {
+		@Override
+		public Path getPathToLocalResultFile() {
 			return getOutputDirectory().resolve(getResultXML());
 		}
 
-		public String getPathToToResultXMLOnBDS() {
+		@Override
+		public String getPathToRemoteResultFile() {
 			String changed = job.getId() + "/" + getResultXML();
 			MessageDigest digest;
 			try {
@@ -226,34 +236,42 @@ public class HPCWorkflowJobManager implements Closeable {
 			}
 		}
 
+		@Override
 		public boolean isVisibleInBDV() {
 			return visibleInBDV;
 		}
 
+		@Override
 		public void startUpload() {
 			job.startUploadData();
 		}
 
+		@Override
 		public void stopUpload() {
 			job.stopUploadData();
 		}
 
+		@Override
 		public boolean isUploading() {
 			return job.isUploading();
 		}
 
-		public void setUploadNotifier(Progress progress) {
-			job.setUploadNotifier(convertToProgressNotifier(progress));
+		@Override
+		public void setUploadNotifier(ProgressNotifier progress) {
+			job.setUploadNotifier(progress);
 		}
 
+		@Override
 		public void setUploaded(boolean b) {
 			job.setUploaded(b);
 		}
 
+		@Override
 		public boolean isUploaded() {
 			return job.isUploaded();
 		}
 
+		@Override
 		public CompletableFuture<?> startDownload() throws IOException {
 			if (job.getState() == Finished) {
 				CompletableFuture<?> result = new CompletableFuture<>();
@@ -268,75 +286,81 @@ public class HPCWorkflowJobManager implements Closeable {
 			}
 		}
 
+		@Override
 		public void stopDownload() {
 			job.stopDownloadData();
 		}
 
-		public void setDownloadNotifier(Progress progress) {
-			downloadNotifier = createDownloadNotifierProcessingResultCSV(
-				convertToProgressNotifier(progress));
+		@Override
+		public void setDownloadNotifier(ProgressNotifier progress) {
+			downloadNotifier = createDownloadNotifierProcessingResultCSV(progress);
 			job.setDownloadNotifier(downloadNotifier);
 		}
 
+		@Override
 		public boolean canBeDownloaded() {
 			return job.canBeDownloaded();
 		}
 
-		public void setDownloaded(Boolean val) {
+		@Override
+		public void setDownloaded(boolean val) {
 			job.setDownloaded(val);
 		}
 
+		@Override
 		public boolean isDownloaded() {
 			return downloadingStatus.isDownloaded();
 		}
 
+		@Override
 		public boolean isDownloading() {
 			return job.isDownloading();
 		}
 
+		@Override
 		public void resumeTransfer() {
 			job.resumeDownload();
 			job.resumeUpload();
 		}
 
-		public boolean isUseDemoData() {
-			return job.isUseDemoData();
+		@Override
+		public boolean canBeUploaded() {
+			return !job.isUseDemoData();
 		}
 
-		public long getId() {
-			return job.getId();
-		}
-
+		@Override
 		public String getCreationTime() {
 			return getStringFromTimeSafely(job.getCreationTime());
 		}
 
+		@Override
 		public String getStartTime() {
 			return getStringFromTimeSafely(job.getStartTime());
 		}
 
+		@Override
 		public String getEndTime() {
 			return getStringFromTimeSafely(job.getEndTime());
 		}
 
+		@Override
 		public Path getDirectory() {
 			return job.getDirectory();
 		}
 
+		@Override
 		public List<Task> getTasks() {
 			return snakemakeOutputHelper.getTasks();
 		}
 
+		@Override
 		public void exploreErrors() {
 			for (HPCWorkflowError error : snakemakeOutputHelper.getErrors()) {
 				log.error(error.getPlainDescription());
 			}
 		}
 
-		public String getComputationOutput(final SynchronizableFileType type) {
-			return getComputationOutput(Arrays.asList(type)).get(0);
-		}
-
+		@Override
 		public List<String> getComputationOutput(
 			final List<SynchronizableFileType> types)
 		{
@@ -349,10 +373,12 @@ public class HPCWorkflowJobManager implements Closeable {
 			job.storeDataInWorkdirectory(file);
 		}
 
+		@Override
 		public Path getInputDirectory() {
 			return job.getInputDirectory();
 		}
 
+		@Override
 		public Path getOutputDirectory() {
 			return job.getOutputDirectory();
 		}
@@ -361,8 +387,36 @@ public class HPCWorkflowJobManager implements Closeable {
 			return job.getProperty(SPIM_OUTPUT_FILENAME_PATTERN) + ".xml";
 		}
 
+		@Override
 		public List<FileTransferInfo> getFileTransferInfo() {
 			return job.getFileTransferInfo();
+		}
+
+		@Override
+		public Long getId() {
+			return job.getId();
+		}
+		
+		@Override
+		public List<String> getFileContents(List<String> files) {
+			return job.getFileContents(files);
+		}
+
+		@Override
+		public WorkflowType getWorkflowType() {
+			return WorkflowType.forLong(job.getHaasTemplateId());
+		}
+
+		@Override
+		public String getWorkflowTypeName() {
+			return NewJobController.WorkflowType.forLong(job.getHaasTemplateId())
+				.toString();
+		}
+
+		@Override
+		public Comparator<? extends WorkflowJob> getComparator() {
+			return (BenchmarkJob j1, BenchmarkJob j2) -> (int) (j1.job.getId() -
+				j2.job.getId());
 		}
 
 		@Override
@@ -381,10 +435,6 @@ public class HPCWorkflowJobManager implements Closeable {
 				return ((BenchmarkJob) obj).getId() == getId();
 			}
 			return false;
-		}
-
-		private ProgressNotifier convertToProgressNotifier(Progress progress) {
-			return progress == null ? null : new ProgressNotifierAdapter(progress);
 		}
 
 		private synchronized CompletableFuture<JobState> doGetStateAsync(
@@ -557,19 +607,6 @@ public class HPCWorkflowJobManager implements Closeable {
 			return job.getState();
 		}
 
-		public List<String> getFileContents(List<String> files) {
-			return job.getFileContents(files);
-		}
-
-		public WorkflowType getWorkflowType() {
-			return WorkflowType.forLong(job.getHaasTemplateId());
-		}
-
-		public String getHaasTemplateName() {
-			return NewJobController.WorkflowType.forLong(job.getHaasTemplateId())
-				.toString();
-		}
-
 		private Predicate<String> downloadFailedData() {
 			return name -> {
 				Path path = getPathSafely(name);
@@ -612,10 +649,6 @@ public class HPCWorkflowJobManager implements Closeable {
 			};
 
 		}
-
-		public String getProperty(String name) {
-			return job.getProperty(name);
-		}
 	}
 
 	public HPCWorkflowJobManager(HPCWorkflowParameters params) {
@@ -624,7 +657,7 @@ public class HPCWorkflowJobManager implements Closeable {
 		jobManager.setUploadFilter(this::canUpload);
 	}
 
-	public BenchmarkJob createJob(UnaryOperator<Path> inputDirectoryProvider,
+	public WorkflowJob createJob(UnaryOperator<Path> inputDirectoryProvider,
 		UnaryOperator<Path> outputDirectoryProvider, int numberOfNodes,
 		int haasTemplateId) throws IOException
 	{
@@ -633,10 +666,14 @@ public class HPCWorkflowJobManager implements Closeable {
 		if (job.getInputDirectory() == null) {
 			job.createEmptyFile(Constants.DEMO_DATA_SIGNAL_FILE_NAME);
 		}
-		return convertJob(job);
+		BenchmarkJob result = convertJob(job);
+		if (job.isUseDemoData()) {
+			job.storeDataInWorkdirectory(getConfigYamlFile());
+		}
+		return result;
 	}
 
-	public Collection<BenchmarkJob> getJobs() {
+	public Collection<WorkflowJob> getJobs() {
 		return jobManager.getJobs().stream().map(this::convertJob).collect(
 			Collectors.toList());
 	}
@@ -765,6 +802,10 @@ public class HPCWorkflowJobManager implements Closeable {
 
 	private BenchmarkJob convertJob(Job job) {
 		return new BenchmarkJob(job);
+	}
+
+	private static UploadingFile getConfigYamlFile() {
+		return new UploadingFileFromResource("", Constants.CONFIG_YAML);
 	}
 
 	private static JobSettings getJobSettings(int numberOfNodes,

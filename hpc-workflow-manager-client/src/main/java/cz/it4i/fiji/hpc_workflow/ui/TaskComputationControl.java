@@ -11,9 +11,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import cz.it4i.fiji.commons.UncaughtExceptionHandlerDecorator;
+import cz.it4i.fiji.hpc_workflow.TaskComputation;
 import cz.it4i.fiji.hpc_workflow.core.AuthFailExceptionHandler;
 import cz.it4i.fiji.hpc_workflow.core.FXFrameExecutorService;
-import cz.it4i.fiji.hpc_workflow.core.TaskComputation;
 import cz.it4i.fiji.hpc_workflow.ui.TaskComputationAdapter.ObservableLog;
 import cz.it4i.swing_javafx_ui.JavaFXRoutines;
 import javafx.fxml.FXML;

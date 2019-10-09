@@ -1,7 +1,7 @@
 
 package cz.it4i.fiji.hpc_workflow.ui;
 
-import cz.it4i.fiji.hpc_workflow.core.TaskComputation;
+import cz.it4i.fiji.hpc_workflow.TaskComputation;
 import javafx.scene.Scene;
 import javafx.stage.Modality;
 import javafx.stage.Stage;

@@ -23,12 +23,13 @@ import cz.it4i.fiji.haas.HaaSOutputHolder;
 import cz.it4i.fiji.haas.HaaSOutputHolderImpl;
 import cz.it4i.fiji.haas.Job;
 import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
+import cz.it4i.fiji.hpc_workflow.Task;
 
 class SnakemakeOutputHelper implements HaaSOutputHolder {
 
 	private final Job job;
 	private final ComputationAccessor computationAccessor;
-	private final List<Task> tasks;
+	private final List<TaskImpl> tasks;
 	private final List<HPCWorkflowError> nonTaskSpecificErrors;
 	private int processedOutputLength;
 
@@ -58,7 +59,7 @@ class SnakemakeOutputHelper implements HaaSOutputHolder {
 			processOutput();
 		}
 
-		return tasks;
+		return Collections.unmodifiableList(tasks);
 	}
 
 	List<HPCWorkflowError> getErrors() {
@@ -174,7 +175,7 @@ class SnakemakeOutputHelper implements HaaSOutputHolder {
 				{
 					break;
 				}
-				tasks.add(new Task(computationAccessor, lineWords.get(1), Integer
+				tasks.add(new TaskImpl(computationAccessor, lineWords.get(1), Integer
 					.parseInt(lineWords.get(0))));
 			}
 			break;
@@ -213,7 +214,7 @@ class SnakemakeOutputHelper implements HaaSOutputHolder {
 
 			final String taskDescription = output.substring(ruleRelativeIndex +
 				OUTPUT_PARSING_RULE.length(), colonRelativeIndex);
-			final List<Task> task = tasks.stream().filter(t -> t.getDescription()
+			final List<TaskImpl> task = tasks.stream().filter(t -> t.getDescription()
 				.equals(taskDescription)).collect(Collectors.toList());
 			if (1 == task.size()) {
 				// TODO: Consider throwing an exception

@@ -14,9 +14,9 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import cz.it4i.fiji.hpc_workflow.TaskComputation;
+import cz.it4i.fiji.hpc_workflow.TaskComputation.Log;
 import cz.it4i.fiji.hpc_workflow.core.SimpleObservableValue;
-import cz.it4i.fiji.hpc_workflow.core.TaskComputation;
-import cz.it4i.fiji.hpc_workflow.core.TaskComputation.Log;
 import javafx.beans.value.ObservableValue;
 import javafx.beans.value.ObservableValueBase;
 

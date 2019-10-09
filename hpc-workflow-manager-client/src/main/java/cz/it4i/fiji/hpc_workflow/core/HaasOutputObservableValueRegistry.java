@@ -17,11 +17,11 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
-import cz.it4i.fiji.hpc_workflow.core.HPCWorkflowJobManager.BenchmarkJob;
+import cz.it4i.fiji.hpc_workflow.WorkflowJob;
 
 class HaasOutputObservableValueRegistry implements Closeable {
 
-	private final BenchmarkJob job;
+	private final WorkflowJob job;
 	private final Map<SynchronizableFileType, SimpleObservableValue<String>> observableValues =
 		new EnumMap<>(SynchronizableFileType.class);
 	private Timer timer;
@@ -29,7 +29,7 @@ class HaasOutputObservableValueRegistry implements Closeable {
 	private int numberOfListeners = 0;
 	private boolean closed = false;
 
-	public HaasOutputObservableValueRegistry(final BenchmarkJob job) {
+	public HaasOutputObservableValueRegistry(final WorkflowJob job) {
 		this.job = job;
 		this.observableValues.put(StandardOutputFile, createObservableValue());
 		this.observableValues.put(StandardErrorFile, createObservableValue());

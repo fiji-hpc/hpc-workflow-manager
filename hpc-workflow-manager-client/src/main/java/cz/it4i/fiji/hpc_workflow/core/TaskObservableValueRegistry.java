@@ -10,21 +10,22 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import cz.it4i.fiji.hpc_workflow.core.HPCWorkflowJobManager.BenchmarkJob;
+import cz.it4i.fiji.hpc_workflow.Task;
+import cz.it4i.fiji.hpc_workflow.WorkflowJob;
 import cz.it4i.swing_javafx_ui.JavaFXRoutines;
 
 class TaskObservableValueRegistry implements Closeable {
 
-	private static final  Task EMPTY_TASK = new Task(
+	private static final Task EMPTY_TASK = new TaskImpl(
 		new ComputationAccessorAdapter(), "", 0);
 
-	private final BenchmarkJob job;
+	private final WorkflowJob job;
 	private final SimpleObservableList<Task> observableTaskList;
 	private Timer timer;
 	private boolean isRunning = false;
 	private boolean closed = false;
 
-	public TaskObservableValueRegistry(final BenchmarkJob job) {
+	public TaskObservableValueRegistry(final WorkflowJob job) {
 		this.job = job;
 		this.observableTaskList = new SimpleObservableList<>(new ArrayList<Task>(),
 			this::evaluateTimer);

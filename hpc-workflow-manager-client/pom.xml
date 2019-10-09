@@ -77,6 +77,11 @@
 		</dependency>
 
 		<dependency>
+			<groupId>org.scijava</groupId>
+			<artifactId>scijava-parallel</artifactId>
+			<version>8.0.0</version>
+		</dependency>
+		<dependency>
 			<groupId>net.imagej</groupId>
 			<artifactId>imagej</artifactId>
 			<scope>provided</scope>

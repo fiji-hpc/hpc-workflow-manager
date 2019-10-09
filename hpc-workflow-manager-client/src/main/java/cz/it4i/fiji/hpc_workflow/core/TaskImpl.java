@@ -1,5 +1,6 @@
 package cz.it4i.fiji.hpc_workflow.core;
 
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
@@ -7,21 +8,24 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import cz.it4i.fiji.haas_java_client.JobState;
+import cz.it4i.fiji.hpc_workflow.Task;
+import cz.it4i.fiji.hpc_workflow.TaskComputation;
 
-public class Task {
+class TaskImpl implements Task {
 
 	private final String description;
-	private final List<TaskComputation> computations;
+	private final List<TaskComputationImpl> computations;
 
 	/**
 	 * Creates a Task object with given description and expected number of
 	 * computations within.
 	 */
-	public Task(ComputationAccessor computationAccessor, String description, int numOfExpectedComputations) {
+	public TaskImpl(ComputationAccessor computationAccessor, String description, int numOfExpectedComputations) {
 		this.description = description;
 		this.computations = new LinkedList<>();
 		for (int i = 0; i < numOfExpectedComputations; i++) {
-			computations.add(new TaskComputation(computationAccessor, description, i + 1));
+			computations.add(new TaskComputationImpl(computationAccessor, description,
+				i + 1));
 		}
 	}
 
@@ -33,11 +37,11 @@ public class Task {
 	 *            Index of the output position to search from
 	 * @return success flag
 	 */
-	public boolean populateTaskComputationParameters(int positionInOutput) {
-		Optional<TaskComputation> otc = computations.stream().filter(c -> c
+	boolean populateTaskComputationParameters(int positionInOutput) {
+		Optional<TaskComputationImpl> otc = computations.stream().filter(c -> c
 			.getState().equals(JobState.Unknown)).min(Comparator.comparingInt(
-				TaskComputation::getTimepoint));
-		TaskComputation tc = null;
+				TaskComputationImpl::getTimepoint));
+		TaskComputationImpl tc = null;
 		if (otc.isPresent()) {
 			tc = otc.get();
 		}
@@ -50,6 +54,7 @@ public class Task {
 	/**
 	 * @return task description
 	 */
+	@Override
 	public String getDescription() {
 		return description;
 	}
@@ -57,13 +62,15 @@ public class Task {
 	/**
 	 * @return list of task computations
 	 */
+	@Override
 	public List<TaskComputation> getComputations() {
-		return computations;
+		return Collections.unmodifiableList(computations);
 	}
 	
 	/**
 	 * @return all errors corresponding to this task
 	 */
+	@Override
 	public List<HPCWorkflowError> getErrors() {
 		return computations.stream().flatMap(s -> s.getErrors().stream()).collect(Collectors.toList());
 	}

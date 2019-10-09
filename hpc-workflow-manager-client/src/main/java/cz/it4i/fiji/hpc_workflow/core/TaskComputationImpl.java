@@ -17,57 +17,14 @@ import org.slf4j.LoggerFactory;
 
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
+import cz.it4i.fiji.hpc_workflow.TaskComputation;
 
 
-public class TaskComputation {
+public class TaskComputationImpl implements TaskComputation {
 
 	public static final Logger log = LoggerFactory.getLogger(
-		cz.it4i.fiji.hpc_workflow.core.TaskComputation.class);
+		cz.it4i.fiji.hpc_workflow.core.TaskComputationImpl.class);
 	
-	public static class Log {
-		private final String name;
-		private final String content;
-
-		public Log(String name, String content) {
-			this.name = name;
-			this.content = content;
-		}
-
-		public String getName() {
-			return name;
-		}
-
-		public String getContent() {
-			return content;
-		}
-
-		@Override
-		public int hashCode() {
-			final int prime = 31;
-			int result = 1;
-			result = prime * result + ((content == null) ? 0 : content.hashCode());
-			result = prime * result + ((name == null) ? 0 : name.hashCode());
-			return result;
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if (this == obj) return true;
-			if (obj == null) return false;
-			if (getClass() != obj.getClass()) return false;
-			Log other = (Log) obj;
-			if (content == null) {
-				if (other.content != null) { return false;}
-			}
-			else if (!content.equals(other.content)) return false;
-			if (name == null) {
-				if (other.name != null) return false;
-			}
-			else if (!name.equals(other.name)) return false;
-			return true;
-		}
-		
-	}
 
 	public static class File {
 		private final String name;
@@ -105,7 +62,9 @@ public class TaskComputation {
 	 * Creates a TaskComputation object. At the time of creation, the job parameters
 	 * are not populated
 	 */
-	public TaskComputation(ComputationAccessor computationAccessor, String taskDescription, int timepoint) {
+	public TaskComputationImpl(ComputationAccessor computationAccessor,
+		String taskDescription, int timepoint)
+	{
 		this.computationAccessor = computationAccessor;
 		this.taskDescription = taskDescription;
 		this.timepoint = timepoint;
@@ -117,11 +76,13 @@ public class TaskComputation {
 	/**
 	 * @return current job state
 	 */
+	@Override
 	public JobState getState() {
 		updateState();
 		return state;
 	}
 
+	@Override
 	/**
 	 * @return job timepoint
 	 */
@@ -129,20 +90,7 @@ public class TaskComputation {
 		return timepoint;
 	}
 
-	/**
-	 * @return job id
-	 */
-	public Long getId() {
-		return id;
-	}
-
-	/**
-	 * @return computations errors
-	 */
-	public Collection<HPCWorkflowError> getErrors() {
-		return errors;
-	}
-
+	@Override
 	public Collection<Log> getLogs() {
 		List<String> logNames = new LinkedList<>(logs);
 		List<String> contents = computationAccessor.getFileContents(logNames);
@@ -176,15 +124,24 @@ public class TaskComputation {
 		return true;
 	}
 
+	@Override
 	public Collection<String> getOutputs() {
 		return outputs;
 	}
 
+	@Override
 	public Map<String, Long> getOutFileSizes() {
 		List<String> names = new LinkedList<>(outputs);
 		List<Long> sizes = computationAccessor.getFileSizes(names);
 		return Streams.zip(names.stream(), sizes.stream(), Pair::new)
 				.collect(Collectors.toMap(Pair::getFirst, Pair::getSecond));
+	}
+
+	/**
+	 * @return computations errors
+	 */
+	Collection<HPCWorkflowError> getErrors() {
+		return errors;
 	}
 
 	private void updateState() {
