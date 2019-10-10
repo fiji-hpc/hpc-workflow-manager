@@ -8,8 +8,8 @@
 package cz.it4i.fiji.hpc_workflow;
 
 import org.scijava.parallel.ParallelizationParadigm;
+import org.scijava.parallel.Status;
 
 public interface WorkflowParadigm extends ParallelizationParadigm {
-
 
 }

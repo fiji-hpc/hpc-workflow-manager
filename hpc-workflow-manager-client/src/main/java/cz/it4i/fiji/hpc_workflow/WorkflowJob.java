@@ -24,6 +24,8 @@ import cz.it4i.fiji.hpc_workflow.ui.NewJobController.WorkflowType;
 
 public interface WorkflowJob {
 
+	void startJob(ProgressNotifier p) throws IOException;
+
 	void cancelJob();
 
 	boolean delete();
@@ -33,8 +35,6 @@ public interface WorkflowJob {
 	void update();
 
 	List<FileTransferInfo> getFileTransferInfo();
-
-	void startJob(ProgressNotifier p) throws IOException;
 
 	List<String> getComputationOutput(
 		List<SynchronizableFileType> types);
@@ -107,3 +107,5 @@ public interface WorkflowJob {
 
 	boolean isVisibleInBDV();
 }
+
+

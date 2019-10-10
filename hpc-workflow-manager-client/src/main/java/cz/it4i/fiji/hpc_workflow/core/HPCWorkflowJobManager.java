@@ -55,6 +55,7 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
+import org.scijava.parallel.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -78,10 +79,11 @@ import cz.it4i.fiji.haas_java_client.UploadingFile;
 import cz.it4i.fiji.hpc_workflow.Task;
 import cz.it4i.fiji.hpc_workflow.TaskComputation;
 import cz.it4i.fiji.hpc_workflow.WorkflowJob;
+import cz.it4i.fiji.hpc_workflow.WorkflowParadigm;
 import cz.it4i.fiji.hpc_workflow.ui.NewJobController;
 import cz.it4i.fiji.hpc_workflow.ui.NewJobController.WorkflowType;
 
-public class HPCWorkflowJobManager implements Closeable {
+public class HPCWorkflowJobManager implements WorkflowParadigm {
 
 	public interface DownloadingStatusProvider {
 
@@ -129,7 +131,6 @@ public class HPCWorkflowJobManager implements Closeable {
 		public synchronized void startJob(ProgressNotifier progress)
 			throws IOException
 		{
-
 			LoadedYAML yaml = null;
 			if (job.getHaasTemplateId() == 4) {
 				job.uploadFile(Constants.CONFIG_YAML, progress);
@@ -788,6 +789,18 @@ public class HPCWorkflowJobManager implements Closeable {
 		catch (Exception e) {
 			log.error(e.getMessage(), e);
 		}
+	}
+
+	@Override
+	public void init() {
+		// TODO Auto-generated method stub
+	
+	}
+
+	@Override
+	public Status getStatus() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	@Override
