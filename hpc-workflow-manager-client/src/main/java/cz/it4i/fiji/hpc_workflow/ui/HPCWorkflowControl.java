@@ -95,6 +95,8 @@ public class HPCWorkflowControl extends BorderPane {
 
 	private boolean closed;
 
+	private String userScript = "user.ijm";
+
 	private static Logger log = LoggerFactory.getLogger(
 		cz.it4i.fiji.hpc_workflow.ui.HPCWorkflowControl.class);
 
@@ -227,7 +229,7 @@ public class HPCWorkflowControl extends BorderPane {
 		boolean isSuccessfull = true;
 		if (job.getWorkflowType() == WorkflowType.MACRO_WORKFLOW) {
 			String userScriptFilePath = job.getInputDirectory().toString() +
-				File.separator + "user.ijm";
+				File.separator + userScript;
 
 			try (BufferedReader resourceReader = new BufferedReader(
 				new InputStreamReader(HPCWorkflowControl.class.getClassLoader()
@@ -536,8 +538,22 @@ public class HPCWorkflowControl extends BorderPane {
 	private void openEditor(BenchmarkJob job) {
 		TextEditor txt = new TextEditor(new Context()); // TODO Context handling is
 																										// wrong
-		File editFile = new File(job.getInputDirectory().toString(),
-			Constants.DEFAULT_MACRO_FILE);
+		// Check if the wrapped script exits:
+		String parallelMacroWrappedString = job.getInputDirectory().toString() +
+			File.separator + Constants.DEFAULT_MACRO_FILE;
+		File parallelMacroWrappedFile = new File(parallelMacroWrappedString);
+
+		// If there is no wrapped script open the user script:
+		File editFile;
+		if (parallelMacroWrappedFile.exists()) {
+			editFile = parallelMacroWrappedFile;
+		}
+		else {
+			editFile = new File(job.getInputDirectory().toString() + File.separator +
+				userScript);
+		}
+
+		// Open editor:
 		txt.open(editFile);
 		txt.setVisible(true);
 	}

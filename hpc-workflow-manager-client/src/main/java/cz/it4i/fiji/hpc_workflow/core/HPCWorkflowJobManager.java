@@ -126,9 +126,8 @@ public class HPCWorkflowJobManager implements Closeable {
 		public synchronized void startJob(ProgressNotifier progress)
 			throws IOException
 		{
-
 			LoadedYAML yaml = null;
-			if (job.getHaasTemplateId() == 4) {
+			if (job.getHaasTemplateId() == 4) { // ToDo: Fix this to work with type and not id!
 				job.uploadFile(Constants.CONFIG_YAML, progress);
 				yaml = new LoadedYAML(job.openLocalFile(Constants.CONFIG_YAML));
 			}
