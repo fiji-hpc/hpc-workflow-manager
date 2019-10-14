@@ -13,6 +13,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -37,6 +38,7 @@ import cz.it4i.fiji.haas_java_client.UploadingFile;
 import cz.it4i.fiji.haas_java_client.UploadingFileData;
 import cz.it4i.fiji.haas_java_client.proxy.JobFileContentExt;
 import cz.it4i.fiji.scpclient.TransferFileProgress;
+import cz.it4i.swing_javafx_ui.SimpleDialog;
 
 /***
  * TASK - napojit na UI
@@ -77,6 +79,8 @@ public class Job {
 	private static final String JOB_INPUT_DIRECTORY_PATH =
 		"job.input_directory_path";
 
+	private static final String USER_SCIPRT_NAME = "job.user_script_name";
+
 	private static final String JOB_USE_DEMO_DATA = "job.use_demo_data";
 
 	private static Logger log = LoggerFactory.getLogger(
@@ -100,12 +104,15 @@ public class Job {
 
 	private Path outputDirectory;
 
+	private String userScriptName;
+
 	private boolean useDemoData;
 
 	public Job(JobManager4Job jobManager, JobSettings jobSettings, Path basePath,
 		Supplier<HaaSClient> haasClientSupplier,
 		UnaryOperator<Path> inputDirectoryProvider,
-		UnaryOperator<Path> outputDirectoryProvider) throws IOException
+		UnaryOperator<Path> outputDirectoryProvider,
+		Callable<String> userScriptNameProvider) throws IOException
 	{
 		this(jobManager, haasClientSupplier);
 		HaaSClient client = getHaaSClient();
@@ -117,6 +124,7 @@ public class Job {
 		storeInputOutputDirectory();
 		setName(jobSettings.getJobName());
 		setHaasTemplateId(jobSettings.getTemplateId());
+		storeUserScriptName(userScriptNameProvider);
 	}
 
 	public Job(JobManager4Job jobManager, Path jobDirectory,
@@ -474,6 +482,13 @@ public class Job {
 		return synchronization.getFileTransferInfo();
 	}
 
+	public String getUserScriptName() {
+		if (userScriptName == null) {
+			userScriptName = propertyHolder.getValue(USER_SCIPRT_NAME);
+		}
+		return userScriptName;
+	}
+
 	public void createEmptyFile(String fileName) throws InterruptedIOException {
 		try (HaaSFileTransfer transfer = haasClientSupplier.get().startFileTransfer(
 			getId()))
@@ -491,6 +506,17 @@ public class Job {
 			storeDataDirectory(JOB_INPUT_DIRECTORY_PATH, inputDirectory);
 		}
 		storeDataDirectory(JOB_OUTPUT_DIRECTORY_PATH, outputDirectory);
+	}
+
+	private void storeUserScriptName(Callable<String> newUserScriptNameProvider) {
+		try {
+			propertyHolder.setValue(USER_SCIPRT_NAME, newUserScriptNameProvider
+				.call());
+		}
+		catch (Exception exc) {
+			SimpleDialog.showException("Exception",
+				"Exception concerning the user script name.", exc);
+		}
 	}
 
 	private void storeDataDirectory(final String directoryPropertyName,

@@ -49,6 +49,8 @@ import cz.it4i.fiji.hpc_workflow.WorkflowJob;
 import cz.it4i.fiji.hpc_workflow.WorkflowParadigm;
 import cz.it4i.fiji.hpc_workflow.core.Constants;
 import cz.it4i.fiji.hpc_workflow.core.FXFrameExecutorService;
+import cz.it4i.fiji.hpc_workflow.core.MacroWorkflowJob;
+import cz.it4i.fiji.hpc_workflow.core.MacroWorkflowParadigm;
 import cz.it4i.fiji.hpc_workflow.core.ObservableHPCWorkflowJob;
 import cz.it4i.fiji.hpc_workflow.core.ObservableHPCWorkflowJob.TransferProgress;
 import cz.it4i.fiji.hpc_workflow.ui.NewJobController.WorkflowType;
@@ -225,21 +227,32 @@ public class HPCWorkflowControl extends BorderPane {
 		boolean isSuccessfull = true;
 		if (job.getWorkflowType() == WorkflowType.MACRO_WORKFLOW) {
 			String userScriptFilePath = job.getInputDirectory().toString() +
-				File.separator + "user.ijm";
+				File.separator + job.getUserScriptName();
 
+			// Remove old wrapped script file if one exists:
+			String parallelMacroWrappedString = job.getInputDirectory().toString() +
+				File.separator + Constants.DEFAULT_MACRO_FILE;
+			File parallelMacroWrappedFile = new File(parallelMacroWrappedString);
+			try {
+				Files.deleteIfExists(parallelMacroWrappedFile.toPath());
+			}
+			catch (IOException exc) {
+				SimpleDialog.showException("Exception",
+					"Could not delete the old wrapped Macro user script.", exc);
+			}
+
+			// Create the new wrapped script file:
 			try (BufferedReader resourceReader = new BufferedReader(
 				new InputStreamReader(HPCWorkflowControl.class.getClassLoader()
 					.getResourceAsStream("MacroWrapper.ijm")));
 					PrintWriter pw = new PrintWriter(job.getInputDirectory().toString() +
 						File.separator + Constants.DEFAULT_MACRO_FILE))
 			{
+				// Write user's script contents to the new script:
+				isSuccessfull = copyLineByLine(pw, userScriptFilePath);
 
 				// Write the MPI wrapper script's contents into the new script:
-				isSuccessfull = copyLineByLine(pw, resourceReader);
-
-				// Write user's script contents to the new script:
-				isSuccessfull = isSuccessfull && copyLineByLine(pw, userScriptFilePath);
-
+				isSuccessfull = isSuccessfull && copyLineByLine(pw, resourceReader);
 			}
 			catch (FileNotFoundException exc) {
 				log.error(exc.getMessage());
@@ -301,7 +314,7 @@ public class HPCWorkflowControl extends BorderPane {
 				public void doAction(ProgressNotifier p) throws IOException {
 					WorkflowJob job = doCreateJob(newJobWindow::getInputDirectory,
 						newJobWindow::getOutputDirectory, newJobWindow.getNumberOfNodes(),
-						newJobWindow.getHaasTemplateId());
+      newJobWindow.getHaasTemplateId(), newJobWindow::getUserScriptName);
 					if (newJobWindow.getInputDirectory(job.getDirectory()) != null && job
 						.getWorkflowType() == WorkflowType.SPIM_WORKFLOW && (job
 							.getInputDirectory().resolve(CONFIG_YAML)).toFile().exists())
@@ -337,11 +350,20 @@ public class HPCWorkflowControl extends BorderPane {
 	}
 
 	private WorkflowJob doCreateJob(UnaryOperator<Path> inputProvider,
-		UnaryOperator<Path> outputProvider, int numberOfNodes, int haasTemplateId)
-		throws IOException
+		UnaryOperator<Path> outputProvider, int numberOfNodes, int haasTemplateId,
+		Callable<String> userScriptName) throws IOException
 	{
-		WorkflowJob bj = paradigm.createJob(inputProvider, outputProvider,
-			numberOfNodes, haasTemplateId);
+		WorkflowJob bj;
+		if (paradigm instanceof MacroWorkflowParadigm) {
+			MacroWorkflowParadigm typeParadigm = (MacroWorkflowParadigm) paradigm;
+			bj = typeParadigm.createJob(inputProvider, outputProvider, numberOfNodes,
+				haasTemplateId, userScriptName);
+		}
+		else {
+			bj = paradigm.createJob(inputProvider, outputProvider, numberOfNodes,
+				haasTemplateId);
+		}
+
 		ObservableHPCWorkflowJob obj = registry.addIfAbsent(bj);
 		addJobToItems(obj);
 		jobs.refresh();
@@ -510,12 +532,21 @@ public class HPCWorkflowControl extends BorderPane {
 	}
 
 	private void openEditor(WorkflowJob job) {
-		TextEditor txt = new TextEditor(new Context()); // TODO Context handling is
-																										// wrong
-		File editFile = new File(job.getInputDirectory().toString(),
-			Constants.DEFAULT_MACRO_FILE);
-		txt.open(editFile);
-		txt.setVisible(true);
+		if (job instanceof MacroWorkflowJob) {
+			MacroWorkflowJob typeJob = (MacroWorkflowJob) job;
+			TextEditor txt = new TextEditor(new Context()); // TODO Context handling
+																											// is
+			// wrong
+
+// If there is no wrapped script open the user script:
+			File editFile = new File(job.getInputDirectory().toString() +
+				File.separator + typeJob.getUserScriptName());
+
+// Open editor:
+			txt.open(editFile);
+			txt.setVisible(true);
+		}
+
 	}
 
 	private interface PJobAction {

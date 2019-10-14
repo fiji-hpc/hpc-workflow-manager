@@ -8,6 +8,7 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
+import java.util.concurrent.Callable;
 import java.util.function.BiPredicate;
 import java.util.function.UnaryOperator;
 
@@ -70,12 +71,12 @@ public class JobManager implements Closeable {
 
 	public Job createJob(JobSettings jobSettings,
 		UnaryOperator<Path> inputDirectoryProvider,
-		UnaryOperator<Path> outputDirectoryProvider) throws IOException
+		UnaryOperator<Path> outputDirectoryProvider, Callable<String> userScriptName) throws IOException
 	{
 		Job result;
 		initJobsIfNecessary();
 		result = new Job(remover, jobSettings, workDirectory, this::getHaasClient,
-			inputDirectoryProvider, outputDirectoryProvider);
+			inputDirectoryProvider, outputDirectoryProvider, userScriptName);
 		jobs.add(result);
 		return result;
 	}

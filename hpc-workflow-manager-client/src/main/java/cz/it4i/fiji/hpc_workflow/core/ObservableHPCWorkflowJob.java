@@ -246,4 +246,14 @@ public class ObservableHPCWorkflowJob extends
 		return workflowkJob.getInputDirectory();
 	}
 
+	public String getUserScriptName() {
+		if (workflowkJob instanceof MacroWorkflowJob) {
+			MacroWorkflowJob typeJob = (MacroWorkflowJob) workflowkJob;
+			return typeJob.getUserScriptName();
+		}
+		throw new UnsupportedOperationException(
+			"Script name is support by MacroWorkflowJob but actual job is " +
+				workflowkJob.getClass());
+	}
+
 }

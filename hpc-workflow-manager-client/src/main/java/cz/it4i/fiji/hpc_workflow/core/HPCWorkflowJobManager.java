@@ -40,6 +40,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.BooleanSupplier;
@@ -82,12 +83,12 @@ import cz.it4i.fiji.haas_java_client.UploadingFile;
 import cz.it4i.fiji.hpc_workflow.Task;
 import cz.it4i.fiji.hpc_workflow.TaskComputation;
 import cz.it4i.fiji.hpc_workflow.WorkflowJob;
-import cz.it4i.fiji.hpc_workflow.WorkflowParadigm;
 import cz.it4i.fiji.hpc_workflow.ui.NewJobController;
 import cz.it4i.fiji.hpc_workflow.ui.NewJobController.WorkflowType;
 
 @Plugin(type = ParallelizationParadigm.class)
-public class HPCWorkflowJobManager implements WorkflowParadigm {
+public class HPCWorkflowJobManager implements MacroWorkflowParadigm
+{
 
 	public interface DownloadingStatusProvider {
 
@@ -109,7 +110,7 @@ public class HPCWorkflowJobManager implements WorkflowParadigm {
 
 	private Runnable initDoneCallback;
 
-	public final class BenchmarkJob implements WorkflowJob {
+	public final class BenchmarkJob implements MacroWorkflowJob {
 
 		private final Job job;
 		private final SnakemakeOutputHelper snakemakeOutputHelper;
@@ -144,7 +145,7 @@ public class HPCWorkflowJobManager implements WorkflowParadigm {
 			throws IOException
 		{
 			LoadedYAML yaml = null;
-			if (job.getHaasTemplateId() == 4) {
+			if (job.getHaasTemplateId() == 4) { // ToDo: Fix this to work with type and not id!
 				job.uploadFile(Constants.CONFIG_YAML, progress);
 				yaml = new LoadedYAML(job.openLocalFile(Constants.CONFIG_YAML));
 			}
@@ -416,6 +417,11 @@ public class HPCWorkflowJobManager implements WorkflowParadigm {
 		}
 
 		@Override
+		public String getUserScriptName() {
+			return job.getUserScriptName();
+		}
+
+		@Override
 		public WorkflowType getWorkflowType() {
 			return WorkflowType.forLong(job.getHaasTemplateId());
 		}
@@ -683,8 +689,17 @@ public class HPCWorkflowJobManager implements WorkflowParadigm {
 		UnaryOperator<Path> outputDirectoryProvider, int numberOfNodes,
 		int haasTemplateId) throws IOException
 	{
+		return createJob(inputDirectoryProvider, outputDirectoryProvider,
+			numberOfNodes, haasTemplateId, () -> "user.ijm");
+	}
+
+	@Override
+	public WorkflowJob createJob(UnaryOperator<Path> inputDirectoryProvider,
+		UnaryOperator<Path> outputDirectoryProvider, int numberOfNodes,
+		int haasTemplateId, Callable<String> userScriptName) throws IOException
+	{
 		Job job = jobManager.createJob(getJobSettings(numberOfNodes,
-			haasTemplateId), inputDirectoryProvider, outputDirectoryProvider);
+			haasTemplateId), inputDirectoryProvider, outputDirectoryProvider, userScriptName);
 		if (job.getInputDirectory() == null) {
 			job.createEmptyFile(Constants.DEMO_DATA_SIGNAL_FILE_NAME);
 		}
