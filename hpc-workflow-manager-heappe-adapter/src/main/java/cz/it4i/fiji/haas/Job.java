@@ -77,6 +77,8 @@ public class Job {
 	private static final String JOB_INPUT_DIRECTORY_PATH =
 		"job.input_directory_path";
 
+	private static final String USER_SCIPRT_NAME = "job.user_script_name";
+
 	private static final String JOB_USE_DEMO_DATA = "job.use_demo_data";
 
 	private static Logger log = LoggerFactory.getLogger(
@@ -100,6 +102,8 @@ public class Job {
 
 	private Path outputDirectory;
 
+	private String userScriptName;
+
 	private boolean useDemoData;
 
 	public Job(JobManager4Job jobManager, JobSettings jobSettings, Path basePath,
@@ -115,6 +119,7 @@ public class Job {
 		propertyHolder = new PropertyHolder(jobDir.resolve(JOB_INFO_FILENAME));
 		Files.createDirectory(this.jobDir);
 		storeInputOutputDirectory();
+		storeUserScriptName();
 		setName(jobSettings.getJobName());
 		setHaasTemplateId(jobSettings.getTemplateId());
 	}
@@ -491,6 +496,17 @@ public class Job {
 			storeDataDirectory(JOB_INPUT_DIRECTORY_PATH, inputDirectory);
 		}
 		storeDataDirectory(JOB_OUTPUT_DIRECTORY_PATH, outputDirectory);
+	}
+
+	private void storeUserScriptName() {
+		propertyHolder.setValue(USER_SCIPRT_NAME, "user.ijm");
+	}
+
+	public String getUserScriptName() {
+		if (userScriptName == null) {
+			userScriptName = propertyHolder.getValue(USER_SCIPRT_NAME);
+		}
+		return userScriptName;
 	}
 
 	private void storeDataDirectory(final String directoryPropertyName,

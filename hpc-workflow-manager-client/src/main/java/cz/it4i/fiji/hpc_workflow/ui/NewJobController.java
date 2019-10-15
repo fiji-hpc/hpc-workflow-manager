@@ -215,7 +215,7 @@ public class NewJobController extends BorderPane {
 		if (dataLocation == DataLocation.CUSTOM_DIRECTORY && (!directoryPath
 			.toFile().exists() || directory.isEmpty()))
 		{
-			String message = !directory.isEmpty() ? "Directory %s for %s not exists"
+			String message = !directory.isEmpty() ? "Directory %s for %s does not exist."
 				: "Directory for %2$s is not selected.";
 			SimpleDialog.showWarning("Invalid input provided", String.format(message,
 				directoryPath.toAbsolutePath(), type));

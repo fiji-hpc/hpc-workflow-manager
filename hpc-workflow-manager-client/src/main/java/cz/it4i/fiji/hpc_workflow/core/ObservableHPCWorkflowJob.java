@@ -243,4 +243,8 @@ public class ObservableHPCWorkflowJob extends
 		return benchmarkJob.getInputDirectory();
 	}
 
+	public String getUserScriptName() {
+		return benchmarkJob.getUserScriptName();
+	}
+
 }

@@ -229,7 +229,7 @@ public class HPCWorkflowControl extends BorderPane {
 		boolean isSuccessfull = true;
 		if (job.getWorkflowType() == WorkflowType.MACRO_WORKFLOW) {
 			String userScriptFilePath = job.getInputDirectory().toString() +
-				File.separator + userScript;
+				File.separator + job.getUserScriptName();
 
 			try (BufferedReader resourceReader = new BufferedReader(
 				new InputStreamReader(HPCWorkflowControl.class.getClassLoader()
@@ -550,7 +550,7 @@ public class HPCWorkflowControl extends BorderPane {
 		}
 		else {
 			editFile = new File(job.getInputDirectory().toString() + File.separator +
-				userScript);
+				job.getUserScriptName());
 		}
 
 		// Open editor:

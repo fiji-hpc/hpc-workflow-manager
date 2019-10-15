@@ -615,6 +615,10 @@ public class HPCWorkflowJobManager implements Closeable {
 		public String getProperty(String name) {
 			return job.getProperty(name);
 		}
+
+		public String getUserScriptName() {
+			return job.getUserScriptName();
+		}
 	}
 
 	public HPCWorkflowJobManager(HPCWorkflowParameters params) {
