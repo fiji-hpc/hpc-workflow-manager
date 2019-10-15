@@ -21,7 +21,7 @@ public class RunBenchmark {
 	public static class CreateJob {
 		public static void main(String[] args) throws IOException {
 			try(HPCWorkflowJobManager benchmarkJobManager = new HPCWorkflowJobManager(getBenchmarkSPIMParameters())) {
-				BenchmarkJob ji = benchmarkJobManager.createJob(jd -> jd, jd -> jd, 2, 4);
+				BenchmarkJob ji = benchmarkJobManager.createJob(jd -> jd, jd -> jd, 2, 4, "");
 				log.info("job: " + ji.getId() + " created.");
 			}
 		}

@@ -21,7 +21,9 @@ import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.DirectoryChooser;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import javafx.stage.Window;
 
 public class NewJobController extends BorderPane {
 
@@ -107,6 +109,8 @@ public class NewJobController extends BorderPane {
 
 	private Runnable createPressedNotifier;
 
+	private String userScriptName;
+
 	public NewJobController() {
 		JavaFXRoutines.initRootAndController("NewJobView.fxml", this);
 		getStylesheets().add(getClass().getResource("NewJobView.css")
@@ -165,16 +169,55 @@ public class NewJobController extends BorderPane {
 
 	private void initSelectButton(TextField textField, Button button) {
 		button.setOnAction(x -> {
-			Path p = Paths.get(textField.getText());
-			DirectoryChooser dch = new DirectoryChooser();
-			if (p.toFile().exists()) {
-				dch.setInitialDirectory(p.toAbsolutePath().toFile());
+			Window parent = ownerWindow.getScene().getWindow();
+
+			if (workflowSpimRadioButton.isSelected()) {
+				setTextFieldForDirectory(textField, parent);
 			}
-			File result = dch.showDialog(ownerWindow.getScene().getWindow());
-			if (result != null) {
-				textField.setText(result.toString());
+			else {
+				setTextFieldForFile(textField, parent);
 			}
 		});
+	}
+
+	private void setTextFieldForDirectory(TextField folderString, Window parent) {
+		// Get the path from the text field an set it as initial path for the
+		// file
+		// chooser if it exists:
+		Path p = Paths.get(folderString.getText());
+		DirectoryChooser dch = new DirectoryChooser();
+		if (p.toFile().exists()) {
+			dch.setInitialDirectory(p.toAbsolutePath().toFile());
+		}
+
+		// Set the selected directory as the new content of the text field:
+		File selectedDirectory = dch.showDialog(parent);
+		if (selectedDirectory != null) {
+			folderString.setText(selectedDirectory.toString());
+		}
+	}
+
+	private void setTextFieldForFile(TextField folderString, Window parent) {
+		// Get the path from the text field an set it as initial path for the
+		// file
+		// chooser if it exists:
+		Path p = Paths.get(folderString.getText());
+		FileChooser fch = new FileChooser();
+		if (p.toFile().exists()) {
+			fch.setInitialDirectory(p.toAbsolutePath().toFile().getParentFile());
+		}
+
+		// Restrict file choice to Fiji Macro scripts only:
+		FileChooser.ExtensionFilter extensionFilter =
+			new FileChooser.ExtensionFilter("Fiji Macro script file (*.ijm)",
+				"*.ijm");
+		fch.getExtensionFilters().add(extensionFilter);
+
+		// Set the selected directory as the new content of the text field:
+		File selectedFile = fch.showOpenDialog(parent);
+		if (selectedFile != null && !selectedFile.isDirectory()) {
+			folderString.setText(selectedFile.toString());
+		}
 	}
 
 	private Path getDirectory(DataLocation dataLocation, String selectedDirectory,
@@ -186,9 +229,25 @@ public class NewJobController extends BorderPane {
 			case WORK_DIRECTORY:
 				return workingDirectory;
 			case CUSTOM_DIRECTORY:
-				return Paths.get(selectedDirectory).toAbsolutePath();
+				return getPathWithoutFile(selectedDirectory);
 			default:
 				throw new UnsupportedOperationException("Not support " + dataLocation);
+		}
+	}
+
+	private Path getPathWithoutFile(String selectedDirectory) {
+		Path path = Paths.get(selectedDirectory).toAbsolutePath();
+		File file = path.toFile();
+		if (file.isDirectory()) {
+			return path;
+		}
+		setUserScriptName(path.getFileName().toString());
+		return path.getParent();
+	}
+	
+	private void setUserScriptName(String newFilename) {
+		if(!workflowSpimRadioButton.isSelected()) {
+			userScriptName = newFilename;
 		}
 	}
 
@@ -215,7 +274,8 @@ public class NewJobController extends BorderPane {
 		if (dataLocation == DataLocation.CUSTOM_DIRECTORY && (!directoryPath
 			.toFile().exists() || directory.isEmpty()))
 		{
-			String message = !directory.isEmpty() ? "Directory %s for %s does not exist."
+			String message = !directory.isEmpty()
+				? "Directory %s for %s does not exist."
 				: "Directory for %2$s is not selected.";
 			SimpleDialog.showWarning("Invalid input provided", String.format(message,
 				directoryPath.toAbsolutePath(), type));
@@ -262,6 +322,14 @@ public class NewJobController extends BorderPane {
 				ownInputRadioButton.setSelected(true);
 			}
 		}
+
+		// Always reset the input directory to prevent mixing choosing a directory
+		// with a script file:
+		inputDirectoryTextField.setText("");
+	}
+
+	public String getUserScriptName() {
+		return userScriptName;
 	}
 
 }

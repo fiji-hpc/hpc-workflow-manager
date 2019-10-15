@@ -629,10 +629,10 @@ public class HPCWorkflowJobManager implements Closeable {
 
 	public BenchmarkJob createJob(UnaryOperator<Path> inputDirectoryProvider,
 		UnaryOperator<Path> outputDirectoryProvider, int numberOfNodes,
-		int haasTemplateId) throws IOException
+		int haasTemplateId, String userScriptName) throws IOException
 	{
 		Job job = jobManager.createJob(getJobSettings(numberOfNodes,
-			haasTemplateId), inputDirectoryProvider, outputDirectoryProvider);
+			haasTemplateId), inputDirectoryProvider, outputDirectoryProvider, userScriptName);
 		if (job.getInputDirectory() == null) {
 			job.createEmptyFile(Constants.DEMO_DATA_SIGNAL_FILE_NAME);
 		}

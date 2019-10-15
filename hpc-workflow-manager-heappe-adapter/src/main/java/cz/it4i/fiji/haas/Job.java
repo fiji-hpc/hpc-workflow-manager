@@ -109,7 +109,7 @@ public class Job {
 	public Job(JobManager4Job jobManager, JobSettings jobSettings, Path basePath,
 		Supplier<HaaSClient> haasClientSupplier,
 		UnaryOperator<Path> inputDirectoryProvider,
-		UnaryOperator<Path> outputDirectoryProvider) throws IOException
+		UnaryOperator<Path> outputDirectoryProvider, String newUserScriptName) throws IOException
 	{
 		this(jobManager, haasClientSupplier);
 		HaaSClient client = getHaaSClient();
@@ -122,6 +122,7 @@ public class Job {
 		storeUserScriptName();
 		setName(jobSettings.getJobName());
 		setHaasTemplateId(jobSettings.getTemplateId());
+		userScriptName = newUserScriptName;
 	}
 
 	public Job(JobManager4Job jobManager, Path jobDirectory,
@@ -499,7 +500,7 @@ public class Job {
 	}
 
 	private void storeUserScriptName() {
-		propertyHolder.setValue(USER_SCIPRT_NAME, "user.ijm");
+		propertyHolder.setValue(USER_SCIPRT_NAME, userScriptName);
 	}
 
 	public String getUserScriptName() {

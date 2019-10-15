@@ -70,12 +70,12 @@ public class JobManager implements Closeable {
 
 	public Job createJob(JobSettings jobSettings,
 		UnaryOperator<Path> inputDirectoryProvider,
-		UnaryOperator<Path> outputDirectoryProvider) throws IOException
+		UnaryOperator<Path> outputDirectoryProvider, String userScriptName) throws IOException
 	{
 		Job result;
 		initJobsIfNecessary();
 		result = new Job(remover, jobSettings, workDirectory, this::getHaasClient,
-			inputDirectoryProvider, outputDirectoryProvider);
+			inputDirectoryProvider, outputDirectoryProvider, userScriptName);
 		jobs.add(result);
 		return result;
 	}

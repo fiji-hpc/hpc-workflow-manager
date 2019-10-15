@@ -57,4 +57,8 @@ public class NewJobWindow {
 	public void finalizeOnStageClose() {
 		this.stage.setOnCloseRequest((WindowEvent we) -> this.controller.close());
 	}
+
+	public String getUserScriptName() {
+		return this.controller.getUserScriptName();
+	}
 }
