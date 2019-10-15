@@ -1,3 +1,4 @@
+
 package cz.it4i.fiji.haas;
 
 import java.io.IOException;
@@ -16,26 +17,39 @@ import cz.it4i.fiji.hpc_workflow.core.HPCWorkflowParameters;
 import cz.it4i.fiji.hpc_workflow.core.HPCWorkflowJobManager.BenchmarkJob;
 
 public class RunBenchmark {
-	private static Logger log = LoggerFactory.getLogger(cz.it4i.fiji.haas.RunBenchmark.class);
+
+	private static Logger log = LoggerFactory.getLogger(
+		cz.it4i.fiji.haas.RunBenchmark.class);
 
 	public static class CreateJob {
+
 		public static void main(String[] args) throws IOException {
-			try(HPCWorkflowJobManager benchmarkJobManager = new HPCWorkflowJobManager(getBenchmarkSPIMParameters())) {
-				BenchmarkJob ji = benchmarkJobManager.createJob(jd -> jd, jd -> jd, 2, 4, "");
+			try (HPCWorkflowJobManager benchmarkJobManager =
+				new HPCWorkflowJobManager(getBenchmarkSPIMParameters()))
+			{
+				BenchmarkJob ji = benchmarkJobManager.createJob(jd -> jd, jd -> jd, 2,
+					4, () -> {
+						return "user.ijm";
+					});
 				log.info("job: " + ji.getId() + " created.");
 			}
 		}
 	}
 
 	public static class ProcessJobs {
+
 		public static void main(String[] args) throws IOException {
-			try( HPCWorkflowJobManager benchmarkJobManager = new HPCWorkflowJobManager(getBenchmarkSPIMParameters())) {
+			try (HPCWorkflowJobManager benchmarkJobManager =
+				new HPCWorkflowJobManager(getBenchmarkSPIMParameters()))
+			{
 				for (BenchmarkJob job : benchmarkJobManager.getJobs()) {
 					JobState state;
-					log.info("job: " + job.getId() + " hasStatus " + (state = job.getState()));
+					log.info("job: " + job.getId() + " hasStatus " + (state = job
+						.getState()));
 					if (state == JobState.Configuring) {
 						job.startJob(new DummyProgress());
-					} else if (state != JobState.Running && state != JobState.Queued) {
+					}
+					else if (state != JobState.Running && state != JobState.Queued) {
 						job.startDownload();
 					}
 					else if (state == JobState.Running) {
@@ -47,7 +61,9 @@ public class RunBenchmark {
 		}
 	}
 
-	private static HPCWorkflowParameters getBenchmarkSPIMParameters() throws IOException {
+	private static HPCWorkflowParameters getBenchmarkSPIMParameters()
+		throws IOException
+	{
 		Path p = Paths.get("/tmp/benchmark");
 		if (!Files.exists(p)) {
 			Files.createDirectory(p);

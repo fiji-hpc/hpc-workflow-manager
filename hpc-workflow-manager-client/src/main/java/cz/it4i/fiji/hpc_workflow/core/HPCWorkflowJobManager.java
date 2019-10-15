@@ -40,6 +40,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.Predicate;
@@ -629,7 +630,7 @@ public class HPCWorkflowJobManager implements Closeable {
 
 	public BenchmarkJob createJob(UnaryOperator<Path> inputDirectoryProvider,
 		UnaryOperator<Path> outputDirectoryProvider, int numberOfNodes,
-		int haasTemplateId, String userScriptName) throws IOException
+		int haasTemplateId, Callable<String> userScriptName) throws IOException
 	{
 		Job job = jobManager.createJob(getJobSettings(numberOfNodes,
 			haasTemplateId), inputDirectoryProvider, outputDirectoryProvider, userScriptName);

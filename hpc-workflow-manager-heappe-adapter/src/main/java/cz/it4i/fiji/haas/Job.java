@@ -13,6 +13,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -37,6 +38,7 @@ import cz.it4i.fiji.haas_java_client.UploadingFile;
 import cz.it4i.fiji.haas_java_client.UploadingFileData;
 import cz.it4i.fiji.haas_java_client.proxy.JobFileContentExt;
 import cz.it4i.fiji.scpclient.TransferFileProgress;
+import cz.it4i.swing_javafx_ui.SimpleDialog;
 
 /***
  * TASK - napojit na UI
@@ -109,7 +111,8 @@ public class Job {
 	public Job(JobManager4Job jobManager, JobSettings jobSettings, Path basePath,
 		Supplier<HaaSClient> haasClientSupplier,
 		UnaryOperator<Path> inputDirectoryProvider,
-		UnaryOperator<Path> outputDirectoryProvider, String newUserScriptName) throws IOException
+		UnaryOperator<Path> outputDirectoryProvider,
+		Callable<String> userScriptNameProvider) throws IOException
 	{
 		this(jobManager, haasClientSupplier);
 		HaaSClient client = getHaaSClient();
@@ -119,10 +122,9 @@ public class Job {
 		propertyHolder = new PropertyHolder(jobDir.resolve(JOB_INFO_FILENAME));
 		Files.createDirectory(this.jobDir);
 		storeInputOutputDirectory();
-		storeUserScriptName();
 		setName(jobSettings.getJobName());
 		setHaasTemplateId(jobSettings.getTemplateId());
-		userScriptName = newUserScriptName;
+		storeUserScriptName(userScriptNameProvider);
 	}
 
 	public Job(JobManager4Job jobManager, Path jobDirectory,
@@ -499,8 +501,15 @@ public class Job {
 		storeDataDirectory(JOB_OUTPUT_DIRECTORY_PATH, outputDirectory);
 	}
 
-	private void storeUserScriptName() {
-		propertyHolder.setValue(USER_SCIPRT_NAME, userScriptName);
+	private void storeUserScriptName(Callable<String> newUserScriptNameProvider) {
+		try {
+			propertyHolder.setValue(USER_SCIPRT_NAME, newUserScriptNameProvider
+				.call());
+		}
+		catch (Exception exc) {
+			SimpleDialog.showException("Exception",
+				"Exception concerning the user script name.", exc);
+		}
 	}
 
 	public String getUserScriptName() {

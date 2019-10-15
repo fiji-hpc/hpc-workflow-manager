@@ -95,8 +95,6 @@ public class HPCWorkflowControl extends BorderPane {
 
 	private boolean closed;
 
-	private String userScript = "user.ijm";
-
 	private static Logger log = LoggerFactory.getLogger(
 		cz.it4i.fiji.hpc_workflow.ui.HPCWorkflowControl.class);
 
@@ -305,7 +303,7 @@ public class HPCWorkflowControl extends BorderPane {
 				public void doAction(ProgressNotifier p) throws IOException {
 					BenchmarkJob job = doCreateJob(newJobWindow::getInputDirectory,
 						newJobWindow::getOutputDirectory, newJobWindow.getNumberOfNodes(),
-						newJobWindow.getHaasTemplateId(), newJobWindow.getUserScriptName());
+						newJobWindow.getHaasTemplateId(), newJobWindow::getUserScriptName);
 					if (job.isUseDemoData()) {
 						job.storeDataInWorkdirectory(getConfigYamlFile());
 					}
@@ -346,8 +344,8 @@ public class HPCWorkflowControl extends BorderPane {
 	}
 
 	private BenchmarkJob doCreateJob(UnaryOperator<Path> inputProvider,
-		UnaryOperator<Path> outputProvider, int numberOfNodes, int haasTemplateId, String userScriptName)
-		throws IOException
+		UnaryOperator<Path> outputProvider, int numberOfNodes, int haasTemplateId,
+		Callable<String> userScriptName) throws IOException
 	{
 		BenchmarkJob bj = manager.createJob(inputProvider, outputProvider,
 			numberOfNodes, haasTemplateId, userScriptName);

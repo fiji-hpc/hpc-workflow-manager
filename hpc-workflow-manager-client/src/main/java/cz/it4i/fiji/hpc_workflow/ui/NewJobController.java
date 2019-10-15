@@ -241,13 +241,14 @@ public class NewJobController extends BorderPane {
 		if (file.isDirectory()) {
 			return path;
 		}
-		setUserScriptName(path.getFileName().toString());
+		String scriptName = path.getFileName().toString();
+		setUserScriptName(scriptName);
 		return path.getParent();
 	}
 	
 	private void setUserScriptName(String newFilename) {
 		if(!workflowSpimRadioButton.isSelected()) {
-			userScriptName = newFilename;
+			this.userScriptName = newFilename;
 		}
 	}
 
@@ -329,7 +330,7 @@ public class NewJobController extends BorderPane {
 	}
 
 	public String getUserScriptName() {
-		return userScriptName;
+		return this.userScriptName;
 	}
 
 }
