@@ -245,9 +245,9 @@ public class NewJobController extends BorderPane {
 		setUserScriptName(scriptName);
 		return path.getParent();
 	}
-	
+
 	private void setUserScriptName(String newFilename) {
-		if(!workflowSpimRadioButton.isSelected()) {
+		if (!workflowSpimRadioButton.isSelected()) {
 			this.userScriptName = newFilename;
 		}
 	}
@@ -264,8 +264,9 @@ public class NewJobController extends BorderPane {
 
 	private boolean checkDirectoryLocationIfNeeded() {
 		return checkDataLocationValue(inputDataLocation, inputDirectoryTextField
-			.getText(), "input") && checkDataLocationValue(outputDataLocation,
-				outputDirectoryTextField.getText(), "output");
+			.getText(), "input") && pathPointsToFile(inputDirectoryTextField
+				.getText()) && checkDataLocationValue(outputDataLocation,
+					outputDirectoryTextField.getText(), "output");
 	}
 
 	private boolean checkDataLocationValue(DataLocation dataLocation,
@@ -280,6 +281,19 @@ public class NewJobController extends BorderPane {
 				: "Directory for %2$s is not selected.";
 			SimpleDialog.showWarning("Invalid input provided", String.format(message,
 				directoryPath.toAbsolutePath(), type));
+			return false;
+		}
+
+		return true;
+	}
+
+	private boolean pathPointsToFile(String directory) {
+		// In case of a Macro workflow, check if selected directory points to a file
+		// as it should be:
+		boolean scriptFileHasBeenSelected = new File(directory).isFile();
+		if (!workflowSpimRadioButton.isSelected() && !scriptFileHasBeenSelected) {
+			SimpleDialog.showWarning("Invalid input provided",
+				"Please specify a script file and not a directory.");
 			return false;
 		}
 		return true;
