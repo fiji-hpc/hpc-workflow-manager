@@ -180,18 +180,18 @@ public class NewJobController extends BorderPane {
 		});
 	}
 
-	private void setTextFieldForDirectory(TextField folderString, Window parent) {
-		// Get the path from the text field an set it as initial path for the
-		// file
-		// chooser if it exists:
-		Path p = Paths.get(folderString.getText());
+	private void setTextFieldForDirectory(TextField folderString,
+		Window parentWindow)
+	{
+		// Get the path from the text field and set it as initial path for the
+		// file chooser if it exists:
 		DirectoryChooser dch = new DirectoryChooser();
-		if (p.toFile().exists()) {
-			dch.setInitialDirectory(p.toAbsolutePath().toFile());
-		}
+
+		// Set initial directory:
+		dch.setInitialDirectory(getPathWithoutFile(folderString.getText()));
 
 		// Set the selected directory as the new content of the text field:
-		File selectedDirectory = dch.showDialog(parent);
+		File selectedDirectory = dch.showDialog(parentWindow);
 		if (selectedDirectory != null) {
 			folderString.setText(selectedDirectory.toString());
 		}
@@ -199,13 +199,11 @@ public class NewJobController extends BorderPane {
 
 	private void setTextFieldForFile(TextField folderString, Window parent) {
 		// Get the path from the text field an set it as initial path for the
-		// file
-		// chooser if it exists:
-		Path p = Paths.get(folderString.getText());
+		// file chooser if it exists:
 		FileChooser fch = new FileChooser();
-		if (p.toFile().exists()) {
-			fch.setInitialDirectory(p.toAbsolutePath().toFile().getParentFile());
-		}
+
+		// Set initial directory:
+		fch.setInitialDirectory(getPathWithoutFile(folderString.getText()));
 
 		// Restrict file choice to Fiji Macro scripts only:
 		FileChooser.ExtensionFilter extensionFilter =
@@ -220,6 +218,21 @@ public class NewJobController extends BorderPane {
 		}
 	}
 
+	private File getPathWithoutFile(String pathString) {
+		File currentLocation = null;
+		File file = Paths.get(pathString).toAbsolutePath().toFile();
+		if (file.exists()) {
+			// Remove the file at the end from the current directory if there is one:
+			if (file.isFile()) {
+				currentLocation = file.getParentFile();
+			}
+			else {
+				currentLocation = file;
+			}
+		}
+		return currentLocation;
+	}
+
 	private Path getDirectory(DataLocation dataLocation, String selectedDirectory,
 		Path workingDirectory)
 	{
@@ -229,13 +242,13 @@ public class NewJobController extends BorderPane {
 			case WORK_DIRECTORY:
 				return workingDirectory;
 			case CUSTOM_DIRECTORY:
-				return getPathWithoutFile(selectedDirectory);
+				return getPathAndSetUserScriptName(selectedDirectory);
 			default:
 				throw new UnsupportedOperationException("Not support " + dataLocation);
 		}
 	}
 
-	private Path getPathWithoutFile(String selectedDirectory) {
+	private Path getPathAndSetUserScriptName(String selectedDirectory) {
 		Path path = Paths.get(selectedDirectory).toAbsolutePath();
 		File file = path.toFile();
 		if (file.isDirectory()) {
@@ -337,10 +350,6 @@ public class NewJobController extends BorderPane {
 				ownInputRadioButton.setSelected(true);
 			}
 		}
-
-		// Always reset the input directory to prevent mixing choosing a directory
-		// with a script file:
-		inputDirectoryTextField.setText("");
 	}
 
 	public String getUserScriptName() {
