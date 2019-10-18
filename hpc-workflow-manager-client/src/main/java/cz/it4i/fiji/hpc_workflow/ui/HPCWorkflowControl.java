@@ -228,8 +228,8 @@ public class HPCWorkflowControl extends BorderPane {
 			String userScriptFilePath = job.getInputDirectory().toString() +
 				File.separator + "user.ijm";
 
-			String resourceFilePath = getClass().getClassLoader().getResource(
-				"MacroWrapper.ijm").getPath();
+			String resourceFilePath = getClass().getResource("/MacroWrapper.ijm")
+					.getPath();
 
 			try (PrintWriter pw = new PrintWriter(job.getInputDirectory().toString() +
 				File.separator + Constants.DEFAULT_MACRO_FILE))
