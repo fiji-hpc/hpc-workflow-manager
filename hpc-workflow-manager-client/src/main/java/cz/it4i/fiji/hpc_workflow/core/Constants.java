@@ -67,7 +67,7 @@ public class Constants {
 		"resources_used.cpupercent";
 	public static final String STATISTICS_RESOURCES_START_TIME = "stime";
 	public static final String BENCHMARK_RESULT_FILE = "benchmark_result.csv";
-	public static final String DEFAULT_MACRO_FILE = "mpitest.txt";
+	public static final String DEFAULT_MACRO_FILE = "parallelMacroWrappedScript.ijm";
 	public static final String STATISTICS_SUMMARY_FILENAME = "summary.csv";
 	public static final String SUMMARY_FILE_HEADER =
 		"Task;AvgMemoryUsage;AvgWallTime;MaxWallTime;TotalTime;JobCount";

@@ -248,7 +248,8 @@ public class HPCWorkflowControl extends BorderPane {
 			}
 
 			log.info(
-				"Merged user's script and fiji macro MPI wrapper into mpitest.txt");
+				"Merged user's script and fiji macro MPI wrapper into new file: " +
+					Constants.DEFAULT_MACRO_FILE);
 		}
 		return isSuccessfull;
 	}
