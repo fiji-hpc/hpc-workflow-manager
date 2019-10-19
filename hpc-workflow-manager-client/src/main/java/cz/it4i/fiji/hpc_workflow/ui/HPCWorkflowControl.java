@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -228,15 +229,15 @@ public class HPCWorkflowControl extends BorderPane {
 			String userScriptFilePath = job.getInputDirectory().toString() +
 				File.separator + "user.ijm";
 
-			String resourceFilePath = getClass().getResource("/MacroWrapper.ijm")
-					.getPath();
-
-			try (PrintWriter pw = new PrintWriter(job.getInputDirectory().toString() +
-				File.separator + Constants.DEFAULT_MACRO_FILE))
+			try (BufferedReader resourceReader = new BufferedReader(
+				new InputStreamReader(HPCWorkflowControl.class.getClassLoader()
+					.getResourceAsStream("MacroWrapper.ijm")));
+					PrintWriter pw = new PrintWriter(job.getInputDirectory().toString() +
+						File.separator + Constants.DEFAULT_MACRO_FILE))
 			{
 
 				// Write the MPI wrapper script's contents into the new script:
-				isSuccessfull = copyLineByLine(pw, resourceFilePath);
+				isSuccessfull = copyLineByLine(pw, resourceReader);
 
 				// Write user's script contents to the new script:
 				isSuccessfull = isSuccessfull && copyLineByLine(pw, userScriptFilePath);
@@ -246,6 +247,9 @@ public class HPCWorkflowControl extends BorderPane {
 				log.error(exc.getMessage());
 				isSuccessfull = false;
 			}
+			catch (IOException exc) {
+				log.error(exc.getMessage());
+			}
 
 			log.info(
 				"Merged user's script and fiji macro MPI wrapper into new file: " +
@@ -254,22 +258,34 @@ public class HPCWorkflowControl extends BorderPane {
 		return isSuccessfull;
 	}
 
-	private boolean copyLineByLine(PrintWriter pw, String filePath) {
-		try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
-
-			String line = br.readLine();
+	private boolean copyLineByLine(PrintWriter pw,
+		BufferedReader resourceReader)
+	{
+		try {
+			String line = resourceReader.readLine();
 
 			// Copy line by line:
 			while (line != null) {
 				pw.println(line);
-				line = br.readLine();
+				line = resourceReader.readLine();
 			}
+
 		}
 		catch (IOException exc) {
 			log.error(exc.toString());
 			return false;
 		}
 		return true;
+	}
+
+	private boolean copyLineByLine(PrintWriter pw, String filePath) {
+		try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
+			return copyLineByLine(pw, br);
+		}
+		catch (IOException exc) {
+			log.error(exc.toString());
+			return false;
+		}
 	}
 
 	private void deleteJob(BenchmarkJob bj) {
