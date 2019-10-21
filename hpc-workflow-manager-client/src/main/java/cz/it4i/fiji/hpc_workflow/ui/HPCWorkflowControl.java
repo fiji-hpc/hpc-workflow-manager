@@ -229,6 +229,19 @@ public class HPCWorkflowControl extends BorderPane {
 			String userScriptFilePath = job.getInputDirectory().toString() +
 				File.separator + job.getUserScriptName();
 
+			// Remove old wrapped script file if one exists:
+			String parallelMacroWrappedString = job.getInputDirectory().toString() +
+				File.separator + Constants.DEFAULT_MACRO_FILE;
+			File parallelMacroWrappedFile = new File(parallelMacroWrappedString);
+			try {
+				Files.deleteIfExists(parallelMacroWrappedFile.toPath());
+			}
+			catch (IOException exc) {
+				SimpleDialog.showException("Exception",
+					"Could not delete the old wrapped Macro user script.", exc);
+			}
+
+			// Create the new wrapped script file:
 			try (BufferedReader resourceReader = new BufferedReader(
 				new InputStreamReader(HPCWorkflowControl.class.getClassLoader()
 					.getResourceAsStream("MacroWrapper.ijm")));
