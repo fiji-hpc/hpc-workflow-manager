@@ -41,6 +41,8 @@ public class MacroTaskProgressViewController extends BorderPane {
 
 	@FXML
 	private Label statusLabel;
+	
+	private ProgressLogParser progressLogParser = new FileProgressLogParser();
 
 	private ObservableHPCWorkflowJob job;
 
@@ -135,29 +137,23 @@ public class MacroTaskProgressViewController extends BorderPane {
 		// Get number of nodes from first node's progress file:
 		int numberOfNodes = 0;
 
-		List<String> files = new ArrayList<>();
-
-		files.add("progress_0.plog");
-
-		List<String> progressLogs = job.getFileContents(files);
-		if (!progressLogs.isEmpty()) {
-			String log = progressLogs.get(0);
-			String[] lines = splitStringByDelimiter(log, "\n");
-			try {
-				numberOfNodes = Integer.parseInt(lines[0]);
-			}
-			catch (NumberFormatException exc) {
-				setStatusMessage("Progress log does not list node size, yet!");
-			}
+		List<String> fileNames = new ArrayList<>();
+		
+		fileNames.add("progress_0.plog");
+		List<String> progressLogs = job.getFileContents(fileNames);
+		
+		numberOfNodes = progressLogParser.getNumberOfNodes(fileNames, progressLogs);
+		if(numberOfNodes == 0) {
+			setStatusMessage("Progress log does not list node size, yet!");
 		}
 
 		// File names of the progress files for each node:
 		for (int i = 1; i < numberOfNodes; i++) {
 			String filename = "progress_".concat(String.valueOf(i)).concat(".plog");
 			setStatusMessage("Adding file: " + filename);
-			files.add(filename);
+			fileNames.add(filename);
 		}
-		return files;
+		return fileNames;
 	}
 
 	private void createColumnsForEachNode(int numberOfNodes) {
