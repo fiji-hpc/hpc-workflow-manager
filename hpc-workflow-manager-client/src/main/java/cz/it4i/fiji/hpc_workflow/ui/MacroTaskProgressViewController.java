@@ -52,12 +52,6 @@ public class MacroTaskProgressViewController extends BorderPane {
 	private ScheduledExecutorService exec = Executors
 		.newSingleThreadScheduledExecutor();
 
-	// Maps task id of a specific node to description:
-	private List<Map<Integer, String>> nodeTaskToDescription = new ArrayList<>();
-
-	// Maps description to taskId:
-	private Map<String, Integer> descriptionToTaskId = new HashMap<>();
-
 	// Maps description to map of node index to observable property:
 	private Map<String, Map<Integer, SimpleLongProperty>> descriptionToProperty =
 		new HashMap<>();
@@ -142,7 +136,7 @@ public class MacroTaskProgressViewController extends BorderPane {
 		fileNames.add("progress_0.plog");
 		List<String> progressLogs = job.getFileContents(fileNames);
 		
-		numberOfNodes = progressLogParser.getNumberOfNodes(fileNames, progressLogs);
+		numberOfNodes = progressLogParser.getNumberOfNodes(progressLogs);
 		if(numberOfNodes == 0) {
 			setStatusMessage("Progress log does not list node size, yet!");
 		}
@@ -195,6 +189,11 @@ public class MacroTaskProgressViewController extends BorderPane {
 		}
 		return this.descriptionToProperty.get(description).get(nodeId);
 	}
+	
+
+	private void setStatusMessage(String message) {
+		JavaFXRoutines.runOnFxThread(() -> this.statusLabel.setText(message));
+	}
 
 	private void getAndParseFileUpdateTasks(List<String> files) {
 		setStatusMessage("Downloading the macro progress files...");
@@ -204,6 +203,14 @@ public class MacroTaskProgressViewController extends BorderPane {
 		setStatusMessage("Done parsing the macro progress files.");
 	}
 
+	// The following methods must be moved very carefully to the new FileProgressLogParser class:
+	
+	// Maps task id of a specific node to description:
+	private List<Map<Integer, String>> nodeTaskToDescription = new ArrayList<>();
+
+	// Maps description to taskId:
+	private Map<String, Integer> descriptionToTaskId = new HashMap<>();
+	
 	private void parseProgressLogs(List<String> progressLogs) {
 		for (int i = nodeTaskToDescription.size(); i < progressLogs.size(); i++) {
 			nodeTaskToDescription.add(new HashMap<>());
@@ -281,7 +288,4 @@ public class MacroTaskProgressViewController extends BorderPane {
 		return stringToSplit.split(delimiter);
 	}
 
-	private void setStatusMessage(String message) {
-		JavaFXRoutines.runOnFxThread(() -> this.statusLabel.setText(message));
-	}
 }

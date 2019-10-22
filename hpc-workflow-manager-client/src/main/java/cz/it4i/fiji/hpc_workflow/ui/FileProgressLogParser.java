@@ -5,7 +5,7 @@ import java.util.List;
 public class FileProgressLogParser implements ProgressLogParser{
 
 	@Override
-	public int getNumberOfNodes(List<String> files, List<String> progressLogs) {
+	public int getNumberOfNodes(List<String> progressLogs) {
 		int numberOfNodes = 0;
 		if (!progressLogs.isEmpty()) {
 			String log = progressLogs.get(0);

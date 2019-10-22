@@ -5,5 +5,5 @@ import java.util.List;
 
 public interface ProgressLogParser {
 
-	public int getNumberOfNodes(List<String> fileNames, List<String> progressLogs);
+	public int getNumberOfNodes(List<String> progressLogs);
 }
