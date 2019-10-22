@@ -3,56 +3,54 @@
 // Do NOT remove this section of code!
 
 function parInit() {
-	ret = call("cz.it4i.fiji.ij1_mpi_wrapper.MPIWrapper.initialise");
-	parReportProgress(0, 0);
+	ret = call("cz.it4i.fiji.parallel_macro.ParallelMacro.initialise");
 }
 
 function parFinalize() {
-	parReportProgress(0, 100);
-	ret = call("cz.it4i.fiji.ij1_mpi_wrapper.MPIWrapper.finalise");
+	ret = call("cz.it4i.fiji.parallel_macro.ParallelMacro.finalise");
 }
 
 function parGetRank() {
-	rank = call("cz.it4i.fiji.ij1_mpi_wrapper.MPIWrapper.getRank");
+	rank = call("cz.it4i.fiji.parallel_macro.ParallelMacro.getRank");
 	return rank;
 }
 
 function parGetSize() {
-	size = call("cz.it4i.fiji.ij1_mpi_wrapper.MPIWrapper.getSize");
+	size = call("cz.it4i.fiji.parallel_macro.ParallelMacro.getSize");
 	return size;
 }
 
 function parBarrier() {
-	ret = call("cz.it4i.fiji.ij1_mpi_wrapper.MPIWrapper.barrier");
+	ret = call("cz.it4i.fiji.parallel_macro.ParallelMacro.barrier");
 }
 
 function parReportProgress(task, progress) {
-	ret = call("cz.it4i.fiji.ij1_mpi_wrapper.MPIWrapper.reportProgress", task, progress);
+	ret = call("cz.it4i.fiji.parallel_macro.ParallelMacro.reportProgress", task, progress);
 }
 
 function parReportText(text) {
-	ret = call("cz.it4i.fiji.ij1_mpi_wrapper.MPIWrapper.reportText",text);
+	ret = call("cz.it4i.fiji.parallel_macro.ParallelMacro.reportText",text);
 }
 
 function parAddTask(description){
-	id = call("cz.it4i.fiji.ij1_mpi_wrapper.MPIWrapper.addTask", description);
+	id = call("cz.it4i.fiji.parallel_macro.ParallelMacro.addTask", description);
 	return id;
 }
 
 function parReportTasks(){
-	ret = call("cz.it4i.fiji.ij1_mpi_wrapper.MPIWrapper.reportTasks");
+	ret = call("cz.it4i.fiji.parallel_macro.ParallelMacro.reportTasks");
 }
 
 function parScatterEqually(sendBuffer, totalSendBufferLength, root) {
 	sendString = convertArrayToCommaSeparatedString(sendBuffer);
-	receivedString = call("cz.it4i.fiji.ij1_mpi_wrapper.MPIWrapper.scatterEqually", sendString, totalSendBufferLength, root);
+	receivedString = call("cz.it4i.fiji.parallel_macro.ParallelMacro.scatterEqually", sendString, totalSendBufferLength, root);
 	receivedBuffer = convertCommaSeparatedStringToArray(receivedString);
 	return receivedBuffer;
 }
 
 function parScatter(sendBuffer, sendCount, receiveCount, root) {
 	sendString = convertArrayToCommaSeparatedString(sendBuffer);
-	receivedString = call("cz.it4i.fiji.ij1_mpi_wrapper.MPIWrapper.scatter", sendString, sendCount, receiveCount, root);
+	receivedString = call("cz.it4i.fiji.parallel_macro.ParallelMacro.scatter", sendString, sendCount, receiveCount, root);
 	receivedBuffer = convertCommaSeparatedStringToArray(receivedString);
 	return receivedBuffer;
 }
@@ -69,6 +67,10 @@ function parGatherEqually(sendBuffer, totalReceiveBufferLength, receiver){
 	receivedString = call("cz.it4i.fiji.parallel_macro.ParallelMacro.gatherEqually", sendString, totalReceiveBufferLength, receiver);
 	receivedBuffer = convertCommaSeparatedStringToArray(receivedString);
 	return receivedBuffer;
+}
+
+function parSelectProgressLogger(type){
+	ret = call("cz.it4i.fiji.parallel_macro.ParallelMacro.selectProgressLogger", type);
 }
 
 function convertArrayToCommaSeparatedString(array){

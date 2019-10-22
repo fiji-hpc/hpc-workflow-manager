@@ -15,8 +15,10 @@ import org.python.jline.internal.Log;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.hpc_workflow.core.MacroTask;
 import cz.it4i.fiji.hpc_workflow.core.ObservableHPCWorkflowJob;
+import cz.it4i.fiji.hpc_workflow.parsers.FileProgressLogParser;
+import cz.it4i.fiji.hpc_workflow.parsers.ProgressLogParser;
+import cz.it4i.fiji.hpc_workflow.parsers.XmlProgressLogParser;
 import cz.it4i.swing_javafx_ui.JavaFXRoutines;
-import cz.it4i.swing_javafx_ui.SimpleDialog;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleLongProperty;
 import javafx.collections.FXCollections;
@@ -42,6 +44,8 @@ public class MacroTaskProgressViewController extends BorderPane {
 	@FXML
 	private Label statusLabel;
 
+	private ProgressLogParser progressLogParser = null;
+
 	private ObservableHPCWorkflowJob job;
 
 	private ObservableList<MacroTask> tableData = FXCollections
@@ -49,12 +53,6 @@ public class MacroTaskProgressViewController extends BorderPane {
 
 	private ScheduledExecutorService exec = Executors
 		.newSingleThreadScheduledExecutor();
-
-	// Maps task id of a specific node to description:
-	private List<Map<Integer, String>> nodeTaskToDescription = new ArrayList<>();
-
-	// Maps description to taskId:
-	private Map<String, Integer> descriptionToTaskId = new HashMap<>();
 
 	// Maps description to map of node index to observable property:
 	private Map<String, Map<Integer, SimpleLongProperty>> descriptionToProperty =
@@ -135,29 +133,37 @@ public class MacroTaskProgressViewController extends BorderPane {
 		// Get number of nodes from first node's progress file:
 		int numberOfNodes = 0;
 
-		List<String> files = new ArrayList<>();
+		List<String> fileNames = new ArrayList<>();
 
-		files.add("progress_0.plog");
+		fileNames.add("progress_0.plog");
+		List<String> progressLogs = job.getFileContents(fileNames);
+		
+		// Check if the file is created or not yet:
+		if(progressLogs == null || progressLogs.get(0).isEmpty()) {
+			return fileNames;
+		}
+		
+		// Check weather the progress log is in CSV or XML format:
+		if(progressLogParser == null) {
+			if(XmlProgressLogParser.fileIsValidXML(progressLogs.get(0))) {
+				progressLogParser = new XmlProgressLogParser();
+			} else {
+				progressLogParser = new FileProgressLogParser();
+			}
+		}
 
-		List<String> progressLogs = job.getFileContents(files);
-		if (!progressLogs.isEmpty()) {
-			String log = progressLogs.get(0);
-			String[] lines = splitStringByDelimiter(log, "\n");
-			try {
-				numberOfNodes = Integer.parseInt(lines[0]);
-			}
-			catch (NumberFormatException exc) {
-				setStatusMessage("Progress log does not list node size, yet!");
-			}
+		numberOfNodes = progressLogParser.getNumberOfNodes(progressLogs);
+		if (numberOfNodes == 0) {
+			setStatusMessage("Progress log does not list node size, yet!");
 		}
 
 		// File names of the progress files for each node:
 		for (int i = 1; i < numberOfNodes; i++) {
 			String filename = "progress_".concat(String.valueOf(i)).concat(".plog");
 			setStatusMessage("Adding file: " + filename);
-			files.add(filename);
+			fileNames.add(filename);
 		}
-		return files;
+		return fileNames;
 	}
 
 	private void createColumnsForEachNode(int numberOfNodes) {
@@ -200,92 +206,21 @@ public class MacroTaskProgressViewController extends BorderPane {
 		return this.descriptionToProperty.get(description).get(nodeId);
 	}
 
+	private void setStatusMessage(String message) {
+		JavaFXRoutines.runOnFxThread(() -> this.statusLabel.setText(message));
+	}
+
 	private void getAndParseFileUpdateTasks(List<String> files) {
 		setStatusMessage("Downloading the macro progress files...");
 		List<String> progressLogs = job.getFileContents(files);
 		setStatusMessage("Parsing the macro progress files...");
-		parseProgressLogs(progressLogs);
+		if (!progressLogParser.parseProgressLogs(progressLogs, tableData,
+			descriptionToProperty))
+		{
+			// A catastrophic exception must have occurred, the executor must be
+			// stopped:
+			exec.shutdown();
+		}
 		setStatusMessage("Done parsing the macro progress files.");
-	}
-
-	private void parseProgressLogs(List<String> progressLogs) {
-		for (int i = nodeTaskToDescription.size(); i < progressLogs.size(); i++) {
-			nodeTaskToDescription.add(new HashMap<>());
-		}
-
-		int nodeId = 0;
-		int taskIdCounter = 0;
-		for (String log : progressLogs) {
-			String[] logLines = splitStringByDelimiter(log, "\n");
-
-			for (String line : logLines) {
-				String[] elements = splitStringByDelimiter(line, ",");
-				taskIdCounter = setTaskProgressOrDescriptionFromElements(nodeId,
-					elements, taskIdCounter);
-
-				// Task counter -1 means parsing the progress log files failed.
-				if (taskIdCounter == -1) {
-					break;
-				}
-			}
-			nodeId++;
-		}
-	}
-
-	private int setTaskProgressOrDescriptionFromElements(int nodeId,
-		String[] elements, int taskIdCounter)
-	{
-		if (elements.length == 2) {
-			int taskIdForNode = Integer.parseInt(elements[0]);
-			try {
-				Long progress = Long.parseLong(elements[1]);
-				String description = nodeTaskToDescription.get(nodeId).get(
-					taskIdForNode);
-				int taskId = descriptionToTaskId.get(description);
-				tableData.get(taskId).setProgress(nodeId, progress);
-				setDescriptionToPropertyIfPossible(description, nodeId, tableData.get(
-					taskId).getProgress(nodeId));
-			}
-			catch (NumberFormatException exc) {
-				String description = elements[1];
-				if (!descriptionToTaskId.containsKey(description)) {
-					descriptionToTaskId.put(description, taskIdCounter++);
-					tableData.add(new MacroTask(description));
-				}
-				nodeTaskToDescription.get(nodeId).put(taskIdForNode, description);
-			}
-			catch (Exception exc) {
-				// A catastrophic exception must have occurred, the executor must be
-				// stopped:
-				JavaFXRoutines.runOnFxThread(() -> SimpleDialog.showException(
-					"Exception occurred while parsing progress file!",
-					"Progress logs for this Macro Workflow type job appear" +
-						" to be corrupted and parsing them caused an exception.", exc));
-				exec.shutdown();
-				return -1;
-			}
-		}
-		return taskIdCounter;
-	}
-
-	private void setDescriptionToPropertyIfPossible(String description,
-		int nodeId, long progress)
-	{
-		try {
-			this.descriptionToProperty.get(description).get(nodeId).set(progress);
-		}
-		catch (Exception exc) {
-			// Do nothing.
-		}
-	}
-
-	private String[] splitStringByDelimiter(String stringToSplit,
-		String delimiter)
-	{
-		return stringToSplit.split(delimiter);
-	}
-
-	private void setStatusMessage(String message) {
-		JavaFXRoutines.runOnFxThread(() -> this.statusLabel.setText(message));
 	}
 }
