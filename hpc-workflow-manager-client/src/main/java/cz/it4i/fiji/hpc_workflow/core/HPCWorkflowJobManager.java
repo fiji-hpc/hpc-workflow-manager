@@ -658,6 +658,7 @@ public class HPCWorkflowJobManager implements WorkflowParadigm {
 		jobManager.setUploadFilter(this::canUpload);
 	}
 
+	@Override
 	public WorkflowJob createJob(UnaryOperator<Path> inputDirectoryProvider,
 		UnaryOperator<Path> outputDirectoryProvider, int numberOfNodes,
 		int haasTemplateId) throws IOException
@@ -674,11 +675,13 @@ public class HPCWorkflowJobManager implements WorkflowParadigm {
 		return result;
 	}
 
+	@Override
 	public Collection<WorkflowJob> getJobs() {
 		return jobManager.getJobs().stream().map(this::convertJob).collect(
 			Collectors.toList());
 	}
 
+	@Override
 	public void checkConnection() {
 		jobManager.checkConnection();
 	}

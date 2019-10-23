@@ -49,6 +49,7 @@ import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.ProgressNotifier;
 import cz.it4i.fiji.haas_java_client.UploadingFile;
 import cz.it4i.fiji.hpc_workflow.WorkflowJob;
+import cz.it4i.fiji.hpc_workflow.WorkflowParadigm;
 import cz.it4i.fiji.hpc_workflow.core.Constants;
 import cz.it4i.fiji.hpc_workflow.core.FXFrameExecutorService;
 import cz.it4i.fiji.hpc_workflow.core.HPCWorkflowJobManager;
@@ -78,7 +79,7 @@ public class HPCWorkflowControl extends BorderPane {
 	@FXML
 	private TableView<ObservableHPCWorkflowJob> jobs;
 
-	private final HPCWorkflowJobManager manager;
+	private final WorkflowParadigm paradigm;
 
 	private final ExecutorService executorServiceJobState = Executors
 		.newWorkStealingPool();
@@ -102,8 +103,8 @@ public class HPCWorkflowControl extends BorderPane {
 
 	private Stage stage;
 
-	public HPCWorkflowControl(HPCWorkflowJobManager manager) {
-		this.manager = manager;
+	public HPCWorkflowControl(WorkflowParadigm paradigm) {
+		this.paradigm = paradigm;
 		JavaFXRoutines.initRootAndController("HPCWorkflow.fxml", this);
 		jobs.setPlaceholder(new Label(
 			"No content in table. Right click to create new one."));
@@ -139,7 +140,7 @@ public class HPCWorkflowControl extends BorderPane {
 			executorServiceJobState.shutdown();
 			registry.close();
 			timer.cancel();
-			manager.close();
+			paradigm.close();
 			closed = true;
 		}
 	}
@@ -343,7 +344,7 @@ public class HPCWorkflowControl extends BorderPane {
 		UnaryOperator<Path> outputProvider, int numberOfNodes, int haasTemplateId)
 		throws IOException
 	{
-		WorkflowJob bj = manager.createJob(inputProvider, outputProvider,
+		WorkflowJob bj = paradigm.createJob(inputProvider, outputProvider,
 			numberOfNodes, haasTemplateId);
 		ObservableHPCWorkflowJob obj = registry.addIfAbsent(bj);
 		addJobToItems(obj);
@@ -400,7 +401,7 @@ public class HPCWorkflowControl extends BorderPane {
 		final CountDownLatch latch = new CountDownLatch(1);
 		executorServiceWS.execute(() -> {
 			try {
-				manager.checkConnection();
+				paradigm.checkConnection();
 				result[0] = true;
 			}
 			finally {
@@ -422,7 +423,7 @@ public class HPCWorkflowControl extends BorderPane {
 			"Updating jobs", this.stage, showProgress);
 
 		executorServiceWS.execute(() -> {
-			List<WorkflowJob> inspectedJobs = new LinkedList<>(manager.getJobs());
+			List<WorkflowJob> inspectedJobs = new LinkedList<>(paradigm.getJobs());
 			inspectedJobs.sort((j1, j2) -> (int) (j1.getId() - j2.getId()));
 			for (WorkflowJob bj : inspectedJobs) {
 				registry.addIfAbsent(bj);
