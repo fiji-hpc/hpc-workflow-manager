@@ -16,7 +16,6 @@ import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.hpc_workflow.core.MacroTask;
 import cz.it4i.fiji.hpc_workflow.core.ObservableHPCWorkflowJob;
 import cz.it4i.swing_javafx_ui.JavaFXRoutines;
-import cz.it4i.swing_javafx_ui.SimpleDialog;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleLongProperty;
 import javafx.collections.FXCollections;
@@ -207,15 +206,4 @@ public class MacroTaskProgressViewController extends BorderPane {
 		}
 		setStatusMessage("Done parsing the macro progress files.");
 	}
-
-//	private void setDescriptionToPropertyIfPossible(String description,
-//		int nodeId, long progress)
-//	{
-//		try {
-//			this.descriptionToProperty.get(description).get(nodeId).set(progress);
-//		}
-//		catch (Exception exc) {
-//			// Do nothing.
-//		}
-//	}
 }

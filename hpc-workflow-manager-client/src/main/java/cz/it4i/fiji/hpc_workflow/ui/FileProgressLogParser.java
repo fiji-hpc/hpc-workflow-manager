@@ -36,8 +36,6 @@ public class FileProgressLogParser implements ProgressLogParser {
 		return stringToSplit.split(delimiter);
 	}
 
-	// New code:
-
 	// Maps task id of a specific node to description:
 	private List<Map<Integer, String>> nodeTaskToDescription = new ArrayList<>();
 
