@@ -41,7 +41,7 @@ public class MacroTaskProgressViewController extends BorderPane {
 	@FXML
 	private Label statusLabel;
 
-	private ProgressLogParser progressLogParser = new FileProgressLogParser();
+	private ProgressLogParser progressLogParser = new XmlProgressLogParser();
 
 	private ObservableHPCWorkflowJob job;
 

@@ -7,10 +7,8 @@ import java.util.Map;
 
 import java.io.StringReader;
 
-import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
@@ -40,15 +38,6 @@ public class XmlProgressLogParser implements ProgressLogParser {
 	private static Document convertStringToXMLDocument(String xmlString) {
 		// Parser that produces DOM object trees from XML content
 		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-
-		try {
-			factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
-			factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
-			factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, "");
-		}
-		catch (ParserConfigurationException exc) {
-			return null;
-		}
 
 		DocumentBuilder builder = null;
 		try {
@@ -88,22 +77,23 @@ public class XmlProgressLogParser implements ProgressLogParser {
 		ObservableList<MacroTask> tableData,
 		Map<String, Map<Integer, SimpleLongProperty>> descriptionToProperty)
 	{
-		for (String log : progressLogs) {
+		for (int nodeId = 0; nodeId < progressLogs.size(); nodeId++) {
 			// Find all task elements in the XML document and get their id and
 			// progress:
 			NodeList taskNodeList = null;
 			try {
-				taskNodeList = convertStringToXMLDocument(log).getElementsByTagName(
-					"task");
+				taskNodeList = convertStringToXMLDocument(progressLogs.get(nodeId))
+					.getElementsByTagName("task");
 			}
 			catch (NullPointerException exc) {
 				return true;
 			}
 
-			for (int nodeId = 0; nodeId < taskNodeList.getLength(); nodeId++) {
-				Node currentNode = taskNodeList.item(nodeId);
+			for (int counter = 0; counter < taskNodeList.getLength(); counter++) {
+				Node currentNode = taskNodeList.item(counter);
 
-				String description = currentNode.getTextContent();
+				String description = currentNode.getChildNodes().item(0)
+					.getTextContent();
 
 				// Add the new task if a task with the same description is not present
 				// in the list:
@@ -112,13 +102,15 @@ public class XmlProgressLogParser implements ProgressLogParser {
 					tableData.add(new MacroTask(description));
 				}
 
-				// Get the progress:
-				long progress = Long.parseLong(currentNode.getChildNodes().item(1)
-					.getNodeValue());
-
 				int taskId = descriptionToTaskId.get(description);
+				
+				// Set the new progress if it exists:
+				Node progressNode = currentNode.getChildNodes().item(1);
+				if(progressNode != null) {
+					long  progress = Long.parseLong(progressNode.getTextContent());
+					tableData.get(taskId).setProgress(nodeId, progress);
+				}
 
-				tableData.get(taskId).setProgress(nodeId, progress);
 				setDescriptionToPropertyIfPossible(descriptionToProperty, description,
 					nodeId, tableData.get(taskId).getProgress(nodeId));
 			}
