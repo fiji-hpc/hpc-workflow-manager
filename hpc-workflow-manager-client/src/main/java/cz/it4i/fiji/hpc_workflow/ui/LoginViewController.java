@@ -51,8 +51,25 @@ public class LoginViewController extends AnchorPane {
 
 	private FileLock fl;
 
+	private HPCWorkflowParametersImpl parameters;
+
 	public LoginViewController() {
 		JavaFXRoutines.initRootAndController("LoginView.fxml", this);
+	}
+
+	public void setInitialFormValues(HPCWorkflowParametersImpl oldLoginSettings) {
+		if (oldLoginSettings != null) {
+			this.userNameTextField.setText(oldLoginSettings.username());
+			this.passwordPasswordField.setText(oldLoginSettings.password());
+			this.emailTextFiled.setText(oldLoginSettings.email());
+			this.workingDirectoryTextField.setText(oldLoginSettings
+				.workingDirectoryString());
+		}
+	
+	}
+
+	public HPCWorkflowParametersImpl getParameters() {
+		return parameters;
 	}
 
 	@FXML
@@ -66,33 +83,18 @@ public class LoginViewController extends AnchorPane {
 		}
 	}
 
-	private HPCWorkflowParameters parameters;
-
 	@FXML
 	private void okAction() {
-		parameters = null;
 
 		if (parametersAreFilledInAndCorrect()) {
 			// Save parameters:
-			this.parameters = getParameters();
+			this.parameters = constructParameters();
 
 			// Close the modal window:
 			Stage stage = (Stage) okButton.getScene().getWindow();
 			stage.close();
 		}
-	}
 
-	public void startJobDetailIfPossible() {
-		if (this.parameters != null) {
-			final UncaughtExceptionHandlerDecorator uehd =
-				UncaughtExceptionHandlerDecorator.setDefaultHandler();
-			uehd.registerHandler(new AuthenticationExceptionHandler());
-			uehd.registerHandler(new NotConnectedExceptionHandler());
-			uehd.registerHandler(new AuthFailExceptionHandler());
-			uehd.activate();
-
-			new HPCWorkflowWindow(parameters, fl, uehd);
-		}
 	}
 
 	private boolean parametersAreFilledInAndCorrect() {
@@ -136,7 +138,7 @@ public class LoginViewController extends AnchorPane {
 		return false;
 	}
 
-	public HPCWorkflowParametersImpl getParameters() {
+	private HPCWorkflowParametersImpl constructParameters() {
 		String userName = this.userNameTextField.getText();
 		String password = this.passwordPasswordField.getText();
 		String email = this.emailTextFiled.getText();
@@ -145,16 +147,5 @@ public class LoginViewController extends AnchorPane {
 
 		return new HPCWorkflowParametersImpl(userName, password, Constants.PHONE,
 			email, workingDirPath);
-	}
-
-	public void setInitialFormValues(HPCWorkflowParametersImpl oldLoginSettings) {
-		if (oldLoginSettings != null) {
-			this.userNameTextField.setText(oldLoginSettings.username());
-			this.passwordPasswordField.setText(oldLoginSettings.password());
-			this.emailTextFiled.setText(oldLoginSettings.email());
-			this.workingDirectoryTextField.setText(oldLoginSettings
-				.workingDirectoryString());
-		}
-
 	}
 }

@@ -14,11 +14,12 @@ public class LoginViewWindow {
 
 	private LoginViewController controller;
 
-	public void openWindow() {
+	public void openWindow(HPCWorkflowParametersImpl params) {
 		// Get the previously entered login settings if any:
 		LastFormLoader<HPCWorkflowParametersImpl> storeLastForm =
 			new LastFormLoader<>(prefService, "loginSettingsForm", this.getClass());
-		HPCWorkflowParametersImpl oldLoginSettings = storeLastForm.loadLastForm();
+		HPCWorkflowParametersImpl oldLoginSettings = params != null ? params
+			: storeLastForm.loadLastForm();
 
 		// Open the login window:
 		this.controller = new LoginViewController();
@@ -43,9 +44,7 @@ public class LoginViewWindow {
 		return this.controller.getParameters();
 	}
 
-	public void startJobDetailIfPossible() {
-		this.controller.startJobDetailIfPossible();
-	}
+
 
 	public void initialize(PrefService newPrefService) {
 		if (this.prefService == null) {
