@@ -1,6 +1,7 @@
 
 package cz.it4i.fiji.hpc_workflow.ui;
 
+import org.scijava.plugin.Parameter;
 import org.scijava.prefs.PrefService;
 
 import cz.it4i.fiji.hpc_workflow.commands.HPCWorkflowParametersImpl;
@@ -10,6 +11,7 @@ import javafx.stage.Stage;
 
 public class LoginViewWindow {
 
+	@Parameter
 	private PrefService prefService;
 
 	private LoginViewController controller;
@@ -44,11 +46,4 @@ public class LoginViewWindow {
 		return this.controller.getParameters();
 	}
 
-
-
-	public void initialize(PrefService newPrefService) {
-		if (this.prefService == null) {
-			this.prefService = newPrefService;
-		}
-	}
 }

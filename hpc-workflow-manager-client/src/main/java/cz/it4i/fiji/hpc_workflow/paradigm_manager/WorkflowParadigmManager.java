@@ -7,21 +7,26 @@
  ******************************************************************************/
 package cz.it4i.fiji.hpc_workflow.paradigm_manager;
 
+import org.scijava.Context;
 import org.scijava.parallel.ParadigmManager;
 import org.scijava.parallel.ParallelizationParadigm;
 import org.scijava.parallel.ParallelizationParadigmProfile;
+import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
-import cz.it4i.fiji.hpc_workflow.WorkflowParadigm;
 import cz.it4i.fiji.hpc_workflow.commands.HPCWorkflowParametersImpl;
+import cz.it4i.fiji.hpc_workflow.core.HPCWorkflowJobManager;
 import cz.it4i.fiji.hpc_workflow.ui.LoginViewWindow;
 
 @Plugin(type = ParadigmManager.class)
 public class WorkflowParadigmManager implements ParadigmManager {
 
+	@Parameter
+	private Context context;
+
 	@Override
 	public Class<? extends ParallelizationParadigm> getSupportedParadigmType() {
-		return WorkflowParadigm.class;
+		return HPCWorkflowJobManager.class;
 	}
 
 	@Override
@@ -37,6 +42,7 @@ public class WorkflowParadigmManager implements ParadigmManager {
 	@Override
 	public boolean editProfile(ParallelizationParadigmProfile profile) {
 		LoginViewWindow loginViewWindow = new LoginViewWindow();
+		context.inject(loginViewWindow);
 		WorkflowParadigmProfile typedProfile = (WorkflowParadigmProfile) profile;
 		loginViewWindow.openWindow(typedProfile.getParameters());
 		HPCWorkflowParametersImpl newParameters = loginViewWindow.getParameters();

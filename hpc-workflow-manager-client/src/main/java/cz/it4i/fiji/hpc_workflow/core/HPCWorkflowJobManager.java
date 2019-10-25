@@ -17,7 +17,6 @@ import static cz.it4i.fiji.hpc_workflow.core.Constants.SPIM_OUTPUT_FILENAME_PATT
 import static cz.it4i.fiji.hpc_workflow.core.Constants.VERIFIED_STATE_OF_FINISHED_JOB;
 
 import java.io.BufferedReader;
-import java.io.Closeable;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -55,7 +54,9 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
+import org.scijava.parallel.ParallelizationParadigm;
 import org.scijava.parallel.Status;
+import org.scijava.plugin.Plugin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -83,6 +84,7 @@ import cz.it4i.fiji.hpc_workflow.WorkflowParadigm;
 import cz.it4i.fiji.hpc_workflow.ui.NewJobController;
 import cz.it4i.fiji.hpc_workflow.ui.NewJobController.WorkflowType;
 
+@Plugin(type = ParallelizationParadigm.class)
 public class HPCWorkflowJobManager implements WorkflowParadigm {
 
 	public interface DownloadingStatusProvider {
@@ -95,7 +97,7 @@ public class HPCWorkflowJobManager implements WorkflowParadigm {
 	private static Logger log = LoggerFactory.getLogger(
 		cz.it4i.fiji.hpc_workflow.core.HPCWorkflowJobManager.class);
 
-	private final JobManager jobManager;
+	private JobManager jobManager;
 
 	public final class BenchmarkJob implements WorkflowJob {
 
@@ -650,6 +652,10 @@ public class HPCWorkflowJobManager implements WorkflowParadigm {
 			};
 
 		}
+	}
+
+	public HPCWorkflowJobManager() {
+
 	}
 
 	public HPCWorkflowJobManager(HPCWorkflowParameters params) {
