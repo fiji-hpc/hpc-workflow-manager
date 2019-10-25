@@ -7,18 +7,13 @@ import org.scijava.Context;
 import org.scijava.Priority;
 import org.scijava.command.Command;
 import org.scijava.parallel.ParallelService;
-import org.scijava.parallel.Status;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import cz.it4i.fiji.commons.UncaughtExceptionHandlerDecorator;
 import cz.it4i.fiji.hpc_workflow.WorkflowParadigm;
-import cz.it4i.fiji.hpc_workflow.core.AuthFailExceptionHandler;
-import cz.it4i.fiji.hpc_workflow.core.AuthenticationExceptionHandler;
 import cz.it4i.fiji.hpc_workflow.core.Constants;
-import cz.it4i.fiji.hpc_workflow.core.NotConnectedExceptionHandler;
 import cz.it4i.fiji.hpc_workflow.ui.HPCWorkflowWindow;
 import cz.it4i.swing_javafx_ui.JavaFXRoutines;
 import groovy.util.logging.Slf4j;
@@ -42,18 +37,8 @@ public class ManageHPCWorkflow implements Command {
 		// Display window:
 		WorkflowParadigm paradigm = parallelService.getParadigmOfType(
 			WorkflowParadigm.class);
-		paradigm.init();
-		if (paradigm.getStatus() == Status.ACTIVE) {
-			JavaFXRoutines.runOnFxThread(() -> {
-				final UncaughtExceptionHandlerDecorator uehd =
-					UncaughtExceptionHandlerDecorator.setDefaultHandler();
-				uehd.registerHandler(new AuthenticationExceptionHandler());
-				uehd.registerHandler(new NotConnectedExceptionHandler());
-				uehd.registerHandler(new AuthFailExceptionHandler());
-				uehd.activate();
-				new HPCWorkflowWindow(paradigm, null, uehd);
-			});
-		}
+		HPCWorkflowWindow.openWindow(paradigm);
+
 	}
 
 	public static void main(final String... args) {

@@ -2,20 +2,14 @@
 package cz.it4i.fiji.hpc_workflow.ui;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import cz.it4i.fiji.commons.UncaughtExceptionHandlerDecorator;
-import cz.it4i.fiji.hpc_workflow.commands.FileLock;
-import cz.it4i.fiji.hpc_workflow.core.AuthFailExceptionHandler;
-import cz.it4i.fiji.hpc_workflow.core.AuthenticationExceptionHandler;
+import cz.it4i.fiji.hpc_workflow.commands.HPCWorkflowParametersImpl;
 import cz.it4i.fiji.hpc_workflow.core.Constants;
-import cz.it4i.fiji.hpc_workflow.core.HPCWorkflowParameters;
-import cz.it4i.fiji.hpc_workflow.core.NotConnectedExceptionHandler;
+import cz.it4i.fiji.hpc_workflow.paradigm_manager.WorkflowParadigmManager;
 import cz.it4i.swing_javafx_ui.JavaFXRoutines;
 import cz.it4i.swing_javafx_ui.SimpleDialog;
-import cz.it4i.fiji.hpc_workflow.commands.HPCWorkflowParametersImpl;
 import groovy.util.logging.Slf4j;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -44,12 +38,6 @@ public class LoginViewController extends AnchorPane {
 
 	@FXML
 	TextField workingDirectoryTextField;
-
-	private static final String LOCK_FILE_NAME = ".lock";
-
-	private static final String ERROR_HEADER = "Error";
-
-	private FileLock fl;
 
 	private HPCWorkflowParametersImpl parameters;
 
@@ -108,34 +96,9 @@ public class LoginViewController extends AnchorPane {
 			return false;
 		}
 
-		File workingDirectory = new File(this.workingDirectoryTextField.getText());
-		if (!workingDirectory.exists() || !workingDirectory.isDirectory()) {
-			SimpleDialog.showError(ERROR_HEADER,
-				"The working directory selected does not exist!");
-			return false;
-		}
+		return WorkflowParadigmManager.checkWorkingDirectory(Paths.get(
+			this.workingDirectoryTextField.getText()));
 
-		if (workingDirectoryIsUsedBySomeoneElse(workingDirectory)) {
-			SimpleDialog.showError(ERROR_HEADER,
-				"Working directory is already used by someone else.");
-			return false;
-		}
-		return true;
-	}
-
-	private boolean workingDirectoryIsUsedBySomeoneElse(File workingDirectory) {
-		try {
-			final Path workingDirPath = Paths.get(workingDirectory.getPath());
-			fl = new FileLock(workingDirPath.resolve(LOCK_FILE_NAME));
-			if (!fl.tryLock()) {
-				return true;
-			}
-		}
-		catch (final IOException e) {
-			SimpleDialog.showException(ERROR_HEADER,
-				"Problem encountered while attempting to read file.", e);
-		}
-		return false;
 	}
 
 	private HPCWorkflowParametersImpl constructParameters() {

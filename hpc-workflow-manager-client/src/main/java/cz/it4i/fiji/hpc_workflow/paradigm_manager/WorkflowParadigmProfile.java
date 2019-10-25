@@ -9,8 +9,8 @@ package cz.it4i.fiji.hpc_workflow.paradigm_manager;
 
 import org.scijava.parallel.ParallelizationParadigmProfile;
 
-import cz.it4i.fiji.hpc_workflow.WorkflowParadigm;
 import cz.it4i.fiji.hpc_workflow.commands.HPCWorkflowParametersImpl;
+import cz.it4i.fiji.hpc_workflow.core.HPCWorkflowJobManager;
 
 public class WorkflowParadigmProfile extends ParallelizationParadigmProfile {
 
@@ -20,7 +20,7 @@ public class WorkflowParadigmProfile extends ParallelizationParadigmProfile {
 
 	public WorkflowParadigmProfile(String profileName)
 	{
-		super(WorkflowParadigm.class, profileName);
+		super(HPCWorkflowJobManager.class, profileName);
 	}
 
 	HPCWorkflowParametersImpl getParameters() {

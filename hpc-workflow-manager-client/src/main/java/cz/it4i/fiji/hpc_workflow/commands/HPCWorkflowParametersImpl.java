@@ -3,6 +3,7 @@ package cz.it4i.fiji.hpc_workflow.commands;
 
 import java.io.Serializable;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import cz.it4i.fiji.hpc_workflow.core.HPCWorkflowParameters;
 
@@ -22,7 +23,7 @@ public class HPCWorkflowParametersImpl implements HPCWorkflowParameters,
 
 	private final String workingDirectoryString;
 
-	private final transient Path workingDirectory;
+	private transient Path workingDirectory;
 
 	public HPCWorkflowParametersImpl(String userName, String password,
 		String phone, String email, Path workingDirectory)
@@ -57,6 +58,9 @@ public class HPCWorkflowParametersImpl implements HPCWorkflowParameters,
 
 	@Override
 	public Path workingDirectory() {
+		if (workingDirectory == null && workingDirectoryString != null) {
+			workingDirectory = Paths.get(workingDirectoryString);
+		}
 		return workingDirectory;
 	}
 

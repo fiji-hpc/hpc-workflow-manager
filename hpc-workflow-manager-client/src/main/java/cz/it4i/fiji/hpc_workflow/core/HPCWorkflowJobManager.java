@@ -41,7 +41,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -64,6 +66,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import cz.it4i.fiji.commons.UncaughtExceptionHandlerDecorator;
 import cz.it4i.fiji.commons.WebRoutines;
 import cz.it4i.fiji.haas.Job;
 import cz.it4i.fiji.haas.JobManager;
@@ -81,6 +84,7 @@ import cz.it4i.fiji.hpc_workflow.Task;
 import cz.it4i.fiji.hpc_workflow.TaskComputation;
 import cz.it4i.fiji.hpc_workflow.WorkflowJob;
 import cz.it4i.fiji.hpc_workflow.WorkflowParadigm;
+import cz.it4i.fiji.hpc_workflow.commands.FileLock;
 import cz.it4i.fiji.hpc_workflow.ui.NewJobController;
 import cz.it4i.fiji.hpc_workflow.ui.NewJobController.WorkflowType;
 
@@ -98,6 +102,17 @@ public class HPCWorkflowJobManager implements WorkflowParadigm {
 		cz.it4i.fiji.hpc_workflow.core.HPCWorkflowJobManager.class);
 
 	private JobManager jobManager;
+
+	private HPCWorkflowParameters parameters;
+
+	private UncaughtExceptionHandlerDecorator uehd;
+
+	private FileLock fileLock;
+
+	private BooleanSupplier initializator;
+
+	private Runnable finalizer;
+
 
 	public final class BenchmarkJob implements WorkflowJob {
 
@@ -658,10 +673,12 @@ public class HPCWorkflowJobManager implements WorkflowParadigm {
 
 	}
 
-	public HPCWorkflowJobManager(HPCWorkflowParameters params) {
-		jobManager = new JobManager(params.workingDirectory(),
-			constructSettingsFromParams(params));
-		jobManager.setUploadFilter(this::canUpload);
+	public void prepareParadigm(HPCWorkflowParameters params,
+		BooleanSupplier aInitializator, Runnable aFinalizer)
+	{
+		this.parameters = params;
+		this.initializator = aInitializator;
+		this.finalizer = aFinalizer;
 	}
 
 	@Override
@@ -801,20 +818,30 @@ public class HPCWorkflowJobManager implements WorkflowParadigm {
 	}
 
 	@Override
-	public void init() {
-		// TODO Auto-generated method stub
-	
+	public final synchronized void init() {
+		if (initializator != null && !initializator.getAsBoolean()) {
+			return;
+		}
+
+
+		jobManager = new JobManager(parameters.workingDirectory(),
+			constructSettingsFromParams(parameters));
+		jobManager.setUploadFilter(this::canUpload);
+		checkConnection();
 	}
 
 	@Override
-	public Status getStatus() {
-		// TODO Auto-generated method stub
-		return null;
+	public synchronized Status getStatus() {
+		return jobManager == null ? Status.NON_ACTIVE : Status.ACTIVE;
 	}
 
 	@Override
-	public void close() {
+	public synchronized void close() {
 		jobManager.close();
+		jobManager = null;
+		if (finalizer != null) {
+			finalizer.run();
+		}
 	}
 
 	private boolean canUpload(Job job, Path p) {

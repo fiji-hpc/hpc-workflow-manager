@@ -13,7 +13,6 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -31,6 +30,7 @@ import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
 import org.scijava.Context;
+import org.scijava.parallel.Status;
 import org.scijava.ui.swing.script.TextEditor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,7 +38,6 @@ import org.slf4j.LoggerFactory;
 import bdv.BigDataViewer;
 import bdv.export.ProgressWriterConsole;
 import bdv.viewer.ViewerOptions;
-import cz.it4i.fiji.haas.UploadingFileFromResource;
 import cz.it4i.fiji.haas.ui.FutureValueUpdater;
 import cz.it4i.fiji.haas.ui.ShellRoutines;
 import cz.it4i.fiji.haas.ui.StringValueUpdater;
@@ -47,13 +46,10 @@ import cz.it4i.fiji.haas.ui.TableCellAdapter.TableCellUpdater;
 import cz.it4i.fiji.haas.ui.TableViewContextMenu;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.ProgressNotifier;
-import cz.it4i.fiji.haas_java_client.UploadingFile;
 import cz.it4i.fiji.hpc_workflow.WorkflowJob;
 import cz.it4i.fiji.hpc_workflow.WorkflowParadigm;
 import cz.it4i.fiji.hpc_workflow.core.Constants;
 import cz.it4i.fiji.hpc_workflow.core.FXFrameExecutorService;
-import cz.it4i.fiji.hpc_workflow.core.HPCWorkflowJobManager;
-import cz.it4i.fiji.hpc_workflow.core.HPCWorkflowJobManager.BenchmarkJob;
 import cz.it4i.fiji.hpc_workflow.core.ObservableHPCWorkflowJob;
 import cz.it4i.fiji.hpc_workflow.core.ObservableHPCWorkflowJob.TransferProgress;
 import cz.it4i.fiji.hpc_workflow.ui.NewJobController.WorkflowType;
@@ -118,9 +114,9 @@ public class HPCWorkflowControl extends BorderPane {
 		timer = new Timer();
 		initTable();
 		initMenu();
-		boolean result = checkConnection();
+		initParadigm();
 		synchronized (this) {
-			if (result && !closed) {
+			if (paradigm.getStatus() == Status.ACTIVE && !closed) {
 				timer.scheduleAtFixedRate(new TimerTask() {
 
 					@Override
@@ -393,16 +389,13 @@ public class HPCWorkflowControl extends BorderPane {
 		});
 	}
 
-	private boolean checkConnection() {
-		boolean[] result = { false };
+	private void initParadigm() {
 		ProgressDialogViewWindow progress = new ProgressDialogViewWindow(
 			"Connecting to HPC", this.stage);
-
 		final CountDownLatch latch = new CountDownLatch(1);
 		executorServiceWS.execute(() -> {
 			try {
-				paradigm.checkConnection();
-				result[0] = true;
+				paradigm.init();
 			}
 			finally {
 				progress.done();
@@ -413,9 +406,9 @@ public class HPCWorkflowControl extends BorderPane {
 			latch.await();
 		}
 		catch (InterruptedException exc) {
+			Thread.currentThread().interrupt();
 			log.error(exc.getMessage(), exc);
 		}
-		return result[0];
 	}
 
 	private void updateJobs(boolean showProgress) {
