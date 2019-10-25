@@ -5,6 +5,7 @@ import org.scijava.parallel.Status;
 
 import cz.it4i.fiji.hpc_workflow.WorkflowParadigm;
 import cz.it4i.fiji.hpc_workflow.core.Constants;
+import javafx.application.Platform;
 import javafx.scene.Scene;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -14,6 +15,10 @@ public class HPCWorkflowWindow {
 
 	private Stage stage;
 	private HPCWorkflowControl controller;
+
+	public HPCWorkflowWindow() {
+		Platform.setImplicitExit(false);
+	}
 
 	public boolean openWindow(WorkflowParadigm paradigm) {
 		// Open the the window:

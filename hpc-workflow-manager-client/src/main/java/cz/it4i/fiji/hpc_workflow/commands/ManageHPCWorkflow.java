@@ -37,8 +37,8 @@ public class ManageHPCWorkflow implements Command {
 		// Display window:
 		WorkflowParadigm paradigm = parallelService.getParadigmOfType(
 			WorkflowParadigm.class);
-		HPCWorkflowWindow.openWindow(paradigm);
-
+		JavaFXRoutines.runOnFxThread(() -> new HPCWorkflowWindow().openWindow(
+			paradigm));
 	}
 
 	public static void main(final String... args) {
