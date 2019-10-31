@@ -811,6 +811,9 @@ public class HPCWorkflowJobManager implements WorkflowParadigm {
 
 	@Override
 	public final synchronized void init() {
+		if (jobManager != null) {
+			throw new IllegalStateException("This paradigm is already initialized.");
+		}
 		if (initializator != null && !initializator.getAsBoolean()) {
 			return;
 		}
@@ -827,6 +830,10 @@ public class HPCWorkflowJobManager implements WorkflowParadigm {
 
 	@Override
 	public synchronized void close() {
+		if (jobManager == null) {
+			throw new IllegalStateException(
+				"This paradigm is not already initialized.");
+		}
 		jobManager.close();
 		jobManager = null;
 		if (finalizer != null) {
