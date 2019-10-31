@@ -22,7 +22,6 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -106,7 +105,7 @@ public class HPCWorkflowControl extends BorderPane {
 			"No content in table. Right click to create new one."));
 	}
 
-	public void init(Stage newStage) {
+	public CompletableFuture<Void> init(Stage newStage) {
 		this.stage = newStage;
 
 		executorServiceWS = Executors.newSingleThreadExecutor();
@@ -114,18 +113,19 @@ public class HPCWorkflowControl extends BorderPane {
 		timer = new Timer();
 		initTable();
 		initMenu();
-		initParadigm();
-		synchronized (this) {
-			if (paradigm.getStatus() == Status.ACTIVE && !closed) {
-				timer.scheduleAtFixedRate(new TimerTask() {
+		return initParadigm().thenAccept(this::startUpdater);
+	}
 
-					@Override
-					public void run() {
-						updateJobs(false);
-					}
-				}, getHaasUpdateTimeout(), getHaasUpdateTimeout());
-				updateJobs(true);
-			}
+	private synchronized void startUpdater(@SuppressWarnings("unused") Void x) {
+		if (paradigm.getStatus() == Status.ACTIVE && !closed) {
+			timer.scheduleAtFixedRate(new TimerTask() {
+
+				@Override
+				public void run() {
+					updateJobs(false);
+				}
+			}, getHaasUpdateTimeout(), getHaasUpdateTimeout());
+			updateJobs(true);
 		}
 	}
 
@@ -389,26 +389,12 @@ public class HPCWorkflowControl extends BorderPane {
 		});
 	}
 
-	private void initParadigm() {
-		ProgressDialogViewWindow progress = new ProgressDialogViewWindow(
+	private CompletableFuture<Void> initParadigm() {
+		final ProgressDialogViewWindow progress = new ProgressDialogViewWindow(
 			"Connecting to HPC", this.stage);
-		final CountDownLatch latch = new CountDownLatch(1);
-		executorServiceWS.execute(() -> {
-			try {
-				paradigm.init();
-			}
-			finally {
-				progress.done();
-				latch.countDown();
-			}
-		});
-		try {
-			latch.await();
-		}
-		catch (InterruptedException exc) {
-			Thread.currentThread().interrupt();
-			log.error(exc.getMessage(), exc);
-		}
+		return CompletableFuture.runAsync(paradigm::init, executorServiceWS)
+			.whenComplete((Void x, Throwable t) -> JavaFXRoutines.runOnFxThread(
+				progress::done));
 	}
 
 	private void updateJobs(boolean showProgress) {

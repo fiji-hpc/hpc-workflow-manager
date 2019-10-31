@@ -5,6 +5,7 @@ import org.scijava.parallel.Status;
 
 import cz.it4i.fiji.hpc_workflow.WorkflowParadigm;
 import cz.it4i.fiji.hpc_workflow.core.Constants;
+import cz.it4i.swing_javafx_ui.JavaFXRoutines;
 import javafx.application.Platform;
 import javafx.scene.Scene;
 import javafx.stage.Modality;
@@ -20,7 +21,7 @@ public class HPCWorkflowWindow {
 		Platform.setImplicitExit(false);
 	}
 
-	public boolean openWindow(WorkflowParadigm paradigm) {
+	public void openWindow(WorkflowParadigm paradigm) {
 		// Open the the window:
 		this.controller = new HPCWorkflowControl(paradigm);
 		final Scene formScene = new Scene(controller);
@@ -30,15 +31,12 @@ public class HPCWorkflowWindow {
 		stage.setResizable(true);
 		stage.setTitle(Constants.SUBMENU_ITEM_NAME);
 		stage.setScene(formScene);
-		this.stage.setOnCloseRequest((WindowEvent we) -> {
-			controller.close();
-		});
+		this.stage.setOnCloseRequest((WindowEvent we) -> controller.close());
 		stage.show();
-		controller.init(stage);
-		if (paradigm.getStatus() == Status.NON_ACTIVE) {
-			stage.hide();
-			return false;
-		}
-		return true;
+		controller.init(stage).thenAccept((Void v) -> {
+			if (paradigm.getStatus() == Status.NON_ACTIVE) {
+				JavaFXRoutines.runOnFxThread(stage::hide);
+			}
+		});
 	}
 }

@@ -90,22 +90,23 @@ public class WorkflowParadigmManager implements ParadigmManager {
 	private static FileLock tryOpenWorkingDirectory(Path workingDirectory) {
 		File workingDirectoryFile = workingDirectory.toFile();
 		if (!workingDirectoryFile.exists() || !workingDirectoryFile.isDirectory()) {
-			SimpleDialog.showError(ERROR_HEADER,
-				"The working directory selected does not exist!");
+			JavaFXRoutines.runOnFxThread(() -> SimpleDialog.showError(ERROR_HEADER,
+				"The working directory selected does not exist!"));
 			return null;
 		}
 
 		FileLock result = new FileLock(workingDirectory.resolve(LOCK_FILE_NAME));
 		try {
 			if (!result.tryLock()) {
-				SimpleDialog.showError(ERROR_HEADER,
-					"Working directory is already used by someone else.");
+				JavaFXRoutines.runOnFxThread(() -> SimpleDialog.showError(ERROR_HEADER,
+					"Working directory is already used by someone else."));
 				return null;
 			}
 		}
 		catch (IOException exc) {
-			SimpleDialog.showException(ERROR_HEADER,
-				"Problem encountered while attempting to read file.", exc);
+			JavaFXRoutines.runOnFxThread(() -> SimpleDialog.showException(
+				ERROR_HEADER, "Problem encountered while attempting to read file.",
+				exc));
 			return null;
 		}
 		return result;
