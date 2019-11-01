@@ -1,5 +1,5 @@
 
-package cz.it4i.fiji.hpc_workflow.ui;
+package cz.it4i.fiji.hpc_workflow.parsers;
 
 import java.util.List;
 import java.util.Map;

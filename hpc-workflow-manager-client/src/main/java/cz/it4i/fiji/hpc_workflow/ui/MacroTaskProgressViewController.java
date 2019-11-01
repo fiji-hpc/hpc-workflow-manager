@@ -15,6 +15,8 @@ import org.python.jline.internal.Log;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.hpc_workflow.core.MacroTask;
 import cz.it4i.fiji.hpc_workflow.core.ObservableHPCWorkflowJob;
+import cz.it4i.fiji.hpc_workflow.parsers.ProgressLogParser;
+import cz.it4i.fiji.hpc_workflow.parsers.XmlProgressLogParser;
 import cz.it4i.swing_javafx_ui.JavaFXRoutines;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleLongProperty;
