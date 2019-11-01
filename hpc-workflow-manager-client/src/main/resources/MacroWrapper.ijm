@@ -4,11 +4,9 @@
 
 function parInit() {
 	ret = call("cz.it4i.fiji.parallel_macro.ParallelMacro.initialise");
-	parReportProgress(0, 0);
 }
 
 function parFinalize() {
-	parReportProgress(0, 100);
 	ret = call("cz.it4i.fiji.parallel_macro.ParallelMacro.finalise");
 }
 
