@@ -15,6 +15,7 @@ import org.python.jline.internal.Log;
 import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.hpc_workflow.core.MacroTask;
 import cz.it4i.fiji.hpc_workflow.core.ObservableHPCWorkflowJob;
+import cz.it4i.fiji.hpc_workflow.parsers.FileProgressLogParser;
 import cz.it4i.fiji.hpc_workflow.parsers.ProgressLogParser;
 import cz.it4i.fiji.hpc_workflow.parsers.XmlProgressLogParser;
 import cz.it4i.swing_javafx_ui.JavaFXRoutines;
@@ -43,7 +44,7 @@ public class MacroTaskProgressViewController extends BorderPane {
 	@FXML
 	private Label statusLabel;
 
-	private ProgressLogParser progressLogParser = new XmlProgressLogParser();
+	private ProgressLogParser progressLogParser = null;
 
 	private ObservableHPCWorkflowJob job;
 
@@ -136,6 +137,20 @@ public class MacroTaskProgressViewController extends BorderPane {
 
 		fileNames.add("progress_0.plog");
 		List<String> progressLogs = job.getFileContents(fileNames);
+		
+		// Check if the file is created or not yet:
+		if(progressLogs == null || progressLogs.get(0).isEmpty()) {
+			return fileNames;
+		}
+		
+		// Check weather the progress log is in CSV or XML format:
+		if(progressLogParser == null) {
+			if(XmlProgressLogParser.fileIsValidXML(progressLogs.get(0))) {
+				progressLogParser = new XmlProgressLogParser();
+			} else {
+				progressLogParser = new FileProgressLogParser();
+			}
+		}
 
 		numberOfNodes = progressLogParser.getNumberOfNodes(progressLogs);
 		if (numberOfNodes == 0) {

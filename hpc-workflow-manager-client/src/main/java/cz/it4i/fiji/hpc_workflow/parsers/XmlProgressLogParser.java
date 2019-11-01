@@ -5,10 +5,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.jcraft.jsch.Logger;
+
+import java.io.IOException;
 import java.io.StringReader;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
@@ -18,6 +22,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 
 import cz.it4i.fiji.hpc_workflow.core.MacroTask;
 import javafx.beans.property.SimpleLongProperty;
@@ -40,9 +45,10 @@ public class XmlProgressLogParser implements ProgressLogParser {
 		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 
 		DocumentBuilder builder = null;
+
 		try {
 			builder = factory.newDocumentBuilder();
-
+			builder.setErrorHandler(null);
 			return builder.parse(new InputSource(new StringReader(xmlString)));
 		}
 		catch (Exception exc) {
@@ -103,11 +109,11 @@ public class XmlProgressLogParser implements ProgressLogParser {
 				}
 
 				int taskId = descriptionToTaskId.get(description);
-				
+
 				// Set the new progress if it exists:
 				Node progressNode = currentNode.getChildNodes().item(1);
-				if(progressNode != null) {
-					long  progress = Long.parseLong(progressNode.getTextContent());
+				if (progressNode != null) {
+					long progress = Long.parseLong(progressNode.getTextContent());
 					tableData.get(taskId).setProgress(nodeId, progress);
 				}
 
@@ -128,6 +134,11 @@ public class XmlProgressLogParser implements ProgressLogParser {
 		catch (Exception exc) {
 			// Do nothing.
 		}
+	}
+
+	public static boolean fileIsValidXML(String xmlSourceFile) {
+		Document document = convertStringToXMLDocument(xmlSourceFile);
+		return document != null;
 	}
 
 }
