@@ -9,6 +9,7 @@ import javafx.scene.Scene;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+import javafx.stage.Window;
 import javafx.stage.WindowEvent;
 
 public class ProgressDialogViewWindow implements ProgressNotifier {
@@ -19,7 +20,7 @@ public class ProgressDialogViewWindow implements ProgressNotifier {
 
 	private String windowTitle = null;
 
-	private void openWindow(String message, Stage parentStage, boolean show) {
+	private void openWindow(String message, Window parentStage, boolean show) {
 		this.controller = new ProgressDialogViewController(message);
 		final Scene formScene = new Scene(this.controller);
 		Stage stage = new Stage();
@@ -65,7 +66,7 @@ public class ProgressDialogViewWindow implements ProgressNotifier {
 		JavaFXRoutines.runOnFxThread(() -> openWindow(message, parentStage, show));
 	}
 
-	public ProgressDialogViewWindow(String message, Stage parentStage) {
+	public ProgressDialogViewWindow(String message, Window parentStage) {
 		JavaFXRoutines.runOnFxThread(() -> openWindow(message, parentStage, true));
 	}
 

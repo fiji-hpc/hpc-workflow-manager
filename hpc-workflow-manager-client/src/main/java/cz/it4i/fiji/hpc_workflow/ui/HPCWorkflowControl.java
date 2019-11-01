@@ -390,14 +390,11 @@ public class HPCWorkflowControl extends BorderPane {
 	}
 
 	private CompletableFuture<Void> initParadigm() {
-		final ProgressDialogViewWindow progress = new ProgressDialogViewWindow(
-			"Connecting to HPC", this.stage);
+
 		if (paradigm.getStatus() == Status.ACTIVE) {
 			return CompletableFuture.completedFuture(null);
 		}
-		return CompletableFuture.runAsync(paradigm::init, executorServiceWS)
-			.whenComplete((Void x, Throwable t) -> JavaFXRoutines.runOnFxThread(
-				progress::done));
+		return CompletableFuture.runAsync(paradigm::init, executorServiceWS);
 	}
 
 	private void updateJobs(boolean showProgress) {

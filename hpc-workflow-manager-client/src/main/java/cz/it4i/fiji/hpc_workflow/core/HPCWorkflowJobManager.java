@@ -106,6 +106,8 @@ public class HPCWorkflowJobManager implements WorkflowParadigm {
 
 	private Runnable finalizer;
 
+	private Runnable initDoneCallback;
+
 	public final class BenchmarkJob implements WorkflowJob {
 
 		private final Job job;
@@ -666,11 +668,13 @@ public class HPCWorkflowJobManager implements WorkflowParadigm {
 	}
 
 	public void prepareParadigm(HPCWorkflowParameters params,
-		BooleanSupplier aInitializator, Runnable aFinalizer)
+		BooleanSupplier aInitializator, Runnable aInitDoneCallback,
+		Runnable aFinalizer)
 	{
 		this.parameters = params;
 		this.initializator = aInitializator;
 		this.finalizer = aFinalizer;
+		this.initDoneCallback = aInitDoneCallback;
 	}
 
 	@Override
@@ -821,6 +825,9 @@ public class HPCWorkflowJobManager implements WorkflowParadigm {
 			constructSettingsFromParams(parameters));
 		jobManager.setUploadFilter(this::canUpload);
 		checkConnection();
+		if (initDoneCallback != null) {
+			initDoneCallback.run();
+		}
 	}
 
 	@Override

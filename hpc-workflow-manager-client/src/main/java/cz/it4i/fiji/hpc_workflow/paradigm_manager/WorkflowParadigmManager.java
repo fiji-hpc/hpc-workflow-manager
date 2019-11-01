@@ -26,17 +26,23 @@ import cz.it4i.fiji.hpc_workflow.core.AuthenticationExceptionHandler;
 import cz.it4i.fiji.hpc_workflow.core.HPCWorkflowJobManager;
 import cz.it4i.fiji.hpc_workflow.core.NotConnectedExceptionHandler;
 import cz.it4i.fiji.hpc_workflow.ui.LoginViewWindow;
+import cz.it4i.fiji.hpc_workflow.ui.ProgressDialogViewWindow;
+import cz.it4i.parallel.paradigm_managers.ui.HavingOwnerWindow;
 import cz.it4i.swing_javafx_ui.JavaFXRoutines;
 import cz.it4i.swing_javafx_ui.SimpleDialog;
+import javafx.stage.Window;
 
 @Plugin(type = ParadigmManager.class)
-public class WorkflowParadigmManager implements ParadigmManager {
+public class WorkflowParadigmManager implements ParadigmManager,
+	HavingOwnerWindow<Window>
+{
 
 	private static final String ERROR_HEADER = "Error";
 	private static final String LOCK_FILE_NAME = ".lock";
 
 	@Parameter
 	private Context context;
+	private Window ownerWindow;
 
 	@Override
 	public Class<? extends ParallelizationParadigm> getSupportedParadigmType() {
@@ -73,9 +79,19 @@ public class WorkflowParadigmManager implements ParadigmManager {
 	{
 		HPCWorkflowJobManager typedParadigm = (HPCWorkflowJobManager) paradigm;
 		WorkflowParadigmProfile typedProfile = (WorkflowParadigmProfile) profile;
-		PManager pmManager = new PManager(typedProfile);
+		PManager pmManager = new PManager(typedProfile, ownerWindow);
 		typedParadigm.prepareParadigm(typedProfile.getParameters(), pmManager::init,
-			pmManager::dispose);
+			pmManager::initDone, pmManager::dispose);
+	}
+
+	@Override
+	public Class<Window> getType() {
+		return Window.class;
+	}
+
+	@Override
+	public void setOwner(Window parent) {
+		ownerWindow = parent;
 	}
 
 	public static boolean checkWorkingDirectory(Path workingDirectory) {
@@ -117,12 +133,16 @@ public class WorkflowParadigmManager implements ParadigmManager {
 		private final WorkflowParadigmProfile profile;
 		private UncaughtExceptionHandlerDecorator uehd;
 		private FileLock fileLock;
+		private ProgressDialogViewWindow progress;
+		private Window ownerWindow;
 
-		PManager(WorkflowParadigmProfile profile) {
+		PManager(WorkflowParadigmProfile profile, Window aOwnerWindow) {
 			this.profile = profile;
+			this.ownerWindow = aOwnerWindow;
 		}
 
 		boolean init() {
+			progress = new ProgressDialogViewWindow("Connecting to HPC", ownerWindow);
 			fileLock = tryOpenWorkingDirectory(profile.getParameters()
 				.workingDirectory());
 
@@ -131,6 +151,10 @@ public class WorkflowParadigmManager implements ParadigmManager {
 			}
 			JavaFXRoutines.runOnFxThread(this::initExceptionHandler);
 			return true;
+		}
+
+		void initDone() {
+			progress.done();
 		}
 
 		void dispose() {
