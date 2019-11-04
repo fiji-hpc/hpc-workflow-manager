@@ -36,22 +36,27 @@ public class FunctionsInformationLoader {
 		functionInformationList.add(new FunctionInformation("Scatter",
 			"This works like parScatterEqually but in this case the user is responsible for providing the parameters to split the array.",
 			"sendBuffer, sendCount, receiveCount, root"));
-		
+
 		functionInformationList.add(new FunctionInformation("ReportProgress",
 			"Outputs progress in percentage for a specified task in the node’s progress log.",
 			"task, progress"));
-		
+
 		functionInformationList.add(new FunctionInformation("ReportText",
-			"Outputs given text to the node’s log.",
-			"text"));
-		
+			"Outputs given text to the node’s log.", "text"));
+
 		functionInformationList.add(new FunctionInformation("AddTask",
-			"Creates a new task with the description provided.",
-			"description"));
-		
+			"Creates a new task with the description provided.", "description"));
+
 		functionInformationList.add(new FunctionInformation("ReportTasks",
-			"Outputs all task ids with their descriptions.",
-			""));
+			"Outputs all task ids with their descriptions.", ""));
+
+		functionInformationList.add(new FunctionInformation("Gather",
+			"All ranks send an equal amount of array items to a single root node of a given rank. Be careful, the receiveCount parameter should be the count of items received from each rank separately. This is the inverse operation of parScatter. ",
+			"sendBuffer, sendCount, receiveCount, sender"));
+
+		functionInformationList.add(new FunctionInformation("GatherEqually",
+			"The given rank will receive an array send in parts by all ranks. This is the inverse operation of the parScatterEqually.",
+			"sendBuffer, totalReceiveBufferLength, receiver"));
 	}
 
 	public List<FunctionInformation> getFunctionInformationList() {
