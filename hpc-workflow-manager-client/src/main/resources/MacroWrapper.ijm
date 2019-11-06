@@ -54,9 +54,22 @@ function parScatter(sendBuffer, sendCount, receiveCount, root) {
 	sendString = convertArrayToCommaSeparatedString(sendBuffer);
 	receivedString = call("cz.it4i.fiji.ij1_mpi_wrapper.MPIWrapper.scatter", sendString, sendCount, receiveCount, root);
 	receivedBuffer = convertCommaSeparatedStringToArray(receivedString);
-	return receivedString;
+	return receivedBuffer;
 }
 
+function parGather(sendBuffer, sendCount, receiveCount, receiver){
+	sendString = convertArrayToCommaSeparatedString(sendBuffer);
+	receivedString = call("cz.it4i.fiji.parallel_macro.ParallelMacro.gather", sendString, sendCount, receiveCount, root);
+	receivedBuffer = convertCommaSeparatedStringToArray(receivedString);
+	return receivedBuffer;
+}
+
+function parGatherEqually(sendBuffer, totalReceiveBufferLength, receiver){
+	sendString = convertArrayToCommaSeparatedString(sendBuffer);
+	receivedString = call("cz.it4i.fiji.parallel_macro.ParallelMacro.gatherEqually", sendString, totalReceiveBufferLength, receiver);
+	receivedBuffer = convertCommaSeparatedStringToArray(receivedString);
+	return receivedBuffer;
+}
 
 function convertArrayToCommaSeparatedString(array){
 	length = lengthOf(array);
