@@ -248,13 +248,11 @@ public class HPCWorkflowControl extends BorderPane {
 					PrintWriter pw = new PrintWriter(job.getInputDirectory().toString() +
 						File.separator + Constants.DEFAULT_MACRO_FILE))
 			{
+				// Write user's script contents to the new script:
+				isSuccessfull = copyLineByLine(pw, userScriptFilePath);
 
 				// Write the MPI wrapper script's contents into the new script:
-				isSuccessfull = copyLineByLine(pw, resourceReader);
-
-				// Write user's script contents to the new script:
-				isSuccessfull = isSuccessfull && copyLineByLine(pw, userScriptFilePath);
-
+				isSuccessfull = isSuccessfull && copyLineByLine(pw, resourceReader);
 			}
 			catch (FileNotFoundException exc) {
 				log.error(exc.getMessage());
@@ -549,20 +547,10 @@ public class HPCWorkflowControl extends BorderPane {
 	private void openEditor(BenchmarkJob job) {
 		TextEditor txt = new TextEditor(new Context()); // TODO Context handling is
 																										// wrong
-		// Check if the wrapped script exits:
-		String parallelMacroWrappedString = job.getInputDirectory().toString() +
-			File.separator + Constants.DEFAULT_MACRO_FILE;
-		File parallelMacroWrappedFile = new File(parallelMacroWrappedString);
 
 		// If there is no wrapped script open the user script:
-		File editFile;
-		if (parallelMacroWrappedFile.exists()) {
-			editFile = parallelMacroWrappedFile;
-		}
-		else {
-			editFile = new File(job.getInputDirectory().toString() + File.separator +
-				job.getUserScriptName());
-		}
+		File editFile = new File(job.getInputDirectory().toString() +
+			File.separator + job.getUserScriptName());
 
 		// Open editor:
 		txt.open(editFile);
