@@ -18,7 +18,7 @@ public class FileProgressLogParser implements ProgressLogParser {
 		int numberOfNodes = 0;
 		if (!progressLogs.isEmpty()) {
 			String log = progressLogs.get(0);
-			String[] lines = splitStringByDelimiter(log, "\n");
+			String[] lines = log.split("\n");
 			try {
 				numberOfNodes = Integer.parseInt(lines[0]);
 				return numberOfNodes;
@@ -28,12 +28,6 @@ public class FileProgressLogParser implements ProgressLogParser {
 			}
 		}
 		return numberOfNodes;
-	}
-
-	private String[] splitStringByDelimiter(String stringToSplit,
-		String delimiter)
-	{
-		return stringToSplit.split(delimiter);
 	}
 
 	// Maps task id of a specific node to description:
@@ -54,10 +48,10 @@ public class FileProgressLogParser implements ProgressLogParser {
 		int nodeId = 0;
 		int taskIdCounter = 0;
 		for (String log : progressLogs) {
-			String[] logLines = splitStringByDelimiter(log, "\n");
+			String[] logLines = log.split("\n");
 
 			for (String line : logLines) {
-				String[] elements = splitStringByDelimiter(line, ",");
+				String[] elements = line.split(",");
 				taskIdCounter = setTaskProgressOrDescriptionFromElements(nodeId,
 					elements, taskIdCounter, tableData, descriptionToProperty);
 
