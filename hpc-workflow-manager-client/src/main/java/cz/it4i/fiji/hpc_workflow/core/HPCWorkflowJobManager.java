@@ -38,6 +38,7 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -444,7 +445,7 @@ public class HPCWorkflowJobManager implements WorkflowParadigm {
 		@Override
 		public boolean equals(Object obj) {
 			if (obj instanceof BenchmarkJob) {
-				return ((BenchmarkJob) obj).getId() == getId();
+				return Objects.equals(((BenchmarkJob) obj).getId(), getId());
 			}
 			return false;
 		}
