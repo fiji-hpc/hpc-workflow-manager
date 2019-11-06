@@ -73,16 +73,40 @@ function parSelectProgressLogger(type){
 	ret = call("cz.it4i.fiji.parallel_macro.ParallelMacro.selectProgressLogger", type);
 }
 
-function convertArrayToCommaSeparatedString(array){
-	length = lengthOf(array);
-	string = "";
-	for(i = 0; i < length; i++){
-		string += ""+array[i];
-		if(i != length - 1){
-			string += ", ";
+function convert1DArrayToImage(Array1D, imageWidth, imageHeight, imageName){
+	newImage(imageName, "24-bit", imageWidth, imageHeight,1);
+	image1=getImageID();
+	for(i=0; i<imageHeight; i++){
+		for(j=0; j<imageWidth; j++){
+			setPixel(j,i,Array1D[(i*imageWidth)+j]);
 		}
 	}
-	return string;
+	return image1;
+}
+
+function convertImageTo1DArray(anImage){
+	getDimensions(width, height, channels, slices, frames);
+	myArray = newArray(width*height);
+	for (i = 0; i < height; i++) {
+		for (j = 0; j < width; j++) {
+			myArray[i*width+j] = getPixel(j, i);
+		}		
+	}
+	
+	return myArray;
+}
+function convertArrayToCommaSeparatedString(array){
+	String.resetBuffer();
+	length = lengthOf(array);
+	for(i = 0; i < length; i++){
+		String.append(""+array[i]);
+		if(i != length - 1){
+			String.append(", ");
+		}
+	}
+	str = String.buffer;
+	String.resetBuffer();
+	return str;
 }
 
 function convertCommaSeparatedStringToArray(string) {
