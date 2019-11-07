@@ -26,6 +26,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
 import org.scijava.Context;
@@ -351,7 +352,7 @@ public class HPCWorkflowControl extends BorderPane {
 
 	private WorkflowJob doCreateJob(UnaryOperator<Path> inputProvider,
 		UnaryOperator<Path> outputProvider, int numberOfNodes, int haasTemplateId,
-		Callable<String> userScriptName) throws IOException
+		Supplier<String> userScriptName) throws IOException
 	{
 		WorkflowJob bj;
 		if (paradigm instanceof MacroWorkflowParadigm) {

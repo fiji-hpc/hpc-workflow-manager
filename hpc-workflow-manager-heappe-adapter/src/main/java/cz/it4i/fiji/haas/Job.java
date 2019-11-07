@@ -13,7 +13,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -38,7 +37,6 @@ import cz.it4i.fiji.haas_java_client.UploadingFile;
 import cz.it4i.fiji.haas_java_client.UploadingFileData;
 import cz.it4i.fiji.haas_java_client.proxy.JobFileContentExt;
 import cz.it4i.fiji.scpclient.TransferFileProgress;
-import cz.it4i.swing_javafx_ui.SimpleDialog;
 
 /***
  * TASK - napojit na UI
@@ -112,7 +110,7 @@ public class Job {
 		Supplier<HaaSClient> haasClientSupplier,
 		UnaryOperator<Path> inputDirectoryProvider,
 		UnaryOperator<Path> outputDirectoryProvider,
-		Callable<String> userScriptNameProvider) throws IOException
+		Supplier<String> userScriptName2) throws IOException
 	{
 		this(jobManager, haasClientSupplier);
 		HaaSClient client = getHaaSClient();
@@ -124,7 +122,7 @@ public class Job {
 		storeInputOutputDirectory();
 		setName(jobSettings.getJobName());
 		setHaasTemplateId(jobSettings.getTemplateId());
-		storeUserScriptName(userScriptNameProvider);
+		storeUserScriptName(userScriptName2);
 	}
 
 	public Job(JobManager4Job jobManager, Path jobDirectory,
@@ -508,15 +506,8 @@ public class Job {
 		storeDataDirectory(JOB_OUTPUT_DIRECTORY_PATH, outputDirectory);
 	}
 
-	private void storeUserScriptName(Callable<String> newUserScriptNameProvider) {
-		try {
-			propertyHolder.setValue(USER_SCIPRT_NAME, newUserScriptNameProvider
-				.call());
-		}
-		catch (Exception exc) {
-			SimpleDialog.showException("Exception",
-				"Exception concerning the user script name.", exc);
-		}
+	private void storeUserScriptName(Supplier<String> newUserScriptNameProvider) {
+		propertyHolder.setValue(USER_SCIPRT_NAME, newUserScriptNameProvider.get());
 	}
 
 	private void storeDataDirectory(final String directoryPropertyName,

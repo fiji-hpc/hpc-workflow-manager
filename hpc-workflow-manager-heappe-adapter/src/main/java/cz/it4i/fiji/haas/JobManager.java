@@ -8,8 +8,8 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
-import java.util.concurrent.Callable;
 import java.util.function.BiPredicate;
+import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
 import org.slf4j.Logger;
@@ -71,7 +71,8 @@ public class JobManager implements Closeable {
 
 	public Job createJob(JobSettings jobSettings,
 		UnaryOperator<Path> inputDirectoryProvider,
-		UnaryOperator<Path> outputDirectoryProvider, Callable<String> userScriptName) throws IOException
+		UnaryOperator<Path> outputDirectoryProvider,
+		Supplier<String> userScriptName) throws IOException
 	{
 		Job result;
 		initJobsIfNecessary();
