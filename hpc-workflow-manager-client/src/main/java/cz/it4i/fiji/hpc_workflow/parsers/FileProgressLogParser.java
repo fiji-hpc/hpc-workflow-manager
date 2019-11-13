@@ -116,6 +116,6 @@ public class FileProgressLogParser implements ProgressLogParser {
 	@Override
 	public long getLastUpdatedTimestamp(List<String> progressLogs) {
 		// ToDo: implement this.
-		return 0;
+		return -1;
 	}
 }
