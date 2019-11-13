@@ -1,7 +1,7 @@
 #miliseconds
 haas_update_timeout=30000
 
-haas_project_ID=open-15-12
+haas_project_ID=open-17-47
 
 haas_cluster_node_type=7
 
