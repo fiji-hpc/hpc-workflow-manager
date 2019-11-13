@@ -33,6 +33,16 @@ public class XmlProgressLogParser implements ProgressLogParser {
 		}
 		return Integer.parseInt(sizeNode.getTextContent());
 	}
+	
+	@Override
+	public long getLastUpdatedTimestamp(List<String> progressLogs) {
+		Document document = convertStringToXMLDocument(progressLogs.get(0));
+		Node timestampNode = findNode(document, "//lastUpdated");
+		if (timestampNode == null) {
+			return 0;
+		}
+		return Long.parseLong(timestampNode.getTextContent());
+	}
 
 	private static Document convertStringToXMLDocument(String xmlString) {
 		// Parser that produces DOM object trees from XML content

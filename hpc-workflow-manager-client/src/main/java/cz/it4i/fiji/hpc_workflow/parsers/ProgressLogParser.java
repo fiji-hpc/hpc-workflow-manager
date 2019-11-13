@@ -15,4 +15,7 @@ public interface ProgressLogParser {
 	public boolean parseProgressLogs(List<String> progressLogs,
 		ObservableList<MacroTask> tableData,
 		Map<String, Map<Integer, SimpleLongProperty>> descriptionToProperty);
+
+	// Returns the time-stamp when the progress log file was last updated:
+	long getLastUpdatedTimestamp(List<String> progressLogs);
 }
