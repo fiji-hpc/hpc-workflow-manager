@@ -39,7 +39,7 @@ public class XmlProgressLogParser implements ProgressLogParser {
 		Document document = convertStringToXMLDocument(progressLogs.get(0));
 		Node timestampNode = findNode(document, "//lastUpdated");
 		if (timestampNode == null) {
-			return 0;
+			return -1;
 		}
 		return Long.parseLong(timestampNode.getTextContent());
 	}
