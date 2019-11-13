@@ -13,4 +13,6 @@ import cz.it4i.fiji.hpc_workflow.WorkflowJob;
 public interface MacroWorkflowJob extends WorkflowJob {
 
 	String getUserScriptName();
+
+	void setLastStartedTimestamp();
 }

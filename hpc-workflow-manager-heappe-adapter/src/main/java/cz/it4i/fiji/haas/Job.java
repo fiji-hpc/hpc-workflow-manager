@@ -79,6 +79,9 @@ public class Job {
 
 	private static final String USER_SCIPRT_NAME = "job.user_script_name";
 
+	private static final String LAST_STARTED_TIMESTAMP =
+		"job.last_started_timestamp";
+
 	private static final String JOB_USE_DEMO_DATA = "job.use_demo_data";
 
 	private static Logger log = LoggerFactory.getLogger(
@@ -106,11 +109,13 @@ public class Job {
 
 	private boolean useDemoData;
 
+	private long lastStartedTimestamp = -1;
+
 	public Job(JobManager4Job jobManager, JobSettings jobSettings, Path basePath,
 		Supplier<HaaSClient> haasClientSupplier,
 		UnaryOperator<Path> inputDirectoryProvider,
 		UnaryOperator<Path> outputDirectoryProvider,
-		Supplier<String> userScriptName2) throws IOException
+		Supplier<String> userScriptNameProvider) throws IOException
 	{
 		this(jobManager, haasClientSupplier);
 		HaaSClient client = getHaaSClient();
@@ -122,7 +127,7 @@ public class Job {
 		storeInputOutputDirectory();
 		setName(jobSettings.getJobName());
 		setHaasTemplateId(jobSettings.getTemplateId());
-		storeUserScriptName(userScriptName2);
+		storeUserScriptName(userScriptNameProvider);
 	}
 
 	public Job(JobManager4Job jobManager, Path jobDirectory,
@@ -603,6 +608,27 @@ public class Job {
 
 		return 4; // FIXME enum defined somewhere else in SPIM_WORKFLOW(4)
 							// hpc-workflow-manager-client/src/main/java/cz/it4i/fiji/hpc_workflow/ui/NewJobController.java
+	}
+
+	// Set the timestamp of the last started job in the job settings,
+	// this is done in order to filter out older progress logs that might be
+	// on the server.
+	public void setLastStartedTimestamp() {
+		this.lastStartedTimestamp = java.time.Instant.now().toEpochMilli();
+		storeLastStartedTimestamp(this.lastStartedTimestamp);
+	}
+	
+	public long getLastStartedTimestamp() {
+		// If it is not set get the property from the configuration file ".jobinfo"
+		if (lastStartedTimestamp == -1) {
+			lastStartedTimestamp = Long.parseLong(propertyHolder.getValue(
+				LAST_STARTED_TIMESTAMP));
+		}
+		return lastStartedTimestamp;
+	}
+
+	private void storeLastStartedTimestamp(long timestamp) {
+		propertyHolder.setValue(LAST_STARTED_TIMESTAMP, Long.toString(timestamp));
 	}
 
 }
