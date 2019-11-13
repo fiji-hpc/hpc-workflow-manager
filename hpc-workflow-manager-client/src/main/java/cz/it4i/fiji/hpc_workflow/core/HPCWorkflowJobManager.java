@@ -172,6 +172,8 @@ public class HPCWorkflowJobManager implements MacroWorkflowParadigm
 			if (job.getHaasTemplateId() == 4 && yaml != null) {
 				job.setProperty(SPIM_OUTPUT_FILENAME_PATTERN, yaml.getCommonProperty(
 					FUSION_SWITCH) + "_" + yaml.getCommonProperty(HDF5_XML_FILENAME));
+			} else {
+				job.setLastStartedTimestamp();
 			}
 
 		}
@@ -419,6 +421,11 @@ public class HPCWorkflowJobManager implements MacroWorkflowParadigm
 		@Override
 		public String getUserScriptName() {
 			return job.getUserScriptName();
+		}
+		
+		@Override
+		public void setLastStartedTimestamp() {
+			job.setLastStartedTimestamp();
 		}
 
 		@Override
