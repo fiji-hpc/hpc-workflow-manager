@@ -255,5 +255,10 @@ public class ObservableHPCWorkflowJob extends
 			"Script name is support by MacroWorkflowJob but actual job is " +
 				workflowkJob.getClass());
 	}
+	
+	public long getLastStartedTimestamp() {
+		MacroWorkflowJob typeJob = (MacroWorkflowJob) workflowkJob;
+		return typeJob.getLastStartedTimestamp();
+	}
 
 }

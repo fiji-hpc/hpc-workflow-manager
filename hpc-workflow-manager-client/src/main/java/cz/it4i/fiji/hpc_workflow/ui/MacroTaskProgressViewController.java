@@ -214,6 +214,11 @@ public class MacroTaskProgressViewController extends BorderPane {
 		setStatusMessage("Downloading the macro progress files...");
 		List<String> progressLogs = job.getFileContents(files);
 		setStatusMessage("Parsing the macro progress files...");
+		if(progressLogParser.getLastUpdatedTimestamp(progressLogs) < job.getLastStartedTimestamp()) {
+			setStatusMessage("The progress log was the same...");
+			return;
+		}
+		
 		if (!progressLogParser.parseProgressLogs(progressLogs, tableData,
 			descriptionToProperty))
 		{
