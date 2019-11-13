@@ -15,4 +15,6 @@ public interface MacroWorkflowJob extends WorkflowJob {
 	String getUserScriptName();
 
 	void setLastStartedTimestamp();
+	
+	long getLastStartedTimestamp();
 }

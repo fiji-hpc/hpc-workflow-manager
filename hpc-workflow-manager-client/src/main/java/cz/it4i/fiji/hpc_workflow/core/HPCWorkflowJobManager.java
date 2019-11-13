@@ -675,6 +675,11 @@ public class HPCWorkflowJobManager implements MacroWorkflowParadigm
 			};
 
 		}
+
+		@Override
+		public long getLastStartedTimestamp() {
+			return job.getLastStartedTimestamp();
+		}
 	}
 
 	public HPCWorkflowJobManager() {
