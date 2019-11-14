@@ -38,7 +38,7 @@ public class FileProgressLogParser implements ProgressLogParser {
 
 	@Override
 	public boolean parseProgressLogs(List<String> progressLogs,
-		ObservableList<MacroTask> tableData,
+		long jobStartedTimestamp, ObservableList<MacroTask> tableData,
 		Map<String, Map<Integer, SimpleLongProperty>> descriptionToProperty)
 	{
 		for (int i = nodeTaskToDescription.size(); i < progressLogs.size(); i++) {
@@ -48,6 +48,11 @@ public class FileProgressLogParser implements ProgressLogParser {
 		int nodeId = 0;
 		int taskIdCounter = 0;
 		for (String log : progressLogs) {
+			// Ignore old progress files:
+			if (jobStartedTimestamp > getLastUpdatedTimestamp(nodeId, progressLogs)) {
+				return true;
+			}
+
 			String[] logLines = log.split("\n");
 
 			for (String line : logLines) {
@@ -114,18 +119,18 @@ public class FileProgressLogParser implements ProgressLogParser {
 	}
 
 	@Override
-	public long getLastUpdatedTimestamp(List<String> progressLogs) {
+	public long getLastUpdatedTimestamp(int rank, List<String> progressLogs) {
 		long timestamp = -1;
 		if (!progressLogs.isEmpty()) {
-			String log = progressLogs.get(0);
-			String[] lines = log.split("\n");
+			String log = progressLogs.get(rank);
+			// Split only in three lines: node number, time-stamp, the rest:
+			String[] lines = log.split("\n", 3);
 			try {
 				// The time-stamp is on the second line of the progress log:
 				timestamp = Long.parseLong(lines[1]);
-				return timestamp;
 			}
 			catch (NumberFormatException exc) {
-				return timestamp;
+				// Ignore incorrect format, -1 will be returned.
 			}
 		}
 		return timestamp;
