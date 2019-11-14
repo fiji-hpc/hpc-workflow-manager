@@ -35,7 +35,7 @@ public class XmlProgressLogParserTest {
 			"		<progress>75</progress>\r\n" + "	</task>\r\n" + "</job>");
 
 		long realTimestamp = -1;
-		long readTimestamp = parser.getLastUpdatedTimestamp(progressLogs);
+		long readTimestamp = parser.getLastUpdatedTimestamp(0, progressLogs);
 		System.out.println("The read timestamp is: " + readTimestamp);
 		assertEquals(realTimestamp, readTimestamp);
 	}
@@ -52,7 +52,7 @@ public class XmlProgressLogParserTest {
 			"		<progress>75</progress>\r\n" + "	</task>\r\n" + "</job>");
 
 		long realTimestamp = 100;
-		long readTimestamp = parser.getLastUpdatedTimestamp(progressLogs);
+		long readTimestamp = parser.getLastUpdatedTimestamp(0, progressLogs);
 		assertEquals(realTimestamp, readTimestamp);
 	}
 }

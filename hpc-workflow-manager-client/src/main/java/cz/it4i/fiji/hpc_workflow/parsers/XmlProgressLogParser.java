@@ -35,8 +35,8 @@ public class XmlProgressLogParser implements ProgressLogParser {
 	}
 	
 	@Override
-	public long getLastUpdatedTimestamp(List<String> progressLogs) {
-		Document document = convertStringToXMLDocument(progressLogs.get(0));
+	public long getLastUpdatedTimestamp(int rank, List<String> progressLogs) {
+		Document document = convertStringToXMLDocument(progressLogs.get(rank));
 		Node timestampNode = findNode(document, "//lastUpdated");
 		if (timestampNode == null) {
 			return -1;
@@ -83,11 +83,16 @@ public class XmlProgressLogParser implements ProgressLogParser {
 	private int taskIdCounter = 0;
 
 	@Override
-	public boolean parseProgressLogs(List<String> progressLogs,
+	public boolean parseProgressLogs(List<String> progressLogs, long jobStartedTimestamp,
 		ObservableList<MacroTask> tableData,
 		Map<String, Map<Integer, SimpleLongProperty>> descriptionToProperty)
 	{
 		for (int nodeId = 0; nodeId < progressLogs.size(); nodeId++) {
+			//Ignore old progress files:
+			if(jobStartedTimestamp > getLastUpdatedTimestamp(nodeId, progressLogs)) {
+				return true;
+			}
+			
 			// Find all task elements in the XML document and get their id and
 			// progress:
 			NodeList taskNodeList = null;

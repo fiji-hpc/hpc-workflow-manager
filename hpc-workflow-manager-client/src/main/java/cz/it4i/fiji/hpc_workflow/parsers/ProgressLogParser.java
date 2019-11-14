@@ -12,10 +12,10 @@ public interface ProgressLogParser {
 
 	public int getNumberOfNodes(List<String> progressLogs);
 
-	public boolean parseProgressLogs(List<String> progressLogs,
+	public boolean parseProgressLogs(List<String> progressLogs, long jobStartedtimestamp,
 		ObservableList<MacroTask> tableData,
 		Map<String, Map<Integer, SimpleLongProperty>> descriptionToProperty);
 
 	// Returns the time-stamp when the progress log file was last updated:
-	long getLastUpdatedTimestamp(List<String> progressLogs);
+	long getLastUpdatedTimestamp(int rank, List<String> progressLogs);
 }

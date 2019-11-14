@@ -137,17 +137,18 @@ public class MacroTaskProgressViewController extends BorderPane {
 
 		fileNames.add("progress_0.plog");
 		List<String> progressLogs = job.getFileContents(fileNames);
-		
+
 		// Check if the file is created or not yet:
-		if(progressLogs == null || progressLogs.get(0).isEmpty()) {
+		if (progressLogs == null || progressLogs.get(0).isEmpty()) {
 			return fileNames;
 		}
-		
+
 		// Check weather the progress log is in CSV or XML format:
-		if(progressLogParser == null) {
-			if(XmlProgressLogParser.fileIsValidXML(progressLogs.get(0))) {
+		if (progressLogParser == null) {
+			if (XmlProgressLogParser.fileIsValidXML(progressLogs.get(0))) {
 				progressLogParser = new XmlProgressLogParser();
-			} else {
+			}
+			else {
 				progressLogParser = new FileProgressLogParser();
 			}
 		}
@@ -214,13 +215,9 @@ public class MacroTaskProgressViewController extends BorderPane {
 		setStatusMessage("Downloading the macro progress files...");
 		List<String> progressLogs = job.getFileContents(files);
 		setStatusMessage("Parsing the macro progress files...");
-		if(progressLogParser.getLastUpdatedTimestamp(progressLogs) < job.getLastStartedTimestamp()) {
-			setStatusMessage("The progress log was the same...");
-			return;
-		}
-		
-		if (!progressLogParser.parseProgressLogs(progressLogs, tableData,
-			descriptionToProperty))
+
+		if (!progressLogParser.parseProgressLogs(progressLogs, job
+			.getLastStartedTimestamp(), tableData, descriptionToProperty))
 		{
 			// A catastrophic exception must have occurred, the executor must be
 			// stopped:
