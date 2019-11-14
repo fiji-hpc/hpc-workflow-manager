@@ -115,7 +115,19 @@ public class FileProgressLogParser implements ProgressLogParser {
 
 	@Override
 	public long getLastUpdatedTimestamp(List<String> progressLogs) {
-		// ToDo: implement this.
-		return -1;
+		long timestamp = -1;
+		if (!progressLogs.isEmpty()) {
+			String log = progressLogs.get(0);
+			String[] lines = log.split("\n");
+			try {
+				// The time-stamp is on the second line of the progress log:
+				timestamp = Long.parseLong(lines[1]);
+				return timestamp;
+			}
+			catch (NumberFormatException exc) {
+				return timestamp;
+			}
+		}
+		return timestamp;
 	}
 }
