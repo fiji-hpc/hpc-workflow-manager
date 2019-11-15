@@ -31,8 +31,8 @@ public class MacroTaskTest {
 		macroTask.setProgress(0, 50);
 		assertEquals(50, macroTask.getProgress(0));
 
-		// This should return -1 as the node 1 does not exist:
-		assertEquals(-1, macroTask.getProgress(1));
+		// This should return -2 as the node 1 does not exist:
+		assertEquals(-2, macroTask.getProgress(1));
 
 		// Set progress for node 1 to 60%, this should work and getting the progress
 		// should return 60:
@@ -45,8 +45,8 @@ public class MacroTaskTest {
 		assertEquals(70, macroTask.getProgress(55));
 
 		// Node 45 which is in between nodes 1 and 55 that exist should exist and
-		// it's progress should be -1.
-		assertEquals(-1, macroTask.getProgress(45));
+		// it's progress should be -2.
+		assertEquals(-2, macroTask.getProgress(45));
 	}
 	
 	@Test

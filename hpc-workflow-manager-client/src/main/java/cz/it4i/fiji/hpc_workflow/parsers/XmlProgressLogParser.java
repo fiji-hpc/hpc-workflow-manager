@@ -33,7 +33,7 @@ public class XmlProgressLogParser implements ProgressLogParser {
 		}
 		return Integer.parseInt(sizeNode.getTextContent());
 	}
-	
+
 	@Override
 	public long getLastUpdatedTimestamp(int rank, List<String> progressLogs) {
 		Document document = convertStringToXMLDocument(progressLogs.get(rank));
@@ -83,29 +83,29 @@ public class XmlProgressLogParser implements ProgressLogParser {
 	private int taskIdCounter = 0;
 
 	@Override
-	public boolean parseProgressLogs(List<String> progressLogs, long jobStartedTimestamp,
-		ObservableList<MacroTask> tableData,
+	public boolean parseProgressLogs(List<String> progressLogs,
+		long jobStartedTimestamp, ObservableList<MacroTask> tableData,
 		Map<String, Map<Integer, SimpleLongProperty>> descriptionToProperty)
 	{
-		for (int nodeId = 0; nodeId < progressLogs.size(); nodeId++) {
-			//Ignore old progress files:
-			if(jobStartedTimestamp > getLastUpdatedTimestamp(nodeId, progressLogs)) {
+		for (int rank = 0; rank < progressLogs.size(); rank++) {
+			// Ignore old progress files:
+			if (jobStartedTimestamp > getLastUpdatedTimestamp(rank, progressLogs)) {
 				return true;
 			}
-			
+
 			// Find all task elements in the XML document and get their id and
 			// progress:
-			NodeList taskNodeList = null;
+			NodeList taskXmlNodeList = null;
 			try {
-				taskNodeList = convertStringToXMLDocument(progressLogs.get(nodeId))
+				taskXmlNodeList = convertStringToXMLDocument(progressLogs.get(rank))
 					.getElementsByTagName("task");
 			}
 			catch (NullPointerException exc) {
 				return true;
 			}
 
-			for (int counter = 0; counter < taskNodeList.getLength(); counter++) {
-				Node currentNode = taskNodeList.item(counter);
+			for (int counter = 0; counter < taskXmlNodeList.getLength(); counter++) {
+				Node currentNode = taskXmlNodeList.item(counter);
 
 				String description = currentNode.getChildNodes().item(0)
 					.getTextContent();
@@ -113,21 +113,23 @@ public class XmlProgressLogParser implements ProgressLogParser {
 				// Add the new task if a task with the same description is not present
 				// in the list:
 				if (!descriptionToTaskId.containsKey(description)) {
-					descriptionToTaskId.put(description, taskIdCounter++);
-					tableData.add(new MacroTask(description));
+					descriptionToTaskId.put(description, taskIdCounter);
+					// Set "indeterminate" progress indicator: state -1.
+					tableData.add(new MacroTask(description, rank));
+					taskIdCounter++;
 				}
 
 				int taskId = descriptionToTaskId.get(description);
 
 				// Set the new progress if it exists:
-				Node progressNode = currentNode.getChildNodes().item(1);
-				if (progressNode != null) {
-					long progress = Long.parseLong(progressNode.getTextContent());
-					tableData.get(taskId).setProgress(nodeId, progress);
+				Node progressXmlNode = currentNode.getChildNodes().item(1);
+				if (progressXmlNode != null) {
+					long progress = Long.parseLong(progressXmlNode.getTextContent());
+					tableData.get(taskId).setProgress(rank, progress);
 				}
 
 				setDescriptionToPropertyIfPossible(descriptionToProperty, description,
-					nodeId, tableData.get(taskId).getProgress(nodeId));
+					rank, tableData.get(taskId).getProgress(rank));
 			}
 		}
 		return true;

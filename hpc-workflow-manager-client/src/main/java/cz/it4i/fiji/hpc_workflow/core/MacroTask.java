@@ -16,6 +16,13 @@ public class MacroTask {
 		this.progress = new ArrayList<>();
 	}
 
+	// This constructor also sets the progress as indeterminate
+	public MacroTask(String description, int nodeId) {
+		this.description = description;
+		this.progress = new ArrayList<>();
+		setIndeterminateProgress(nodeId);
+	}
+
 	public String getDescription() {
 		return description;
 	}
@@ -25,7 +32,7 @@ public class MacroTask {
 			return this.progress.get(nodeId);
 		}
 		catch (Exception e) {
-			return -1;
+			return -2;
 		}
 	}
 
@@ -34,6 +41,15 @@ public class MacroTask {
 		if (newProgress > 100 || newProgress < 0) {
 			return;
 		}
+
+		setProgressIncludingIndeterminate(nodeId, newProgress);
+	}
+
+	private void setIndeterminateProgress(int nodeId) {
+		setProgressIncludingIndeterminate(nodeId, -1);
+	}
+
+	private void setProgressIncludingIndeterminate(int nodeId, long newProgress) {
 
 		// Add new progress percentage if it is greater than the old one and the
 		// node exists:
