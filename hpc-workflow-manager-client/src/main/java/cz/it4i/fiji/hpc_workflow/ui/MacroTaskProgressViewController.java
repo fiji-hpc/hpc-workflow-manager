@@ -76,9 +76,13 @@ public class MacroTaskProgressViewController extends BorderPane {
 		@Override
 		protected void updateItem(Long t, boolean empty) {
 			super.updateItem(t, empty);
-			if (!empty && t >= 0) {
+			if (!empty && t >= -1) {
 				setText(null);
-				cellProgress.setProgress(t.doubleValue() / 100D);
+				if(t == -1) {
+					cellProgress.setProgress(-1);
+				} else {
+					cellProgress.setProgress(t.doubleValue() / 100D);
+				}
 				setGraphic(cellProgress);
 			}
 			else {

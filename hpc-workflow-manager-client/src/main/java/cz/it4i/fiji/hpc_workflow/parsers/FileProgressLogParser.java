@@ -89,7 +89,8 @@ public class FileProgressLogParser implements ProgressLogParser {
 				String description = elements[1];
 				if (!descriptionToTaskId.containsKey(description)) {
 					descriptionToTaskId.put(description, taskIdCounter++);
-					tableData.add(new MacroTask(description));
+					// Set "indeterminate" progress indicator: state -1.
+					tableData.add(new MacroTask(description, nodeId));
 				}
 				nodeTaskToDescription.get(nodeId).put(taskIdForNode, description);
 			}
