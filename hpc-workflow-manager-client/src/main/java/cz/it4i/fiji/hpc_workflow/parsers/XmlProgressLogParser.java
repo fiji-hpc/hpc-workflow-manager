@@ -24,6 +24,9 @@ import javafx.collections.ObservableList;
 
 public class XmlProgressLogParser implements ProgressLogParser {
 
+	// Maps rank to last updated timestamp:
+	private Map<Integer, Long> previousTimestamp = new HashMap<>();
+
 	@Override
 	public int getNumberOfNodes(List<String> progressLogs) {
 		Document document = convertStringToXMLDocument(progressLogs.get(0));
@@ -87,11 +90,19 @@ public class XmlProgressLogParser implements ProgressLogParser {
 		long jobStartedTimestamp, ObservableList<MacroTask> tableData,
 		Map<String, Map<Integer, SimpleLongProperty>> descriptionToProperty)
 	{
-		for (int rank = 0; rank < progressLogs.size(); rank++) {
+		int size = progressLogs.size();
+		for (int rank = 0; rank < size; rank++) {
 			// Ignore old progress files:
-			if (jobStartedTimestamp > getLastUpdatedTimestamp(rank, progressLogs)) {
+			long lastUpdatedTimestamp = getLastUpdatedTimestamp(rank, progressLogs);
+			if(!this.previousTimestamp.containsKey(rank)) {
+				this.previousTimestamp.put(rank, -1L);
+			}
+			if (jobStartedTimestamp > lastUpdatedTimestamp ||
+				lastUpdatedTimestamp <= this.previousTimestamp.get(rank))
+			{
 				return true;
 			}
+			this.previousTimestamp.put(rank, lastUpdatedTimestamp);
 
 			// Find all task elements in the XML document and get their id and
 			// progress:

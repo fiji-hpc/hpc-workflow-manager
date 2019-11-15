@@ -13,6 +13,8 @@ import javafx.collections.ObservableList;
 
 public class FileProgressLogParser implements ProgressLogParser {
 
+	private Map<Integer, Long> previousTimestamp = new HashMap<>();
+
 	@Override
 	public int getNumberOfNodes(List<String> progressLogs) {
 		int numberOfNodes = 0;
@@ -45,19 +47,26 @@ public class FileProgressLogParser implements ProgressLogParser {
 			nodeTaskToDescription.add(new HashMap<>());
 		}
 
-		int nodeId = 0;
+		int rank = 0;
 		int taskIdCounter = 0;
 		for (String log : progressLogs) {
 			// Ignore old progress files:
-			if (jobStartedTimestamp > getLastUpdatedTimestamp(nodeId, progressLogs)) {
+			long lastUpdatedTimestamp = getLastUpdatedTimestamp(rank, progressLogs);
+			if (!previousTimestamp.containsKey(rank)) {
+				previousTimestamp.put(rank, -1L);
+			}
+			if (jobStartedTimestamp > lastUpdatedTimestamp ||
+				lastUpdatedTimestamp <= previousTimestamp.get(rank))
+			{
 				return true;
 			}
+			this.previousTimestamp.put(rank, lastUpdatedTimestamp);
 
 			String[] logLines = log.split("\n");
 
 			for (String line : logLines) {
 				String[] elements = line.split(",");
-				taskIdCounter = setTaskProgressOrDescriptionFromElements(nodeId,
+				taskIdCounter = setTaskProgressOrDescriptionFromElements(rank,
 					elements, taskIdCounter, tableData, descriptionToProperty);
 
 				// Task counter -1 means parsing the progress log files failed.
@@ -65,7 +74,7 @@ public class FileProgressLogParser implements ProgressLogParser {
 					return false;
 				}
 			}
-			nodeId++;
+			rank++;
 		}
 		return true;
 	}
