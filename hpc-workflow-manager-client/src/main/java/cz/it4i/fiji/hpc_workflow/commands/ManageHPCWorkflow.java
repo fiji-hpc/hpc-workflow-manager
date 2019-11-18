@@ -16,7 +16,9 @@ import cz.it4i.fiji.hpc_workflow.WorkflowParadigm;
 import cz.it4i.fiji.hpc_workflow.core.Constants;
 import cz.it4i.fiji.hpc_workflow.ui.HPCWorkflowWindow;
 import cz.it4i.swing_javafx_ui.JavaFXRoutines;
+import cz.it4i.swing_javafx_ui.SimpleDialog;
 import groovy.util.logging.Slf4j;
+import javafx.application.Platform;
 
 @Slf4j
 @Plugin(type = Command.class, headless = false, priority = Priority.HIGH,
@@ -37,8 +39,20 @@ public class ManageHPCWorkflow implements Command {
 		// Display window:
 		WorkflowParadigm paradigm = parallelService.getParadigmOfType(
 			WorkflowParadigm.class);
-		JavaFXRoutines.runOnFxThread(() -> new HPCWorkflowWindow().openWindow(
-			paradigm));
+		if (paradigm != null) {
+			JavaFXRoutines.runOnFxThread(() -> new HPCWorkflowWindow().openWindow(
+				paradigm));
+		}
+		else {
+			JavaFXRoutines.runOnFxThread(() -> {
+				Platform.setImplicitExit(false); // Do not stop the JavaFX thread.
+				SimpleDialog.showWarning("There is no active workflow paradigm.",
+					"Please start a workflow paradigm first!\nFrom the Fiji menu select:\n" +
+						"\"Plugins > SciJava Parallel > HPC Workflow Manager\"\n" +
+						"then activate an existing worklow paradigm or create a " +
+						"new one and try running HPC Workflow Manager again.");
+			});
+		}
 	}
 
 	public static void main(final String... args) {
