@@ -148,15 +148,19 @@ public class MacroTaskProgressViewController extends BorderPane {
 		}
 
 		// Check weather the progress log is in CSV or XML format:
+		setStatusMessage("Checking type of progress log.");
 		if (progressLogParser == null) {
 			if (XmlProgressLogParser.fileIsValidXML(progressLogs.get(0))) {
 				progressLogParser = new XmlProgressLogParser();
+				setStatusMessage("XML progress log detected.");
 			}
 			else {
 				progressLogParser = new FileProgressLogParser();
+				setStatusMessage("CSV progress log detected.");
 			}
 		}
 
+		setStatusMessage("Getting the number of nodes.");
 		numberOfNodes = progressLogParser.getNumberOfNodes(progressLogs);
 		if (numberOfNodes == 0) {
 			setStatusMessage("Progress log does not list node size, yet!");
@@ -218,8 +222,8 @@ public class MacroTaskProgressViewController extends BorderPane {
 	private void getAndParseFileUpdateTasks(List<String> files) {
 		setStatusMessage("Downloading the macro progress files...");
 		List<String> progressLogs = job.getFileContents(files);
-		setStatusMessage("Parsing the macro progress files...");
 
+		setStatusMessage("Parsing the macro progress files...");
 		if (!progressLogParser.parseProgressLogs(progressLogs, job
 			.getLastStartedTimestamp(), tableData, descriptionToProperty))
 		{
