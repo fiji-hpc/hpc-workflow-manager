@@ -5,8 +5,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import cz.it4i.fiji.haas.ui.TableCellAdapter;
-import cz.it4i.fiji.haas_java_client.FileTransferInfo;
-import cz.it4i.fiji.haas_java_client.FileTransferState;
+import cz.it4i.fiji.hpc_client.data_transfer.FileTransferInfo;
+import cz.it4i.fiji.hpc_client.data_transfer.FileTransferState;
 import cz.it4i.fiji.hpc_workflow.core.SimpleObservableList;
 import cz.it4i.fiji.hpc_workflow.core.SimpleObservableValue;
 import cz.it4i.swing_javafx_ui.CloseableControl;

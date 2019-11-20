@@ -5,7 +5,7 @@ import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.Map;
 
-import cz.it4i.fiji.haas_java_client.JobState;
+import cz.it4i.fiji.hpc_client.JobState;
 
 public class JobStateComparator implements Comparator<JobState> {
 

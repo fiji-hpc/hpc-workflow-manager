@@ -16,10 +16,10 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
-import cz.it4i.fiji.haas_java_client.FileTransferInfo;
-import cz.it4i.fiji.haas_java_client.JobState;
+import cz.it4i.fiji.hpc_client.JobState;
 import cz.it4i.fiji.hpc_client.ProgressNotifier;
 import cz.it4i.fiji.hpc_client.SynchronizableFileType;
+import cz.it4i.fiji.hpc_client.data_transfer.FileTransferInfo;
 import cz.it4i.fiji.hpc_workflow.ui.NewJobController.WorkflowType;
 
 public interface WorkflowJob {

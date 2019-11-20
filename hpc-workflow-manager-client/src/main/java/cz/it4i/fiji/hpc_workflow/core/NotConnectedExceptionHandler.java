@@ -1,7 +1,7 @@
 
 package cz.it4i.fiji.hpc_workflow.core;
 
-import cz.it4i.fiji.haas_java_client.NotConnectedException;
+import cz.it4i.fiji.hpc_client.NotConnectedException;
 import javafx.scene.control.Alert.AlertType;
 
 public class NotConnectedExceptionHandler extends BaseExceptionHandler {

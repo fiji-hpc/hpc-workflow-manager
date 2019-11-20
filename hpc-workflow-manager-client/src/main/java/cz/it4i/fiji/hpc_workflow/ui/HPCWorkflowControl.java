@@ -44,7 +44,7 @@ import cz.it4i.fiji.haas.ui.StringValueUpdater;
 import cz.it4i.fiji.haas.ui.TableCellAdapter;
 import cz.it4i.fiji.haas.ui.TableCellAdapter.TableCellUpdater;
 import cz.it4i.fiji.haas.ui.TableViewContextMenu;
-import cz.it4i.fiji.haas_java_client.JobState;
+import cz.it4i.fiji.hpc_client.JobState;
 import cz.it4i.fiji.hpc_client.ProgressNotifier;
 import cz.it4i.fiji.hpc_workflow.WorkflowJob;
 import cz.it4i.fiji.hpc_workflow.WorkflowParadigm;

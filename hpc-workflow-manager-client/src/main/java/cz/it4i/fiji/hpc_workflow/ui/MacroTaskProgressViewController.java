@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.python.jline.internal.Log;
 
-import cz.it4i.fiji.haas_java_client.JobState;
+import cz.it4i.fiji.hpc_client.JobState;
 import cz.it4i.fiji.hpc_workflow.core.MacroTask;
 import cz.it4i.fiji.hpc_workflow.core.ObservableHPCWorkflowJob;
 import cz.it4i.fiji.hpc_workflow.parsers.FileProgressLogParser;

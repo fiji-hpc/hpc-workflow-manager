@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.time.Instant;
 
-import cz.it4i.fiji.haas_java_client.UploadingFile;
+import cz.it4i.fiji.hpc_client.UploadingFile;
 
 public class UploadingFileFromResource implements UploadingFile {
 
