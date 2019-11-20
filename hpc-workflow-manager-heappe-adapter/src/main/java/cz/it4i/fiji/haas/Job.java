@@ -24,20 +24,19 @@ import org.slf4j.LoggerFactory;
 
 import cz.it4i.fiji.haas.JobManager.JobManager4Job;
 import cz.it4i.fiji.haas.JobManager.JobSynchronizableFile;
-import cz.it4i.fiji.haas.data_transfer.Synchronization;
-import cz.it4i.fiji.haas_java_client.FileTransferInfo;
 import cz.it4i.fiji.haas_java_client.HaaSClient;
 import cz.it4i.fiji.haas_java_client.JobSettings;
-import cz.it4i.fiji.haas_java_client.JobState;
 import cz.it4i.fiji.haas_java_client.TransferFileProgressForHaaSClient;
-import cz.it4i.fiji.haas_java_client.UploadingFile;
-import cz.it4i.fiji.haas_java_client.UploadingFileData;
 import cz.it4i.fiji.hpc_client.HPCClient;
 import cz.it4i.fiji.hpc_client.HPCFileTransfer;
 import cz.it4i.fiji.hpc_client.JobFileContent;
 import cz.it4i.fiji.hpc_client.JobInfo;
+import cz.it4i.fiji.hpc_client.JobState;
 import cz.it4i.fiji.hpc_client.ProgressNotifier;
 import cz.it4i.fiji.hpc_client.SynchronizableFile;
+import cz.it4i.fiji.hpc_client.UploadingFile;
+import cz.it4i.fiji.hpc_client.data_transfer.FileTransferInfo;
+import cz.it4i.fiji.hpc_client.data_transfer.Synchronization;
 import cz.it4i.fiji.scpclient.TransferFileProgress;
 
 /***
@@ -499,7 +498,7 @@ public class Job {
 		try (HPCFileTransfer transfer = haasClientSupplier.get().startFileTransfer(
 			getId()))
 		{
-			transfer.upload(new UploadingFileData(fileName));
+			transfer.upload(new EmptyUploadingFile(fileName));
 		}
 	}
 

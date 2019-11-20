@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import cz.it4i.fiji.haas.ui.TableCellAdapter;
 import cz.it4i.fiji.haas.ui.TableViewContextMenu;
-import cz.it4i.fiji.haas_java_client.JobState;
+import cz.it4i.fiji.hpc_client.JobState;
 import cz.it4i.fiji.hpc_workflow.Task;
 import cz.it4i.fiji.hpc_workflow.TaskComputation;
 import cz.it4i.fiji.hpc_workflow.core.Constants;

@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import cz.it4i.fiji.haas_java_client.JobState;
+import cz.it4i.fiji.hpc_client.JobState;
 import cz.it4i.fiji.hpc_workflow.Task;
 import cz.it4i.fiji.hpc_workflow.TaskComputation;
 

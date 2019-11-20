@@ -1,10 +1,9 @@
 
 package cz.it4i.fiji.hpc_workflow.core;
 
-import static cz.it4i.fiji.haas.data_transfer.PersistentSynchronizationProcess.FAILED_ITEM;
-import static cz.it4i.fiji.haas_java_client.JobState.Canceled;
-import static cz.it4i.fiji.haas_java_client.JobState.Failed;
-import static cz.it4i.fiji.haas_java_client.JobState.Finished;
+import static cz.it4i.fiji.hpc_client.JobState.Canceled;
+import static cz.it4i.fiji.hpc_client.JobState.Failed;
+import static cz.it4i.fiji.hpc_client.JobState.Finished;
 import static cz.it4i.fiji.hpc_workflow.core.Configuration.getHaasClusterNodeType;
 import static cz.it4i.fiji.hpc_workflow.core.Configuration.getWalltime;
 import static cz.it4i.fiji.hpc_workflow.core.Constants.BENCHMARK_TASK_NAME_MAP;
@@ -71,15 +70,16 @@ import cz.it4i.fiji.commons.WebRoutines;
 import cz.it4i.fiji.haas.Job;
 import cz.it4i.fiji.haas.JobManager;
 import cz.it4i.fiji.haas.UploadingFileFromResource;
-import cz.it4i.fiji.haas_java_client.FileTransferInfo;
-import cz.it4i.fiji.haas_java_client.HaaSClientException;
 import cz.it4i.fiji.haas_java_client.HaaSClientSettings;
 import cz.it4i.fiji.haas_java_client.JobSettings;
 import cz.it4i.fiji.haas_java_client.JobSettingsBuilder;
-import cz.it4i.fiji.haas_java_client.JobState;
-import cz.it4i.fiji.haas_java_client.UploadingFile;
+import cz.it4i.fiji.hpc_client.HPCClientException;
+import cz.it4i.fiji.hpc_client.JobState;
 import cz.it4i.fiji.hpc_client.ProgressNotifier;
 import cz.it4i.fiji.hpc_client.SynchronizableFileType;
+import cz.it4i.fiji.hpc_client.UploadingFile;
+import cz.it4i.fiji.hpc_client.data_transfer.FileTransferInfo;
+import cz.it4i.fiji.hpc_client.data_transfer.Synchronization;
 import cz.it4i.fiji.hpc_workflow.Task;
 import cz.it4i.fiji.hpc_workflow.TaskComputation;
 import cz.it4i.fiji.hpc_workflow.WorkflowJob;
@@ -542,7 +542,7 @@ public class HPCWorkflowJobManager implements MacroWorkflowParadigm
 				}).whenComplete((x, e) -> {
 					if (e != null) {
 						log.error(e.getMessage(), e);
-						downloadNotifier.addItem(FAILED_ITEM);
+						downloadNotifier.addItem(Synchronization.FAILED_ITEM);
 					}
 					result.complete(null);
 				});
@@ -599,7 +599,7 @@ public class HPCWorkflowJobManager implements MacroWorkflowParadigm
 			catch (IOException | ParserConfigurationException | SAXException
 					| XPathExpressionException e)
 			{
-				throw new HaaSClientException("Extract names from " + pathToXML, e);
+				throw new HPCClientException("Extract names from " + pathToXML, e);
 			}
 			return result;
 		}

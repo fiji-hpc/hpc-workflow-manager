@@ -7,9 +7,9 @@ import java.util.concurrent.Executors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import cz.it4i.fiji.haas_java_client.FileTransferInfo;
-import cz.it4i.fiji.haas_java_client.JobState;
+import cz.it4i.fiji.hpc_client.JobState;
 import cz.it4i.fiji.hpc_client.SynchronizableFileType;
+import cz.it4i.fiji.hpc_client.data_transfer.FileTransferInfo;
 import cz.it4i.fiji.hpc_workflow.Task;
 import cz.it4i.fiji.hpc_workflow.core.ObservableHPCWorkflowJob;
 import cz.it4i.fiji.hpc_workflow.core.SimpleObservableList;

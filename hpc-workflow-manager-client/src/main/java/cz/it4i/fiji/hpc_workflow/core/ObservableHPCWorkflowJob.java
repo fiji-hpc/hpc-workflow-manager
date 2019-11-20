@@ -13,12 +13,12 @@ import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import cz.it4i.fiji.haas.data_transfer.PersistentSynchronizationProcess;
 import cz.it4i.fiji.haas.ui.UpdatableObservableValue;
-import cz.it4i.fiji.haas_java_client.FileTransferInfo;
-import cz.it4i.fiji.haas_java_client.JobState;
+import cz.it4i.fiji.hpc_client.JobState;
 import cz.it4i.fiji.hpc_client.ProgressNotifier;
 import cz.it4i.fiji.hpc_client.SynchronizableFileType;
+import cz.it4i.fiji.hpc_client.data_transfer.FileTransferInfo;
+import cz.it4i.fiji.hpc_client.data_transfer.Synchronization;
 import cz.it4i.fiji.hpc_workflow.Task;
 import cz.it4i.fiji.hpc_workflow.WorkflowJob;
 import cz.it4i.fiji.hpc_workflow.ui.NewJobController.WorkflowType;
@@ -153,7 +153,7 @@ public class ObservableHPCWorkflowJob extends
 
 		@Override
 		public synchronized void addItem(Object item) {
-			if (Objects.equals(item, PersistentSynchronizationProcess.FAILED_ITEM)) {
+			if (Objects.equals(item, Synchronization.FAILED_ITEM)) {
 				failed = true;
 				doneStatusConsumer.accept(false);
 				reloadFileTransferList();

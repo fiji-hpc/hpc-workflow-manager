@@ -18,7 +18,7 @@ import org.slf4j.LoggerFactory;
 import cz.it4i.fiji.haas_java_client.HaaSClient;
 import cz.it4i.fiji.haas_java_client.HaaSClientSettings;
 import cz.it4i.fiji.haas_java_client.JobSettings;
-import cz.it4i.fiji.haas_java_client.JobState;
+import cz.it4i.fiji.hpc_client.JobState;
 import cz.it4i.fiji.hpc_client.SynchronizableFileType;
 
 public class JobManager implements Closeable {
