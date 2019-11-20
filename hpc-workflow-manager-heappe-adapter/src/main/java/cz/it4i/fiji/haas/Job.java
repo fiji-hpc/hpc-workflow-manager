@@ -27,15 +27,17 @@ import cz.it4i.fiji.haas.JobManager.JobSynchronizableFile;
 import cz.it4i.fiji.haas.data_transfer.Synchronization;
 import cz.it4i.fiji.haas_java_client.FileTransferInfo;
 import cz.it4i.fiji.haas_java_client.HaaSClient;
-import cz.it4i.fiji.haas_java_client.HaaSFileTransfer;
-import cz.it4i.fiji.haas_java_client.JobInfo;
 import cz.it4i.fiji.haas_java_client.JobSettings;
 import cz.it4i.fiji.haas_java_client.JobState;
-import cz.it4i.fiji.haas_java_client.ProgressNotifier;
 import cz.it4i.fiji.haas_java_client.TransferFileProgressForHaaSClient;
 import cz.it4i.fiji.haas_java_client.UploadingFile;
 import cz.it4i.fiji.haas_java_client.UploadingFileData;
-import cz.it4i.fiji.haas_java_client.proxy.JobFileContentExt;
+import cz.it4i.fiji.hpc_client.HPCClient;
+import cz.it4i.fiji.hpc_client.HPCFileTransfer;
+import cz.it4i.fiji.hpc_client.JobFileContent;
+import cz.it4i.fiji.hpc_client.JobInfo;
+import cz.it4i.fiji.hpc_client.ProgressNotifier;
+import cz.it4i.fiji.hpc_client.SynchronizableFile;
 import cz.it4i.fiji.scpclient.TransferFileProgress;
 
 /***
@@ -263,8 +265,8 @@ public class Job {
 		TransferFileProgressForHaaSClient progress =
 			new TransferFileProgressForHaaSClient(totalSize, notifier);
 
-		HaaSClient client = getHaaSClient();
-		try (HaaSFileTransfer transfer = client.startFileTransfer(getId(),
+		HPCClient<?> client = getHaaSClient();
+		try (HPCFileTransfer transfer = client.startFileTransfer(getId(),
 			progress))
 		{
 			int index = 0;
@@ -287,7 +289,7 @@ public class Job {
 	}
 
 	public void submit() {
-		HaaSClient client = getHaaSClient();
+		HPCClient<?> client = getHaaSClient();
 		client.submitJob(jobId);
 		stopDownloadData();
 		setCanBeDownloaded(true);
@@ -320,8 +322,8 @@ public class Job {
 	{
 		List<String> files = getHaaSClient().getChangedFiles(jobId).stream().filter(
 			predicate).collect(Collectors.toList());
-		try (HaaSFileTransfer transfer = haasClientSupplier.get().startFileTransfer(
-			getId(), HaaSClient.DUMMY_TRANSFER_FILE_PROGRESS))
+		try (HPCFileTransfer transfer = haasClientSupplier.get().startFileTransfer(
+			getId(), HPCClient.DUMMY_TRANSFER_FILE_PROGRESS))
 		{
 			List<Long> fileSizes;
 			try {
@@ -370,14 +372,15 @@ public class Job {
 		return jobInfo.getEndTime();
 	}
 
-	public List<String> getOutput(Iterable<JobSynchronizableFile> output) {
-		HaaSClient.SynchronizableFiles taskFileOffset =
-			new HaaSClient.SynchronizableFiles();
+	public List<String> getOutput(Collection<JobSynchronizableFile> output) {
+
 		long taskId = (Long) getJobInfo().getTasks().toArray()[0];
-		output.forEach(file -> taskFileOffset.addFile(taskId, file.getType(), file
-			.getOffset()));
-		return getHaaSClient().downloadPartsOfJobFiles(jobId, taskFileOffset)
-			.stream().map(JobFileContentExt::getContent).collect(Collectors.toList());
+		List<SynchronizableFile> synchronizableFiles = output.stream().map(
+			file -> new SynchronizableFile(taskId, file.getType(), file.getOffset()))
+			.collect(Collectors.toList());
+
+		return getHaaSClient().downloadPartsOfJobFiles(jobId, synchronizableFiles)
+			.stream().map(JobFileContent::getContent).collect(Collectors.toList());
 	}
 
 	public InputStream openLocalFile(String name) throws IOException {
@@ -441,8 +444,8 @@ public class Job {
 
 	public List<Long> getFileSizes(List<String> names) {
 
-		try (HaaSFileTransfer transfer = getHaaSClient().startFileTransfer(getId(),
-			HaaSClient.DUMMY_TRANSFER_FILE_PROGRESS))
+		try (HPCFileTransfer transfer = getHaaSClient().startFileTransfer(getId(),
+			HPCClient.DUMMY_TRANSFER_FILE_PROGRESS))
 		{
 			try {
 				return transfer.obtainSize(names);
@@ -454,8 +457,8 @@ public class Job {
 	}
 
 	public List<String> getFileContents(List<String> logs) {
-		try (HaaSFileTransfer transfer = getHaaSClient().startFileTransfer(getId(),
-			HaaSClient.DUMMY_TRANSFER_FILE_PROGRESS))
+		try (HPCFileTransfer transfer = getHaaSClient().startFileTransfer(getId(),
+			HPCClient.DUMMY_TRANSFER_FILE_PROGRESS))
 		{
 			return transfer.getContent(logs);
 		}
@@ -493,7 +496,7 @@ public class Job {
 	}
 
 	public void createEmptyFile(String fileName) throws InterruptedIOException {
-		try (HaaSFileTransfer transfer = haasClientSupplier.get().startFileTransfer(
+		try (HPCFileTransfer transfer = haasClientSupplier.get().startFileTransfer(
 			getId()))
 		{
 			transfer.upload(new UploadingFileData(fileName));
@@ -544,7 +547,7 @@ public class Job {
 			this.inputDirectory = inputDirectoryProvider.apply(jobDir);
 			this.outputDirectory = outputDirectoryProvider.apply(jobDir);
 			this.synchronization = new Synchronization(() -> startFileTransfer(
-				HaaSClient.DUMMY_TRANSFER_FILE_PROGRESS), jobDir, this.inputDirectory,
+				HPCClient.DUMMY_TRANSFER_FILE_PROGRESS), jobDir, this.inputDirectory,
 				this.outputDirectory, () -> {
 					setProperty(JOB_NEEDS_UPLOAD, false);
 					setUploaded(true);
@@ -560,7 +563,7 @@ public class Job {
 		}
 	}
 
-	private HaaSFileTransfer startFileTransfer(
+	private HPCFileTransfer startFileTransfer(
 		final TransferFileProgress progress)
 	{
 		return haasClientSupplier.get().startFileTransfer(getId(), progress);

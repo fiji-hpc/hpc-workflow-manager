@@ -1,8 +1,8 @@
 
 package cz.it4i.fiji.hpc_workflow.core;
 
-import static cz.it4i.fiji.haas_java_client.SynchronizableFileType.StandardErrorFile;
-import static cz.it4i.fiji.haas_java_client.SynchronizableFileType.StandardOutputFile;
+import static cz.it4i.fiji.hpc_client.SynchronizableFileType.StandardErrorFile;
+import static cz.it4i.fiji.hpc_client.SynchronizableFileType.StandardOutputFile;
 import static cz.it4i.fiji.hpc_workflow.core.Configuration.getHaasUpdateTimeout;
 import static cz.it4i.fiji.hpc_workflow.core.Constants.BENCHMARK_TASK_NAME_MAP;
 import static cz.it4i.fiji.hpc_workflow.core.Constants.UI_TO_HAAS_FREQUENCY_UPDATE_RATIO;
@@ -22,7 +22,7 @@ import java.util.stream.Stream;
 import cz.it4i.fiji.haas.HaaSOutputHolder;
 import cz.it4i.fiji.haas.HaaSOutputHolderImpl;
 import cz.it4i.fiji.haas.Job;
-import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
+import cz.it4i.fiji.hpc_client.SynchronizableFileType;
 import cz.it4i.fiji.hpc_workflow.Task;
 
 class SnakemakeOutputHelper implements HaaSOutputHolder {

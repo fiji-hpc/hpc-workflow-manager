@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.Streams;
 
 import cz.it4i.fiji.haas.JobManager.JobSynchronizableFile;
-import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
+import cz.it4i.fiji.hpc_client.SynchronizableFileType;
 
 public class HaaSOutputHolderImpl implements HaaSOutputHolder {
 

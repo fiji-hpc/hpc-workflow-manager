@@ -11,7 +11,7 @@ import java.util.function.Function;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
-import cz.it4i.fiji.haas_java_client.SynchronizableFileType;
+import cz.it4i.fiji.hpc_client.SynchronizableFileType;
 
 public class ComputationAccessorDecoratorWithTimeout implements ComputationAccessor {
 	private final long intervalForQueryInMs;

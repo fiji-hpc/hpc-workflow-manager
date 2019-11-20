@@ -1,7 +1,8 @@
 package cz.it4i.fiji.hpc_workflow.core;
 
-import cz.it4i.fiji.haas_java_client.ProgressNotifier;
 import net.imagej.updater.util.Progress;
+
+import cz.it4i.fiji.hpc_client.ProgressNotifier;
 
 class ProgressNotifierAdapter implements ProgressNotifier {
 	private final Progress progress;
