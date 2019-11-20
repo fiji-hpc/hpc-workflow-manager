@@ -3,7 +3,7 @@ package cz.it4i.fiji.hpc_workflow.ui;
 
 import net.imagej.updater.util.UpdateCanceledException;
 
-import cz.it4i.fiji.haas_java_client.ProgressNotifier;
+import cz.it4i.fiji.hpc_client.ProgressNotifier;
 import cz.it4i.swing_javafx_ui.JavaFXRoutines;
 import javafx.scene.Scene;
 import javafx.stage.Modality;
