@@ -10,6 +10,7 @@ package cz.it4i.fiji.hpc_workflow.paradigm_manager;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.function.Supplier;
 
 import org.scijava.Context;
 import org.scijava.parallel.ParadigmManager;
@@ -19,13 +20,22 @@ import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
 import cz.it4i.fiji.commons.UncaughtExceptionHandlerDecorator;
+import cz.it4i.fiji.haas.JobWithDirectorySettings;
+import cz.it4i.fiji.haas_java_client.HaaSClient;
+import cz.it4i.fiji.haas_java_client.HaaSClientSettings;
+import cz.it4i.fiji.haas_java_client.JobSettings;
+import cz.it4i.fiji.haas_java_client.JobSettingsBuilder;
+import cz.it4i.fiji.hpc_client.HPCClient;
 import cz.it4i.fiji.hpc_workflow.commands.FileLock;
 import cz.it4i.fiji.hpc_workflow.commands.HPCWorkflowParametersImpl;
 import cz.it4i.fiji.hpc_workflow.core.AuthFailExceptionHandler;
 import cz.it4i.fiji.hpc_workflow.core.AuthenticationExceptionHandler;
+import cz.it4i.fiji.hpc_workflow.core.Configuration;
 import cz.it4i.fiji.hpc_workflow.core.HPCWorkflowJobManager;
+import cz.it4i.fiji.hpc_workflow.core.HPCWorkflowParameters;
 import cz.it4i.fiji.hpc_workflow.core.NotConnectedExceptionHandler;
 import cz.it4i.fiji.hpc_workflow.ui.LoginViewWindow;
+import cz.it4i.fiji.hpc_workflow.ui.NewJobWindow;
 import cz.it4i.fiji.hpc_workflow.ui.ProgressDialogViewWindow;
 import cz.it4i.parallel.paradigm_managers.ui.HavingOwnerWindow;
 import cz.it4i.swing_javafx_ui.JavaFXRoutines;
@@ -80,8 +90,31 @@ public class WorkflowParadigmManager implements ParadigmManager,
 		HPCWorkflowJobManager typedParadigm = (HPCWorkflowJobManager) paradigm;
 		WorkflowParadigmProfile typedProfile = (WorkflowParadigmProfile) profile;
 		PManager pmManager = new PManager(typedProfile, ownerWindow);
-		typedParadigm.prepareParadigm(typedProfile.getParameters(), pmManager::init,
-			pmManager::initDone, pmManager::dispose);
+		typedParadigm.prepareParadigm(typedProfile.getParameters()
+			.workingDirectory(), getHPCClientSupplier(typedProfile.getParameters()),
+			getSettingsSupplier(), pmManager::init, pmManager::initDone,
+			pmManager::dispose);
+	}
+
+	private Supplier<JobWithDirectorySettings> getSettingsSupplier() {
+		return () -> {
+			NewJobWindow newJobWindow = new NewJobWindow(ownerWindow);
+			doCreateJob(newJobWindow::getInputDirectory,
+				newJobWindow::getOutputDirectory, newJobWindow.getNumberOfNodes(),
+  newJobWindow.getHaasTemplateId(), newJobWindow::getUserScriptName)
+			
+			JobSettings jobSetttings = new JobSettingsBuilder().jobName(HAAS_JOB_NAME)
+				.clusterNodeType(getHaasClusterNodeType()).templateId(haasTemplateId)
+				.walltimeLimit(getWalltime()).numberOfCoresPerNode(CORES_PER_NODE)
+				.numberOfNodes(numberOfNodes).build();
+		};
+	}
+
+	private static Supplier<HPCClient<JobWithDirectorySettings>>
+		getHPCClientSupplier(HPCWorkflowParametersImpl hpcWorkflowParametersImpl)
+	{
+		return () -> new HaaSClient<>(constructSettingsFromParams(
+			hpcWorkflowParametersImpl));
 	}
 
 	@Override
@@ -126,6 +159,39 @@ public class WorkflowParadigmManager implements ParadigmManager,
 			return null;
 		}
 		return result;
+	}
+
+	private static HaaSClientSettings constructSettingsFromParams(
+		HPCWorkflowParameters params)
+	{
+		return new HaaSClientSettings() {
+
+			@Override
+			public String getUserName() {
+				return params.username();
+			}
+
+			@Override
+			public String getProjectId() {
+				return Configuration.getHaasProjectID();
+			}
+
+			@Override
+			public String getPhone() {
+				return params.phone();
+			}
+
+			@Override
+			public String getPassword() {
+				return params.password();
+			}
+
+			@Override
+			public String getEmail() {
+				return params.email();
+			}
+
+		};
 	}
 
 	private static class PManager {

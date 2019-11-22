@@ -9,15 +9,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.function.BiPredicate;
-import java.util.function.Supplier;
-import java.util.function.UnaryOperator;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import cz.it4i.fiji.haas_java_client.HaaSClient;
-import cz.it4i.fiji.haas_java_client.HaaSClientSettings;
-import cz.it4i.fiji.haas_java_client.JobSettings;
 import cz.it4i.fiji.hpc_client.JobState;
 import cz.it4i.fiji.hpc_client.SynchronizableFileType;
 
@@ -33,16 +29,13 @@ public class JobManager implements Closeable {
 	private static Logger log = LoggerFactory.getLogger(
 		cz.it4i.fiji.haas.JobManager.class);
 
-	private static final BiPredicate<Job, Path> DUMMY_UPLOAD_FILTER = (X,
-		Y) -> true;
+	private static final BiPredicate<Job, Path> DUMMY_UPLOAD_FILTER = (x,
+		y) -> true;
 
 	private final Path workDirectory;
 
 	private Collection<Job> jobs;
 
-	private HaaSClient haasClient;
-
-	private final HaaSClientSettings settings;
 
 	private BiPredicate<Job, Path> uploadFilter = DUMMY_UPLOAD_FILTER;
 
@@ -64,20 +57,20 @@ public class JobManager implements Closeable {
 		}
 	};
 
-	public JobManager(Path workDirectory, HaaSClientSettings settings) {
+	private HPCClientProxyAdapter<? extends JobWithDirectorySettings> hpcClient;
+
+	public JobManager(Path workDirectory,
+		HPCClientProxyAdapter<? extends JobWithDirectorySettings> hpcClient)
+	{
 		this.workDirectory = workDirectory;
-		this.settings = settings;
+		this.hpcClient = hpcClient;
 	}
 
-	public Job createJob(JobSettings jobSettings,
-		UnaryOperator<Path> inputDirectoryProvider,
-		UnaryOperator<Path> outputDirectoryProvider,
-		Supplier<String> userScriptName) throws IOException
+	public Job createJob() throws IOException 
 	{
 		Job result;
 		initJobsIfNecessary();
-		result = new Job(remover, jobSettings, workDirectory, this::getHaasClient,
-			inputDirectoryProvider, outputDirectoryProvider, userScriptName);
+		result = Job.submitNewJob(remover, workDirectory, hpcClient);
 		jobs.add(result);
 		return result;
 	}
@@ -88,7 +81,7 @@ public class JobManager implements Closeable {
 	}
 
 	public void checkConnection() {
-		getHaasClient().checkConnection();
+		hpcClient.checkConnection();
 	}
 
 	public void setUploadFilter(BiPredicate<Job, Path> filter) {
@@ -102,20 +95,12 @@ public class JobManager implements Closeable {
 		}
 	}
 
-	private HaaSClient getHaasClient() {
-		if (haasClient == null) {
-			haasClient = new HaaSClient(settings);
-		}
-		return haasClient;
-	}
-
 	private synchronized void initJobsIfNecessary() {
 		if (jobs == null) {
 			jobs = new LinkedList<>();
-			try {
-				Files.list(this.workDirectory).filter(p -> p.toFile().isDirectory() &&
-					Job.isValidJobPath(p)).forEach(p -> jobs.add(new Job(remover, p,
-						this::getHaasClient)));
+			try (Stream<Path> dir = Files.list(this.workDirectory)) {
+				dir.filter(p -> p.toFile().isDirectory() && Job.isValidJobPath(p))
+					.forEach(p -> jobs.add(Job.getExistingJob(remover, p, hpcClient)));
 			}
 			catch (IOException e) {
 				log.error(e.getMessage(), e);
