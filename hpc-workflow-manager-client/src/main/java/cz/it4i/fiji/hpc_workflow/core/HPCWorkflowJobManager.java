@@ -40,7 +40,6 @@ import java.util.concurrent.Executor;
 import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
-import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -79,11 +78,12 @@ import cz.it4i.fiji.hpc_client.data_transfer.Synchronization;
 import cz.it4i.fiji.hpc_workflow.Task;
 import cz.it4i.fiji.hpc_workflow.TaskComputation;
 import cz.it4i.fiji.hpc_workflow.WorkflowJob;
+import cz.it4i.fiji.hpc_workflow.WorkflowParadigm;
 import cz.it4i.fiji.hpc_workflow.ui.NewJobController;
 import cz.it4i.fiji.hpc_workflow.ui.NewJobController.WorkflowType;
 
 @Plugin(type = ParallelizationParadigm.class)
-public class HPCWorkflowJobManager implements MacroWorkflowParadigm
+public class HPCWorkflowJobManager implements WorkflowParadigm
 {
 
 	public interface DownloadingStatusProvider {
@@ -687,32 +687,22 @@ public class HPCWorkflowJobManager implements MacroWorkflowParadigm
 	public <T extends JobWithDirectorySettings> void prepareParadigm(
 		Path aWorkingDirectory,
 		Supplier<HPCClient<T>> hpcClientSupplier,
-		Supplier<T> jobSettingsSupplier, BooleanSupplier aInitializator,
+		Class<T> jobSettingsType, BooleanSupplier aInitializator,
 		Runnable aInitDoneCallback, Runnable aFinalizer)
 	{
 		this.workingDirectory = aWorkingDirectory;
 		this.hpcClient = new HPCClientProxyAdapter<>(hpcClientSupplier,
-			jobSettingsSupplier);
+			jobSettingsType);
 		this.initializator = aInitializator;
 		this.finalizer = aFinalizer;
 		this.initDoneCallback = aInitDoneCallback;
 	}
 
-	@Override
-	public WorkflowJob createJob(UnaryOperator<Path> inputDirectoryProvider,
-		UnaryOperator<Path> outputDirectoryProvider, int numberOfNodes,
-		int haasTemplateId) throws IOException
-	{
-		return createJob(inputDirectoryProvider, outputDirectoryProvider,
-			numberOfNodes, haasTemplateId, () -> "user.ijm");
-	}
 
 	@Override
-	public WorkflowJob createJob(UnaryOperator<Path> inputDirectoryProvider,
-		UnaryOperator<Path> outputDirectoryProvider, int numberOfNodes,
-		int haasTemplateId, Supplier<String> userScriptName) throws IOException
-	{
-		Job job = jobManager.createJob();
+	public WorkflowJob createJob(Object parameters) throws IOException {
+
+		Job job = jobManager.createJob(parameters);
 		if (job.getInputDirectory() == null) {
 			job.createEmptyFile(Constants.DEMO_DATA_SIGNAL_FILE_NAME);
 		}
@@ -888,7 +878,6 @@ public class HPCWorkflowJobManager implements MacroWorkflowParadigm
 	private static UploadingFile getConfigYamlFile() {
 		return new UploadingFileFromResource("", Constants.CONFIG_YAML);
 	}
-
 
 
 

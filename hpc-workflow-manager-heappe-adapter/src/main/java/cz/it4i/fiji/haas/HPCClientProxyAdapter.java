@@ -35,19 +35,19 @@ public class HPCClientProxyAdapter<T> implements HPCClient<T> {
 	}
 
 	private final Supplier<HPCClient<T>> clientSupplier;
-	private final Supplier<T> jobSettingsSupplier;
+	private final Class<T> jobSettingsType;
 	private HPCClient<T> hpcClient;
 
 
 	public HPCClientProxyAdapter(Supplier<HPCClient<T>> clientSupplier,
-		Supplier<T> jobSettingsSupplier)
+		Class<T> jobSettingsType)
 	{
 		this.clientSupplier = clientSupplier;
-		this.jobSettingsSupplier = jobSettingsSupplier;
+		this.jobSettingsType = jobSettingsType;
 	}
 
-	public JobSubmission<T> createJob() {
-		T settings = jobSettingsSupplier.get();
+	public JobSubmission<T> createJobSubmission(Object params) {
+		T settings = jobSettingsType.cast(params);
 		return new JobSubmission<>(createJob(settings), settings);
 	}
 

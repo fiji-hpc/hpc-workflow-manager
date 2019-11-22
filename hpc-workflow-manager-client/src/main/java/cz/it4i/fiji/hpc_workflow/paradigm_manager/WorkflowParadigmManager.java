@@ -92,22 +92,8 @@ public class WorkflowParadigmManager implements ParadigmManager,
 		PManager pmManager = new PManager(typedProfile, ownerWindow);
 		typedParadigm.prepareParadigm(typedProfile.getParameters()
 			.workingDirectory(), getHPCClientSupplier(typedProfile.getParameters()),
-			getSettingsSupplier(), pmManager::init, pmManager::initDone,
+			JobWithDirectorySettings.class, pmManager::init, pmManager::initDone,
 			pmManager::dispose);
-	}
-
-	private Supplier<JobWithDirectorySettings> getSettingsSupplier() {
-		return () -> {
-			NewJobWindow newJobWindow = new NewJobWindow(ownerWindow);
-			doCreateJob(newJobWindow::getInputDirectory,
-				newJobWindow::getOutputDirectory, newJobWindow.getNumberOfNodes(),
-  newJobWindow.getHaasTemplateId(), newJobWindow::getUserScriptName)
-			
-			JobSettings jobSetttings = new JobSettingsBuilder().jobName(HAAS_JOB_NAME)
-				.clusterNodeType(getHaasClusterNodeType()).templateId(haasTemplateId)
-				.walltimeLimit(getWalltime()).numberOfCoresPerNode(CORES_PER_NODE)
-				.numberOfNodes(numberOfNodes).build();
-		};
 	}
 
 	private static Supplier<HPCClient<JobWithDirectorySettings>>

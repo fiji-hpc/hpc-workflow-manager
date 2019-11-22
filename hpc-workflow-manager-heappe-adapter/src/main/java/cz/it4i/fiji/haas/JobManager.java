@@ -66,11 +66,11 @@ public class JobManager implements Closeable {
 		this.hpcClient = hpcClient;
 	}
 
-	public Job createJob() throws IOException 
+	public Job createJob(Object params) throws IOException
 	{
 		Job result;
 		initJobsIfNecessary();
-		result = Job.submitNewJob(remover, workDirectory, hpcClient);
+		result = Job.submitNewJob(remover, workDirectory, hpcClient, params);
 		jobs.add(result);
 		return result;
 	}

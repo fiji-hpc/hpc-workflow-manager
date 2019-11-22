@@ -26,7 +26,6 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
 import org.scijava.Context;
@@ -38,20 +37,23 @@ import org.slf4j.LoggerFactory;
 import bdv.BigDataViewer;
 import bdv.export.ProgressWriterConsole;
 import bdv.viewer.ViewerOptions;
+import cz.it4i.fiji.haas.JobWithDirectorySettings;
 import cz.it4i.fiji.haas.ui.FutureValueUpdater;
 import cz.it4i.fiji.haas.ui.ShellRoutines;
 import cz.it4i.fiji.haas.ui.StringValueUpdater;
 import cz.it4i.fiji.haas.ui.TableCellAdapter;
 import cz.it4i.fiji.haas.ui.TableCellAdapter.TableCellUpdater;
 import cz.it4i.fiji.haas.ui.TableViewContextMenu;
+import cz.it4i.fiji.haas_java_client.JobSettings;
+import cz.it4i.fiji.haas_java_client.JobSettingsBuilder;
 import cz.it4i.fiji.hpc_client.JobState;
 import cz.it4i.fiji.hpc_client.ProgressNotifier;
 import cz.it4i.fiji.hpc_workflow.WorkflowJob;
 import cz.it4i.fiji.hpc_workflow.WorkflowParadigm;
+import cz.it4i.fiji.hpc_workflow.core.Configuration;
 import cz.it4i.fiji.hpc_workflow.core.Constants;
 import cz.it4i.fiji.hpc_workflow.core.FXFrameExecutorService;
 import cz.it4i.fiji.hpc_workflow.core.MacroWorkflowJob;
-import cz.it4i.fiji.hpc_workflow.core.MacroWorkflowParadigm;
 import cz.it4i.fiji.hpc_workflow.core.ObservableHPCWorkflowJob;
 import cz.it4i.fiji.hpc_workflow.core.ObservableHPCWorkflowJob.TransferProgress;
 import cz.it4i.fiji.hpc_workflow.ui.NewJobController.WorkflowType;
@@ -70,6 +72,8 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Region;
 import javafx.stage.Stage;
+import lombok.AllArgsConstructor;
+import lombok.experimental.Delegate;
 import mpicbg.spim.data.SpimDataException;
 
 public class HPCWorkflowControl extends BorderPane {
@@ -313,9 +317,8 @@ public class HPCWorkflowControl extends BorderPane {
 
 				@Override
 				public void doAction(ProgressNotifier p) throws IOException {
-					WorkflowJob job = doCreateJob(newJobWindow::getInputDirectory,
-						newJobWindow::getOutputDirectory, newJobWindow.getNumberOfNodes(),
-      newJobWindow.getHaasTemplateId(), newJobWindow::getUserScriptName);
+					WorkflowJob job = doCreateJob(constructSettings(newJobWindow));
+
 					if (newJobWindow.getInputDirectory(job.getDirectory()) != null && job
 						.getWorkflowType() == WorkflowType.SPIM_WORKFLOW && (job
 							.getInputDirectory().resolve(CONFIG_YAML)).toFile().exists())
@@ -350,25 +353,44 @@ public class HPCWorkflowControl extends BorderPane {
 		newJobWindow.openWindow(this.stage);
 	}
 
-	private WorkflowJob doCreateJob(UnaryOperator<Path> inputProvider,
-		UnaryOperator<Path> outputProvider, int numberOfNodes, int haasTemplateId,
-		Supplier<String> userScriptName) throws IOException
+	private WorkflowJob doCreateJob(JobWithDirectorySettings settings)
+		throws IOException
 	{
 		WorkflowJob bj;
-		if (paradigm instanceof MacroWorkflowParadigm) {
-			MacroWorkflowParadigm typeParadigm = (MacroWorkflowParadigm) paradigm;
-			bj = typeParadigm.createJob(inputProvider, outputProvider, numberOfNodes,
-				haasTemplateId, userScriptName);
-		}
-		else {
-			bj = paradigm.createJob(inputProvider, outputProvider, numberOfNodes,
-				haasTemplateId);
-		}
-
+		bj = paradigm.createJob(settings);
 		ObservableHPCWorkflowJob obj = registry.addIfAbsent(bj);
 		addJobToItems(obj);
 		jobs.refresh();
 		return bj;
+	}
+
+	private JobWithDirectorySettings constructSettings(
+		NewJobWindow newJobWindow)
+	{
+		JobSettings jobSetttings = new JobSettingsBuilder().jobName(
+			Constants.HAAS_JOB_NAME).clusterNodeType(Configuration
+				.getHaasClusterNodeType()).templateId(newJobWindow.getHaasTemplateId())
+			.walltimeLimit(Configuration.getWalltime()).numberOfCoresPerNode(
+				Constants.CORES_PER_NODE).numberOfNodes(newJobWindow.getNumberOfNodes())
+			.build();
+		return new PJobWitdDirectorySettingsAdapter(jobSetttings) {
+
+			@Override
+			public String getUserScriptName() {
+				return newJobWindow.getUserScriptName();
+			}
+
+			@Override
+			public UnaryOperator<Path> getOutputPath() {
+				return newJobWindow::getOutputDirectory;
+			}
+
+			@Override
+			public UnaryOperator<Path> getInputPath() {
+				return newJobWindow::getInputDirectory;
+			}
+		};
+
 	}
 
 	private synchronized void addJobToItems(ObservableHPCWorkflowJob obj) {
@@ -555,7 +577,7 @@ public class HPCWorkflowControl extends BorderPane {
 		public void doAction(ProgressNotifier progress) throws IOException;
 	}
 
-	private class PTableCellUpdaterDecoratorWithToolTip<S, T> implements
+	private static class PTableCellUpdaterDecoratorWithToolTip<S, T> implements
 		TableCellUpdater<T>
 	{
 
@@ -575,6 +597,16 @@ public class HPCWorkflowControl extends BorderPane {
 			decorated.accept(cell, value, empty);
 			cell.setTooltip(new Tooltip(toolTipText));
 		}
+
+	}
+
+	@AllArgsConstructor
+	private static abstract class PJobWitdDirectorySettingsAdapter implements
+		JobWithDirectorySettings
+	{
+
+		@Delegate(types = JobSettings.class)
+		private final JobSettings jobSettings;
 
 	}
 }
