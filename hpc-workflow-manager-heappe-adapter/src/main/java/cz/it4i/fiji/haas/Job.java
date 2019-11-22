@@ -115,12 +115,13 @@ public class Job {
 	private long lastStartedTimestamp = -1;
 
 	public static Job submitNewJob(JobManager4Job jobManager, Path basePath,
-		HPCClientProxyAdapter<? extends JobWithDirectorySettings> hpcClient)
+		HPCClientProxyAdapter<? extends JobWithDirectorySettings> hpcClient,
+		Object params)
 		throws IOException
 	{
 		Job result = new Job(jobManager, hpcClient);
 		JobSubmission<? extends JobWithDirectorySettings> jobSubmission = hpcClient
-			.createJob();
+			.createJobSubmission(params);
 		result.setJobDirectory(basePath.resolve("" + jobSubmission.getJobId()),
 			jobSubmission.getJobSettings().getInputPath(), jobSubmission
 				.getJobSettings().getOutputPath());
