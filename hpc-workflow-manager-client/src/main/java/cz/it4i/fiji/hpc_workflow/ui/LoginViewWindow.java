@@ -1,15 +1,42 @@
 
 package cz.it4i.fiji.hpc_workflow.ui;
 
+import org.scijava.Context;
+import org.scijava.Priority;
 import org.scijava.plugin.Parameter;
+import org.scijava.plugin.Plugin;
 import org.scijava.prefs.PrefService;
 
 import cz.it4i.fiji.hpc_workflow.commands.HPCWorkflowParametersImpl;
+import cz.it4i.parallel.paradigm_managers.ParadigmProfileSettingsEditor;
 import javafx.scene.Scene;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 public class LoginViewWindow {
+
+	@Plugin(type = ParadigmProfileSettingsEditor.class, priority = Priority.HIGH)
+	public static class Editor implements
+		ParadigmProfileSettingsEditor<HPCWorkflowParametersImpl>
+	{
+
+		@Parameter
+		private Context context;
+
+		@Override
+		public Class<HPCWorkflowParametersImpl> getTypeOfSettings() {
+			return HPCWorkflowParametersImpl.class;
+		}
+
+		@Override
+		public HPCWorkflowParametersImpl edit(HPCWorkflowParametersImpl settings) {
+			LoginViewWindow loginViewWindow = new LoginViewWindow();
+			context.inject(loginViewWindow);
+			loginViewWindow.openWindow(settings);
+			return loginViewWindow.getParameters();
+		}
+
+	}
 
 	@Parameter
 	private PrefService prefService;

@@ -7,28 +7,26 @@
  ******************************************************************************/
 package cz.it4i.fiji.hpc_workflow.paradigm_manager;
 
-import org.scijava.parallel.ParallelizationParadigmProfile;
-
 import cz.it4i.fiji.hpc_workflow.commands.HPCWorkflowParametersImpl;
 import cz.it4i.fiji.hpc_workflow.core.HPCWorkflowJobManager;
+import cz.it4i.parallel.paradigm_managers.ParadigmProfileWithSettings;
 
-public class WorkflowParadigmProfile extends ParallelizationParadigmProfile {
+public class WorkflowParadigmProfile extends
+	ParadigmProfileWithSettings<HPCWorkflowParametersImpl>
+{
 
 	private static final long serialVersionUID = 6843116946587764808L;
 
-	private HPCWorkflowParametersImpl parameters;
 
 	public WorkflowParadigmProfile(String profileName)
 	{
 		super(HPCWorkflowJobManager.class, profileName);
 	}
 
-	HPCWorkflowParametersImpl getParameters() {
-		return parameters;
-	}
 
-	void setParameters(HPCWorkflowParametersImpl parameters) {
-		this.parameters = parameters;
+	@Override
+	protected Class<HPCWorkflowParametersImpl> getTypeOfSettings() {
+		return HPCWorkflowParametersImpl.class;
 	}
 
 }
