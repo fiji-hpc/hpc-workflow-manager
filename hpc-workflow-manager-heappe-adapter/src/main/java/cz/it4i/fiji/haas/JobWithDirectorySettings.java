@@ -5,24 +5,19 @@
  * This file is subject to the terms and conditions defined in
  * file 'LICENSE', which is part of this project.
  ******************************************************************************/
-package cz.it4i.fiji.hpc_workflow;
+package cz.it4i.fiji.haas;
 
-import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Collection;
 import java.util.function.UnaryOperator;
 
-import org.scijava.parallel.ParallelizationParadigm;
+import cz.it4i.fiji.haas_java_client.JobSettings;
 
-public interface WorkflowParadigm extends ParallelizationParadigm {
 
-	
-	WorkflowJob createJob(UnaryOperator<Path> inputProvider,
-		UnaryOperator<Path> outputProvider, int numberOfNodes, int haasTemplateId)
-		throws IOException;
+public interface JobWithDirectorySettings extends JobSettings {
 
-	Collection<WorkflowJob> getJobs();
+	UnaryOperator<Path> getInputPath();
 
-	void checkConnection();
+	UnaryOperator<Path> getOutputPath();
 
+	String getUserScriptName();
 }

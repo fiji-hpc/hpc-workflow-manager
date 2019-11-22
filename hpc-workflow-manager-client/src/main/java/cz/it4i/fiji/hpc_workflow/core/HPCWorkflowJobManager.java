@@ -4,13 +4,9 @@ package cz.it4i.fiji.hpc_workflow.core;
 import static cz.it4i.fiji.hpc_client.JobState.Canceled;
 import static cz.it4i.fiji.hpc_client.JobState.Failed;
 import static cz.it4i.fiji.hpc_client.JobState.Finished;
-import static cz.it4i.fiji.hpc_workflow.core.Configuration.getHaasClusterNodeType;
-import static cz.it4i.fiji.hpc_workflow.core.Configuration.getWalltime;
 import static cz.it4i.fiji.hpc_workflow.core.Constants.BENCHMARK_TASK_NAME_MAP;
-import static cz.it4i.fiji.hpc_workflow.core.Constants.CORES_PER_NODE;
 import static cz.it4i.fiji.hpc_workflow.core.Constants.DONE_TASK;
 import static cz.it4i.fiji.hpc_workflow.core.Constants.FUSION_SWITCH;
-import static cz.it4i.fiji.hpc_workflow.core.Constants.HAAS_JOB_NAME;
 import static cz.it4i.fiji.hpc_workflow.core.Constants.HDF5_XML_FILENAME;
 import static cz.it4i.fiji.hpc_workflow.core.Constants.SPIM_OUTPUT_FILENAME_PATTERN;
 import static cz.it4i.fiji.hpc_workflow.core.Constants.VERIFIED_STATE_OF_FINISHED_JOB;
@@ -67,12 +63,12 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import cz.it4i.fiji.commons.WebRoutines;
+import cz.it4i.fiji.haas.HPCClientProxyAdapter;
 import cz.it4i.fiji.haas.Job;
 import cz.it4i.fiji.haas.JobManager;
+import cz.it4i.fiji.haas.JobWithDirectorySettings;
 import cz.it4i.fiji.haas.UploadingFileFromResource;
-import cz.it4i.fiji.haas_java_client.HaaSClientSettings;
-import cz.it4i.fiji.haas_java_client.JobSettings;
-import cz.it4i.fiji.haas_java_client.JobSettingsBuilder;
+import cz.it4i.fiji.hpc_client.HPCClient;
 import cz.it4i.fiji.hpc_client.HPCClientException;
 import cz.it4i.fiji.hpc_client.JobState;
 import cz.it4i.fiji.hpc_client.ProgressNotifier;
@@ -102,13 +98,15 @@ public class HPCWorkflowJobManager implements MacroWorkflowParadigm
 
 	private JobManager jobManager;
 
-	private HPCWorkflowParameters parameters;
-
 	private BooleanSupplier initializator;
 
 	private Runnable finalizer;
 
 	private Runnable initDoneCallback;
+
+	private HPCClientProxyAdapter<? extends JobWithDirectorySettings> hpcClient;
+
+	private Path workingDirectory;
 
 	public final class BenchmarkJob implements MacroWorkflowJob {
 
@@ -686,11 +684,15 @@ public class HPCWorkflowJobManager implements MacroWorkflowParadigm
 
 	}
 
-	public void prepareParadigm(HPCWorkflowParameters params,
-		BooleanSupplier aInitializator, Runnable aInitDoneCallback,
-		Runnable aFinalizer)
+	public <T extends JobWithDirectorySettings> void prepareParadigm(
+		Path aWorkingDirectory,
+		Supplier<HPCClient<T>> hpcClientSupplier,
+		Supplier<T> jobSettingsSupplier, BooleanSupplier aInitializator,
+		Runnable aInitDoneCallback, Runnable aFinalizer)
 	{
-		this.parameters = params;
+		this.workingDirectory = aWorkingDirectory;
+		this.hpcClient = new HPCClientProxyAdapter<>(hpcClientSupplier,
+			jobSettingsSupplier);
 		this.initializator = aInitializator;
 		this.finalizer = aFinalizer;
 		this.initDoneCallback = aInitDoneCallback;
@@ -710,8 +712,7 @@ public class HPCWorkflowJobManager implements MacroWorkflowParadigm
 		UnaryOperator<Path> outputDirectoryProvider, int numberOfNodes,
 		int haasTemplateId, Supplier<String> userScriptName) throws IOException
 	{
-		Job job = jobManager.createJob(getJobSettings(numberOfNodes,
-			haasTemplateId), inputDirectoryProvider, outputDirectoryProvider, userScriptName);
+		Job job = jobManager.createJob();
 		if (job.getInputDirectory() == null) {
 			job.createEmptyFile(Constants.DEMO_DATA_SIGNAL_FILE_NAME);
 		}
@@ -849,8 +850,7 @@ public class HPCWorkflowJobManager implements MacroWorkflowParadigm
 		if (initializator != null && !initializator.getAsBoolean()) {
 			return;
 		}
-		jobManager = new JobManager(parameters.workingDirectory(),
-			constructSettingsFromParams(parameters));
+		jobManager = new JobManager(workingDirectory, hpcClient);
 		jobManager.setUploadFilter(this::canUpload);
 		checkConnection();
 		if (initDoneCallback != null) {
@@ -889,45 +889,7 @@ public class HPCWorkflowJobManager implements MacroWorkflowParadigm
 		return new UploadingFileFromResource("", Constants.CONFIG_YAML);
 	}
 
-	private static JobSettings getJobSettings(int numberOfNodes,
-		int haasTemplateId)
-	{
-		return new JobSettingsBuilder().jobName(HAAS_JOB_NAME).clusterNodeType(
-			getHaasClusterNodeType()).templateId(haasTemplateId).walltimeLimit(
-				getWalltime()).numberOfCoresPerNode(CORES_PER_NODE).numberOfNodes(
-					numberOfNodes).build();
-	}
 
-	private static HaaSClientSettings constructSettingsFromParams(
-		HPCWorkflowParameters params)
-	{
-		return new HaaSClientSettings() {
 
-			@Override
-			public String getUserName() {
-				return params.username();
-			}
 
-			@Override
-			public String getProjectId() {
-				return Configuration.getHaasProjectID();
-			}
-
-			@Override
-			public String getPhone() {
-				return params.phone();
-			}
-
-			@Override
-			public String getPassword() {
-				return params.password();
-			}
-
-			@Override
-			public String getEmail() {
-				return params.email();
-			}
-
-		};
-	}
 }
