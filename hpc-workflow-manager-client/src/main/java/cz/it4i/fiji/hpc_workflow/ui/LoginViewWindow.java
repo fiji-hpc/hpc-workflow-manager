@@ -7,7 +7,7 @@ import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 import org.scijava.prefs.PrefService;
 
-import cz.it4i.fiji.hpc_workflow.commands.HPCWorkflowParametersImpl;
+import cz.it4i.fiji.hpc_workflow.commands.HaaSClientSettingsImpl;
 import cz.it4i.parallel.paradigm_managers.ParadigmProfileSettingsEditor;
 import javafx.scene.Scene;
 import javafx.stage.Modality;
@@ -17,19 +17,19 @@ public class LoginViewWindow {
 
 	@Plugin(type = ParadigmProfileSettingsEditor.class, priority = Priority.HIGH)
 	public static class Editor implements
-		ParadigmProfileSettingsEditor<HPCWorkflowParametersImpl>
+		ParadigmProfileSettingsEditor<HaaSClientSettingsImpl>
 	{
 
 		@Parameter
 		private Context context;
 
 		@Override
-		public Class<HPCWorkflowParametersImpl> getTypeOfSettings() {
-			return HPCWorkflowParametersImpl.class;
+		public Class<HaaSClientSettingsImpl> getTypeOfSettings() {
+			return HaaSClientSettingsImpl.class;
 		}
 
 		@Override
-		public HPCWorkflowParametersImpl edit(HPCWorkflowParametersImpl settings) {
+		public HaaSClientSettingsImpl edit(HaaSClientSettingsImpl settings) {
 			LoginViewWindow loginViewWindow = new LoginViewWindow();
 			context.inject(loginViewWindow);
 			loginViewWindow.openWindow(settings);
@@ -43,11 +43,11 @@ public class LoginViewWindow {
 
 	private LoginViewController controller;
 
-	public void openWindow(HPCWorkflowParametersImpl params) {
+	public void openWindow(HaaSClientSettingsImpl params) {
 		// Get the previously entered login settings if any:
-		LastFormLoader<HPCWorkflowParametersImpl> storeLastForm =
+		LastFormLoader<HaaSClientSettingsImpl> storeLastForm =
 			new LastFormLoader<>(prefService, "loginSettingsForm", this.getClass());
-		HPCWorkflowParametersImpl oldLoginSettings = params != null ? params
+		HaaSClientSettingsImpl oldLoginSettings = params != null ? params
 			: storeLastForm.loadLastForm();
 
 		// Open the login window:
@@ -63,13 +63,13 @@ public class LoginViewWindow {
 
 		stage.showAndWait();
 
-		HPCWorkflowParametersImpl newSettings = this.controller.getParameters();
+		HaaSClientSettingsImpl newSettings = this.controller.getParameters();
 
 		// Save the new settings:
 		storeLastForm.storeLastForm(newSettings);
 	}
 
-	public HPCWorkflowParametersImpl getParameters() {
+	public HaaSClientSettingsImpl getParameters() {
 		return this.controller.getParameters();
 	}
 

@@ -10,47 +10,55 @@ package cz.it4i.fiji.hpc_workflow.paradigm_manager;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.function.Supplier;
 
 import org.scijava.Context;
-import org.scijava.parallel.ParadigmManager;
 import org.scijava.parallel.ParallelizationParadigm;
 import org.scijava.parallel.ParallelizationParadigmProfile;
 import org.scijava.plugin.Parameter;
-import org.scijava.plugin.Plugin;
 
 import cz.it4i.fiji.commons.UncaughtExceptionHandlerDecorator;
 import cz.it4i.fiji.haas.JobWithDirectorySettings;
-import cz.it4i.fiji.haas_java_client.HaaSClient;
-import cz.it4i.fiji.haas_java_client.HaaSClientSettings;
 import cz.it4i.fiji.hpc_client.HPCClient;
-import cz.it4i.fiji.hpc_workflow.WorkflowParadigm;
 import cz.it4i.fiji.hpc_workflow.commands.FileLock;
 import cz.it4i.fiji.hpc_workflow.core.AuthFailExceptionHandler;
 import cz.it4i.fiji.hpc_workflow.core.AuthenticationExceptionHandler;
-import cz.it4i.fiji.hpc_workflow.core.Configuration;
 import cz.it4i.fiji.hpc_workflow.core.HPCWorkflowJobManager;
-import cz.it4i.fiji.hpc_workflow.core.HPCWorkflowParameters;
 import cz.it4i.fiji.hpc_workflow.core.NotConnectedExceptionHandler;
 import cz.it4i.fiji.hpc_workflow.ui.ProgressDialogViewWindow;
 import cz.it4i.parallel.paradigm_managers.ParadigmManagerWithSettings;
+import cz.it4i.parallel.paradigm_managers.ParadigmProfileWithSettings;
 import cz.it4i.parallel.paradigm_managers.ui.HavingOwnerWindow;
 import cz.it4i.swing_javafx_ui.JavaFXRoutines;
 import cz.it4i.swing_javafx_ui.SimpleDialog;
 import javafx.stage.Window;
 
-@Plugin(type = ParadigmManager.class)
-public class WorkflowParadigmManager extends
-	ParadigmManagerWithSettings<HPCWorkflowParameters> implements
+
+public class WorkflowParadigmManager<T extends SettingsWithWorkingDirectory, U extends JobWithDirectorySettings>
+	extends ParadigmManagerWithSettings<SettingsWithWorkingDirectory> implements
 	HavingOwnerWindow<Window>
 {
 
 	private static final String ERROR_HEADER = "Error";
 	private static final String LOCK_FILE_NAME = ".lock";
 
+	private Class<T> typeOfSettings;
+
+	private Class<? extends HPCClient<U>> typeOfClient;
+
 	@Parameter
 	private Context context;
 	private Window ownerWindow;
+	private Class<U> jobWithDirectorySettings;
+
+	public WorkflowParadigmManager(Class<T> typeOfSettings,
+		Class<? extends HPCClient<U>> typeOfClient,
+		Class<U> jobWithDirectorySettings)
+	{
+		super();
+		this.typeOfSettings = typeOfSettings;
+		this.typeOfClient = typeOfClient;
+		this.jobWithDirectorySettings = jobWithDirectorySettings;
+	}
 
 	@Override
 	public Class<? extends ParallelizationParadigm> getSupportedParadigmType() {
@@ -63,8 +71,8 @@ public class WorkflowParadigmManager extends
 	}
 
 	@Override
-	public ParallelizationParadigmProfile createProfile(String name) {
-		return new WorkflowParadigmProfile(name);
+	public ParadigmProfileWithSettings<T> createProfile(String name) {
+		return new WorkflowParadigmProfile<>(name, typeOfSettings, typeOfClient);
 	}
 
 	@Override
@@ -72,19 +80,15 @@ public class WorkflowParadigmManager extends
 		ParallelizationParadigm paradigm)
 	{
 		HPCWorkflowJobManager typedParadigm = (HPCWorkflowJobManager) paradigm;
-		WorkflowParadigmProfile typedProfile = (WorkflowParadigmProfile) profile;
-		PManager pmManager = new PManager(typedProfile, ownerWindow);
-		typedParadigm.prepareParadigm(typedProfile.getSettings()
-			.workingDirectory(), getHPCClientSupplier(typedProfile.getSettings()),
-			JobWithDirectorySettings.class, pmManager::init, pmManager::initDone,
-			pmManager::dispose);
-	}
+		@SuppressWarnings("unchecked")
+		WorkflowParadigmProfile<T, U> typedProfile =
+			(WorkflowParadigmProfile<T, U>) profile;
 
-	private static Supplier<HPCClient<JobWithDirectorySettings>>
-		getHPCClientSupplier(HPCWorkflowParameters hpcWorkflowParametersImpl)
-	{
-		return () -> new HaaSClient<>(constructSettingsFromParams(
-			hpcWorkflowParametersImpl));
+		PManager pmManager = new PManager(typedProfile, ownerWindow);
+		typedParadigm.<U> prepareParadigm(typedProfile.getSettings()
+			.getWorkingDirectory(), typedProfile::createHPCClient,
+			jobWithDirectorySettings,
+			pmManager::init, pmManager::initDone, pmManager::dispose);
 	}
 
 	@Override
@@ -131,48 +135,16 @@ public class WorkflowParadigmManager extends
 		return result;
 	}
 
-	private static HaaSClientSettings constructSettingsFromParams(
-		HPCWorkflowParameters params)
-	{
-		return new HaaSClientSettings() {
-
-			@Override
-			public String getUserName() {
-				return params.username();
-			}
-
-			@Override
-			public String getProjectId() {
-				return Configuration.getHaasProjectID();
-			}
-
-			@Override
-			public String getPhone() {
-				return params.phone();
-			}
-
-			@Override
-			public String getPassword() {
-				return params.password();
-			}
-
-			@Override
-			public String getEmail() {
-				return params.email();
-			}
-
-		};
-	}
 
 	private static class PManager {
 
-		private final WorkflowParadigmProfile profile;
+		private final WorkflowParadigmProfile<?, ?> profile;
 		private UncaughtExceptionHandlerDecorator uehd;
 		private FileLock fileLock;
 		private ProgressDialogViewWindow progress;
 		private Window ownerWindow;
 
-		PManager(WorkflowParadigmProfile profile, Window aOwnerWindow) {
+		PManager(WorkflowParadigmProfile<?, ?> profile, Window aOwnerWindow) {
 			this.profile = profile;
 			this.ownerWindow = aOwnerWindow;
 		}
@@ -180,7 +152,7 @@ public class WorkflowParadigmManager extends
 		boolean init() {
 			progress = new ProgressDialogViewWindow("Connecting to HPC", ownerWindow);
 			fileLock = tryOpenWorkingDirectory(profile.getSettings()
-				.workingDirectory());
+				.getWorkingDirectory());
 
 			if (fileLock == null) {
 				return false;

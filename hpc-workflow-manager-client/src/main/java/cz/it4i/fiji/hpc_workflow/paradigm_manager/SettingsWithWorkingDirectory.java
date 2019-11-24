@@ -5,20 +5,12 @@
  * This file is subject to the terms and conditions defined in
  * file 'LICENSE', which is part of this project.
  ******************************************************************************/
-package cz.it4i.fiji.haas;
+package cz.it4i.fiji.hpc_workflow.paradigm_manager;
 
 import java.io.Serializable;
 import java.nio.file.Path;
-import java.util.function.UnaryOperator;
 
-import cz.it4i.fiji.haas_java_client.JobSettings;
+public interface SettingsWithWorkingDirectory extends Serializable {
 
-
-public interface JobWithDirectorySettings extends JobSettings, Serializable {
-
-	UnaryOperator<Path> getInputPath();
-
-	UnaryOperator<Path> getOutputPath();
-
-	String getUserScriptName();
+	Path getWorkingDirectory();
 }
