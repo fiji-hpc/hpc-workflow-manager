@@ -1,14 +1,15 @@
 
 package cz.it4i.fiji.hpc_workflow.commands;
 
-import java.io.Serializable;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import cz.it4i.fiji.hpc_workflow.core.HPCWorkflowParameters;
+import cz.it4i.fiji.haas_java_client.HaaSClientSettings;
+import cz.it4i.fiji.hpc_workflow.core.Configuration;
+import cz.it4i.fiji.hpc_workflow.paradigm_manager.SettingsWithWorkingDirectory;
 
-public class HPCWorkflowParametersImpl implements HPCWorkflowParameters,
-	Serializable
+public class HaaSClientSettingsImpl implements HaaSClientSettings,
+	SettingsWithWorkingDirectory
 {
 
 	private static final long serialVersionUID = 1L;
@@ -25,7 +26,7 @@ public class HPCWorkflowParametersImpl implements HPCWorkflowParameters,
 
 	private transient Path workingDirectory;
 
-	public HPCWorkflowParametersImpl(String userName, String password,
+	public HaaSClientSettingsImpl(String userName, String password,
 		String phone, String email, Path workingDirectory)
 	{
 		this.userName = userName;
@@ -37,34 +38,36 @@ public class HPCWorkflowParametersImpl implements HPCWorkflowParameters,
 	}
 
 	@Override
-	public String username() {
+	public String getUserName() {
 		return userName;
 	}
 
 	@Override
-	public String password() {
+	public String getPassword() {
 		return password;
 	}
 
 	@Override
-	public String phone() {
+	public String getPhone() {
 		return phone;
 	}
 
 	@Override
-	public String email() {
+	public String getEmail() {
 		return email;
 	}
 
 	@Override
-	public Path workingDirectory() {
+	public String getProjectId() {
+		return Configuration.getHaasProjectID();
+	}
+
+	@Override
+	public Path getWorkingDirectory() {
 		if (workingDirectory == null && workingDirectoryString != null) {
 			workingDirectory = Paths.get(workingDirectoryString);
 		}
 		return workingDirectory;
 	}
 
-	public String workingDirectoryString() {
-		return this.workingDirectoryString;
-	}
 }

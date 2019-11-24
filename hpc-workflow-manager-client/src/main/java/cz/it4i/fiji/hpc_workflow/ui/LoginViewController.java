@@ -5,7 +5,7 @@ import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import cz.it4i.fiji.hpc_workflow.commands.HPCWorkflowParametersImpl;
+import cz.it4i.fiji.hpc_workflow.commands.HaaSClientSettingsImpl;
 import cz.it4i.fiji.hpc_workflow.core.Constants;
 import cz.it4i.fiji.hpc_workflow.paradigm_manager.WorkflowParadigmManager;
 import cz.it4i.swing_javafx_ui.JavaFXRoutines;
@@ -39,24 +39,24 @@ public class LoginViewController extends AnchorPane {
 	@FXML
 	TextField workingDirectoryTextField;
 
-	private HPCWorkflowParametersImpl parameters;
+	private HaaSClientSettingsImpl parameters;
 
 	public LoginViewController() {
 		JavaFXRoutines.initRootAndController("LoginView.fxml", this);
 	}
 
-	public void setInitialFormValues(HPCWorkflowParametersImpl oldLoginSettings) {
+	public void setInitialFormValues(HaaSClientSettingsImpl oldLoginSettings) {
 		if (oldLoginSettings != null) {
-			this.userNameTextField.setText(oldLoginSettings.username());
-			this.passwordPasswordField.setText(oldLoginSettings.password());
-			this.emailTextFiled.setText(oldLoginSettings.email());
+			this.userNameTextField.setText(oldLoginSettings.getUserName());
+			this.passwordPasswordField.setText(oldLoginSettings.getPassword());
+			this.emailTextFiled.setText(oldLoginSettings.getEmail());
 			this.workingDirectoryTextField.setText(oldLoginSettings
-				.workingDirectoryString());
+				.getWorkingDirectory().toString());
 		}
 	
 	}
 
-	public HPCWorkflowParametersImpl getParameters() {
+	public HaaSClientSettingsImpl getParameters() {
 		return parameters;
 	}
 
@@ -101,14 +101,14 @@ public class LoginViewController extends AnchorPane {
 
 	}
 
-	private HPCWorkflowParametersImpl constructParameters() {
+	private HaaSClientSettingsImpl constructParameters() {
 		String userName = this.userNameTextField.getText();
 		String password = this.passwordPasswordField.getText();
 		String email = this.emailTextFiled.getText();
 		Path workingDirPath = new File(this.workingDirectoryTextField.getText())
 			.toPath();
 
-		return new HPCWorkflowParametersImpl(userName, password, Constants.PHONE,
+		return new HaaSClientSettingsImpl(userName, password, Constants.PHONE,
 			email, workingDirPath);
 	}
 }

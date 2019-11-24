@@ -375,6 +375,8 @@ public class HPCWorkflowControl extends BorderPane {
 			.build();
 		return new PJobWitdDirectorySettingsAdapter(jobSetttings) {
 
+			private static final long serialVersionUID = 5998838289289128870L;
+
 			@Override
 			public String getUserScriptName() {
 				return newJobWindow.getUserScriptName();
@@ -601,10 +603,11 @@ public class HPCWorkflowControl extends BorderPane {
 	}
 
 	@AllArgsConstructor
-	private static abstract class PJobWitdDirectorySettingsAdapter implements
+	private abstract static class PJobWitdDirectorySettingsAdapter implements
 		JobWithDirectorySettings
 	{
 
+		private static final long serialVersionUID = 7219177839749763140L;
 		@Delegate(types = JobSettings.class)
 		private final JobSettings jobSettings;
 
