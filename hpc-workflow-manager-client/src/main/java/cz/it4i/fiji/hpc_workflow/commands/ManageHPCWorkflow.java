@@ -12,6 +12,7 @@ import org.scijava.plugin.Plugin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import cz.it4i.fiji.haas.JobWithDirectorySettings;
 import cz.it4i.fiji.hpc_workflow.WorkflowParadigm;
 import cz.it4i.fiji.hpc_workflow.core.Constants;
 import cz.it4i.fiji.hpc_workflow.ui.HPCWorkflowWindow;
@@ -37,11 +38,10 @@ public class ManageHPCWorkflow implements Command {
 	@Override
 	public void run() {
 		// Display window:
-		WorkflowParadigm paradigm = parallelService.getParadigmOfType(
+		WorkflowParadigm<?> paradigm = parallelService.getParadigmOfType(
 			WorkflowParadigm.class);
 		if (paradigm != null) {
-			JavaFXRoutines.runOnFxThread(() -> new HPCWorkflowWindow().openWindow(
-				paradigm));
+			JavaFXRoutines.runOnFxThread(() -> this.openWorkflowWindow(paradigm));
 		}
 		else {
 			JavaFXRoutines.runOnFxThread(() -> {
@@ -53,6 +53,19 @@ public class ManageHPCWorkflow implements Command {
 						"new one and try running HPC Workflow Manager again.");
 			});
 		}
+	}
+
+	private <T extends JobWithDirectorySettings> void openWorkflowWindow(
+		WorkflowParadigm<?> paradigm)
+	{
+		@SuppressWarnings("unchecked")
+		WorkflowParadigm<T> typedParadigm = (WorkflowParadigm<T>) paradigm;
+		inject(new HPCWorkflowWindow()).openWindow(typedParadigm);
+	}
+
+	private <T> T inject(T toInject) {
+		context.inject(toInject);
+		return toInject;
 	}
 
 	public static void main(final String... args) {

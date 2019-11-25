@@ -5,21 +5,16 @@
  * This file is subject to the terms and conditions defined in
  * file 'LICENSE', which is part of this project.
  ******************************************************************************/
-package cz.it4i.fiji.haas;
+package cz.it4i.fiji.hpc_workflow.ui;
 
-import java.nio.file.Path;
-import java.util.function.UnaryOperator;
+import java.util.function.Consumer;
+
+import org.scijava.plugin.SciJavaPlugin;
 
 
-public interface JobWithDirectorySettings {
+public interface JavaFXJobSettingsProvider<T> extends SciJavaPlugin {
 
-	UnaryOperator<Path> getInputPath();
+	Class<T> getTypeOfJobSettings();
 
-	UnaryOperator<Path> getOutputPath();
-
-	String getUserScriptName();
-
-	long getTemplateId();
-
-	String getJobName();
+	void provideJobSettings(Consumer<T> consumer);
 }

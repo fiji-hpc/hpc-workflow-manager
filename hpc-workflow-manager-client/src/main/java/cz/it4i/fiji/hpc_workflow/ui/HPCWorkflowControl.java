@@ -30,6 +30,8 @@ import java.util.function.UnaryOperator;
 
 import org.scijava.Context;
 import org.scijava.parallel.Status;
+import org.scijava.plugin.Parameter;
+import org.scijava.plugin.PluginService;
 import org.scijava.ui.swing.script.TextEditor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,12 +78,17 @@ import lombok.AllArgsConstructor;
 import lombok.experimental.Delegate;
 import mpicbg.spim.data.SpimDataException;
 
-public class HPCWorkflowControl extends BorderPane {
+public class HPCWorkflowControl<T extends JobWithDirectorySettings> extends
+	BorderPane
+{
+
+	@Parameter
+	private PluginService pluginService;
 
 	@FXML
 	private TableView<ObservableHPCWorkflowJob> jobs;
 
-	private final WorkflowParadigm paradigm;
+	private final WorkflowParadigm<T> paradigm;
 
 	private final ExecutorService executorServiceJobState = Executors
 		.newWorkStealingPool();
@@ -105,7 +112,7 @@ public class HPCWorkflowControl extends BorderPane {
 
 	private Stage stage;
 
-	public HPCWorkflowControl(WorkflowParadigm paradigm) {
+	public HPCWorkflowControl(WorkflowParadigm<T> paradigm) {
 		this.paradigm = paradigm;
 		JavaFXRoutines.initRootAndController("HPCWorkflow.fxml", this);
 		jobs.setPlaceholder(new Label(
@@ -310,50 +317,58 @@ public class HPCWorkflowControl extends BorderPane {
 	}
 
 	private void askForCreateJob() {
-		NewJobWindow newJobWindow = new NewJobWindow(this.stage);
-		newJobWindow.setCreatePressedNotifier(() -> executeWSCallAsync(
-			"Creating job", false, new PJobAction()
-			{
+		@SuppressWarnings("unchecked")
+		JavaFXJobSettingsProvider<T> settingsProvider = pluginService
+			.createInstancesOfType(
+			JavaFXJobSettingsProvider.class).stream().filter(p -> p
+				.getTypeOfJobSettings().equals(paradigm.getTypeOfJobSettings()))
+			.findFirst().orElse(null);
+		if (settingsProvider == null) {
+			return;
+		}
 
-				@Override
-				public void doAction(ProgressNotifier p) throws IOException {
-					WorkflowJob job = doCreateJob(constructSettings(newJobWindow));
+		settingsProvider.provideJobSettings(jobSettings -> executeWSCallAsync(
+			"Creating job", false, notifier -> doJobAction(notifier, jobSettings)));
 
-					if (newJobWindow.getInputDirectory(job.getDirectory()) != null && job
-						.getWorkflowType() == WorkflowType.SPIM_WORKFLOW && (job
-							.getInputDirectory().resolve(CONFIG_YAML)).toFile().exists())
-			{
-						executorServiceFX.execute(() -> {
-
-							Alert al = new Alert(AlertType.CONFIRMATION, "The file \"" +
-								CONFIG_YAML +
-								"\" found in the defined data input directory \"" + job
-									.getInputDirectory() +
-								"\". Would you like to copy it into the job working directory \"" +
-								job.getDirectory() + "\"?", ButtonType.YES, ButtonType.NO);
-
-							al.setHeaderText(null);
-							al.setTitle("Copy " + CONFIG_YAML + "?");
-							al.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
-							if (al.showAndWait().get() == ButtonType.YES) {
-								try {
-									Files.copy(job.getInputDirectory().resolve(CONFIG_YAML), job
-										.getDirectory().resolve(CONFIG_YAML));
-								}
-								catch (IOException e) {
-									SimpleDialog.showException("Exception",
-										"Exception occurred while trying to create job.", e);
-								}
-							}
-						});
-
-					}
-				}
-			}));
-		newJobWindow.openWindow(this.stage);
 	}
 
-	private WorkflowJob doCreateJob(JobWithDirectorySettings settings)
+	private void doJobAction(
+		@SuppressWarnings("unused") ProgressNotifier notifier, T jobSettings)
+		throws IOException
+	{
+		WorkflowJob job = doCreateJob(jobSettings);
+
+		if (jobSettings.getInputPath().apply(job.getDirectory()) != null && job
+			.getWorkflowType() == WorkflowType.SPIM_WORKFLOW && (job
+				.getInputDirectory().resolve(CONFIG_YAML)).toFile().exists())
+		{
+			executorServiceFX.execute(() -> {
+
+				Alert al = new Alert(AlertType.CONFIRMATION, "The file \"" +
+					CONFIG_YAML + "\" found in the defined data input directory \"" + job
+						.getInputDirectory() +
+					"\". Would you like to copy it into the job working directory \"" +
+					job.getDirectory() + "\"?", ButtonType.YES, ButtonType.NO);
+
+				al.setHeaderText(null);
+				al.setTitle("Copy " + CONFIG_YAML + "?");
+				al.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
+				if (al.showAndWait().get() == ButtonType.YES) {
+					try {
+						Files.copy(job.getInputDirectory().resolve(CONFIG_YAML), job
+							.getDirectory().resolve(CONFIG_YAML));
+					}
+					catch (IOException e) {
+						SimpleDialog.showException("Exception",
+							"Exception occurred while trying to create job.", e);
+					}
+				}
+			});
+
+		}
+	}
+
+	private WorkflowJob doCreateJob(T settings)
 		throws IOException
 	{
 		WorkflowJob bj;

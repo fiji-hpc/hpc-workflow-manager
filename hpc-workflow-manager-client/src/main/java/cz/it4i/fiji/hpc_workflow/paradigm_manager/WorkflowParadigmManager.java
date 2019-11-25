@@ -48,16 +48,16 @@ public class WorkflowParadigmManager<T extends SettingsWithWorkingDirectory, U e
 	@Parameter
 	private Context context;
 	private Window ownerWindow;
-	private Class<U> jobWithDirectorySettings;
+	private Class<U> typeOfJobSettings;
 
 	public WorkflowParadigmManager(Class<T> typeOfSettings,
 		Class<? extends HPCClient<U>> typeOfClient,
-		Class<U> jobWithDirectorySettings)
+		Class<U> typeOfJobSettings)
 	{
 		super();
 		this.typeOfSettings = typeOfSettings;
 		this.typeOfClient = typeOfClient;
-		this.jobWithDirectorySettings = jobWithDirectorySettings;
+		this.typeOfJobSettings = typeOfJobSettings;
 	}
 
 	@Override
@@ -79,15 +79,17 @@ public class WorkflowParadigmManager<T extends SettingsWithWorkingDirectory, U e
 	public void prepareParadigm(ParallelizationParadigmProfile profile,
 		ParallelizationParadigm paradigm)
 	{
-		HPCWorkflowJobManager typedParadigm = (HPCWorkflowJobManager) paradigm;
+		@SuppressWarnings("unchecked")
+		HPCWorkflowJobManager<U> typedParadigm =
+			(HPCWorkflowJobManager<U>) paradigm;
 		@SuppressWarnings("unchecked")
 		WorkflowParadigmProfile<T, U> typedProfile =
 			(WorkflowParadigmProfile<T, U>) profile;
 
 		PManager pmManager = new PManager(typedProfile, ownerWindow);
-		typedParadigm.<U> prepareParadigm(typedProfile.getSettings()
+		typedParadigm.prepareParadigm(typedProfile.getSettings()
 			.getWorkingDirectory(), typedProfile::createHPCClient,
-			jobWithDirectorySettings,
+			typeOfJobSettings,
 			pmManager::init, pmManager::initDone, pmManager::dispose);
 	}
 

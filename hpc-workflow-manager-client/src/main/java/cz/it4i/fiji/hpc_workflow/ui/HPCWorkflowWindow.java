@@ -1,8 +1,11 @@
 
 package cz.it4i.fiji.hpc_workflow.ui;
 
+import org.scijava.Context;
 import org.scijava.parallel.Status;
+import org.scijava.plugin.Parameter;
 
+import cz.it4i.fiji.haas.JobWithDirectorySettings;
 import cz.it4i.fiji.hpc_workflow.WorkflowParadigm;
 import cz.it4i.fiji.hpc_workflow.core.Constants;
 import cz.it4i.swing_javafx_ui.JavaFXRoutines;
@@ -14,16 +17,25 @@ import javafx.stage.WindowEvent;
 
 public class HPCWorkflowWindow {
 
+	@Parameter
+	private Context ctx;
+
 	private Stage stage;
-	private HPCWorkflowControl controller;
+
+	private HPCWorkflowControl<?> controller;
+
 
 	public HPCWorkflowWindow() {
 		Platform.setImplicitExit(false);
 	}
 
-	public void openWindow(WorkflowParadigm paradigm) {
+	public <T extends JobWithDirectorySettings> void openWindow(
+		WorkflowParadigm<T> paradigm)
+	{
 		// Open the the window:
-		this.controller = new HPCWorkflowControl(paradigm);
+
+		this.controller = new HPCWorkflowControl<>(paradigm);
+		ctx.inject(controller);
 		final Scene formScene = new Scene(controller);
 		stage = new Stage();
 		stage.initOwner(null);
