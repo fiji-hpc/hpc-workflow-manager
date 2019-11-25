@@ -12,14 +12,16 @@ import java.util.Collection;
 
 import org.scijava.parallel.ParallelizationParadigm;
 
-public interface WorkflowParadigm extends ParallelizationParadigm {
+public interface WorkflowParadigm<T> extends ParallelizationParadigm {
 
 	
-	WorkflowJob createJob(Object parameters)
+	WorkflowJob createJob(T parameters)
 		throws IOException;
 
 	Collection<WorkflowJob> getJobs();
 
 	void checkConnection();
+
+	Class<T> getTypeOfJobSettings();
 
 }

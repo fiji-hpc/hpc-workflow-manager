@@ -97,6 +97,10 @@ public class HPCClientProxyAdapter<T> implements HPCClient<T> {
 		return getHPCClient().downloadPartsOfJobFiles(jobId, files);
 	}
 
+	public Class<T> getTypeOfJobSettings() {
+		return jobSettingsType;
+	}
+
 	@Override
 	public Collection<String> getChangedFiles(long jobId) {
 		return getHPCClient().getChangedFiles(jobId);
