@@ -26,7 +26,6 @@ import cz.it4i.fiji.haas.HPCClientProxyAdapter.JobSubmission;
 import cz.it4i.fiji.haas.JobManager.JobManager4Job;
 import cz.it4i.fiji.haas.JobManager.JobSynchronizableFile;
 import cz.it4i.fiji.haas_java_client.HaaSClient;
-import cz.it4i.fiji.haas_java_client.JobSettings;
 import cz.it4i.fiji.haas_java_client.TransferFileProgressForHaaSClient;
 import cz.it4i.fiji.hpc_client.HPCClient;
 import cz.it4i.fiji.hpc_client.HPCClientException;
@@ -92,7 +91,7 @@ public class Job {
 
 	private Path jobDir;
 
-	private final HPCClientProxyAdapter<? extends JobSettings> hpcClient;
+	private final HPCClientProxyAdapter<?> hpcClient;
 
 	private JobInfo jobInfo;
 
@@ -137,7 +136,7 @@ public class Job {
 	}
 
 	public static Job getExistingJob(JobManager4Job jobManager, Path jobDirectory,
-		HPCClientProxyAdapter<? extends JobSettings> hpcClient)
+		HPCClientProxyAdapter<?> hpcClient)
 	{
 		Job result = new Job(jobManager, hpcClient);
 		result.propertyHolder = new PropertyHolder(jobDirectory.resolve(
@@ -152,7 +151,7 @@ public class Job {
 	}
 
 	private Job(JobManager4Job jobManager,
-		HPCClientProxyAdapter<? extends JobSettings> hpcClient)
+		HPCClientProxyAdapter<?> hpcClient)
 	{
 		this.hpcClient = hpcClient;
 		this.jobManager = jobManager;
