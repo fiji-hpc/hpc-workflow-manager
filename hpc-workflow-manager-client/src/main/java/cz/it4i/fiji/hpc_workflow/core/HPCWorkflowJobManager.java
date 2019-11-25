@@ -83,7 +83,8 @@ import cz.it4i.fiji.hpc_workflow.ui.NewJobController;
 import cz.it4i.fiji.hpc_workflow.ui.NewJobController.WorkflowType;
 
 @Plugin(type = ParallelizationParadigm.class)
-public class HPCWorkflowJobManager implements WorkflowParadigm
+public class HPCWorkflowJobManager<T extends JobWithDirectorySettings>
+	implements WorkflowParadigm<T>
 {
 
 	public interface DownloadingStatusProvider {
@@ -104,11 +105,11 @@ public class HPCWorkflowJobManager implements WorkflowParadigm
 
 	private Runnable initDoneCallback;
 
-	private HPCClientProxyAdapter<? extends JobWithDirectorySettings> hpcClient;
+	private HPCClientProxyAdapter<T> hpcClient;
 
 	private Path workingDirectory;
 
-	public final class BenchmarkJob implements MacroWorkflowJob {
+	public static final class BenchmarkJob implements MacroWorkflowJob {
 
 		private final Job job;
 		private final SnakemakeOutputHelper snakemakeOutputHelper;
@@ -684,7 +685,7 @@ public class HPCWorkflowJobManager implements WorkflowParadigm
 
 	}
 
-	public <T extends JobWithDirectorySettings> void prepareParadigm(
+	public void prepareParadigm(
 		Path aWorkingDirectory,
 		Supplier<HPCClient<T>> hpcClientSupplier,
 		Class<T> jobSettingsType, BooleanSupplier aInitializator,
@@ -700,7 +701,7 @@ public class HPCWorkflowJobManager implements WorkflowParadigm
 
 
 	@Override
-	public WorkflowJob createJob(Object parameters) throws IOException {
+	public WorkflowJob createJob(T parameters) throws IOException {
 
 		Job job = jobManager.createJob(parameters);
 		if (job.getInputDirectory() == null) {
@@ -717,6 +718,11 @@ public class HPCWorkflowJobManager implements WorkflowParadigm
 	public Collection<WorkflowJob> getJobs() {
 		return jobManager.getJobs().stream().map(this::convertJob).collect(
 			Collectors.toList());
+	}
+
+	@Override
+	public Class<T> getTypeOfJobSettings() {
+		return hpcClient.getTypeOfJobSettings();
 	}
 
 	@Override
@@ -878,7 +884,6 @@ public class HPCWorkflowJobManager implements WorkflowParadigm
 	private static UploadingFile getConfigYamlFile() {
 		return new UploadingFileFromResource("", Constants.CONFIG_YAML);
 	}
-
 
 
 }
