@@ -2,63 +2,101 @@
 package cz.it4i.fiji.hpc_workflow.ui;
 
 import java.nio.file.Path;
+import java.util.function.Consumer;
+import java.util.function.UnaryOperator;
 
+import org.scijava.plugin.Plugin;
+
+import cz.it4i.fiji.haas_java_client.JobSettings;
+import cz.it4i.fiji.haas_java_client.JobSettingsBuilder;
+import cz.it4i.fiji.hpc_workflow.core.Configuration;
+import cz.it4i.fiji.hpc_workflow.core.Constants;
+import cz.it4i.fiji.hpc_workflow.paradigm_manager.heappe.HEAppEClientJobSettings;
 import javafx.scene.Scene;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.stage.Window;
 import javafx.stage.WindowEvent;
+import lombok.AllArgsConstructor;
+import lombok.experimental.Delegate;
 
-public class NewJobWindow {
+@Plugin(type = JavaFXJobSettingsProvider.class)
+public class NewJobWindow implements
+	JavaFXJobSettingsProvider<HEAppEClientJobSettings>
+{
 
-	private NewJobController controller;
-	private Stage stage;
-
-	public NewJobWindow(Stage stage) {
-		this.stage = stage;
-		this.controller = new NewJobController();
+	@Override
+	public Class<HEAppEClientJobSettings> getTypeOfJobSettings() {
+		return HEAppEClientJobSettings.class;
 	}
 
-	public Path getInputDirectory(Path workingDirectory) {
-		return this.controller.getInputDirectory(workingDirectory);
-	}
-
-	public Path getOutputDirectory(Path workingDirectory) {
-		return this.controller.getOutputDirectory(workingDirectory);
-	}
-
-	public void setCreatePressedNotifier(Runnable runnable) {
-		this.controller.setCreatePressedNotifier(runnable);
-	}
-
-	public int getNumberOfNodes() {
-		return this.controller.getNumberOfNodes();
-	}
-
-	public int getHaasTemplateId() {
-		return this.controller.getWorkflowType().getHaasTemplateID();
-	}
-
-	public void openWindow(Stage parentStage) {
-		// Open the the window:		
+	@Override
+	public void provideJobSettings(Window parent,
+		Consumer<HEAppEClientJobSettings> consumer)
+	{
+		final NewJobController controller = new NewJobController();
+		controller.setCreatePressedNotifier(() -> consumer.accept(constructSettings(
+			controller)));
 		final Scene formScene = new Scene(controller);
-		this.stage = new Stage();
-		this.stage.initOwner(parentStage);
-		this.stage.initModality(Modality.APPLICATION_MODAL);
-		this.stage.setResizable(false);
-		this.stage.setTitle("Create job");
-		this.stage.setScene(formScene);
-
-		finalizeOnStageClose();
+		Stage stage = new Stage();
+		stage.initOwner(parent);
+		stage.initModality(Modality.APPLICATION_MODAL);
+		stage.setResizable(false);
+		stage.setTitle("Create job");
+		stage.setScene(formScene);
+		finalizeOnStageClose(controller, stage);
 		controller.init(stage);
-
-		this.stage.showAndWait();
+		stage.showAndWait();
 	}
 
-	public void finalizeOnStageClose() {
-		this.stage.setOnCloseRequest((WindowEvent we) -> this.controller.close());
+
+	private static HEAppEClientJobSettings constructSettings(
+		NewJobController newJobController)
+	{
+		JobSettings jobSetttings = new JobSettingsBuilder().jobName(
+			Constants.HAAS_JOB_NAME).clusterNodeType(Configuration
+				.getHaasClusterNodeType()).templateId(newJobController.getWorkflowType()
+					.getHaasTemplateID())
+			.walltimeLimit(Configuration.getWalltime()).numberOfCoresPerNode(
+				Constants.CORES_PER_NODE).numberOfNodes(newJobController
+					.getNumberOfNodes())
+			.build();
+		return new PJobWitdDirectorySettingsAdapter(jobSetttings) {
+
+			private static final long serialVersionUID = 5998838289289128870L;
+
+			@Override
+			public String getUserScriptName() {
+				return newJobController.getUserScriptName();
+			}
+
+			@Override
+			public UnaryOperator<Path> getOutputPath() {
+				return newJobController::getOutputDirectory;
+			}
+
+			@Override
+			public UnaryOperator<Path> getInputPath() {
+				return newJobController::getInputDirectory;
+			}
+		};
+
 	}
 
-	public String getUserScriptName() {
-		return this.controller.getUserScriptName();
+	private static void finalizeOnStageClose(NewJobController controller,
+		Stage stage)
+	{
+		stage.setOnCloseRequest((WindowEvent we) -> controller.close());
+	}
+
+	@AllArgsConstructor
+	private abstract static class PJobWitdDirectorySettingsAdapter implements
+		HEAppEClientJobSettings
+	{
+
+		private static final long serialVersionUID = 7219177839749763140L;
+		@Delegate(types = JobSettings.class)
+		private final JobSettings jobSettings;
+
 	}
 }
