@@ -65,7 +65,6 @@ import cz.it4i.fiji.commons.WebRoutines;
 import cz.it4i.fiji.haas.HPCClientProxyAdapter;
 import cz.it4i.fiji.haas.Job;
 import cz.it4i.fiji.haas.JobManager;
-import cz.it4i.fiji.haas.JobWithDirectorySettings;
 import cz.it4i.fiji.haas.UploadingFileFromResource;
 import cz.it4i.fiji.hpc_client.HPCClient;
 import cz.it4i.fiji.hpc_client.HPCClientException;
@@ -79,11 +78,10 @@ import cz.it4i.fiji.hpc_workflow.Task;
 import cz.it4i.fiji.hpc_workflow.TaskComputation;
 import cz.it4i.fiji.hpc_workflow.WorkflowJob;
 import cz.it4i.fiji.hpc_workflow.WorkflowParadigm;
-import cz.it4i.fiji.hpc_workflow.ui.NewJobController;
 import cz.it4i.fiji.hpc_workflow.ui.NewJobController.WorkflowType;
 
 @Plugin(type = ParallelizationParadigm.class)
-public class HPCWorkflowJobManager<T extends JobWithDirectorySettings>
+public class HPCWorkflowJobManager<T extends JobWithWorkflowTypeSettings>
 	implements WorkflowParadigm<T>
 {
 
@@ -93,6 +91,8 @@ public class HPCWorkflowJobManager<T extends JobWithDirectorySettings>
 
 		boolean needsDownload();
 	}
+
+	private static final String JOB_HAAS_TEMPLATE_ID = "job.haas_template_id";
 
 	private static Logger log = LoggerFactory.getLogger(
 		cz.it4i.fiji.hpc_workflow.core.HPCWorkflowJobManager.class);
@@ -144,7 +144,7 @@ public class HPCWorkflowJobManager<T extends JobWithDirectorySettings>
 			throws IOException
 		{
 			LoadedYAML yaml = null;
-			if (job.getHaasTemplateId() == 4) { // ToDo: Fix this to work with type and not id!
+			if (getWorkflowType() == WorkflowType.SPIM_WORKFLOW) {
 				job.uploadFile(Constants.CONFIG_YAML, progress);
 				yaml = new LoadedYAML(job.openLocalFile(Constants.CONFIG_YAML));
 			}
@@ -168,7 +168,7 @@ public class HPCWorkflowJobManager<T extends JobWithDirectorySettings>
 				}
 			}
 			progress.itemDone(message);
-			if (job.getHaasTemplateId() == 4 && yaml != null) {
+			if (getWorkflowType() == WorkflowType.SPIM_WORKFLOW && yaml != null) {
 				job.setProperty(SPIM_OUTPUT_FILENAME_PATTERN, yaml.getCommonProperty(
 					FUSION_SWITCH) + "_" + yaml.getCommonProperty(HDF5_XML_FILENAME));
 			} else {
@@ -427,15 +427,36 @@ public class HPCWorkflowJobManager<T extends JobWithDirectorySettings>
 			job.setLastStartedTimestamp();
 		}
 
+		public void setWorkflowType(WorkflowType workflowType) {
+			job.setProperty(JOB_HAAS_TEMPLATE_ID, workflowType.name());
+		}
+
 		@Override
 		public WorkflowType getWorkflowType() {
-			return WorkflowType.forLong(job.getHaasTemplateId());
+			String strValue = job.getProperty(JOB_HAAS_TEMPLATE_ID);
+			try {
+				return WorkflowType.valueOf(strValue);
+			}
+			catch (java.lang.IllegalArgumentException exc) {
+				if (exc.getMessage().startsWith("No enum constant " + WorkflowType.class
+					.getCanonicalName() + "."))
+				{
+					try {
+						return WorkflowType.forLong(Long.parseLong(strValue));
+					}
+					catch (NumberFormatException exc2) {
+						throw exc;
+					}
+				}
+
+				throw exc;
+
+			}
 		}
 
 		@Override
 		public String getWorkflowTypeName() {
-			return NewJobController.WorkflowType.forLong(job.getHaasTemplateId())
-				.toString();
+			return getWorkflowType().name();
 		}
 
 		@Override
@@ -515,8 +536,7 @@ public class HPCWorkflowJobManager<T extends JobWithDirectorySettings>
 			throws IOException
 		{
 
-			final WorkflowType jobType = WorkflowType.forLong(job
-				.getHaasTemplateId());
+			final WorkflowType jobType = getWorkflowType();
 			final String mainFile = job.getProperty(SPIM_OUTPUT_FILENAME_PATTERN) +
 				".xml";
 			final StillRunningDownloadSwitcher stillRunningTemporarySwitch =
@@ -681,10 +701,6 @@ public class HPCWorkflowJobManager<T extends JobWithDirectorySettings>
 		}
 	}
 
-	public HPCWorkflowJobManager() {
-
-	}
-
 	public void prepareParadigm(
 		Path aWorkingDirectory,
 		Supplier<HPCClient<T>> hpcClientSupplier,
@@ -708,6 +724,7 @@ public class HPCWorkflowJobManager<T extends JobWithDirectorySettings>
 			job.createEmptyFile(Constants.DEMO_DATA_SIGNAL_FILE_NAME);
 		}
 		BenchmarkJob result = convertJob(job);
+		result.setWorkflowType(parameters.getWorkflowType());
 		if (job.isUseDemoData()) {
 			job.storeDataInWorkdirectory(getConfigYamlFile());
 		}

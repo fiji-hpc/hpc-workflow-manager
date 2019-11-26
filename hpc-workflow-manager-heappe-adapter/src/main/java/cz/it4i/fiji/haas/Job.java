@@ -71,8 +71,6 @@ public class Job {
 
 	private static final String JOB_IS_UPLOADED = "job.uploaded";
 
-	private static final String JOB_HAAS_TEMPLATE_ID = "job.haas_template_id";
-
 	private static final String JOB_OUTPUT_DIRECTORY_PATH =
 		"job.output_directory_path";
 
@@ -129,7 +127,6 @@ public class Job {
 		Files.createDirectory(result.jobDir);
 		result.storeInputOutputDirectory();
 		result.setName(jobSubmission.getJobSettings().getJobName());
-		result.setHaasTemplateId(jobSubmission.getJobSettings().getTemplateId());
 		result.storeUserScriptName(jobSubmission.getJobSettings()
 			.getUserScriptName());
 		return result;
@@ -593,22 +590,6 @@ public class Job {
 		setProperty(JOB_CAN_BE_DOWNLOADED, b);
 	}
 
-	public void setHaasTemplateId(long id) {
-		setProperty(JOB_HAAS_TEMPLATE_ID, id);
-	}
-
-	public long getHaasTemplateId() {
-		return getSafeTemplateId(getProperty(JOB_HAAS_TEMPLATE_ID));
-	}
-
-	private long getSafeTemplateId(final String value) {
-		if (value != null) {
-			return Long.parseLong(value);
-		}
-
-		return 4; // FIXME enum defined somewhere else in SPIM_WORKFLOW(4)
-							// hpc-workflow-manager-client/src/main/java/cz/it4i/fiji/hpc_workflow/ui/NewJobController.java
-	}
 
 	// Set the timestamp of the last started job in the job settings,
 	// this is done in order to filter out older progress logs that might be

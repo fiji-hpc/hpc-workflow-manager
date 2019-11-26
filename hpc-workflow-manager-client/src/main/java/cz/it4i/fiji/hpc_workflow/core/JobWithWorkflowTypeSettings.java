@@ -5,19 +5,12 @@
  * This file is subject to the terms and conditions defined in
  * file 'LICENSE', which is part of this project.
  ******************************************************************************/
-package cz.it4i.fiji.haas;
+package cz.it4i.fiji.hpc_workflow.core;
 
-import java.nio.file.Path;
-import java.util.function.UnaryOperator;
+import cz.it4i.fiji.haas.JobWithDirectorySettings;
+import cz.it4i.fiji.hpc_workflow.ui.NewJobController.WorkflowType;
 
+public interface JobWithWorkflowTypeSettings extends JobWithDirectorySettings {
 
-public interface JobWithDirectorySettings {
-
-	UnaryOperator<Path> getInputPath();
-
-	UnaryOperator<Path> getOutputPath();
-
-	String getUserScriptName();
-
-	String getJobName();
+	WorkflowType getWorkflowType();
 }

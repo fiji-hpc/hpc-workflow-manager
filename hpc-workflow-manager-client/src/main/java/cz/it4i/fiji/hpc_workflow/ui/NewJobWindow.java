@@ -12,6 +12,7 @@ import cz.it4i.fiji.haas_java_client.JobSettingsBuilder;
 import cz.it4i.fiji.hpc_workflow.core.Configuration;
 import cz.it4i.fiji.hpc_workflow.core.Constants;
 import cz.it4i.fiji.hpc_workflow.paradigm_manager.heappe.HEAppEClientJobSettings;
+import cz.it4i.fiji.hpc_workflow.ui.NewJobController.WorkflowType;
 import javafx.scene.Scene;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -78,6 +79,11 @@ public class NewJobWindow implements
 			@Override
 			public UnaryOperator<Path> getInputPath() {
 				return newJobController::getInputDirectory;
+			}
+
+			@Override
+			public WorkflowType getWorkflowType() {
+				return newJobController.getWorkflowType();
 			}
 		};
 
