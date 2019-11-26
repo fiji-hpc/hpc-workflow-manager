@@ -45,7 +45,6 @@ import cz.it4i.fiji.haas.ui.StringValueUpdater;
 import cz.it4i.fiji.haas.ui.TableCellAdapter;
 import cz.it4i.fiji.haas.ui.TableCellAdapter.TableCellUpdater;
 import cz.it4i.fiji.haas.ui.TableViewContextMenu;
-import cz.it4i.fiji.haas_java_client.JobSettings;
 import cz.it4i.fiji.hpc_client.JobState;
 import cz.it4i.fiji.hpc_client.ProgressNotifier;
 import cz.it4i.fiji.hpc_workflow.WorkflowJob;
@@ -71,8 +70,6 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Region;
 import javafx.stage.Stage;
-import lombok.AllArgsConstructor;
-import lombok.experimental.Delegate;
 import mpicbg.spim.data.SpimDataException;
 
 public class HPCWorkflowControl<T extends JobWithDirectorySettings> extends
