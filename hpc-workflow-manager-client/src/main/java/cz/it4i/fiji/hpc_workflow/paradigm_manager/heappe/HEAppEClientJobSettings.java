@@ -9,11 +9,15 @@ package cz.it4i.fiji.hpc_workflow.paradigm_manager.heappe;
 
 import java.io.Serializable;
 
-import cz.it4i.fiji.haas.JobWithDirectorySettings;
 import cz.it4i.fiji.haas_java_client.JobSettings;
+import cz.it4i.fiji.hpc_workflow.core.JobWithWorkflowTypeSettings;
 
 public interface HEAppEClientJobSettings extends JobSettings,
-	JobWithDirectorySettings, Serializable
+	JobWithWorkflowTypeSettings, Serializable
 {
 
+	@Override
+	default long getTemplateId() {
+		return getWorkflowType().getHaasTemplateID();
+	}
 }
