@@ -5,36 +5,36 @@
  * This file is subject to the terms and conditions defined in
  * file 'LICENSE', which is part of this project.
  ******************************************************************************/
-package cz.it4i.fiji.hpc_workflow.paradigm_manager.heappe;
+package cz.it4i.fiji.hpc_workflow.paradigm_manager.ssh;
 
 import org.scijava.plugin.Plugin;
 
-import cz.it4i.fiji.haas_java_client.HaaSClient;
 import cz.it4i.fiji.hpc_client.HPCClient;
 import cz.it4i.fiji.hpc_workflow.commands.HaaSClientSettingsImpl;
 import cz.it4i.fiji.hpc_workflow.paradigm_manager.WorkflowParadigmManager;
+import cz.it4i.fiji.ssh_hpc_client.SshHPCClient;
 
 @Plugin(type = WorkflowParadigmManager.class)
-public class HEAppEWorkflowParadigmManager extends
-	WorkflowParadigmManager<HaaSClientSettingsImpl, HEAppEClientJobSettings>
+public class SshWorkflowParadigmManager extends
+	WorkflowParadigmManager<HaaSClientSettingsImpl, HPCClientJobSettings>
 {
 
-	public HEAppEWorkflowParadigmManager()
+	public SshWorkflowParadigmManager()
 	{
 		super(HaaSClientSettingsImpl.class,
-			castHaaSClient(HaaSClient.class),
-			HEAppEClientJobSettings.class);
+			castSshClient(SshHPCClient.class),
+			HPCClientJobSettings.class);
 	}
 
 	@SuppressWarnings("unchecked")
-	private static Class<? extends HPCClient<HEAppEClientJobSettings>>
-		castHaaSClient(Class<HaaSClient> class1)
+	private static Class<? extends HPCClient<HPCClientJobSettings>>
+		castSshClient(Class<SshHPCClient> class1)
 	{
-		return (Class<? extends HPCClient<HEAppEClientJobSettings>>) class1;
+		return (Class<? extends HPCClient<HPCClientJobSettings>>) class1;
 	}
 
 	@Override
 	public String toString() {
-		return "WorkflowParadigm over HEAppE";
+		return "WorkflowParadigm over ssh";
 	}
 }
