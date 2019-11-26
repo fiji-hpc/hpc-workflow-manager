@@ -16,21 +16,21 @@ import cz.it4i.fiji.ssh_hpc_client.SshHPCClient;
 
 @Plugin(type = WorkflowParadigmManager.class)
 public class SshWorkflowParadigmManager extends
-	WorkflowParadigmManager<HaaSClientSettingsImpl, HPCClientJobSettings>
+	WorkflowParadigmManager<HaaSClientSettingsImpl, SshClientJobSettings>
 {
 
 	public SshWorkflowParadigmManager()
 	{
 		super(HaaSClientSettingsImpl.class,
 			castSshClient(SshHPCClient.class),
-			HPCClientJobSettings.class);
+			SshClientJobSettings.class);
 	}
 
 	@SuppressWarnings("unchecked")
-	private static Class<? extends HPCClient<HPCClientJobSettings>>
+	private static Class<? extends HPCClient<SshClientJobSettings>>
 		castSshClient(Class<SshHPCClient> class1)
 	{
-		return (Class<? extends HPCClient<HPCClientJobSettings>>) class1;
+		return (Class<? extends HPCClient<SshClientJobSettings>>) class1;
 	}
 
 	@Override

@@ -35,6 +35,10 @@ public class WorkflowParadigmProfile<T extends SettingsWithWorkingDirectory, U e
 		this.typeOfClient = typeOfClient;
 	}
 
+	Class<? extends HPCClient<U>> getTypeOfClient() {
+		return typeOfClient;
+	}
+
 	HPCClient<U> createHPCClient() {
 		try {
 			@SuppressWarnings("unchecked")

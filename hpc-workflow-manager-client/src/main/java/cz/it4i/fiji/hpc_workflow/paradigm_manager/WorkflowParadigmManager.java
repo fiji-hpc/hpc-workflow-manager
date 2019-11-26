@@ -67,7 +67,14 @@ public class WorkflowParadigmManager<T extends SettingsWithWorkingDirectory, U e
 
 	@Override
 	public boolean isProfileSupported(ParallelizationParadigmProfile profile) {
-		return profile instanceof WorkflowParadigmProfile;
+		if (getSupportedParadigmType().equals(profile.getParadigmType()) &&
+			profile instanceof WorkflowParadigmProfile)
+		{
+			WorkflowParadigmProfile<?, ?> typedProfile =
+				(WorkflowParadigmProfile<?, ?>) profile;
+			return typedProfile.getTypeOfClient().equals(typeOfClient);
+		}
+		return false;
 	}
 
 	@Override

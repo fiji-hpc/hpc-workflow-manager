@@ -12,7 +12,7 @@ import java.io.Serializable;
 import cz.it4i.fiji.hpc_workflow.core.JobWithWorkflowTypeSettings;
 import cz.it4i.fiji.ssh_hpc_client.SSHJobSettings;
 
-public interface HPCClientJobSettings extends SSHJobSettings,
+public interface SshClientJobSettings extends SSHJobSettings,
 	JobWithWorkflowTypeSettings, Serializable
 {
 
