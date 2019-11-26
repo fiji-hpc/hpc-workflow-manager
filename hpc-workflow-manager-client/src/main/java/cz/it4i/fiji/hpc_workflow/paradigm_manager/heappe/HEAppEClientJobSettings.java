@@ -5,17 +5,15 @@
  * This file is subject to the terms and conditions defined in
  * file 'LICENSE', which is part of this project.
  ******************************************************************************/
-package cz.it4i.fiji.hpc_workflow.ui;
+package cz.it4i.fiji.hpc_workflow.paradigm_manager.heappe;
 
-import java.util.function.Consumer;
+import java.io.Serializable;
 
-import org.scijava.plugin.SciJavaPlugin;
+import cz.it4i.fiji.haas.JobWithDirectorySettings;
+import cz.it4i.fiji.haas_java_client.JobSettings;
 
-import javafx.stage.Window;
+public interface HEAppEClientJobSettings extends JobSettings,
+	JobWithDirectorySettings, Serializable
+{
 
-public interface JavaFXJobSettingsProvider<T> extends SciJavaPlugin {
-
-	Class<T> getTypeOfJobSettings();
-
-	void provideJobSettings(Window parent, Consumer<T> consumer);
 }

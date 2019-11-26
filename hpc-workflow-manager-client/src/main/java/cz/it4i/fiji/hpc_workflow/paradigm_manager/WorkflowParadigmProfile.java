@@ -37,14 +37,19 @@ public class WorkflowParadigmProfile<T extends SettingsWithWorkingDirectory, U e
 
 	HPCClient<U> createHPCClient() {
 		try {
-			Constructor<? extends HPCClient<U>> constructor = typeOfClient
-				.getConstructor(typeOfSettings);
-			return constructor.newInstance(getSettings());
-
-		}
-		catch (NoSuchMethodException exc) {
+			@SuppressWarnings("unchecked")
+			Constructor<? extends HPCClient<U>>[] constructors =
+				(Constructor<? extends HPCClient<U>>[]) typeOfClient.getConstructors();
+			for (Constructor<? extends HPCClient<U>> constructor : constructors) {
+				if (constructor.getParameterCount() > 0 && constructor
+					.getParameterTypes()[0].isAssignableFrom(getTypeOfSettings()))
+				{
+					return constructor.newInstance(getSettings());
+				}
+			}
 			throw new HPCClientException("Type " + typeOfClient +
 				" does not have constructor with parameter " + typeOfSettings);
+
 		}
 		catch (SecurityException | InstantiationException | IllegalAccessException
 				| IllegalArgumentException | InvocationTargetException exc)

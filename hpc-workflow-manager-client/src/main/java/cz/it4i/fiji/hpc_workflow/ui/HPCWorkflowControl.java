@@ -26,7 +26,6 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Function;
-import java.util.function.UnaryOperator;
 
 import org.scijava.Context;
 import org.scijava.parallel.Status;
@@ -47,12 +46,10 @@ import cz.it4i.fiji.haas.ui.TableCellAdapter;
 import cz.it4i.fiji.haas.ui.TableCellAdapter.TableCellUpdater;
 import cz.it4i.fiji.haas.ui.TableViewContextMenu;
 import cz.it4i.fiji.haas_java_client.JobSettings;
-import cz.it4i.fiji.haas_java_client.JobSettingsBuilder;
 import cz.it4i.fiji.hpc_client.JobState;
 import cz.it4i.fiji.hpc_client.ProgressNotifier;
 import cz.it4i.fiji.hpc_workflow.WorkflowJob;
 import cz.it4i.fiji.hpc_workflow.WorkflowParadigm;
-import cz.it4i.fiji.hpc_workflow.core.Configuration;
 import cz.it4i.fiji.hpc_workflow.core.Constants;
 import cz.it4i.fiji.hpc_workflow.core.FXFrameExecutorService;
 import cz.it4i.fiji.hpc_workflow.core.MacroWorkflowJob;
@@ -327,9 +324,9 @@ public class HPCWorkflowControl<T extends JobWithDirectorySettings> extends
 			return;
 		}
 
-		settingsProvider.provideJobSettings(jobSettings -> executeWSCallAsync(
-			"Creating job", false, notifier -> doJobAction(notifier, jobSettings)));
-
+		settingsProvider.provideJobSettings(stage,
+			jobSettings -> executeWSCallAsync("Creating job", false,
+				notifier -> doJobAction(notifier, jobSettings)));
 	}
 
 	private void doJobAction(
@@ -379,36 +376,6 @@ public class HPCWorkflowControl<T extends JobWithDirectorySettings> extends
 		return bj;
 	}
 
-	private JobWithDirectorySettings constructSettings(
-		NewJobWindow newJobWindow)
-	{
-		JobSettings jobSetttings = new JobSettingsBuilder().jobName(
-			Constants.HAAS_JOB_NAME).clusterNodeType(Configuration
-				.getHaasClusterNodeType()).templateId(newJobWindow.getHaasTemplateId())
-			.walltimeLimit(Configuration.getWalltime()).numberOfCoresPerNode(
-				Constants.CORES_PER_NODE).numberOfNodes(newJobWindow.getNumberOfNodes())
-			.build();
-		return new PJobWitdDirectorySettingsAdapter(jobSetttings) {
-
-			private static final long serialVersionUID = 5998838289289128870L;
-
-			@Override
-			public String getUserScriptName() {
-				return newJobWindow.getUserScriptName();
-			}
-
-			@Override
-			public UnaryOperator<Path> getOutputPath() {
-				return newJobWindow::getOutputDirectory;
-			}
-
-			@Override
-			public UnaryOperator<Path> getInputPath() {
-				return newJobWindow::getInputDirectory;
-			}
-		};
-
-	}
 
 	private synchronized void addJobToItems(ObservableHPCWorkflowJob obj) {
 		jobs.getItems().add(obj);
@@ -617,14 +584,4 @@ public class HPCWorkflowControl<T extends JobWithDirectorySettings> extends
 
 	}
 
-	@AllArgsConstructor
-	private abstract static class PJobWitdDirectorySettingsAdapter implements
-		JobWithDirectorySettings
-	{
-
-		private static final long serialVersionUID = 7219177839749763140L;
-		@Delegate(types = JobSettings.class)
-		private final JobSettings jobSettings;
-
-	}
 }
