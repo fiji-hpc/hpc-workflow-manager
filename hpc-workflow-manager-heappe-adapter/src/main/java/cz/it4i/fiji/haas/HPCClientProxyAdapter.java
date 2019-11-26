@@ -17,7 +17,6 @@ import cz.it4i.fiji.hpc_client.HPCFileTransfer;
 import cz.it4i.fiji.hpc_client.JobFileContent;
 import cz.it4i.fiji.hpc_client.JobInfo;
 import cz.it4i.fiji.hpc_client.SynchronizableFile;
-import cz.it4i.fiji.hpc_client.TunnelToNode;
 import cz.it4i.fiji.scpclient.TransferFileProgress;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -71,13 +70,6 @@ public class HPCClientProxyAdapter<T> implements HPCClient<T> {
 	@Override
 	public HPCFileTransfer startFileTransfer(long jobId) {
 		return getHPCClient().startFileTransfer(jobId);
-	}
-
-	@Override
-	public TunnelToNode openTunnel(long jobId, String nodeIP, int localPort,
-		int remotePort)
-	{
-		return getHPCClient().openTunnel(jobId, nodeIP, localPort, remotePort);
 	}
 
 	@Override
