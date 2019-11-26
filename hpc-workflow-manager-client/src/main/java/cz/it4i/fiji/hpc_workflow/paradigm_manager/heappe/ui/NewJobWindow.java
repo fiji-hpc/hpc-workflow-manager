@@ -1,5 +1,5 @@
 
-package cz.it4i.fiji.hpc_workflow.ui;
+package cz.it4i.fiji.hpc_workflow.paradigm_manager.heappe.ui;
 
 import java.nio.file.Path;
 import java.util.function.Consumer;
@@ -12,6 +12,8 @@ import cz.it4i.fiji.haas_java_client.JobSettingsBuilder;
 import cz.it4i.fiji.hpc_workflow.core.Configuration;
 import cz.it4i.fiji.hpc_workflow.core.Constants;
 import cz.it4i.fiji.hpc_workflow.paradigm_manager.heappe.HEAppEClientJobSettings;
+import cz.it4i.fiji.hpc_workflow.ui.JavaFXJobSettingsProvider;
+import cz.it4i.fiji.hpc_workflow.ui.NewJobController;
 import cz.it4i.fiji.hpc_workflow.ui.NewJobController.WorkflowType;
 import javafx.scene.Scene;
 import javafx.stage.Modality;
