@@ -1,6 +1,8 @@
 
 package cz.it4i.fiji.haas;
 
+import static cz.it4i.fiji.hpc_client.Notifiers.emptyTransferFileProgress;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
@@ -27,7 +29,6 @@ import cz.it4i.fiji.haas.JobManager.JobManager4Job;
 import cz.it4i.fiji.haas.JobManager.JobSynchronizableFile;
 import cz.it4i.fiji.haas_java_client.HaaSClient;
 import cz.it4i.fiji.haas_java_client.TransferFileProgressForHaaSClient;
-import cz.it4i.fiji.hpc_client.HPCClient;
 import cz.it4i.fiji.hpc_client.HPCClientException;
 import cz.it4i.fiji.hpc_client.HPCFileTransfer;
 import cz.it4i.fiji.hpc_client.JobFileContent;
@@ -321,7 +322,7 @@ public class Job {
 		List<String> files = hpcClient.getChangedFiles(jobId).stream().filter(
 			predicate).collect(Collectors.toList());
 		try (HPCFileTransfer transfer = hpcClient.startFileTransfer(getId(),
-			HPCClient.DUMMY_TRANSFER_FILE_PROGRESS))
+			emptyTransferFileProgress()))
 		{
 			List<Long> fileSizes;
 			try {
@@ -443,7 +444,7 @@ public class Job {
 	public List<Long> getFileSizes(List<String> names) {
 
 		try (HPCFileTransfer transfer = hpcClient.startFileTransfer(getId(),
-			HPCClient.DUMMY_TRANSFER_FILE_PROGRESS))
+			emptyTransferFileProgress()))
 		{
 			try {
 				return transfer.obtainSize(names);
@@ -456,7 +457,7 @@ public class Job {
 
 	public List<String> getFileContents(List<String> logs) {
 		try (HPCFileTransfer transfer = hpcClient.startFileTransfer(getId(),
-			HPCClient.DUMMY_TRANSFER_FILE_PROGRESS))
+			emptyTransferFileProgress()))
 		{
 			return transfer.getContent(logs);
 		}
@@ -544,7 +545,7 @@ public class Job {
 			this.inputDirectory = inputDirectoryProvider.apply(jobDir);
 			this.outputDirectory = outputDirectoryProvider.apply(jobDir);
 			this.synchronization = new Synchronization(() -> startFileTransfer(
-				HPCClient.DUMMY_TRANSFER_FILE_PROGRESS), jobDir, this.inputDirectory,
+				emptyTransferFileProgress()), jobDir, this.inputDirectory,
 				this.outputDirectory, () -> {
 					setProperty(JOB_NEEDS_UPLOAD, false);
 					setUploaded(true);
