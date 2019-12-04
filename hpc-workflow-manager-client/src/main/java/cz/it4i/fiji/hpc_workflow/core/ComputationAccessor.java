@@ -3,7 +3,7 @@ package cz.it4i.fiji.hpc_workflow.core;
 import java.util.Collection;
 import java.util.List;
 
-import cz.it4i.fiji.haas.HaaSOutputHolder;
+import cz.it4i.fiji.hpc_adapter.HaaSOutputHolder;
 
 public interface ComputationAccessor extends HaaSOutputHolder {
 	

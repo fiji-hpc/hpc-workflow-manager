@@ -10,7 +10,7 @@ import java.util.concurrent.Executors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import cz.it4i.fiji.commons.UncaughtExceptionHandlerDecorator;
+import cz.it4i.common.UncaughtExceptionHandlerDecorator;
 import cz.it4i.fiji.hpc_workflow.TaskComputation;
 import cz.it4i.fiji.hpc_workflow.core.AuthFailExceptionHandler;
 import cz.it4i.fiji.hpc_workflow.core.FXFrameExecutorService;

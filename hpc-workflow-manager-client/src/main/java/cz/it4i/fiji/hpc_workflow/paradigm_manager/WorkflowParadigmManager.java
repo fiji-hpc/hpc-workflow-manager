@@ -16,7 +16,7 @@ import org.scijava.parallel.ParallelizationParadigm;
 import org.scijava.parallel.ParallelizationParadigmProfile;
 import org.scijava.plugin.Parameter;
 
-import cz.it4i.fiji.commons.UncaughtExceptionHandlerDecorator;
+import cz.it4i.common.UncaughtExceptionHandlerDecorator;
 import cz.it4i.fiji.hpc_client.HPCClient;
 import cz.it4i.fiji.hpc_workflow.commands.FileLock;
 import cz.it4i.fiji.hpc_workflow.core.AuthFailExceptionHandler;

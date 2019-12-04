@@ -5,7 +5,7 @@ import org.scijava.Context;
 import org.scijava.parallel.Status;
 import org.scijava.plugin.Parameter;
 
-import cz.it4i.fiji.haas.JobWithDirectorySettings;
+import cz.it4i.fiji.hpc_adapter.JobWithDirectorySettings;
 import cz.it4i.fiji.hpc_workflow.WorkflowParadigm;
 import cz.it4i.fiji.hpc_workflow.core.Constants;
 import cz.it4i.swing_javafx_ui.JavaFXRoutines;

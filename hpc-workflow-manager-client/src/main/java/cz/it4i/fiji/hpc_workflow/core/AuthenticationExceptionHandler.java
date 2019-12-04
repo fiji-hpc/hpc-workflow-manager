@@ -1,7 +1,7 @@
 
 package cz.it4i.fiji.hpc_workflow.core;
 
-import cz.it4i.fiji.haas_java_client.AuthenticationException;
+import cz.it4i.fiji.hpc_client.AuthenticationException;
 import javafx.scene.control.Alert.AlertType;
 
 public class AuthenticationExceptionHandler extends BaseExceptionHandler {

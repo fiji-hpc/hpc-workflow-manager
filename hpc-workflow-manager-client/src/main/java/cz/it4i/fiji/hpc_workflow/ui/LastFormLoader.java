@@ -10,13 +10,12 @@ import java.util.Base64;
 import org.python.jline.internal.Log;
 import org.scijava.prefs.PrefService;
 
-import cz.it4i.fiji.hpc_workflow.commands.HaaSClientSettingsImpl;
 import cz.it4i.swing_javafx_ui.SimpleDialog;
 import groovy.util.logging.Slf4j;
 
 //Code responsible for loading and storing the last used form values:
 @Slf4j
-class LastFormLoader<S extends HaaSClientSettingsImpl> {
+public class LastFormLoader<S> {
 
 	private String formStorage;
 

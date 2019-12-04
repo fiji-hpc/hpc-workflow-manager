@@ -61,11 +61,11 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-import cz.it4i.fiji.commons.WebRoutines;
-import cz.it4i.fiji.haas.HPCClientProxyAdapter;
-import cz.it4i.fiji.haas.Job;
-import cz.it4i.fiji.haas.JobManager;
-import cz.it4i.fiji.haas.UploadingFileFromResource;
+import cz.it4i.common.WebRoutines;
+import cz.it4i.fiji.hpc_adapter.HPCClientProxyAdapter;
+import cz.it4i.fiji.hpc_adapter.Job;
+import cz.it4i.fiji.hpc_adapter.JobManager;
+import cz.it4i.fiji.hpc_adapter.UploadingFileFromResource;
 import cz.it4i.fiji.hpc_client.HPCClient;
 import cz.it4i.fiji.hpc_client.HPCClientException;
 import cz.it4i.fiji.hpc_client.JobState;

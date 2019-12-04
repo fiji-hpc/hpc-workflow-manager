@@ -4,7 +4,7 @@ package cz.it4i.fiji.hpc_workflow.ui;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import cz.it4i.fiji.haas.ui.TableCellAdapter;
+import cz.it4i.fiji.hpc_adapter.ui.TableCellAdapter;
 import cz.it4i.fiji.hpc_client.data_transfer.FileTransferInfo;
 import cz.it4i.fiji.hpc_client.data_transfer.FileTransferState;
 import cz.it4i.fiji.hpc_workflow.core.SimpleObservableList;
