@@ -12,7 +12,7 @@ import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import cz.it4i.fiji.haas.ui.ShellRoutines;
+import cz.it4i.fiji.hpc_adapter.ui.ShellRoutines;
 import cz.it4i.fiji.hpc_workflow.core.ObservableHPCWorkflowJob;
 import cz.it4i.fiji.hpc_workflow.core.SimpleObservableValue;
 import cz.it4i.swing_javafx_ui.JavaFXRoutines;

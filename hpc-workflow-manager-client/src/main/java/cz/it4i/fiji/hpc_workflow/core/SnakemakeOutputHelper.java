@@ -19,9 +19,9 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import cz.it4i.fiji.haas.HaaSOutputHolder;
-import cz.it4i.fiji.haas.HaaSOutputHolderImpl;
-import cz.it4i.fiji.haas.Job;
+import cz.it4i.fiji.hpc_adapter.HaaSOutputHolder;
+import cz.it4i.fiji.hpc_adapter.HaaSOutputHolderImpl;
+import cz.it4i.fiji.hpc_adapter.Job;
 import cz.it4i.fiji.hpc_client.SynchronizableFileType;
 import cz.it4i.fiji.hpc_workflow.Task;
 

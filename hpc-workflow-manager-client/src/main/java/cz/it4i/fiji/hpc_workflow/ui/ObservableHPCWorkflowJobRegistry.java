@@ -6,8 +6,8 @@ import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import cz.it4i.fiji.haas.ui.ObservableValueRegistry;
-import cz.it4i.fiji.haas.ui.UpdatableObservableValue.UpdateStatus;
+import cz.it4i.fiji.hpc_adapter.ui.ObservableValueRegistry;
+import cz.it4i.fiji.hpc_adapter.ui.UpdatableObservableValue.UpdateStatus;
 import cz.it4i.fiji.hpc_client.JobState;
 import cz.it4i.fiji.hpc_workflow.WorkflowJob;
 import cz.it4i.fiji.hpc_workflow.core.ObservableHPCWorkflowJob;

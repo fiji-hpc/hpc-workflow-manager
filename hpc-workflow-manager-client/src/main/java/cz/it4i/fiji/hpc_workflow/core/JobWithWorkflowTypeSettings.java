@@ -7,7 +7,7 @@
  ******************************************************************************/
 package cz.it4i.fiji.hpc_workflow.core;
 
-import cz.it4i.fiji.haas.JobWithDirectorySettings;
+import cz.it4i.fiji.hpc_adapter.JobWithDirectorySettings;
 import cz.it4i.fiji.hpc_workflow.ui.NewJobController.WorkflowType;
 
 public interface JobWithWorkflowTypeSettings extends JobWithDirectorySettings {

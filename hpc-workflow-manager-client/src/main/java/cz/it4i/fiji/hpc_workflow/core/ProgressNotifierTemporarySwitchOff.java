@@ -1,6 +1,6 @@
 package cz.it4i.fiji.hpc_workflow.core;
 
-import cz.it4i.fiji.haas.Job;
+import cz.it4i.fiji.hpc_adapter.Job;
 import cz.it4i.fiji.hpc_client.ProgressNotifier;
 
 public class ProgressNotifierTemporarySwitchOff {

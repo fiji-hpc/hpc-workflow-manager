@@ -89,7 +89,7 @@
 	</properties>
 	<modules>
 		<module>hpc-workflow-manager-client</module>
-		<module>hpc-workflow-manager-heappe-adapter</module>
+		<module>hpc-workflow-manager-hpc-adapter</module>
 	</modules>
 	<repositories>
 		<repository>

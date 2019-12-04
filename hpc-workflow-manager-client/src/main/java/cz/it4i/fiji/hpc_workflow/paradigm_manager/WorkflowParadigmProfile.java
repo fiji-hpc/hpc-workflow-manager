@@ -10,7 +10,7 @@ package cz.it4i.fiji.hpc_workflow.paradigm_manager;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
-import cz.it4i.fiji.haas.JobWithDirectorySettings;
+import cz.it4i.fiji.hpc_adapter.JobWithDirectorySettings;
 import cz.it4i.fiji.hpc_client.HPCClient;
 import cz.it4i.fiji.hpc_client.HPCClientException;
 import cz.it4i.fiji.hpc_workflow.core.HPCWorkflowJobManager;

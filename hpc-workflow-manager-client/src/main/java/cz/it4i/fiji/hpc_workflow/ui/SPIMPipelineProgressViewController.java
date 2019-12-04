@@ -11,8 +11,8 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import cz.it4i.fiji.haas.ui.TableCellAdapter;
-import cz.it4i.fiji.haas.ui.TableViewContextMenu;
+import cz.it4i.fiji.hpc_adapter.ui.TableCellAdapter;
+import cz.it4i.fiji.hpc_adapter.ui.TableViewContextMenu;
 import cz.it4i.fiji.hpc_client.JobState;
 import cz.it4i.fiji.hpc_workflow.Task;
 import cz.it4i.fiji.hpc_workflow.TaskComputation;
