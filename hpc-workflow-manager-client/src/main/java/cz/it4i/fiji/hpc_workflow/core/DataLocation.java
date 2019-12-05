@@ -7,9 +7,6 @@
  ******************************************************************************/
 package cz.it4i.fiji.hpc_workflow.core;
 
-import cz.it4i.fiji.hpc_adapter.JobWithDirectorySettings;
-
-public interface JobWithWorkflowTypeSettings extends JobWithDirectorySettings {
-
-	WorkflowType getWorkflowType();
+public enum DataLocation {
+		DEMONSTRATION_ON_SERVER, WORK_DIRECTORY, CUSTOM_DIRECTORY
 }

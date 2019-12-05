@@ -43,8 +43,8 @@ import cz.it4i.fiji.hpc_adapter.ui.FutureValueUpdater;
 import cz.it4i.fiji.hpc_adapter.ui.ShellRoutines;
 import cz.it4i.fiji.hpc_adapter.ui.StringValueUpdater;
 import cz.it4i.fiji.hpc_adapter.ui.TableCellAdapter;
-import cz.it4i.fiji.hpc_adapter.ui.TableViewContextMenu;
 import cz.it4i.fiji.hpc_adapter.ui.TableCellAdapter.TableCellUpdater;
+import cz.it4i.fiji.hpc_adapter.ui.TableViewContextMenu;
 import cz.it4i.fiji.hpc_client.JobState;
 import cz.it4i.fiji.hpc_client.ProgressNotifier;
 import cz.it4i.fiji.hpc_workflow.WorkflowJob;
@@ -54,7 +54,7 @@ import cz.it4i.fiji.hpc_workflow.core.FXFrameExecutorService;
 import cz.it4i.fiji.hpc_workflow.core.MacroWorkflowJob;
 import cz.it4i.fiji.hpc_workflow.core.ObservableHPCWorkflowJob;
 import cz.it4i.fiji.hpc_workflow.core.ObservableHPCWorkflowJob.TransferProgress;
-import cz.it4i.fiji.hpc_workflow.ui.NewJobController.WorkflowType;
+import cz.it4i.fiji.hpc_workflow.core.WorkflowType;
 import cz.it4i.swing_javafx_ui.JavaFXRoutines;
 import cz.it4i.swing_javafx_ui.SimpleDialog;
 import javafx.beans.value.ObservableValue;
@@ -179,7 +179,7 @@ public class HPCWorkflowControl<T extends JobWithDirectorySettings> extends
 				.getState() == JobState.Finished && j.isVisibleInBDV()));
 		menu.addItem("Open Macro in editor", j -> openEditor(j.getValue()),
 			x -> JavaFXRoutines.notNullValue(x, j -> j
-				.getWorkflowType() == NewJobController.WorkflowType.MACRO_WORKFLOW));
+				.getWorkflowType() == WorkflowType.MACRO_WORKFLOW));
 
 		menu.addSeparator();
 

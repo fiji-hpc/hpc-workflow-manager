@@ -14,7 +14,7 @@ import cz.it4i.fiji.hpc_workflow.Task;
 import cz.it4i.fiji.hpc_workflow.core.ObservableHPCWorkflowJob;
 import cz.it4i.fiji.hpc_workflow.core.SimpleObservableList;
 import cz.it4i.fiji.hpc_workflow.core.SimpleObservableValue;
-import cz.it4i.fiji.hpc_workflow.ui.NewJobController.WorkflowType;
+import cz.it4i.fiji.hpc_workflow.core.WorkflowType;
 import cz.it4i.swing_javafx_ui.JavaFXRoutines;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;

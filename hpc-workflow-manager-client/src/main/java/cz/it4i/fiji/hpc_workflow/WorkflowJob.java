@@ -20,7 +20,7 @@ import cz.it4i.fiji.hpc_client.JobState;
 import cz.it4i.fiji.hpc_client.ProgressNotifier;
 import cz.it4i.fiji.hpc_client.SynchronizableFileType;
 import cz.it4i.fiji.hpc_client.data_transfer.FileTransferInfo;
-import cz.it4i.fiji.hpc_workflow.ui.NewJobController.WorkflowType;
+import cz.it4i.fiji.hpc_workflow.core.WorkflowType;
 
 public interface WorkflowJob {
 
