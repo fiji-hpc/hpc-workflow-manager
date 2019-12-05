@@ -78,7 +78,6 @@ import cz.it4i.fiji.hpc_workflow.Task;
 import cz.it4i.fiji.hpc_workflow.TaskComputation;
 import cz.it4i.fiji.hpc_workflow.WorkflowJob;
 import cz.it4i.fiji.hpc_workflow.WorkflowParadigm;
-import cz.it4i.fiji.hpc_workflow.ui.NewJobController.WorkflowType;
 
 @Plugin(type = ParallelizationParadigm.class)
 public class HPCWorkflowJobManager<T extends JobWithWorkflowTypeSettings>

@@ -21,7 +21,6 @@ import cz.it4i.fiji.hpc_client.data_transfer.FileTransferInfo;
 import cz.it4i.fiji.hpc_client.data_transfer.Synchronization;
 import cz.it4i.fiji.hpc_workflow.Task;
 import cz.it4i.fiji.hpc_workflow.WorkflowJob;
-import cz.it4i.fiji.hpc_workflow.ui.NewJobController.WorkflowType;
 
 public class ObservableHPCWorkflowJob extends
 	UpdatableObservableValue<WorkflowJob> implements Closeable
