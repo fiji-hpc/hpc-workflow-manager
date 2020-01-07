@@ -43,7 +43,7 @@ public class WorkflowParadigmManager<T extends SettingsWithWorkingDirectory, U e
 
 	private Class<T> typeOfSettings;
 
-	private Class<? extends HPCClient<U>> typeOfClient;
+	private Class<? extends HPCClient<? super U>> typeOfClient;
 
 	@Parameter
 	private Context context;
@@ -51,7 +51,7 @@ public class WorkflowParadigmManager<T extends SettingsWithWorkingDirectory, U e
 	private Class<U> typeOfJobSettings;
 
 	public WorkflowParadigmManager(Class<T> typeOfSettings,
-		Class<? extends HPCClient<U>> typeOfClient,
+		Class<? extends HPCClient<? super U>> typeOfClient,
 		Class<U> typeOfJobSettings)
 	{
 		super();
