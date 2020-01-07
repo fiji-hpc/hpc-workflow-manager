@@ -25,17 +25,17 @@ public class WorkflowParadigmProfile<T extends SettingsWithWorkingDirectory, U e
 
 	private Class<T> typeOfSettings;
 
-	private Class<? extends HPCClient<U>> typeOfClient;
+	private Class<? extends HPCClient<? super U>> typeOfClient;
 
 	public WorkflowParadigmProfile(String profileName, Class<T> typeOfSettings,
-		Class<? extends HPCClient<U>> typeOfClient)
+		Class<? extends HPCClient<? super U>> typeOfClient)
 	{
 		super(HPCWorkflowJobManager.class, profileName);
 		this.typeOfSettings = typeOfSettings;
 		this.typeOfClient = typeOfClient;
 	}
 
-	Class<? extends HPCClient<U>> getTypeOfClient() {
+	Class<? extends HPCClient<? super U>> getTypeOfClient() {
 		return typeOfClient;
 	}
 
