@@ -48,7 +48,7 @@ public class ManageHPCWorkflow implements Command {
 				Platform.setImplicitExit(false); // Do not stop the JavaFX thread.
 				SimpleDialog.showWarning("There is no active workflow paradigm.",
 					"Please start a workflow paradigm first!\nFrom the Fiji menu select:\n" +
-						"\"Plugins > SciJava Parallel > HPC Workflow Manager\"\n" +
+						"\"Plugins > SciJava Parallel > Paradigm Profiles Manager\"\n" +
 						"then activate an existing worklow paradigm or create a " +
 						"new one and try running HPC Workflow Manager again.");
 			});
