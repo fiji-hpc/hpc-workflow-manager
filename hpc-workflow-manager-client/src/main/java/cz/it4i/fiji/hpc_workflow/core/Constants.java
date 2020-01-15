@@ -72,7 +72,6 @@ public class Constants {
 	public static final String SUMMARY_FILE_HEADER =
 		"Task;AvgMemoryUsage;AvgWallTime;MaxWallTime;TotalTime;JobCount";
 	public static final int CORES_PER_NODE = 24;
-	public static final int NUMBER_OF_NODES = 2;
 	public static final String DEMO_DATA_SIGNAL_FILE_NAME = "demodata";
 
 }
