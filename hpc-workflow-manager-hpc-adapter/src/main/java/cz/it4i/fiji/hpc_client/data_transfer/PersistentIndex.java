@@ -15,16 +15,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 class PersistentIndex<T> {
-	
-	public static final Logger log = LoggerFactory.getLogger(cz.it4i.fiji.hpc_client.data_transfer.PersistentIndex.class);
-	
+
+	public static final Logger log = LoggerFactory.getLogger(
+		cz.it4i.fiji.hpc_client.data_transfer.PersistentIndex.class);
+
 	private final Path workingFile;
 
 	private final Set<T> indexedFiles = new LinkedHashSet<>();
 
 	private final Function<String, T> fromStringConvertor;
 
-	public PersistentIndex(Path workingFile,Function<String, T> fromStringConvertor) throws IOException {
+	public PersistentIndex(Path workingFile,
+		Function<String, T> fromStringConvertor) throws IOException
+	{
 		this.workingFile = workingFile;
 		this.fromStringConvertor = fromStringConvertor;
 		loadFromWorkingFile();
@@ -61,7 +64,7 @@ class PersistentIndex<T> {
 
 	private void loadFromWorkingFile() throws IOException {
 		indexedFiles.clear();
-		if (Files.exists(workingFile)) {
+		if (workingFile.toFile().exists()) {
 			try (BufferedReader br = Files.newBufferedReader(workingFile)) {
 				String line;
 				while (null != (line = br.readLine())) {
