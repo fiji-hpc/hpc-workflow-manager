@@ -32,14 +32,14 @@ public class Synchronization implements Closeable {
 
 	private final static Logger log = LoggerFactory.getLogger(
 		cz.it4i.fiji.hpc_client.data_transfer.Synchronization.class);
-	
+
 	private static final String FILE_INDEX_TO_UPLOAD_FILENAME = ".toUploadFiles";
-	
+
 	private static final String FILE_INDEX_UPLOADED_FILENAME = ".uploaded";
-	
+
 	private static final String FILE_INDEX_TO_DOWNLOAD_FILENAME =
 		".toDownloadFiles";
-	
+
 	private static final String FILE_INDEX_DOWNLOADED_FILENAME = ".downloaded";
 
 	private final Path workingDirectory;
@@ -62,9 +62,11 @@ public class Synchronization implements Closeable {
 
 	public static final String FAILED_ITEM = "Failed item";
 
-	public Synchronization(Supplier<HPCFileTransfer> fileTransferSupplier, Path workingDirectory, Path inputDirectory,
-			Path outputDirectory, Runnable uploadFinishedNotifier, Runnable downloadFinishedNotifier, Predicate<Path> uploadFilter)
-			throws IOException {
+	public Synchronization(Supplier<HPCFileTransfer> fileTransferSupplier,
+		Path workingDirectory, Path inputDirectory, Path outputDirectory,
+		Runnable uploadFinishedNotifier, Runnable downloadFinishedNotifier,
+		Predicate<Path> uploadFilter) throws IOException
+	{
 		this.workingDirectory = workingDirectory;
 		this.inputDirectory = inputDirectory;
 		this.outputDirectory = outputDirectory;
@@ -143,14 +145,19 @@ public class Synchronization implements Closeable {
 	}
 
 	private boolean canUpload(Path file) {
-		return uploadFilter.test(file) && !file.getFileName().toString().matches("[.][^.]+")
-				&& !filesDownloaded.contains(file);
+		return uploadFilter.test(file) && !file.getFileName().toString().matches(
+			"[.][^.]+") && !filesDownloaded.contains(file);
 	}
 
-	private PersistentSynchronizationProcess<Path> createUploadProcess(Supplier<HPCFileTransfer> fileTransferSupplier,
-			ExecutorService executorService, Runnable uploadFinishedNotifier) throws IOException {
-		return new PersistentSynchronizationProcess<Path>(executorService, fileTransferSupplier, uploadFinishedNotifier,
-				workingDirectory.resolve(FILE_INDEX_TO_UPLOAD_FILENAME), name -> inputDirectory.resolve(name)) {
+	private PersistentSynchronizationProcess<Path> createUploadProcess(
+		Supplier<HPCFileTransfer> fileTransferSupplier,
+		ExecutorService executorService, Runnable uploadFinishedNotifier)
+		throws IOException
+	{
+		return new PersistentSynchronizationProcess<Path>(executorService,
+			fileTransferSupplier, uploadFinishedNotifier, workingDirectory.resolve(
+				FILE_INDEX_TO_UPLOAD_FILENAME), name -> inputDirectory.resolve(name))
+		{
 
 			@Override
 			protected Collection<Path> getItems() throws IOException {
@@ -170,9 +177,10 @@ public class Synchronization implements Closeable {
 				filesUploaded.insert(inputDirectory.resolve(p.toString()));
 				try {
 					filesUploaded.storeToWorkingFile();
-				} catch (final IOException e) {
+				}
+				catch (final IOException e) {
 					log.error(e.getMessage(), e);
-				} 
+				}
 			}
 
 			@Override
@@ -180,7 +188,8 @@ public class Synchronization implements Closeable {
 				return StreamSupport.stream(items.spliterator(), false).map(p -> {
 					try {
 						return Files.size(p);
-					} catch (IOException e) {
+					}
+					catch (IOException e) {
 						log.error(e.getMessage(), e);
 						return 0;
 					}
@@ -189,20 +198,29 @@ public class Synchronization implements Closeable {
 		};
 	}
 
-	private P_PersistentDownloadProcess createDownloadProcess(Supplier<HPCFileTransfer> fileTransferSupplier,
-			ExecutorService executorService, Runnable uploadFinishedNotifier) throws IOException {
+	private P_PersistentDownloadProcess createDownloadProcess(
+		Supplier<HPCFileTransfer> fileTransferSupplier,
+		ExecutorService executorService, Runnable uploadFinishedNotifier)
+		throws IOException
+	{
 
-		return new P_PersistentDownloadProcess(executorService, fileTransferSupplier, uploadFinishedNotifier);
+		return new P_PersistentDownloadProcess(executorService,
+			fileTransferSupplier, uploadFinishedNotifier);
 	}
 
-	private class P_PersistentDownloadProcess extends PersistentSynchronizationProcess<String> {
+	private class P_PersistentDownloadProcess extends
+		PersistentSynchronizationProcess<String>
+	{
 
 		private Collection<String> items = Collections.emptyList();
 
-		public P_PersistentDownloadProcess(ExecutorService service, Supplier<HPCFileTransfer> fileTransferSupplier,
-				Runnable processFinishedNotifier) throws IOException {
+		public P_PersistentDownloadProcess(ExecutorService service,
+			Supplier<HPCFileTransfer> fileTransferSupplier,
+			Runnable processFinishedNotifier) throws IOException
+		{
 			super(service, fileTransferSupplier, processFinishedNotifier,
-					workingDirectory.resolve(FILE_INDEX_TO_DOWNLOAD_FILENAME), name -> name);
+				workingDirectory.resolve(FILE_INDEX_TO_DOWNLOAD_FILENAME),
+				name -> name);
 		}
 
 		private synchronized void setItems(Collection<String> items) {
@@ -229,9 +247,12 @@ public class Synchronization implements Closeable {
 		}
 
 		@Override
-		protected long getTotalSize(Iterable<String> files, HPCFileTransfer tr) throws InterruptedIOException {
-			return tr.obtainSize(StreamSupport.stream(files.spliterator(), false).collect(Collectors.toList())).stream()
-					.collect(Collectors.summingLong(val -> val));
+		protected long getTotalSize(Iterable<String> files, HPCFileTransfer tr)
+			throws InterruptedIOException
+		{
+			return tr.obtainSize(StreamSupport.stream(files.spliterator(), false)
+				.collect(Collectors.toList())).stream().collect(Collectors.summingLong(
+					val -> val));
 		}
 
 	}
