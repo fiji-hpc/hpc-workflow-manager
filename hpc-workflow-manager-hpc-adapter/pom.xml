@@ -75,7 +75,7 @@
 		<dependency>
 			<groupId>cz.it4i.fiji</groupId>
 			<artifactId>scp-java-client</artifactId>
-			<version>1.2.0</version>
+			<version>1.2.1</version>
 		</dependency>
 		<dependency>
 			<groupId>net.imagej</groupId>

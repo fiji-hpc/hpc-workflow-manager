@@ -170,10 +170,7 @@ public class HPCWorkflowJobManager<T extends JobWithWorkflowTypeSettings>
 			if (getWorkflowType() == WorkflowType.SPIM_WORKFLOW && yaml != null) {
 				job.setProperty(SPIM_OUTPUT_FILENAME_PATTERN, yaml.getCommonProperty(
 					FUSION_SWITCH) + "_" + yaml.getCommonProperty(HDF5_XML_FILENAME));
-			} else {
-				job.setLastStartedTimestamp();
 			}
-
 		}
 
 		@Override

@@ -255,6 +255,11 @@ public class ObservableHPCWorkflowJob extends
 				workflowkJob.getClass());
 	}
 	
+	public void setLastStartedTimestamp() {
+		MacroWorkflowJob typeJob = (MacroWorkflowJob) workflowkJob;
+		typeJob.setLastStartedTimestamp();
+	}
+	
 	public long getLastStartedTimestamp() {
 		MacroWorkflowJob typeJob = (MacroWorkflowJob) workflowkJob;
 		return typeJob.getLastStartedTimestamp();

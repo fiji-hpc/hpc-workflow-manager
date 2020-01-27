@@ -155,10 +155,14 @@ public class HPCWorkflowControl<T extends JobWithDirectorySettings> extends
 		menu.addItem("Create a new job", x -> askForCreateJob(), j -> true);
 		menu.addSeparator();
 
-		menu.addItem("Start job", job -> executeWSCallAsync("Starting job", p -> {
-			job.getValue().startJob(p);
-			job.getValue().update();
-		}), job -> JavaFXRoutines.notNullValue(job, j -> (j
+		menu.addItem("Start job", job -> {
+			if (job.getWorkflowType() == WorkflowType.MACRO_WORKFLOW) job
+				.setLastStartedTimestamp();
+			executeWSCallAsync("Starting job", p -> {
+				job.getValue().startJob(p);
+				job.getValue().update();
+			});
+		}, job -> JavaFXRoutines.notNullValue(job, j -> (j
 			.getState() == JobState.Configuring || j
 				.getState() == JobState.Finished || j.getState() == JobState.Failed || j
 					.getState() == JobState.Canceled) && checkIfAnythingHasBeenUploaded(
@@ -313,9 +317,8 @@ public class HPCWorkflowControl<T extends JobWithDirectorySettings> extends
 	private void askForCreateJob() {
 		@SuppressWarnings("unchecked")
 		JavaFXJobSettingsProvider<T> settingsProvider = pluginService
-			.createInstancesOfType(
-			JavaFXJobSettingsProvider.class).stream().filter(p -> p
-				.getTypeOfJobSettings().equals(paradigm.getTypeOfJobSettings()))
+			.createInstancesOfType(JavaFXJobSettingsProvider.class).stream().filter(
+				p -> p.getTypeOfJobSettings().equals(paradigm.getTypeOfJobSettings()))
 			.findFirst().orElse(null);
 		if (settingsProvider == null) {
 			return;
@@ -362,9 +365,7 @@ public class HPCWorkflowControl<T extends JobWithDirectorySettings> extends
 		}
 	}
 
-	private WorkflowJob doCreateJob(T settings)
-		throws IOException
-	{
+	private WorkflowJob doCreateJob(T settings) throws IOException {
 		WorkflowJob bj;
 		bj = paradigm.createJob(settings);
 		ObservableHPCWorkflowJob obj = registry.addIfAbsent(bj);
@@ -372,7 +373,6 @@ public class HPCWorkflowControl<T extends JobWithDirectorySettings> extends
 		jobs.refresh();
 		return bj;
 	}
-
 
 	private synchronized void addJobToItems(ObservableHPCWorkflowJob obj) {
 		jobs.getItems().add(obj);
