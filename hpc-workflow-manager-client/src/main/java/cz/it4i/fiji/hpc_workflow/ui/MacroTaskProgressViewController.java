@@ -78,9 +78,10 @@ public class MacroTaskProgressViewController extends BorderPane {
 			super.updateItem(t, empty);
 			if (!empty && t >= -1) {
 				setText(null);
-				if(t == -1) {
+				if (t == -1) {
 					cellProgress.setProgress(-1);
-				} else {
+				}
+				else {
 					cellProgress.setProgress(t.doubleValue() / 100D);
 				}
 				setGraphic(cellProgress);
@@ -121,11 +122,12 @@ public class MacroTaskProgressViewController extends BorderPane {
 			}
 			getAndParseFileUpdateTasks(files);
 
-			if (job.getState() != JobState.Queued && job
-				.getState() != JobState.Running && job.getState() != JobState.Submitted)
+			JobState jobState = job.getState();
+			if (jobState != JobState.Queued && jobState != JobState.Running &&
+				jobState != JobState.Submitted)
 			{
-				setStatusMessage("Stopped updating progress because state is: " + job
-					.getState().toString());
+				setStatusMessage("Stopped updating progress because state is: " +
+					jobState.toString());
 				exec.shutdown();
 			}
 

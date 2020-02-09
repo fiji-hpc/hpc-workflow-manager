@@ -9,6 +9,7 @@ import java.io.InterruptedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
@@ -113,8 +114,7 @@ public class Job {
 
 	public static Job submitNewJob(JobManager4Job jobManager, Path basePath,
 		HPCClientProxyAdapter<? extends JobWithDirectorySettings> hpcClient,
-		Object params)
-		throws IOException
+		Object params) throws IOException
 	{
 		Job result = new Job(jobManager, hpcClient);
 		JobSubmission<? extends JobWithDirectorySettings> jobSubmission = hpcClient
@@ -147,9 +147,7 @@ public class Job {
 		return result;
 	}
 
-	private Job(JobManager4Job jobManager,
-		HPCClientProxyAdapter<?> hpcClient)
-	{
+	private Job(JobManager4Job jobManager, HPCClientProxyAdapter<?> hpcClient) {
 		this.hpcClient = hpcClient;
 		this.jobManager = jobManager;
 	}
@@ -177,8 +175,8 @@ public class Job {
 	public CompletableFuture<?> startDownload(Predicate<String> predicate)
 		throws IOException
 	{
-		Collection<String> files = hpcClient.getChangedFiles(jobId).stream()
-			.filter(predicate).collect(Collectors.toList());
+		Collection<String> files = hpcClient.getChangedFiles(jobId).stream().filter(
+			predicate).collect(Collectors.toList());
 		if (files.isEmpty()) {
 			return CompletableFuture.completedFuture(null);
 		}
@@ -372,14 +370,19 @@ public class Job {
 	}
 
 	public List<String> getOutput(Collection<JobSynchronizableFile> output) {
+		List<String> result = new ArrayList<>();
 
-		long taskId = (Long) getJobInfo().getTasks().toArray()[0];
-		List<SynchronizableFile> synchronizableFiles = output.stream().map(
-			file -> new SynchronizableFile(taskId, file.getType(), file.getOffset()))
-			.collect(Collectors.toList());
+		if (!getJobInfo().getTasks().isEmpty()) {
+			long taskId = (Long) getJobInfo().getTasks().toArray()[0];
+			List<SynchronizableFile> synchronizableFiles = output.stream().map(
+				file -> new SynchronizableFile(taskId, file.getType(), file
+					.getOffset())).collect(Collectors.toList());
 
-		return hpcClient.downloadPartsOfJobFiles(jobId, synchronizableFiles)
-			.stream().map(JobFileContent::getContent).collect(Collectors.toList());
+			result = hpcClient.downloadPartsOfJobFiles(jobId, synchronizableFiles)
+				.stream().map(JobFileContent::getContent).collect(Collectors.toList());
+		}
+
+		return result;
 	}
 
 	public InputStream openLocalFile(String name) throws IOException {
@@ -419,8 +422,8 @@ public class Job {
 		if ((result) && jobDir.toFile().isDirectory()) {
 			List<Path> pathsToDelete;
 			try (Stream<Path> dirStream = Files.walk(jobDir)) {
-				pathsToDelete = dirStream.sorted(Comparator.reverseOrder())
-					.collect(Collectors.toList());
+				pathsToDelete = dirStream.sorted(Comparator.reverseOrder()).collect(
+					Collectors.toList());
 				for (Path path : pathsToDelete) {
 					Files.deleteIfExists(path);
 				}
@@ -512,8 +515,7 @@ public class Job {
 	}
 
 	public void createEmptyFile(String fileName) throws InterruptedIOException {
-		try (HPCFileTransfer transfer = hpcClient.startFileTransfer(getId()))
-		{
+		try (HPCFileTransfer transfer = hpcClient.startFileTransfer(getId())) {
 			transfer.upload(new EmptyUploadingFile(fileName));
 		}
 	}
@@ -583,8 +585,6 @@ public class Job {
 		setProperty(JOB_NAME, name);
 	}
 
-
-
 	private JobInfo getJobInfo() {
 		if (jobInfo == null) {
 			updateJobInfo();
@@ -600,7 +600,6 @@ public class Job {
 		setProperty(JOB_CAN_BE_DOWNLOADED, b);
 	}
 
-
 	private void storeLastStartedTimestamp(long timestamp) {
 		propertyHolder.setValue(LAST_STARTED_TIMESTAMP, Long.toString(timestamp));
 	}
@@ -615,7 +614,7 @@ public class Job {
 
 	private static UploadingFile getUploadingFile(final Path file) {
 		return new UploadingFile() {
-	
+
 			@Override
 			public InputStream getInputStream() {
 				try {
@@ -625,12 +624,12 @@ public class Job {
 					throw new HPCClientException(e);
 				}
 			}
-	
+
 			@Override
 			public String getName() {
 				return file.getFileName().toString();
 			}
-	
+
 			@Override
 			public long getLength() {
 				try {
@@ -640,7 +639,7 @@ public class Job {
 					throw new HPCClientException(e);
 				}
 			}
-	
+
 			@Override
 			public long getLastTime() {
 				try {
@@ -650,7 +649,7 @@ public class Job {
 					throw new HPCClientException(e);
 				}
 			}
-	
+
 		};
 	}
 

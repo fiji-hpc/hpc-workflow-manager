@@ -1,3 +1,4 @@
+
 package cz.it4i.fiji.hpc_workflow.core;
 
 import java.util.Collection;
@@ -13,9 +14,12 @@ import java.util.stream.Collectors;
 
 import cz.it4i.fiji.hpc_client.SynchronizableFileType;
 
-public class ComputationAccessorDecoratorWithTimeout implements ComputationAccessor {
+public class ComputationAccessorDecoratorWithTimeout implements
+	ComputationAccessor
+{
+
 	private final long intervalForQueryInMs;
-	private final  PResultCacheHolder<List<String>> outputCache;
+	private final PResultCacheHolder<List<String>> outputCache;
 	private final PResultCacheHolder<Set<String>> changedFilesCache;
 	private final Map<SynchronizableFileType, Integer> allowedTypesIndices =
 		new EnumMap<>(SynchronizableFileType.class);
@@ -23,15 +27,19 @@ public class ComputationAccessorDecoratorWithTimeout implements ComputationAcces
 	private ComputationAccessor decorated;
 
 	public ComputationAccessorDecoratorWithTimeout(ComputationAccessor decorated,
-			Set<SynchronizableFileType> allowedTypes, long intervalForQueryInMs) {
+		Set<SynchronizableFileType> allowedTypes, long intervalForQueryInMs)
+	{
 		this.intervalForQueryInMs = intervalForQueryInMs;
 		this.decorated = decorated;
 		initAllowedTypes(allowedTypes);
-		outputCache = new PResultCacheHolder<>(x -> decorated.getActualOutput(this.allowedTypes));
+		outputCache = new PResultCacheHolder<>(x -> 
+			decorated.getActualOutput(this.allowedTypes)
+		);
 		changedFilesCache = new PResultCacheHolder<>(set -> {
 			if (set == null) {
 				set = new HashSet<>();
-			} else {
+			}
+			else {
 				set.clear();
 			}
 			set.addAll(decorated.getChangedFiles());
@@ -40,12 +48,16 @@ public class ComputationAccessorDecoratorWithTimeout implements ComputationAcces
 	}
 
 	@Override
-	public synchronized List<String> getActualOutput(List<SynchronizableFileType> types) {
+	public synchronized List<String> getActualOutput(
+		List<SynchronizableFileType> types)
+	{
 		if (!allowedTypesIndices.keySet().containsAll(types)) {
-			throw new IllegalArgumentException("supported only types: " + allowedTypes + ", given" + types);
+			throw new IllegalArgumentException("supported only types: " +
+				allowedTypes + ", given" + types);
 		}
 		List<String> result = outputCache.getResult();
-		return types.stream().map(type -> result.get(allowedTypesIndices.get(type))).collect(Collectors.toList());
+		return types.stream().map(type -> result.get(allowedTypesIndices.get(type)))
+			.collect(Collectors.toList());
 	}
 
 	@Override
@@ -57,7 +69,7 @@ public class ComputationAccessorDecoratorWithTimeout implements ComputationAcces
 	public List<Long> getFileSizes(List<String> names) {
 		return decorated.getFileSizes(names);
 	}
-	
+
 	@Override
 	public List<String> getFileContents(List<String> logs) {
 		return decorated.getFileContents(logs);
@@ -71,6 +83,7 @@ public class ComputationAccessorDecoratorWithTimeout implements ComputationAcces
 	}
 
 	private class PResultCacheHolder<T> {
+
 		private Long lastQuery;
 		private T value;
 		private final Function<T, T> producer;

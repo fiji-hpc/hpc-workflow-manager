@@ -78,6 +78,8 @@ import cz.it4i.fiji.hpc_workflow.Task;
 import cz.it4i.fiji.hpc_workflow.TaskComputation;
 import cz.it4i.fiji.hpc_workflow.WorkflowJob;
 import cz.it4i.fiji.hpc_workflow.WorkflowParadigm;
+import cz.it4i.swing_javafx_ui.JavaFXRoutines;
+import cz.it4i.swing_javafx_ui.SimpleDialog;
 
 @Plugin(type = ParallelizationParadigm.class)
 public class HPCWorkflowJobManager<T extends JobWithWorkflowTypeSettings>
@@ -407,7 +409,7 @@ public class HPCWorkflowJobManager<T extends JobWithWorkflowTypeSettings>
 		public Long getId() {
 			return job.getId();
 		}
-		
+
 		@Override
 		public List<String> getFileContents(List<String> files) {
 			return job.getFileContents(files);
@@ -417,7 +419,7 @@ public class HPCWorkflowJobManager<T extends JobWithWorkflowTypeSettings>
 		public String getUserScriptName() {
 			return job.getUserScriptName();
 		}
-		
+
 		@Override
 		public void setLastStartedTimestamp() {
 			job.setLastStartedTimestamp();
@@ -494,11 +496,22 @@ public class HPCWorkflowJobManager<T extends JobWithWorkflowTypeSettings>
 			verifiedStateProcessed = true;
 			return CompletableFuture.supplyAsync(() -> {
 				try {
-					JobState workVerifiedState = Stream.concat(Arrays.asList(state)
-						.stream(), getTasks().stream().filter(task -> !task.getDescription()
-							.equals(DONE_TASK)).flatMap(task -> task.getComputations()
-								.stream()).map(TaskComputation::getState)).max(
-									new JobStateComparator()).get();
+
+					JobState workVerifiedState = null;
+					Stream<JobState> stateStream = Arrays.asList(state).stream();
+					List<Task> tasks = getTasks();
+					if (!tasks.isEmpty()) {
+						Stream<Task> tasksStream = tasks.stream();
+						workVerifiedState = Stream.concat(Arrays.asList(state).stream(),
+							tasksStream.filter(task -> !task.getDescription().equals(
+								DONE_TASK)).flatMap(task -> task.getComputations().stream())
+								.map(TaskComputation::getState)).max(new JobStateComparator())
+							.get();
+					}
+					else {
+						// ToDo: Is this correct for SPIMM Workflow type jobs?
+						workVerifiedState = Finished;
+					}
 
 					if (workVerifiedState != Finished && workVerifiedState != Canceled) {
 						workVerifiedState = Failed;
@@ -513,6 +526,11 @@ public class HPCWorkflowJobManager<T extends JobWithWorkflowTypeSettings>
 						setVerifiedState(workVerifiedState);
 						return workVerifiedState;
 					}
+				}
+				catch (Exception exc) {
+					JavaFXRoutines.runOnFxThread(() -> SimpleDialog.showException("Exception",
+						"Impossible!!!", exc));
+					return JobState.Failed;
 				}
 				finally {
 					synchronized (BenchmarkJob.this) {
@@ -697,11 +715,10 @@ public class HPCWorkflowJobManager<T extends JobWithWorkflowTypeSettings>
 		}
 	}
 
-	public void prepareParadigm(
-		Path aWorkingDirectory,
-		Supplier<HPCClient<T>> hpcClientSupplier,
-		Class<T> jobSettingsType, BooleanSupplier aInitializator,
-		Runnable aInitDoneCallback, Runnable aFinalizer)
+	public void prepareParadigm(Path aWorkingDirectory,
+		Supplier<HPCClient<T>> hpcClientSupplier, Class<T> jobSettingsType,
+		BooleanSupplier aInitializator, Runnable aInitDoneCallback,
+		Runnable aFinalizer)
 	{
 		this.workingDirectory = aWorkingDirectory;
 		this.hpcClient = new HPCClientProxyAdapter<>(hpcClientSupplier,
@@ -710,7 +727,6 @@ public class HPCWorkflowJobManager<T extends JobWithWorkflowTypeSettings>
 		this.finalizer = aFinalizer;
 		this.initDoneCallback = aInitDoneCallback;
 	}
-
 
 	@Override
 	public WorkflowJob createJob(T parameters) throws IOException {
@@ -897,6 +913,5 @@ public class HPCWorkflowJobManager<T extends JobWithWorkflowTypeSettings>
 	private static UploadingFile getConfigYamlFile() {
 		return new UploadingFileFromResource("", Constants.CONFIG_YAML);
 	}
-
 
 }
