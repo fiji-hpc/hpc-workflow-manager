@@ -286,12 +286,13 @@ public class HPCWorkflowJobManager<T extends JobWithWorkflowTypeSettings>
 
 		@Override
 		public CompletableFuture<?> startDownload() throws IOException {
-			if (job.getState() == Finished) {
+			JobState jobState = job.getState();
+			if (jobState == Finished) {
 				CompletableFuture<?> result = new CompletableFuture<>();
 				startDownloadResults(result);
 				return result;
 			}
-			else if (job.getState() == Failed || job.getState() == Canceled) {
+			else if (jobState == Failed || jobState == Canceled) {
 				return job.startDownload(downloadFailedData());
 			}
 			else {
@@ -502,10 +503,10 @@ public class HPCWorkflowJobManager<T extends JobWithWorkflowTypeSettings>
 					List<Task> tasks = getTasks();
 					if (!tasks.isEmpty()) {
 						Stream<Task> tasksStream = tasks.stream();
-						workVerifiedState = Stream.concat(Arrays.asList(state).stream(),
-							tasksStream.filter(task -> !task.getDescription().equals(
-								DONE_TASK)).flatMap(task -> task.getComputations().stream())
-								.map(TaskComputation::getState)).max(new JobStateComparator())
+						workVerifiedState = Stream.concat(stateStream, tasksStream.filter(
+							task -> !task.getDescription().equals(DONE_TASK)).flatMap(
+								task -> task.getComputations().stream()).map(
+									TaskComputation::getState)).max(new JobStateComparator())
 							.get();
 					}
 					else {
@@ -528,8 +529,8 @@ public class HPCWorkflowJobManager<T extends JobWithWorkflowTypeSettings>
 					}
 				}
 				catch (Exception exc) {
-					JavaFXRoutines.runOnFxThread(() -> SimpleDialog.showException("Exception",
-						"Impossible!!!", exc));
+					JavaFXRoutines.runOnFxThread(() -> SimpleDialog.showException(
+						"Exception", "Impossible!!!", exc));
 					return JobState.Failed;
 				}
 				finally {
