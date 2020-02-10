@@ -162,17 +162,20 @@ public class HPCWorkflowControl<T extends JobWithDirectorySettings> extends
 				job.getValue().startJob(p);
 				job.getValue().update();
 			});
-		}, job -> JavaFXRoutines.notNullValue(job, j -> (j
-			.getState() == JobState.Configuring || j
-				.getState() == JobState.Finished || j.getState() == JobState.Failed || j
-					.getState() == JobState.Canceled) && checkIfAnythingHasBeenUploaded(
-						j)));
+		}, job -> JavaFXRoutines.notNullValue(job, j -> {
+			JobState jobState = j.getState();
+			return (jobState == JobState.Configuring ||
+				jobState == JobState.Finished || jobState == JobState.Failed ||
+				jobState == JobState.Canceled) && checkIfAnythingHasBeenUploaded(j);
+		}));
 
 		menu.addItem("Cancel job", job -> executeWSCallAsync("Canceling job", p -> {
 			job.getValue().cancelJob();
 			job.getValue().update();
-		}), job -> JavaFXRoutines.notNullValue(job, j -> j
-			.getState() == JobState.Running || j.getState() == JobState.Queued));
+		}), job -> JavaFXRoutines.notNullValue(job, j -> {
+			JobState jobState = j.getState();
+			return (jobState == JobState.Running || jobState == JobState.Queued);
+		}));
 
 		menu.addItem("Job dashboard", this::openJobDetailsWindow,
 			job -> JavaFXRoutines.notNullValue(job, j -> true));
