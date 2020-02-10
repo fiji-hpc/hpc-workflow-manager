@@ -552,13 +552,17 @@ public class HPCWorkflowJobManager<T extends JobWithWorkflowTypeSettings>
 		{
 
 			final WorkflowType jobType = getWorkflowType();
+
 			final String mainFile = job.getProperty(SPIM_OUTPUT_FILENAME_PATTERN) +
 				".xml";
+
 			final StillRunningDownloadSwitcher stillRunningTemporarySwitch =
 				new StillRunningDownloadSwitcher(() -> downloadingStatus,
 					val -> downloadingStatus = val);
+
 			final ProgressNotifierTemporarySwitchOff progressNotifierTemporarySwitchOff =
 				new ProgressNotifierTemporarySwitchOff(downloadNotifier, job);
+
 			downloadMainFile(jobType, mainFile, stillRunningTemporarySwitch,
 				progressNotifierTemporarySwitchOff).thenCompose(x -> {
 					try {
