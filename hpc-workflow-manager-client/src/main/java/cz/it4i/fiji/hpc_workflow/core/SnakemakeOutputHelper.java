@@ -99,8 +99,8 @@ class SnakemakeOutputHelper implements HaaSOutputHolder {
 			}
 		};
 
-		result = new ComputationAccessorDecoratorWithTimeout(result,
-			new HashSet<>(Arrays.asList(StandardOutputFile, StandardErrorFile)),
+		result = new ComputationAccessorDecoratorWithTimeout(result, new HashSet<>(
+			Arrays.asList(StandardOutputFile, StandardErrorFile)),
 			getHaasUpdateTimeout() / UI_TO_HAAS_FREQUENCY_UPDATE_RATIO);
 		return result;
 	}
@@ -128,8 +128,7 @@ class SnakemakeOutputHelper implements HaaSOutputHolder {
 		}
 
 		// If no job count definition has been found, search through the output and
-		// list
-		// all errors
+		// list all errors:
 		if (!found) {
 			@SuppressWarnings("resource")
 			final Scanner scanner = new Scanner(getSnakemakeOutput());
@@ -146,8 +145,8 @@ class SnakemakeOutputHelper implements HaaSOutputHolder {
 						}
 						currentLine = scanner.nextLine().trim();
 					}
-					nonTaskSpecificErrors.add(new HPCWorkflowError(errorMessageStringBuilder
-						.toString()));
+					nonTaskSpecificErrors.add(new HPCWorkflowError(
+						errorMessageStringBuilder.toString()));
 				}
 			}
 			scanner.close();
