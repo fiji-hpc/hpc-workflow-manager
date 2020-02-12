@@ -372,7 +372,9 @@ public class Job {
 	public List<String> getOutput(Collection<JobSynchronizableFile> output) {
 		List<String> result = new ArrayList<>();
 
-		if (!getJobInfo().getTasks().isEmpty()) {
+		// ToDo: re-enable the condition after the SSH version of getting the output
+		// is implemented.
+		if (true) {// (!getJobInfo().getTasks().isEmpty()) {
 			long taskId = (Long) getJobInfo().getTasks().toArray()[0];
 			List<SynchronizableFile> synchronizableFiles = output.stream().map(
 				file -> new SynchronizableFile(taskId, file.getType(), file

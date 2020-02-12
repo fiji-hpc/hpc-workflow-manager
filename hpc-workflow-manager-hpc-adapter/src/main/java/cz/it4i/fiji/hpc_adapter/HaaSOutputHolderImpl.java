@@ -22,6 +22,7 @@ public class HaaSOutputHolderImpl implements HaaSOutputHolder {
 
 	private final Map<SynchronizableFileType, StringBuilder> results =
 		new EnumMap<>(SynchronizableFileType.class);
+	
 	private final HaaSOutputSource source;
 
 	public HaaSOutputHolderImpl(HaaSOutputSource source) {
@@ -42,11 +43,16 @@ public class HaaSOutputHolderImpl implements HaaSOutputHolder {
 
 	private synchronized void updateData(List<SynchronizableFileType> types) {
 		List<JobSynchronizableFile> files = types.stream().map(
-			type -> new JobSynchronizableFile(type, results.computeIfAbsent(type,
-				x -> new StringBuilder()).length())).collect(Collectors.toList());
+			type -> new JobSynchronizableFile(
+				type, results.computeIfAbsent(type,
+					x -> new StringBuilder()).length()
+			)
+		).collect(Collectors.toList());
+		
 		List<String> readedContent = source.getOutput(files);
-		Streams.zip(types.stream(), readedContent.stream(), (type,
-			content) -> (Runnable) (() -> results.get(type).append(content))).forEach(
-				Runnable::run);
+		
+		Streams.zip(types.stream(), readedContent.stream(), 
+			(type, content) -> (Runnable) (() -> results.get(type).append(content))
+		).forEach(Runnable::run);
 	}
 }
