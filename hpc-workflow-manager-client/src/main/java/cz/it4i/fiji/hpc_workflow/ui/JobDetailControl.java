@@ -193,7 +193,6 @@ public class JobDetailControl extends TabPane {
 		if (jobType == WorkflowType.SPIM_WORKFLOW) {
 			taskList.unsubscribe(taskListListener);
 			progressControl.close();
-			logViewControl.close();
 		}
 		else {
 			macroProgressControl.close();
@@ -201,6 +200,7 @@ public class JobDetailControl extends TabPane {
 		// Common close for both workflow types:
 		errorOutput.removeListener(errorOutputListener);
 		standardOutput.removeListener(standardOutputListener);
+		logViewControl.close();
 		otherOutputControl.close();
 		jobProperties.close();
 		dataUploadControl.close();
