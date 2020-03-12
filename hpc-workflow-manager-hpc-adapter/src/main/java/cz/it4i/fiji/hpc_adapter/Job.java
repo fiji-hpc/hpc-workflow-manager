@@ -372,7 +372,7 @@ public class Job {
 	public List<String> getOutput(Collection<JobSynchronizableFile> output) {
 		List<String> result = new ArrayList<>();
 
-		// ToDo: re-enable the condition after the SSH version of getting the output
+		//ToDo: re-enable the condition after the SSH version of getting the output
 		// is implemented.
 		if (true) {// (!getJobInfo().getTasks().isEmpty()) {
 			long taskId = (Long) getJobInfo().getTasks().toArray()[0];
