@@ -41,6 +41,10 @@ function parReportTasks(){
 	ret = call("cz.it4i.fiji.parallel_macro.ParallelMacro.reportTasks");
 }
 
+function parEnableTiming(){
+	ret = call("cz.it4i.fiji.parallel_macro.ParallelMacro.enableTiming");
+}
+
 function parScatterEqually(sendBuffer, totalSendBufferLength, root) {
 	sendString = convertArrayToCommaSeparatedString(sendBuffer);
 	receivedString = call("cz.it4i.fiji.parallel_macro.ParallelMacro.scatterEqually", sendString, totalSendBufferLength, root);
