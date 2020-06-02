@@ -83,7 +83,7 @@ public class FileProgressLogParser implements ProgressLogParser {
 		String[] elements, int taskIdCounter, ObservableList<MacroTask> tableData,
 		Map<String, Map<Integer, SimpleLongProperty>> descriptionToProperty)
 	{
-		if (elements.length == 2) {
+		if (elements.length >= 2) {
 			int taskIdForNode = Integer.parseInt(elements[0]);
 			try {
 				Long progress = Long.parseLong(elements[1]);
