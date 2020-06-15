@@ -52,11 +52,15 @@ public class FunctionsInformationLoader {
 
 		functionInformationList.add(new FunctionInformation("Gather",
 			"All ranks send an equal amount of array items to a single root node of a given rank. Be careful, the receiveCount parameter should be the count of items received from each rank separately. This is the inverse operation of parScatter. ",
-			"sendBuffer, sendCount, receiveCount, sender"));
+			"sendBuffer, sendCount, receiveCount, receiver"));
 
 		functionInformationList.add(new FunctionInformation("GatherEqually",
 			"The given rank will receive an array send in parts by all ranks. This is the inverse operation of the parScatterEqually.",
 			"sendBuffer, totalReceiveBufferLength, receiver"));
+
+		functionInformationList.add(new FunctionInformation("EnableTiming",
+			"Enable timing of each tasks (from its start 0% to finish 100%) in the progress logs.",
+			""));
 	}
 
 	public List<FunctionInformation> getFunctionInformationList() {
