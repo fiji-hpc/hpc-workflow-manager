@@ -61,7 +61,7 @@ function parScatter(sendBuffer, sendCount, receiveCount, root) {
 
 function parGather(sendBuffer, sendCount, receiveCount, receiver){
 	sendString = convertArrayToCommaSeparatedString(sendBuffer);
-	receivedString = call("cz.it4i.fiji.parallel_macro.ParallelMacro.gather", sendString, sendCount, receiveCount, root);
+	receivedString = call("cz.it4i.fiji.parallel_macro.ParallelMacro.gather", sendString, sendCount, receiveCount, receiver);
 	receivedBuffer = convertCommaSeparatedStringToArray(receivedString);
 	return receivedBuffer;
 }
