@@ -9,6 +9,7 @@ import java.io.InterruptedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -503,7 +504,7 @@ public class Job {
 	// this is done in order to filter out older progress logs that might be
 	// on the server.
 	public void setLastStartedTimestamp() {
-		this.lastStartedTimestamp = java.time.Instant.now().toEpochMilli();
+		this.lastStartedTimestamp = Instant.now().toEpochMilli();
 		storeLastStartedTimestamp(this.lastStartedTimestamp);
 	}
 

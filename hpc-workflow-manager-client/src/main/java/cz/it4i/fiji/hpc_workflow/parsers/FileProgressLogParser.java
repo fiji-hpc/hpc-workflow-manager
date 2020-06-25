@@ -5,6 +5,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import cz.it4i.fiji.hpc_workflow.core.MacroTask;
 import cz.it4i.swing_javafx_ui.JavaFXRoutines;
 import cz.it4i.swing_javafx_ui.SimpleDialog;
@@ -14,6 +18,9 @@ import javafx.collections.ObservableList;
 public class FileProgressLogParser implements ProgressLogParser {
 
 	private Map<Integer, Long> previousTimestamp = new HashMap<>();
+
+	private static Logger logger = LoggerFactory.getLogger(
+		FileProgressLogParser.class);
 
 	@Override
 	public int getNumberOfNodes(List<String> progressLogs) {
@@ -58,6 +65,9 @@ public class FileProgressLogParser implements ProgressLogParser {
 			if (jobStartedTimestamp > lastUpdatedTimestamp ||
 				lastUpdatedTimestamp <= previousTimestamp.get(rank))
 			{
+				logger.debug(
+					"CSV log is up to date and progress does not need to be updated.\n job started: {}, last updated: {} ",
+					jobStartedTimestamp, lastUpdatedTimestamp);
 				return true;
 			}
 			this.previousTimestamp.put(rank, lastUpdatedTimestamp);
@@ -66,11 +76,12 @@ public class FileProgressLogParser implements ProgressLogParser {
 
 			for (String line : logLines) {
 				String[] elements = line.split(",");
-				taskIdCounter = setTaskProgressOrDescriptionFromElements(rank,
-					elements, taskIdCounter, tableData, descriptionToProperty);
+				taskIdCounter = setTaskProgressOrDescriptionFromElements(rank, elements,
+					taskIdCounter, tableData, descriptionToProperty);
 
 				// Task counter -1 means parsing the progress log files failed.
 				if (taskIdCounter == -1) {
+					logger.debug("Parsing the CSV file failed.");
 					return false;
 				}
 			}
@@ -99,7 +110,8 @@ public class FileProgressLogParser implements ProgressLogParser {
 				if (!descriptionToTaskId.containsKey(description)) {
 					descriptionToTaskId.put(description, taskIdCounter++);
 					// Set "indeterminate" progress indicator: state -1.
-					tableData.add(new MacroTask(description, nodeId));
+					tableData.add(new MacroTask(description));
+					tableData.get(taskIdCounter - 1).setIndeterminateProgress(nodeId);
 				}
 				nodeTaskToDescription.get(nodeId).put(taskIdForNode, description);
 			}

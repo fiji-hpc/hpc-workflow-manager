@@ -4,20 +4,27 @@ package cz.it4i.fiji.hpc_workflow.parsers;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import java.io.StringReader;
 
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.Source;
+import javax.xml.transform.stream.StreamSource;
+import javax.xml.validation.Schema;
+import javax.xml.validation.SchemaFactory;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathFactory;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+
 import cz.it4i.fiji.hpc_workflow.core.MacroTask;
 import javafx.beans.property.SimpleLongProperty;
 import javafx.collections.ObservableList;
@@ -26,6 +33,9 @@ public class XmlProgressLogParser implements ProgressLogParser {
 
 	// Maps rank to last updated timestamp:
 	private Map<Integer, Long> previousTimestamp = new HashMap<>();
+
+	private static Logger logger = LoggerFactory.getLogger(
+		XmlProgressLogParser.class);
 
 	@Override
 	public int getNumberOfNodes(List<String> progressLogs) {
@@ -49,14 +59,35 @@ public class XmlProgressLogParser implements ProgressLogParser {
 
 	private static Document convertStringToXMLDocument(String xmlString) {
 		// Parser that produces DOM object trees from XML content
-		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory
+			.newInstance();
+		documentBuilderFactory.setNamespaceAware(true);
+		// When not validating using DTD it should be set to false.
+		documentBuilderFactory.setValidating(false);
+		// Ignore indentation whitespaces on the XML document
+		documentBuilderFactory.setIgnoringElementContentWhitespace(true);
+		documentBuilderFactory.setIgnoringComments(true);
 
-		DocumentBuilder builder = null;
+		// Attempt to load and set schema:
+		Source schemaFile = new StreamSource(XmlProgressLogParser.class
+			.getClassLoader().getResourceAsStream("progress.xsd"));
+		SchemaFactory schemaFactory = SchemaFactory.newInstance(
+			XMLConstants.W3C_XML_SCHEMA_NS_URI);
+		try {
+			Schema schema = schemaFactory.newSchema(schemaFile);
+			documentBuilderFactory.setSchema(schema);
+		}
+		catch (NullPointerException | SAXException exc) {
+			logger.debug("Failed loading schema. exc {} ", exc);
+		}
+
+		DocumentBuilder documentBuilder = null;
 
 		try {
-			builder = factory.newDocumentBuilder();
-			builder.setErrorHandler(null);
-			return builder.parse(new InputSource(new StringReader(xmlString)));
+			documentBuilder = documentBuilderFactory.newDocumentBuilder();
+			// documentBuilder.setErrorHandler(new ErrorHandlerImpl());
+			return documentBuilder.parse(new InputSource(new StringReader(
+				xmlString)));
 		}
 		catch (Exception exc) {
 			return null;
@@ -75,7 +106,7 @@ public class XmlProgressLogParser implements ProgressLogParser {
 			node = (Node) expr.evaluate(document, XPathConstants.NODE);
 		}
 		catch (Exception exc) {
-			// Do nothing.
+			logger.debug("Could not fing node at xpath: {} ", xpathExpression);
 		}
 		return node;
 	}
@@ -90,32 +121,43 @@ public class XmlProgressLogParser implements ProgressLogParser {
 		long jobStartedTimestamp, ObservableList<MacroTask> tableData,
 		Map<String, Map<Integer, SimpleLongProperty>> descriptionToProperty)
 	{
+		long progress;
 		int size = progressLogs.size();
+		long lastUpdatedTimestamp;
+
 		for (int rank = 0; rank < size; rank++) {
+
 			// Ignore old progress files:
-			long lastUpdatedTimestamp = getLastUpdatedTimestamp(rank, progressLogs);
-			if(!this.previousTimestamp.containsKey(rank)) {
-				this.previousTimestamp.put(rank, -1L);
-			}
+			lastUpdatedTimestamp = getLastUpdatedTimestamp(rank, progressLogs);
+			this.previousTimestamp.putIfAbsent(rank, -1L);
+
 			if (jobStartedTimestamp > lastUpdatedTimestamp ||
 				lastUpdatedTimestamp <= this.previousTimestamp.get(rank))
 			{
+				logger.debug(
+					"XML log is up to date and progress does not need to be updated.");
 				return true;
 			}
+
 			this.previousTimestamp.put(rank, lastUpdatedTimestamp);
 
-			// Find all task elements in the XML document and get their id and
-			// progress:
+			// Get the XML structure:
 			NodeList taskXmlNodeList = null;
 			try {
 				taskXmlNodeList = convertStringToXMLDocument(progressLogs.get(rank))
 					.getElementsByTagName("task");
 			}
 			catch (NullPointerException exc) {
-				return true;
+				logger.debug(
+					"Catastrophic error when trying to read XML document from text. Exc: {} ",
+					exc);
+				return false;
 			}
 
-			for (int counter = 0; counter < taskXmlNodeList.getLength(); counter++) {
+			// Find all task elements in the XML structure and get their id and
+			// progress:
+			int numberOfTasks = taskXmlNodeList.getLength();
+			for (int counter = 0; counter < numberOfTasks; counter++) {
 				Node currentNode = taskXmlNodeList.item(counter);
 
 				String description = currentNode.getChildNodes().item(0)
@@ -126,7 +168,7 @@ public class XmlProgressLogParser implements ProgressLogParser {
 				if (!descriptionToTaskId.containsKey(description)) {
 					descriptionToTaskId.put(description, taskIdCounter);
 					// Set "indeterminate" progress indicator: state -1.
-					tableData.add(new MacroTask(description, rank));
+					tableData.add(new MacroTask(description));
 					taskIdCounter++;
 				}
 
@@ -135,13 +177,17 @@ public class XmlProgressLogParser implements ProgressLogParser {
 				// Set the new progress if it exists:
 				Node progressXmlNode = currentNode.getChildNodes().item(1);
 				if (progressXmlNode != null) {
-					long progress = Long.parseLong(progressXmlNode.getTextContent());
+					progress = Long.parseLong(progressXmlNode.getTextContent());
 					tableData.get(taskId).setProgress(rank, progress);
+				}
+				else {
+					tableData.get(taskId).setIndeterminateProgress(rank);
 				}
 
 				setDescriptionToPropertyIfPossible(descriptionToProperty, description,
 					rank, tableData.get(taskId).getProgress(rank));
 			}
+
 		}
 		return true;
 	}
@@ -160,7 +206,14 @@ public class XmlProgressLogParser implements ProgressLogParser {
 
 	public static boolean fileIsValidXML(String xmlSourceFile) {
 		Document document = convertStringToXMLDocument(xmlSourceFile);
-		return document != null;
+		boolean isXML = (document != null);
+		if (!isXML) {
+			logger.debug("Progress log is CSV format.");
+		}
+		else {
+			logger.debug("Progress log is XML file.");
+		}
+		return isXML;
 	}
 
 }

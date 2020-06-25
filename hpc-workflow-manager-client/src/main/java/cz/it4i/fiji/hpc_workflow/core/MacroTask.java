@@ -15,14 +15,7 @@ public class MacroTask {
 		this.description = description;
 		this.progress = new ArrayList<>();
 	}
-
-	// This constructor also sets the progress as indeterminate
-	public MacroTask(String description, int nodeId) {
-		this.description = description;
-		this.progress = new ArrayList<>();
-		setIndeterminateProgress(nodeId);
-	}
-
+	
 	public String getDescription() {
 		return description;
 	}
@@ -45,7 +38,7 @@ public class MacroTask {
 		setProgressIncludingIndeterminate(nodeId, newProgress);
 	}
 
-	private void setIndeterminateProgress(int nodeId) {
+	public void setIndeterminateProgress(int nodeId) {
 		setProgressIncludingIndeterminate(nodeId, -1);
 	}
 
