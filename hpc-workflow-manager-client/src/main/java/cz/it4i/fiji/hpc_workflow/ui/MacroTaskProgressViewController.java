@@ -152,7 +152,7 @@ public class MacroTaskProgressViewController extends BorderPane {
 		// Check weather the progress log is in CSV or XML format:
 		setStatusMessage("Checking type of progress log.");
 		if (progressLogParser == null) {
-			if (XmlProgressLogParser.fileIsValidXML(progressLogs.get(0))) {
+			if (XmlProgressLogParser.isXML(progressLogs.get(0))) {
 				progressLogParser = new XmlProgressLogParser();
 				setStatusMessage("XML progress log detected.");
 			}
