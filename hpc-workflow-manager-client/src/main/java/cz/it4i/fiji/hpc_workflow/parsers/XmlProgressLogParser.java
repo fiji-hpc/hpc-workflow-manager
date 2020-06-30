@@ -85,7 +85,6 @@ public class XmlProgressLogParser implements ProgressLogParser {
 
 		try {
 			documentBuilder = documentBuilderFactory.newDocumentBuilder();
-			// documentBuilder.setErrorHandler(new ErrorHandlerImpl());
 			return documentBuilder.parse(new InputSource(new StringReader(
 				xmlString)));
 		}
@@ -106,7 +105,7 @@ public class XmlProgressLogParser implements ProgressLogParser {
 			node = (Node) expr.evaluate(document, XPathConstants.NODE);
 		}
 		catch (Exception exc) {
-			logger.debug("Could not fing node at xpath: {} ", xpathExpression);
+			logger.debug("Could not find node at xpath: {} ", xpathExpression);
 		}
 		return node;
 	}
@@ -204,9 +203,8 @@ public class XmlProgressLogParser implements ProgressLogParser {
 		}
 	}
 
-	public static boolean fileIsValidXML(String xmlSourceFile) {
-		Document document = convertStringToXMLDocument(xmlSourceFile);
-		boolean isXML = (document != null);
+	public static boolean isXML(String sourceString) {
+		boolean isXML = sourceString.contains("<?xml");
 		if (!isXML) {
 			logger.debug("Progress log is CSV format.");
 		}
