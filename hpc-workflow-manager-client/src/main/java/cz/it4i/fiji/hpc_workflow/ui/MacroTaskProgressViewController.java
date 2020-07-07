@@ -231,6 +231,7 @@ public class MacroTaskProgressViewController extends BorderPane {
 		{
 			// A catastrophic exception must have occurred, the executor must be
 			// stopped:
+			setStatusMessage("Catastrophic exception during parsing.");
 			exec.shutdown();
 		}
 		setStatusMessage("Done parsing the macro progress files.");

@@ -108,12 +108,14 @@ public class FileProgressLogParser implements ProgressLogParser {
 			catch (NumberFormatException exc) {
 				String description = elements[1];
 				if (!descriptionToTaskId.containsKey(description)) {
-					descriptionToTaskId.put(description, taskIdCounter++);
-					// Set "indeterminate" progress indicator: state -1.
+					descriptionToTaskId.put(description, taskIdCounter);
 					tableData.add(new MacroTask(description));
-					tableData.get(taskIdCounter - 1).setIndeterminateProgress(nodeId);
+					taskIdCounter += 1;
 				}
 				nodeTaskToDescription.get(nodeId).put(taskIdForNode, description);
+				// Set "indeterminate" progress indicator: state -1.
+				int id = descriptionToTaskId.get(description);
+				tableData.get(id).setIndeterminateProgress(nodeId);
 			}
 			catch (Exception exc) {
 				// A catastrophic exception must have occurred, the executor must be
@@ -122,6 +124,7 @@ public class FileProgressLogParser implements ProgressLogParser {
 					"Exception occurred while parsing progress file!",
 					"Progress logs for this Macro Workflow type job appear" +
 						" to be corrupted and parsing them caused an exception.", exc));
+				logger.debug("Exception occurred while parsing progress file!");
 				return -1;
 			}
 		}
