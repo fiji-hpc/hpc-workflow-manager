@@ -291,7 +291,7 @@ public class HPCWorkflowControl<T extends JobWithDirectorySettings> extends
 			// Copy line by line:
 			while (line != null) {
 				pw.print(line);
-				// Use the second print to add a linux format new line, if println is
+				// Use the second print to add a Linux format new line, if println is
 				// used and the client is running on Windows it will add incorrect
 				// newline:
 				pw.print("\n");
