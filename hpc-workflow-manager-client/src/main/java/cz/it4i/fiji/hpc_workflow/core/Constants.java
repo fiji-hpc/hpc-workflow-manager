@@ -13,6 +13,9 @@ public class Constants {
 	public static final String MENU_ITEM_NAME = "Multiview Reconstruction";
 	public static final String SUBMENU_ITEM_NAME =
 		"HPC Workflow Manager";
+	
+	public static final String ALTERNATIVE_ITEM_NAME = "Macros";
+	public static final String ALTERNATIVE_SUBMENU_ITEM_NAME = "Parallel Macro Client";
 
 	public static final String PHONE = "123456789";
 

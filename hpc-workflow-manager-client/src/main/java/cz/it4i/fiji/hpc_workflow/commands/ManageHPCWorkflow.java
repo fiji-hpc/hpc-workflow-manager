@@ -9,8 +9,6 @@ import org.scijava.command.Command;
 import org.scijava.parallel.ParallelService;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import cz.it4i.fiji.hpc_adapter.JobWithDirectorySettings;
 import cz.it4i.fiji.hpc_workflow.WorkflowParadigm;
@@ -18,8 +16,8 @@ import cz.it4i.fiji.hpc_workflow.core.Constants;
 import cz.it4i.fiji.hpc_workflow.ui.HPCWorkflowWindow;
 import cz.it4i.swing_javafx_ui.JavaFXRoutines;
 import cz.it4i.swing_javafx_ui.SimpleDialog;
-import groovy.util.logging.Slf4j;
 import javafx.application.Platform;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Plugin(type = Command.class, headless = false, priority = Priority.HIGH,
@@ -27,7 +25,6 @@ import javafx.application.Platform;
 		Constants.SUBMENU_ITEM_NAME)
 public class ManageHPCWorkflow implements Command {
 
-	private static Logger log = LoggerFactory.getLogger(ManageHPCWorkflow.class);
 
 	@Parameter
 	private Context context;
@@ -37,11 +34,18 @@ public class ManageHPCWorkflow implements Command {
 
 	@Override
 	public void run() {
+		runWithGivenParameterValues(this.context, this.parallelService);
+	}
+
+	public void runWithGivenParameterValues(Context givenContext,
+		ParallelService givenParallelService)
+	{
 		// Display window:
-		WorkflowParadigm<?> paradigm = parallelService.getParadigmOfType(
+		WorkflowParadigm<?> paradigm = givenParallelService.getParadigmOfType(
 			WorkflowParadigm.class);
 		if (paradigm != null) {
-			JavaFXRoutines.runOnFxThread(() -> this.openWorkflowWindow(paradigm));
+			JavaFXRoutines.runOnFxThread(() -> this.openWorkflowWindow(givenContext,
+				paradigm));
 		}
 		else {
 			JavaFXRoutines.runOnFxThread(() -> {
@@ -56,15 +60,15 @@ public class ManageHPCWorkflow implements Command {
 	}
 
 	private <T extends JobWithDirectorySettings> void openWorkflowWindow(
-		WorkflowParadigm<?> paradigm)
+		Context givenContext, WorkflowParadigm<?> paradigm)
 	{
 		@SuppressWarnings("unchecked")
 		WorkflowParadigm<T> typedParadigm = (WorkflowParadigm<T>) paradigm;
-		inject(new HPCWorkflowWindow()).openWindow(typedParadigm);
+		inject(givenContext, new HPCWorkflowWindow()).openWindow(typedParadigm);
 	}
 
-	private <T> T inject(T toInject) {
-		context.inject(toInject);
+	private <T> T inject(Context givenContext, T toInject) {
+		givenContext.inject(toInject);
 		return toInject;
 	}
 
@@ -72,9 +76,7 @@ public class ManageHPCWorkflow implements Command {
 		// Launch ImageJ as usual.
 		final ImageJ ij = new ImageJ();
 		ij.launch(args);
-		if (log.isDebugEnabled()) {
-			log.debug("run NewManageHPCWorkflow");
-		}
+		log.debug("run NewManageHPCWorkflow");
 		ij.command().run(ManageHPCWorkflow.class, true);
 	}
 }
