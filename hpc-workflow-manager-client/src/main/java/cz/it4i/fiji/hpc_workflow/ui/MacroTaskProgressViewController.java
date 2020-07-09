@@ -5,13 +5,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-
-import org.python.jline.internal.Log;
-
 import cz.it4i.fiji.hpc_client.JobState;
 import cz.it4i.fiji.hpc_workflow.core.MacroTask;
 import cz.it4i.fiji.hpc_workflow.core.ObservableHPCWorkflowJob;
@@ -19,7 +15,6 @@ import cz.it4i.fiji.hpc_workflow.parsers.FileProgressLogParser;
 import cz.it4i.fiji.hpc_workflow.parsers.ProgressLogParser;
 import cz.it4i.fiji.hpc_workflow.parsers.XmlProgressLogParser;
 import cz.it4i.swing_javafx_ui.JavaFXRoutines;
-import javafx.application.Platform;
 import javafx.beans.property.SimpleLongProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -57,8 +52,6 @@ public class MacroTaskProgressViewController extends BorderPane {
 	// Maps description to map of node index to observable property:
 	private Map<String, Map<Integer, SimpleLongProperty>> descriptionToProperty =
 		new HashMap<>();
-
-	private final CountDownLatch latchToWaitForJavaFx = new CountDownLatch(1);
 
 	public MacroTaskProgressViewController() {
 		init();
@@ -109,26 +102,19 @@ public class MacroTaskProgressViewController extends BorderPane {
 
 		exec.scheduleAtFixedRate(() -> {
 			List<String> files = generateProgressFileNames();
-			Platform.runLater(() -> {
-				createColumnsForEachNode(files.size());
-				latchToWaitForJavaFx.countDown();
-			});
-			try {
-				latchToWaitForJavaFx.await();
-			}
-			catch (InterruptedException exc) {
-				Log.error(exc.getMessage());
-				Thread.currentThread().interrupt();
-			}
-			getAndParseFileUpdateTasks(files);
+			if (!files.isEmpty()) {
+				JavaFXRoutines.runOnFxThread(() -> createColumnsForEachNode(files
+					.size()));
+				getAndParseFileUpdateTasks(files);
 
-			JobState jobState = job.getState();
-			if (jobState != JobState.Queued && jobState != JobState.Running &&
-				jobState != JobState.Submitted)
-			{
-				setStatusMessage("Stopped updating progress because state is: " +
-					jobState.toString());
-				exec.shutdown();
+				JobState jobState = job.getState();
+				if (jobState != JobState.Queued && jobState != JobState.Running &&
+					jobState != JobState.Submitted)
+				{
+					setStatusMessage("Stopped updating progress because state is: " +
+						jobState.toString());
+					exec.shutdown();
+				}
 			}
 
 		}, 0, 2, TimeUnit.SECONDS);
@@ -140,39 +126,45 @@ public class MacroTaskProgressViewController extends BorderPane {
 		int numberOfNodes = 0;
 
 		List<String> fileNames = new ArrayList<>();
+		List<String> tempFileNames = new ArrayList<>();
 
-		fileNames.add("progress_0.plog");
-		List<String> progressLogs = job.getFileContents(fileNames);
+		tempFileNames.add("progress_0.plog");
+		List<String> progressLogs = job.getFileContents(tempFileNames);
 
 		// Check if the file is created or not yet:
-		if (progressLogs == null || progressLogs.get(0).isEmpty()) {
-			return fileNames;
+		if (progressLogs.get(0).isEmpty()) {
+			setStatusMessage("Progress logs do not exist yet.");
 		}
+		else {
+			fileNames.add("progress_0.plog");
+			// Check which progress log format is used: CSV or XML:
+			setStatusMessage("Checking type of progress log.");
+			if (progressLogParser == null) {
+				if (XmlProgressLogParser.isXML(progressLogs.get(0))) {
+					progressLogParser = new XmlProgressLogParser();
+					setStatusMessage("XML progress log detected.");
+				}
+				else {
+					progressLogParser = new FileProgressLogParser();
+					setStatusMessage("CSV progress log detected.");
+				}
+			}
 
-		// Check weather the progress log is in CSV or XML format:
-		setStatusMessage("Checking type of progress log.");
-		if (progressLogParser == null) {
-			if (XmlProgressLogParser.isXML(progressLogs.get(0))) {
-				progressLogParser = new XmlProgressLogParser();
-				setStatusMessage("XML progress log detected.");
+			setStatusMessage("Getting the number of nodes.");
+			numberOfNodes = progressLogParser.getNumberOfNodes(progressLogs);
+			if (numberOfNodes == 0) {
+				setStatusMessage("Progress log does not list node size, yet!");
 			}
 			else {
-				progressLogParser = new FileProgressLogParser();
-				setStatusMessage("CSV progress log detected.");
+				// File names of the progress files for each node:
+				for (int i = 1; i < numberOfNodes; i++) {
+					String filename = "progress_".concat(String.valueOf(i)).concat(
+						".plog");
+					setStatusMessage("Adding progress file: " + filename +
+						" in the list.");
+					fileNames.add(filename);
+				}
 			}
-		}
-
-		setStatusMessage("Getting the number of nodes.");
-		numberOfNodes = progressLogParser.getNumberOfNodes(progressLogs);
-		if (numberOfNodes == 0) {
-			setStatusMessage("Progress log does not list node size, yet!");
-		}
-
-		// File names of the progress files for each node:
-		for (int i = 1; i < numberOfNodes; i++) {
-			String filename = "progress_".concat(String.valueOf(i)).concat(".plog");
-			setStatusMessage("Adding file: " + filename);
-			fileNames.add(filename);
 		}
 		return fileNames;
 	}
