@@ -59,22 +59,27 @@ public class ProgressDialogViewController extends GridPane {
 
 	public ProgressDialogViewController(String description) {
 		JavaFXRoutines.initRootAndController("ProgressDialogView.fxml", this);
-		this.taskDescriptionLabel.setText(description);
-
-		// Make the details button visible only when there are details to display:
-		this.detailsToggleButton.setVisible(false);
+		JavaFXRoutines.runOnFxThread(() -> {
+			this.taskDescriptionLabel.setText(description);
+			// Make the details button visible only when there are details to display:
+			this.detailsToggleButton.setVisible(false);
+		});
 	}
 
 	public void close() {
-		Stage stage = (Stage) taskDescriptionLabel.getScene().getWindow();
-		stage.close();
+		JavaFXRoutines.runOnFxThread(() -> {
+			Stage stage = (Stage) taskDescriptionLabel.getScene().getWindow();
+			stage.close();
+		});
 	}
 
 	public void addItem(String itemDescription) {
 		// Now that there is at least an item enable the details button:
-		if (!this.detailsToggleButton.isVisible()) {
-			this.detailsToggleButton.setVisible(true);
-		}
+		JavaFXRoutines.runOnFxThread(() -> {
+			if (!this.detailsToggleButton.isVisible()) {
+				this.detailsToggleButton.setVisible(true);
+			}
+		});
 
 		items.putIfAbsent(itemDescription, false);
 
@@ -82,19 +87,21 @@ public class ProgressDialogViewController extends GridPane {
 	}
 
 	public void addSubProgress(String itemDescription) {
-		Label tempLabel = new Label(itemDescription);
-		ProgressBar tempProgressBar = new ProgressBar();
-		int rowIndex = items.size() - 1;
+		JavaFXRoutines.runOnFxThread(() -> {
+			Label tempLabel = new Label(itemDescription);
+			ProgressBar tempProgressBar = new ProgressBar();
+			int rowIndex = items.size() - 1;
 
-		// If it is not the first item add a new row to the GridPane first:
-		if (items.size() == 1) {
-			this.subProgressGridPane.add(tempLabel, 0, 0);
-			this.subProgressGridPane.add(tempProgressBar, 1, 0);
-		}
-		else {
-			this.subProgressGridPane.addRow(rowIndex, tempLabel, tempProgressBar);
-		}
-		itemsProgress.put(itemDescription, tempProgressBar);
+			// If it is not the first item add a new row to the GridPane first:
+			if (items.size() == 1) {
+				this.subProgressGridPane.add(tempLabel, 0, 0);
+				this.subProgressGridPane.add(tempProgressBar, 1, 0);
+			}
+			else {
+				this.subProgressGridPane.addRow(rowIndex, tempLabel, tempProgressBar);
+			}
+			itemsProgress.put(itemDescription, tempProgressBar);
+		});
 	}
 
 	public void itemDone(String itemDescription) {
@@ -108,7 +115,8 @@ public class ProgressDialogViewController extends GridPane {
 	}
 
 	public void setMessage(String message) {
-		this.taskDescriptionLabel.setText(message);
+		JavaFXRoutines.runOnFxThread(() -> this.taskDescriptionLabel.setText(
+			message));
 	}
 
 	public void setProgress(int current, int total) {
