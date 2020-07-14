@@ -545,17 +545,17 @@ public class HPCWorkflowControl<T extends JobWithDirectorySettings> extends
 	private void openEditor(WorkflowJob job) {
 		if (job instanceof MacroWorkflowJob) {
 			MacroWorkflowJob typeJob = (MacroWorkflowJob) job;
-			TextEditor txt = new TextEditor(new Context()); // TODO Context handling
-																											// is
-			// wrong
+			// TODO Context handling is wrong:
+			TextEditor txt = new TextEditor(new Context()); 
 
-// If there is no wrapped script open the user script:
+			// If there is no wrapped script open the user script:
 			File editFile = new File(job.getInputDirectory().toString() +
 				File.separator + typeJob.getUserScriptName());
 
-// Open editor:
+			// Open editor:	    
 			txt.open(editFile);
 			txt.setVisible(true);
+			txt.toFront();
 		}
 
 	}
