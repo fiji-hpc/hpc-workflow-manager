@@ -27,6 +27,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Function;
 
+import org.kordamp.ikonli.materialdesign.MaterialDesign;
 import org.scijava.Context;
 import org.scijava.parallel.Status;
 import org.scijava.plugin.Parameter;
@@ -152,7 +153,8 @@ public class HPCWorkflowControl<T extends JobWithDirectorySettings> extends
 	private void initMenu() {
 		TableViewContextMenu<ObservableHPCWorkflowJob> menu =
 			new TableViewContextMenu<>(jobs);
-		menu.addItem("Create a new job", x -> askForCreateJob(), j -> true);
+		menu.addItem("Create a new job", x -> askForCreateJob(), j -> true,
+			MaterialDesign.MDI_CREATION);
 		menu.addSeparator();
 
 		menu.addItem("Start job", job -> {
@@ -167,7 +169,7 @@ public class HPCWorkflowControl<T extends JobWithDirectorySettings> extends
 			return (jobState == JobState.Configuring ||
 				jobState == JobState.Finished || jobState == JobState.Failed ||
 				jobState == JobState.Canceled) && checkIfAnythingHasBeenUploaded(j);
-		}));
+		}), MaterialDesign.MDI_PLAY);
 
 		menu.addItem("Cancel job", job -> executeWSCallAsync("Canceling job", p -> {
 			job.getValue().cancelJob();
@@ -175,18 +177,22 @@ public class HPCWorkflowControl<T extends JobWithDirectorySettings> extends
 		}), job -> JavaFXRoutines.notNullValue(job, j -> {
 			JobState jobState = j.getState();
 			return (jobState == JobState.Running || jobState == JobState.Queued);
-		}));
+		}), MaterialDesign.MDI_STOP);
 
 		menu.addItem("Job dashboard", this::openJobDetailsWindow,
-			job -> JavaFXRoutines.notNullValue(job, j -> true));
+			job -> JavaFXRoutines.notNullValue(job, j -> true),
+			MaterialDesign.MDI_VIEW_DASHBOARD);
 		menu.addItem("Open job subdirectory", j -> openJobSubdirectory(j
-			.getValue()), x -> JavaFXRoutines.notNullValue(x, j -> true));
+			.getValue()), x -> JavaFXRoutines.notNullValue(x, j -> true),
+			MaterialDesign.MDI_FOLDER);
 		menu.addItem("Open in BigDataViewer", j -> openBigDataViewer(j.getValue()),
 			x -> JavaFXRoutines.notNullValue(x, j -> j
-				.getState() == JobState.Finished && j.isVisibleInBDV()));
+				.getState() == JobState.Finished && j.isVisibleInBDV()),
+			MaterialDesign.MDI_EYE);
 		menu.addItem("Open Macro in editor", j -> openEditor(j.getValue()),
 			x -> JavaFXRoutines.notNullValue(x, j -> j
-				.getWorkflowType() == WorkflowType.MACRO_WORKFLOW));
+				.getWorkflowType() == WorkflowType.MACRO_WORKFLOW),
+			MaterialDesign.MDI_LEAD_PENCIL);
 
 		menu.addSeparator();
 
@@ -198,7 +204,7 @@ public class HPCWorkflowControl<T extends JobWithDirectorySettings> extends
 			.stopUpload()), job -> JavaFXRoutines.notNullValue(job, j -> j
 				.canBeUploaded() && !EnumSet.of(JobState.Running, JobState.Disposed)
 					.contains(j.getState())), job -> job != null && job
-						.getUploadProgress().isWorking());
+						.getUploadProgress().isWorking(), MaterialDesign.MDI_UPLOAD);
 
 		menu.addItem("Download result", job -> executeWSCallAsync(
 			"Downloading data", p -> job.getValue().startDownload()),
@@ -206,16 +212,17 @@ public class HPCWorkflowControl<T extends JobWithDirectorySettings> extends
 				.stopDownload()), job -> JavaFXRoutines.notNullValue(job, j -> EnumSet
 					.of(JobState.Failed, JobState.Finished, JobState.Canceled).contains(j
 						.getState()) && j.canBeDownloaded()), job -> job != null && job
-							.getDownloadProgress().isWorking());
+							.getDownloadProgress().isWorking(), MaterialDesign.MDI_DOWNLOAD);
 
 		menu.addItem("Explore errors", job -> job.getValue().exploreErrors(),
 			job -> JavaFXRoutines.notNullValue(job, j -> j.getState().equals(
-				JobState.Failed)));
+				JobState.Failed)), MaterialDesign.MDI_ALERT_CIRCLE);
 
 		menu.addSeparator();
 
 		menu.addItem("Delete job", j -> deleteJob(j.getValue()), x -> JavaFXRoutines
-			.notNullValue(x, j -> j.getState() != JobState.Running));
+			.notNullValue(x, j -> j.getState() != JobState.Running),
+			MaterialDesign.MDI_DELETE);
 
 	}
 
@@ -546,13 +553,13 @@ public class HPCWorkflowControl<T extends JobWithDirectorySettings> extends
 		if (job instanceof MacroWorkflowJob) {
 			MacroWorkflowJob typeJob = (MacroWorkflowJob) job;
 			// TODO Context handling is wrong:
-			TextEditor txt = new TextEditor(new Context()); 
+			TextEditor txt = new TextEditor(new Context());
 
 			// If there is no wrapped script open the user script:
 			File editFile = new File(job.getInputDirectory().toString() +
 				File.separator + typeJob.getUserScriptName());
 
-			// Open editor:	    
+			// Open editor:
 			txt.open(editFile);
 			txt.setVisible(true);
 			txt.toFront();
