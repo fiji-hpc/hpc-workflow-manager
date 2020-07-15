@@ -21,7 +21,12 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.input.ContextMenuEvent;
 
+import org.kordamp.ikonli.Ikon;
+import org.kordamp.ikonli.javafx.FontIcon;
+
 public class TableViewContextMenu<T> {
+	
+	private static final int ICON_SIZE = 20;
 
 	public static final Logger log = LoggerFactory.getLogger(
 		cz.it4i.fiji.hpc_adapter.ui.TableViewContextMenu.class);
@@ -36,10 +41,18 @@ public class TableViewContextMenu<T> {
 		this.tableView = tableView;
 	}
 
+	// Without icon:
 	public void addItem(String text, Consumer<T> eventHandler,
 		Predicate<T> enableHandler)
 	{
 		items.add(new P_MenuItem(text, eventHandler, enableHandler));
+	}
+
+	// With icon:
+	public void addItem(String text, Consumer<T> eventHandler,
+		Predicate<T> enableHandler, Ikon icon)
+	{
+		items.add(new P_MenuItem(text, eventHandler, enableHandler, icon));
 	}
 
 	public void addItem(String text, ObjIntConsumer<T> eventHandler,
@@ -48,12 +61,22 @@ public class TableViewContextMenu<T> {
 		items.add(new P_MenuItemWithColumnIndex(text, eventHandler, enableHandler));
 	}
 
+	// Without icon:
 	public void addItem(String text, Consumer<T> eventHandlerOn,
 		Consumer<T> eventHandlerOff, Predicate<T> enableHandler,
 		Function<T, Boolean> property)
 	{
 		items.add(new P_CheckMenuItem(text, eventHandlerOff, eventHandlerOn,
 			enableHandler, property));
+	}
+
+	// With icon:
+	public void addItem(String text, Consumer<T> eventHandlerOn,
+		Consumer<T> eventHandlerOff, Predicate<T> enableHandler,
+		Function<T, Boolean> property, Ikon icon)
+	{
+		items.add(new P_CheckMenuItem(text, eventHandlerOff, eventHandlerOn,
+			enableHandler, property, icon));
 	}
 
 	public void addSeparator() {
@@ -132,6 +155,7 @@ public class TableViewContextMenu<T> {
 
 	private class P_MenuItem extends P_UpdatableImpl<MenuItem> {
 
+		// Without icon:
 		public P_MenuItem(String text, Consumer<T> eventHandler,
 			Predicate<T> enableHandler)
 		{
@@ -139,6 +163,30 @@ public class TableViewContextMenu<T> {
 			getItem().setOnAction(e -> eventHandler.accept(getRequestedItem()));
 		}
 
+		// With icon:
+		public P_MenuItem(String text, Consumer<T> eventHandler,
+			Predicate<T> enableHandler, Ikon icon)
+		{
+			super(createMenuItemWithIcon(text, icon), enableHandler);
+			getItem().setOnAction(e -> eventHandler.accept(getRequestedItem()));
+		}
+
+	}
+
+	private MenuItem createMenuItemWithIcon(String text, Ikon icon) {
+		MenuItem item = new MenuItem(text);
+		FontIcon newIcon = FontIcon.of(icon);
+		newIcon.setIconSize(ICON_SIZE);
+		item.setGraphic(newIcon);
+		return item;
+	}
+
+	private CheckMenuItem createCheckMenuItem(String text, Ikon icon) {
+		CheckMenuItem item = new CheckMenuItem(text);
+		FontIcon newIcon = FontIcon.of(icon);
+		newIcon.setIconSize(ICON_SIZE);
+		item.setGraphic(newIcon);
+		return item;
 	}
 
 	private class P_MenuItemWithColumnIndex implements P_Updatable<T> {
@@ -168,12 +216,9 @@ public class TableViewContextMenu<T> {
 
 		private final Function<T, Boolean> property;
 
-		public P_CheckMenuItem(String text, Consumer<T> eventHandlerOff,
-			Consumer<T> eventHandlerOn, Predicate<T> enableHandler,
-			Function<T, Boolean> property)
+		private void commonFunction(Consumer<T> eventHandlerOff,
+			Consumer<T> eventHandlerOn)
 		{
-			super(new CheckMenuItem(text), enableHandler);
-			this.property = property;
 			getItem().setOnAction(e -> {
 				boolean selected = getItem().isSelected();
 				if (selected) {
@@ -183,6 +228,24 @@ public class TableViewContextMenu<T> {
 					eventHandlerOff.accept(getRequestedItem());
 				}
 			});
+		}
+
+		public P_CheckMenuItem(String text, Consumer<T> eventHandlerOff,
+			Consumer<T> eventHandlerOn, Predicate<T> enableHandler,
+			Function<T, Boolean> property)
+		{
+			super(new CheckMenuItem(text), enableHandler);
+			this.property = property;
+			commonFunction(eventHandlerOff, eventHandlerOn);
+		}
+
+		public P_CheckMenuItem(String text, Consumer<T> eventHandlerOff,
+			Consumer<T> eventHandlerOn, Predicate<T> enableHandler,
+			Function<T, Boolean> property, Ikon icon)
+		{
+			super(createCheckMenuItem(text, icon), enableHandler);
+			this.property = property;
+			commonFunction(eventHandlerOff, eventHandlerOn);
 		}
 
 		@Override
