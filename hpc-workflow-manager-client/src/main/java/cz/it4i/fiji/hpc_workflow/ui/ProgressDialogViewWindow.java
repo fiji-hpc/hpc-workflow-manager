@@ -3,9 +3,12 @@ package cz.it4i.fiji.hpc_workflow.ui;
 
 import net.imagej.updater.util.UpdateCanceledException;
 
+import org.kordamp.ikonli.materialdesign.MaterialDesign;
+
 import cz.it4i.fiji.hpc_client.ProgressNotifier;
 import cz.it4i.swing_javafx_ui.JavaFXRoutines;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
@@ -31,6 +34,9 @@ public class ProgressDialogViewWindow implements ProgressNotifier {
 		stage.setResizable(false);
 		this.windowTitle = message;
 		stage.setTitle(message);
+		Image myImage = IconHelperMethods.convertIkonToImage(
+			MaterialDesign.MDI_CLOCK_FAST);
+		stage.getIcons().add(myImage);
 		stage.setScene(formScene);
 		if (show) {
 			stage.show();

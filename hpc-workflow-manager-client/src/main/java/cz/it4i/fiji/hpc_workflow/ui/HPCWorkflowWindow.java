@@ -1,6 +1,7 @@
 
 package cz.it4i.fiji.hpc_workflow.ui;
 
+import org.kordamp.ikonli.materialdesign.MaterialDesign;
 import org.scijava.Context;
 import org.scijava.parallel.Status;
 import org.scijava.plugin.Parameter;
@@ -11,6 +12,7 @@ import cz.it4i.swing_javafx_ui.JavaFXRoutines;
 import cz.it4i.swing_javafx_ui.SimpleDialog;
 import javafx.application.Platform;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
@@ -19,10 +21,6 @@ public class HPCWorkflowWindow {
 
 	@Parameter
 	private Context ctx;
-
-	private Stage stage;
-
-	private HPCWorkflowControl<?> controller;
 
 	private static boolean windowIsOpen = false;
 
@@ -33,10 +31,12 @@ public class HPCWorkflowWindow {
 	public <T extends JobWithDirectorySettings> void openWindow(
 		WorkflowParadigm<T> paradigm)
 	{
+		Stage stage;
+		HPCWorkflowControl<?> controller;
 		if (!windowIsOpen) {
 			// Open the the window:
 			windowIsOpen = true;
-			this.controller = new HPCWorkflowControl<>(paradigm);
+			controller = new HPCWorkflowControl<>(paradigm);
 			ctx.inject(controller);
 			final Scene formScene = new Scene(controller);
 			stage = new Stage();
@@ -45,10 +45,13 @@ public class HPCWorkflowWindow {
 			stage.setResizable(true);
 			stage.setTitle(Constants.SUBMENU_ITEM_NAME);
 			stage.setScene(formScene);
-			this.stage.setOnCloseRequest((WindowEvent we) -> {
+			stage.setOnCloseRequest((WindowEvent we) -> {
 				controller.close();
 				windowIsOpen = false;
 			});
+			Image myImage = IconHelperMethods.convertIkonToImage(
+				MaterialDesign.MDI_ANIMATION);
+			stage.getIcons().add(myImage);
 			stage.show();
 			controller.init(stage).thenAccept((Void v) -> {
 				if (paradigm.getStatus() == Status.NON_ACTIVE) {
@@ -61,4 +64,5 @@ public class HPCWorkflowWindow {
 				" is already open.", "Please close the existing window and try again.");
 		}
 	}
+
 }
