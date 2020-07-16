@@ -1,9 +1,12 @@
 
 package cz.it4i.fiji.hpc_workflow.ui;
 
+import org.kordamp.ikonli.materialdesign.MaterialDesign;
+
 import cz.it4i.fiji.hpc_workflow.core.ObservableHPCWorkflowJob;
 import cz.it4i.swing_javafx_ui.JavaFXRoutines;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
@@ -14,7 +17,7 @@ public class JobDetailWindow {
 
 	private JobDetailControl controller;
 
-	public JobDetailWindow( ObservableHPCWorkflowJob job) {
+	public JobDetailWindow(ObservableHPCWorkflowJob job) {
 		JavaFXRoutines.runOnFxThread(() -> openWindow(job));
 	}
 
@@ -29,8 +32,10 @@ public class JobDetailWindow {
 		stage.initModality(Modality.NONE);
 		stage.setResizable(true);
 		stage.setTitle("Job dashboard for job #" + job.getValue().getId());
-		stage.setScene(formScene);
-
+		Image myImage = IconHelperMethods.convertIkonToImage(
+			MaterialDesign.MDI_VIEW_DASHBOARD);
+		stage.getIcons().add(myImage);
+		stage.setScene(formScene);		
 		finalizeOnStageClose();
 		controller.init(stage);
 

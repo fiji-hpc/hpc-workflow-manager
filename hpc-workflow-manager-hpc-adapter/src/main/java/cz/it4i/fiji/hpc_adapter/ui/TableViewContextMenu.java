@@ -29,7 +29,7 @@ public class TableViewContextMenu<T> {
 	private static final int ICON_SIZE = 20;
 
 	public static final Logger log = LoggerFactory.getLogger(
-		cz.it4i.fiji.hpc_adapter.ui.TableViewContextMenu.class);
+		TableViewContextMenu.class);
 
 	private final Collection<P_Updatable<T>> items = new LinkedList<>();
 
