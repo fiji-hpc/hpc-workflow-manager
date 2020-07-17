@@ -23,10 +23,12 @@ public class ProgressDialogViewWindow implements ProgressNotifier {
 
 	private String windowTitle = null;
 
+	private Stage stage;
+
 	private void openWindow(String message, Window parentStage, boolean show) {
 		this.controller = new ProgressDialogViewController(message);
 		final Scene formScene = new Scene(this.controller);
-		Stage stage = new Stage();
+		stage = new Stage();
 		stage.initOwner(parentStage);
 		stage.initModality(Modality.APPLICATION_MODAL);
 		stage.setAlwaysOnTop(false);
@@ -49,7 +51,7 @@ public class ProgressDialogViewWindow implements ProgressNotifier {
 	}
 
 	private void closeWindow() {
-		this.controller.close();
+		JavaFXRoutines.runOnFxThread(() -> this.controller.close(this.stage));
 	}
 
 	private void setTitleToNextIncompleteTask() {

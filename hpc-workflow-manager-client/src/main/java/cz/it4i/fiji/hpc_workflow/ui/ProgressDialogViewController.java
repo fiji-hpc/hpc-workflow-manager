@@ -66,11 +66,8 @@ public class ProgressDialogViewController extends GridPane {
 		});
 	}
 
-	public void close() {
-		JavaFXRoutines.runOnFxThread(() -> {
-			Stage stage = (Stage) taskDescriptionLabel.getScene().getWindow();
-			stage.close();
-		});
+	public void close(Stage stage) {
+		JavaFXRoutines.runOnFxThread(stage::close);
 	}
 
 	public void addItem(String itemDescription) {
