@@ -24,7 +24,7 @@ public class ProgressDialogViewWindow implements ProgressNotifier {
 
 	private void openWindow(String message, Window parentStage, boolean show) {
 		this.controller = new ProgressDialogViewController(message);
-		JavaFXRoutines.runOnFxThread(() -> {
+		JavaFXRoutines.runOnFxThreadAndWait(() -> {
 			final Scene formScene = new Scene(this.controller);
 			Stage stage = new Stage();
 			stage.initOwner(parentStage);

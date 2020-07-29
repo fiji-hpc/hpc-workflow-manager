@@ -128,7 +128,7 @@ public class ProgressDialogViewController extends GridPane implements
 
 	@Override
 	public void close() {
-		JavaFXRoutines.runOnFxThread(() -> {
+		JavaFXRoutines.runOnFxThreadAndWait(() -> {
 			Stage stage = (Stage) taskDescriptionLabel.getScene().getWindow();
 			stage.close();
 		});
