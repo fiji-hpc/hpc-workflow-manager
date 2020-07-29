@@ -105,9 +105,9 @@ public class JobDetailControl extends TabPane {
 	// -- InitiableControl methods --
 
 	public void init(Stage newStage) {
-		ProgressDialogViewWindow progressDialogViewWindow =
-			new ProgressDialogViewWindow("Downloading tasks", newStage);
 		executorServiceWS.execute(() -> {
+			ProgressDialogViewWindow progressDialogViewWindow =
+				new ProgressDialogViewWindow("Downloading tasks", newStage);
 
 			try {
 				WorkflowType jobType = job.getWorkflowType();
