@@ -4,6 +4,7 @@ package cz.it4i.fiji.hpc_workflow.ui;
 import java.util.HashMap;
 import java.util.Map;
 
+import cz.it4i.swing_javafx_ui.CloseableControl;
 import cz.it4i.swing_javafx_ui.JavaFXRoutines;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
@@ -13,7 +14,9 @@ import javafx.scene.control.ToggleButton;
 import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
 
-public class ProgressDialogViewController extends GridPane {
+public class ProgressDialogViewController extends GridPane implements
+	CloseableControl
+{
 
 	@FXML
 	Label taskDescriptionLabel;
@@ -66,10 +69,6 @@ public class ProgressDialogViewController extends GridPane {
 		});
 	}
 
-	public void close(Stage stage) {
-		JavaFXRoutines.runOnFxThread(stage::close);
-	}
-
 	public void addItem(String itemDescription) {
 		// Now that there is at least an item enable the details button:
 		JavaFXRoutines.runOnFxThread(() -> {
@@ -80,7 +79,7 @@ public class ProgressDialogViewController extends GridPane {
 
 		items.putIfAbsent(itemDescription, false);
 
-		JavaFXRoutines.runOnFxThread(() -> addSubProgress(itemDescription));
+		addSubProgress(itemDescription);
 	}
 
 	public void addSubProgress(String itemDescription) {
@@ -125,6 +124,14 @@ public class ProgressDialogViewController extends GridPane {
 		String itemDescription = getFirstNonCompletedTask();
 		JavaFXRoutines.runOnFxThread(() -> itemsProgress.get(itemDescription)
 			.setProgress(currentlyDone / (double) total));
+	}
+
+	@Override
+	public void close() {
+		JavaFXRoutines.runOnFxThread(() -> {
+			Stage stage = (Stage) taskDescriptionLabel.getScene().getWindow();
+			stage.close();
+		});
 	}
 
 }

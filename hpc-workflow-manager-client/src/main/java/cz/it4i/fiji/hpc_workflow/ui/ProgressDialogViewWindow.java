@@ -4,7 +4,6 @@ package cz.it4i.fiji.hpc_workflow.ui;
 import net.imagej.updater.util.UpdateCanceledException;
 
 import org.kordamp.ikonli.materialdesign.MaterialDesign;
-
 import cz.it4i.fiji.hpc_client.ProgressNotifier;
 import cz.it4i.swing_javafx_ui.JavaFXRoutines;
 import javafx.scene.Scene;
@@ -23,35 +22,32 @@ public class ProgressDialogViewWindow implements ProgressNotifier {
 
 	private String windowTitle = null;
 
-	private Stage stage;
-
 	private void openWindow(String message, Window parentStage, boolean show) {
 		this.controller = new ProgressDialogViewController(message);
-		final Scene formScene = new Scene(this.controller);
-		stage = new Stage();
-		stage.initOwner(parentStage);
-		stage.initModality(Modality.APPLICATION_MODAL);
-		stage.setAlwaysOnTop(false);
-		stage.initStyle(StageStyle.DECORATED);
-		stage.setResizable(false);
-		this.windowTitle = message;
-		stage.setTitle(message);
-		Image myImage = IconHelperMethods.convertIkonToImage(
-			MaterialDesign.MDI_CLOCK_FAST);
-		stage.getIcons().add(myImage);
-		stage.setScene(formScene);
-		if (show) {
-			stage.show();
-		}
+		JavaFXRoutines.runOnFxThread(() -> {
+			final Scene formScene = new Scene(this.controller);
+			Stage stage = new Stage();
+			stage.initOwner(parentStage);
+			stage.initModality(Modality.APPLICATION_MODAL);
+			stage.setAlwaysOnTop(false);
+			stage.initStyle(StageStyle.DECORATED);
+			stage.setResizable(false);
+			this.windowTitle = message;
+			stage.setTitle(message);
+			Image myImage = IconHelperMethods.convertIkonToImage(
+				MaterialDesign.MDI_CLOCK_FAST);
+			stage.getIcons().add(myImage);
+			stage.setScene(formScene);
+			if (show) {
+				stage.show();
+			}
 
-		// Prevent user from closing with the x button on the window decoration,
-		// JavaFX does not provide a method to remove all buttons from the
-		// decoration but keep the decoration to have a handle to move the window.
-		stage.setOnCloseRequest(WindowEvent::consume);
-	}
-
-	private void closeWindow() {
-		JavaFXRoutines.runOnFxThread(() -> this.controller.close(this.stage));
+			// Prevent user from closing with the x button on the window decoration,
+			// JavaFX does not provide a method to remove all buttons from the
+			// decoration but keep the decoration to have a handle to move the
+			// window.
+			stage.setOnCloseRequest(WindowEvent::consume);
+		});
 	}
 
 	private void setTitleToNextIncompleteTask() {
@@ -70,11 +66,11 @@ public class ProgressDialogViewWindow implements ProgressNotifier {
 	public ProgressDialogViewWindow(String message, Stage parentStage,
 		boolean show)
 	{
-		JavaFXRoutines.runOnFxThread(() -> openWindow(message, parentStage, show));
+		openWindow(message, parentStage, show);
 	}
 
 	public ProgressDialogViewWindow(String message, Window parentStage) {
-		JavaFXRoutines.runOnFxThread(() -> openWindow(message, parentStage, true));
+		openWindow(message, parentStage, true);
 	}
 
 	public void addItem(String itemDescription) {
@@ -131,6 +127,6 @@ public class ProgressDialogViewWindow implements ProgressNotifier {
 
 	@Override
 	public void done() {
-		this.closeWindow();
+		this.controller.close();
 	}
 }

@@ -411,10 +411,9 @@ public class HPCWorkflowControl<T extends JobWithDirectorySettings> extends
 	private void executeWSCallAsync(String title, boolean update,
 		PJobAction action)
 	{
-		ProgressDialogViewWindow progress = new ProgressDialogViewWindow(title,
-			this.stage);
-
 		JavaFXRoutines.executeAsync(executorServiceWS, (Callable<Void>) () -> {
+			ProgressDialogViewWindow progress = new ProgressDialogViewWindow(title,
+				this.stage);
 			try {
 				action.doAction(progress);
 			}
@@ -438,10 +437,9 @@ public class HPCWorkflowControl<T extends JobWithDirectorySettings> extends
 	}
 
 	private void updateJobs(boolean showProgress) {
-		final ProgressDialogViewWindow progress = new ProgressDialogViewWindow(
-			"Updating jobs", this.stage, showProgress);
-
 		executorServiceWS.execute(() -> {
+			ProgressDialogViewWindow progress = new ProgressDialogViewWindow(
+				"Updating jobs", this.stage, showProgress);
 			List<WorkflowJob> inspectedJobs = new LinkedList<>(paradigm.getJobs());
 			inspectedJobs.sort((j1, j2) -> (int) (j1.getId() - j2.getId()));
 			for (WorkflowJob bj : inspectedJobs) {
