@@ -22,7 +22,7 @@ import cz.it4i.fiji.hpc_workflow.commands.FileLock;
 import cz.it4i.fiji.hpc_workflow.core.AuthFailExceptionHandler;
 import cz.it4i.fiji.hpc_workflow.core.AuthenticationExceptionHandler;
 import cz.it4i.fiji.hpc_workflow.core.HPCWorkflowJobManager;
-import cz.it4i.fiji.hpc_workflow.core.JobWithWorkflowTypeSettings;
+import cz.it4i.fiji.hpc_workflow.core.JobWithJobTypeSettings;
 import cz.it4i.fiji.hpc_workflow.core.NotConnectedExceptionHandler;
 import cz.it4i.fiji.hpc_workflow.ui.ProgressDialogViewWindow;
 import cz.it4i.parallel.paradigm_managers.ParadigmManagerWithSettings;
@@ -33,7 +33,7 @@ import cz.it4i.swing_javafx_ui.SimpleDialog;
 import javafx.stage.Window;
 
 
-public class WorkflowParadigmManager<T extends SettingsWithWorkingDirectory, U extends JobWithWorkflowTypeSettings>
+public class WorkflowParadigmManager<T extends SettingsWithWorkingDirectory, U extends JobWithJobTypeSettings>
 	extends ParadigmManagerWithSettings<SettingsWithWorkingDirectory> implements
 	HavingOwnerWindow<Window>
 {

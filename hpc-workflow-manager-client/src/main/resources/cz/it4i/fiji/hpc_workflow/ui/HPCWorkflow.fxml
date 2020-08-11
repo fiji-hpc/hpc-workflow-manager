@@ -19,7 +19,7 @@
 						<TableColumn prefWidth="230.0" text="End time" />
 						<TableColumn prefWidth="250.0" text="Upload" />
 						<TableColumn prefWidth="250.0" text="Download" />
-						<TableColumn prefWidth="150.0" text="Workflow Type" />
+						<TableColumn prefWidth="150.0" text="Job Type" />
 					</columns>
                <columnResizePolicy>
                   <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />

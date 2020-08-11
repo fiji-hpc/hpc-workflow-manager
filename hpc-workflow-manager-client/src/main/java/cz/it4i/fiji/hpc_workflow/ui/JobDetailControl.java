@@ -14,7 +14,7 @@ import cz.it4i.fiji.hpc_workflow.Task;
 import cz.it4i.fiji.hpc_workflow.core.ObservableHPCWorkflowJob;
 import cz.it4i.fiji.hpc_workflow.core.SimpleObservableList;
 import cz.it4i.fiji.hpc_workflow.core.SimpleObservableValue;
-import cz.it4i.fiji.hpc_workflow.core.WorkflowType;
+import cz.it4i.fiji.hpc_workflow.core.JobType;
 import cz.it4i.swing_javafx_ui.JavaFXRoutines;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -110,15 +110,15 @@ public class JobDetailControl extends TabPane {
 				new ProgressDialogViewWindow("Downloading tasks", newStage);
 
 			try {
-				WorkflowType jobType = job.getWorkflowType();
+				JobType jobType = job.getJobType();
 
-				// Display errors, this is for both workflow types:
+				// Display errors, this is for both job types:
 				errorOutput = job.getObservableSnakemakeOutput(
 					SynchronizableFileType.StandardErrorFile);
 				errorOutput.addListener(errorOutputListener);
 				logViewControl.setObservable(errorOutput);
 
-				if (jobType == WorkflowType.SPIM_WORKFLOW) {
+				if (jobType == JobType.SPIM_WORKFLOW) {
 					setTabAvailability(macroProgressTab, true);
 					removeTab(macroProgressTab);
 
@@ -173,8 +173,8 @@ public class JobDetailControl extends TabPane {
 							progressDialogViewWindow.done();
 						}
 					};
-				WorkflowType jobType = job.getWorkflowType();
-				if (jobType == WorkflowType.SPIM_WORKFLOW) {
+				JobType jobType = job.getJobType();
+				if (jobType == JobType.SPIM_WORKFLOW) {
 					taskList.subscribe(localListener);
 				}
 			}
@@ -185,19 +185,19 @@ public class JobDetailControl extends TabPane {
 	// -- CloseableControl methods --
 
 	public void close() {
-		WorkflowType jobType = job.getWorkflowType();
+		JobType jobType = job.getJobType();
 
 		executorServiceWS.shutdown();
 
 		// Close controllers
-		if (jobType == WorkflowType.SPIM_WORKFLOW) {
+		if (jobType == JobType.SPIM_WORKFLOW) {
 			taskList.unsubscribe(taskListListener);
 			progressControl.close();
 		}
 		else {
 			macroProgressControl.close();
 		}
-		// Common close for both workflow types:
+		// Common close for both job types:
 		errorOutput.removeListener(errorOutputListener);
 		standardOutput.removeListener(standardOutputListener);
 		logViewControl.close();

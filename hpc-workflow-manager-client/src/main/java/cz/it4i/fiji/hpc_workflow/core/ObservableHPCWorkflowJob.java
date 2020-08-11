@@ -42,7 +42,7 @@ public class ObservableHPCWorkflowJob extends
 
 	private final SimpleObservableList<FileTransferInfo> fileTransferList;
 
-	private WorkflowJob workflowkJob;
+	private WorkflowJob job;
 
 	public interface TransferProgress {
 
@@ -62,7 +62,7 @@ public class ObservableHPCWorkflowJob extends
 		Function<WorkflowJob, Object> stateProvider, Executor executorUI)
 	{
 		super(wrapped, updateFunction, stateProvider);
-		this.workflowkJob = wrapped;
+		this.job = wrapped;
 		this.executor = executorUI;
 		wrapped.setDownloadNotifier(downloadProgress);
 		wrapped.setUploadNotifier(uploadProgress);
@@ -230,38 +230,38 @@ public class ObservableHPCWorkflowJob extends
 	}
 
 	public List<String> getFileContents(List<String> files) {
-		return workflowkJob.getFileContents(files);
+		return job.getFileContents(files);
 	}
 
 	public JobState getState() {
-		return workflowkJob.getState();
+		return job.getState();
 	}
 
-	public WorkflowType getWorkflowType() {
-		return workflowkJob.getWorkflowType();
+	public JobType getJobType() {
+		return job.getJobType();
 	}
 
 	public Path getInputDirectory() {
-		return workflowkJob.getInputDirectory();
+		return job.getInputDirectory();
 	}
 
 	public String getUserScriptName() {
-		if (workflowkJob instanceof MacroWorkflowJob) {
-			MacroWorkflowJob typeJob = (MacroWorkflowJob) workflowkJob;
+		if (job instanceof MacroJob) {
+			MacroJob typeJob = (MacroJob) job;
 			return typeJob.getUserScriptName();
 		}
 		throw new UnsupportedOperationException(
 			"Script name is support by MacroWorkflowJob but actual job is " +
-				workflowkJob.getClass());
+				job.getClass());
 	}
 	
 	public void setLastStartedTimestamp() {
-		MacroWorkflowJob typeJob = (MacroWorkflowJob) workflowkJob;
+		MacroJob typeJob = (MacroJob) job;
 		typeJob.setLastStartedTimestamp();
 	}
 	
 	public long getLastStartedTimestamp() {
-		MacroWorkflowJob typeJob = (MacroWorkflowJob) workflowkJob;
+		MacroJob typeJob = (MacroJob) job;
 		return typeJob.getLastStartedTimestamp();
 	}
 

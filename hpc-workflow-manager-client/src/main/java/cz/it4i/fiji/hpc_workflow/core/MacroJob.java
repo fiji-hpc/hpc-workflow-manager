@@ -7,9 +7,14 @@
  ******************************************************************************/
 package cz.it4i.fiji.hpc_workflow.core;
 
-import cz.it4i.fiji.hpc_adapter.JobWithDirectorySettings;
+import cz.it4i.fiji.hpc_workflow.WorkflowJob;
 
-public interface JobWithWorkflowTypeSettings extends JobWithDirectorySettings {
 
-	WorkflowType getWorkflowType();
+public interface MacroJob extends WorkflowJob {
+
+	String getUserScriptName();
+
+	void setLastStartedTimestamp();
+	
+	long getLastStartedTimestamp();
 }
