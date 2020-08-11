@@ -52,10 +52,10 @@ import cz.it4i.fiji.hpc_workflow.WorkflowJob;
 import cz.it4i.fiji.hpc_workflow.WorkflowParadigm;
 import cz.it4i.fiji.hpc_workflow.core.Constants;
 import cz.it4i.fiji.hpc_workflow.core.FXFrameExecutorService;
-import cz.it4i.fiji.hpc_workflow.core.MacroWorkflowJob;
+import cz.it4i.fiji.hpc_workflow.core.MacroJob;
 import cz.it4i.fiji.hpc_workflow.core.ObservableHPCWorkflowJob;
 import cz.it4i.fiji.hpc_workflow.core.ObservableHPCWorkflowJob.TransferProgress;
-import cz.it4i.fiji.hpc_workflow.core.WorkflowType;
+import cz.it4i.fiji.hpc_workflow.core.JobType;
 import cz.it4i.swing_javafx_ui.JavaFXRoutines;
 import cz.it4i.swing_javafx_ui.SimpleDialog;
 import javafx.beans.value.ObservableValue;
@@ -158,7 +158,7 @@ public class HPCWorkflowControl<T extends JobWithDirectorySettings> extends
 		menu.addSeparator();
 
 		menu.addItem("Start job", job -> {
-			if (job.getWorkflowType() == WorkflowType.MACRO_WORKFLOW) job
+			if (job.getJobType() == JobType.MACRO) job
 				.setLastStartedTimestamp();
 			executeWSCallAsync("Starting job", p -> {
 				job.getValue().startJob(p);
@@ -191,7 +191,7 @@ public class HPCWorkflowControl<T extends JobWithDirectorySettings> extends
 			MaterialDesign.MDI_EYE);
 		menu.addItem("Open Macro in editor", j -> openEditor(j.getValue()),
 			x -> JavaFXRoutines.notNullValue(x, j -> j
-				.getWorkflowType() == WorkflowType.MACRO_WORKFLOW),
+				.getJobType() == JobType.MACRO),
 			MaterialDesign.MDI_LEAD_PENCIL);
 
 		menu.addSeparator();
@@ -227,7 +227,7 @@ public class HPCWorkflowControl<T extends JobWithDirectorySettings> extends
 	}
 
 	private boolean checkIfAnythingHasBeenUploaded(WorkflowJob job) {
-		if (job.getWorkflowType() == WorkflowType.MACRO_WORKFLOW) {
+		if (job.getJobType() == JobType.MACRO) {
 			// If the user has not uploaded anything return false:
 			try {
 				if (job.isUploaded()) {
@@ -245,7 +245,7 @@ public class HPCWorkflowControl<T extends JobWithDirectorySettings> extends
 
 	private boolean createTheMacroScript(ObservableHPCWorkflowJob job) {
 		boolean isSuccessfull = true;
-		if (job.getWorkflowType() == WorkflowType.MACRO_WORKFLOW) {
+		if (job.getJobType() == JobType.MACRO) {
 			String userScriptFilePath = job.getInputDirectory().toString() +
 				File.separator + job.getUserScriptName();
 
@@ -350,7 +350,7 @@ public class HPCWorkflowControl<T extends JobWithDirectorySettings> extends
 		WorkflowJob job = doCreateJob(jobSettings);
 
 		if (jobSettings.getInputPath().apply(job.getDirectory()) != null && job
-			.getWorkflowType() == WorkflowType.SPIM_WORKFLOW && (job
+			.getJobType() == JobType.SPIM_WORKFLOW && (job
 				.getInputDirectory().resolve(CONFIG_YAML)).toFile().exists())
 		{
 			executorServiceFX.execute(() -> {
@@ -474,7 +474,7 @@ public class HPCWorkflowControl<T extends JobWithDirectorySettings> extends
 			.getUploadProgress()));
 		setCellValueFactory(6, j -> decorateTransfer(registry.get(j)
 			.getDownloadProgress()));
-		setCellValueFactory(7, WorkflowJob::getWorkflowTypeName);
+		setCellValueFactory(7, WorkflowJob::getJobTypeName);
 		JavaFXRoutines.setOnDoubleClickAction(jobs, executorServiceJobState,
 			openJobDetailsWindow -> true, this::openJobDetailsWindow);
 	}
@@ -548,8 +548,8 @@ public class HPCWorkflowControl<T extends JobWithDirectorySettings> extends
 	}
 
 	private void openEditor(WorkflowJob job) {
-		if (job instanceof MacroWorkflowJob) {
-			MacroWorkflowJob typeJob = (MacroWorkflowJob) job;
+		if (job instanceof MacroJob) {
+			MacroJob typeJob = (MacroJob) job;
 			// TODO Context handling is wrong:
 			TextEditor txt = new TextEditor(new Context());
 

@@ -5,28 +5,29 @@
  * This file is subject to the terms and conditions defined in
  * file 'LICENSE', which is part of this project.
  ******************************************************************************/
+
 package cz.it4i.fiji.hpc_workflow.core;
 
-public enum WorkflowType {
-		SPIM_WORKFLOW(4), MACRO_WORKFLOW(8);
+public enum JobType {
+		SPIM_WORKFLOW(4), MACRO(8), SCRIPT(16);
 
 	private final int haasTemplateID;
 
-	private WorkflowType(int workflowType) {
-		this.haasTemplateID = workflowType;
+	private JobType(int jobType) {
+		this.haasTemplateID = jobType;
 	}
 
 	public int getHaasTemplateID() {
 		return this.haasTemplateID;
 	}
 
-	public static WorkflowType forLong(long id) {
-		for (WorkflowType workflows : values()) {
-			if (workflows.haasTemplateID == id) {
-				return workflows;
+	public static JobType forLong(long id) {
+		for (JobType jobType : values()) {
+			if (jobType.haasTemplateID == id) {
+				return jobType;
 			}
 		}
-		throw new IllegalArgumentException("Invalid WorkflowType id: " + id);
+		throw new IllegalArgumentException("Invalid JobType id: " + id);
 	}
 
 }

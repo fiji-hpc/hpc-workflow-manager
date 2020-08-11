@@ -5,16 +5,12 @@
  * This file is subject to the terms and conditions defined in
  * file 'LICENSE', which is part of this project.
  ******************************************************************************/
+
 package cz.it4i.fiji.hpc_workflow.core;
 
-import cz.it4i.fiji.hpc_workflow.WorkflowJob;
+import cz.it4i.fiji.hpc_adapter.JobWithDirectorySettings;
 
+public interface JobWithJobTypeSettings extends JobWithDirectorySettings {
 
-public interface MacroWorkflowJob extends WorkflowJob {
-
-	String getUserScriptName();
-
-	void setLastStartedTimestamp();
-	
-	long getLastStartedTimestamp();
+	JobType getJobType();
 }

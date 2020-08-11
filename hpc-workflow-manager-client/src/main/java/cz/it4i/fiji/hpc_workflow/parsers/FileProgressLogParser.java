@@ -122,8 +122,8 @@ public class FileProgressLogParser implements ProgressLogParser {
 				// stopped:
 				JavaFXRoutines.runOnFxThread(() -> SimpleDialog.showException(
 					"Exception occurred while parsing progress file!",
-					"Progress logs for this Macro Workflow type job appear" +
-						" to be corrupted and parsing them caused an exception.", exc));
+					"Progress logs for this Macro job appear to be " +
+						"corrupted and parsing them caused an exception.", exc));
 				logger.debug("Exception occurred while parsing progress file!");
 				return -1;
 			}

@@ -20,7 +20,7 @@ import cz.it4i.fiji.hpc_client.JobState;
 import cz.it4i.fiji.hpc_client.ProgressNotifier;
 import cz.it4i.fiji.hpc_client.SynchronizableFileType;
 import cz.it4i.fiji.hpc_client.data_transfer.FileTransferInfo;
-import cz.it4i.fiji.hpc_workflow.core.WorkflowType;
+import cz.it4i.fiji.hpc_workflow.core.JobType;
 
 public interface WorkflowJob {
 
@@ -47,7 +47,7 @@ public interface WorkflowJob {
 
 	List<String> getFileContents(List<String> files);
 
-	WorkflowType getWorkflowType();
+	JobType getJobType();
 
 	Path getInputDirectory();
 
@@ -99,7 +99,7 @@ public interface WorkflowJob {
 
 	String getCreationTime();
 
-	String getWorkflowTypeName();
+	String getJobTypeName();
 
 	Path getOutputDirectory();
 

@@ -82,7 +82,7 @@ import cz.it4i.swing_javafx_ui.JavaFXRoutines;
 import cz.it4i.swing_javafx_ui.SimpleDialog;
 
 @Plugin(type = ParallelizationParadigm.class)
-public class HPCWorkflowJobManager<T extends JobWithWorkflowTypeSettings>
+public class HPCWorkflowJobManager<T extends JobWithJobTypeSettings>
 	implements WorkflowParadigm<T>
 {
 
@@ -110,7 +110,7 @@ public class HPCWorkflowJobManager<T extends JobWithWorkflowTypeSettings>
 
 	private Path workingDirectory;
 
-	public static final class BenchmarkJob implements MacroWorkflowJob {
+	public static final class BenchmarkJob implements MacroJob {
 
 		private final Job job;
 		private final SnakemakeOutputHelper snakemakeOutputHelper;
@@ -145,7 +145,7 @@ public class HPCWorkflowJobManager<T extends JobWithWorkflowTypeSettings>
 			throws IOException
 		{
 			LoadedYAML yaml = null;
-			if (getWorkflowType() == WorkflowType.SPIM_WORKFLOW) {
+			if (getJobType() == JobType.SPIM_WORKFLOW) {
 				job.uploadFile(Constants.CONFIG_YAML, progress);
 				yaml = new LoadedYAML(job.openLocalFile(Constants.CONFIG_YAML));
 			}
@@ -169,7 +169,7 @@ public class HPCWorkflowJobManager<T extends JobWithWorkflowTypeSettings>
 				}
 			}
 			progress.itemDone(message);
-			if (getWorkflowType() == WorkflowType.SPIM_WORKFLOW && yaml != null) {
+			if (getJobType() == JobType.SPIM_WORKFLOW && yaml != null) {
 				job.setProperty(SPIM_OUTPUT_FILENAME_PATTERN, yaml.getCommonProperty(
 					FUSION_SWITCH) + "_" + yaml.getCommonProperty(HDF5_XML_FILENAME));
 			}
@@ -426,22 +426,22 @@ public class HPCWorkflowJobManager<T extends JobWithWorkflowTypeSettings>
 			job.setLastStartedTimestamp();
 		}
 
-		public void setWorkflowType(WorkflowType workflowType) {
-			job.setProperty(JOB_HAAS_TEMPLATE_ID, workflowType.name());
+		public void setJobType(JobType jobType) {
+			job.setProperty(JOB_HAAS_TEMPLATE_ID, jobType.name());
 		}
 
 		@Override
-		public WorkflowType getWorkflowType() {
+		public JobType getJobType() {
 			String strValue = job.getProperty(JOB_HAAS_TEMPLATE_ID);
 			try {
-				return WorkflowType.valueOf(strValue);
+				return JobType.valueOf(strValue);
 			}
 			catch (java.lang.IllegalArgumentException exc) {
-				if (exc.getMessage().startsWith("No enum constant " + WorkflowType.class
+				if (exc.getMessage().startsWith("No enum constant " + JobType.class
 					.getCanonicalName() + "."))
 				{
 					try {
-						return WorkflowType.forLong(Long.parseLong(strValue));
+						return JobType.forLong(Long.parseLong(strValue));
 					}
 					catch (NumberFormatException exc2) {
 						throw exc;
@@ -454,8 +454,8 @@ public class HPCWorkflowJobManager<T extends JobWithWorkflowTypeSettings>
 		}
 
 		@Override
-		public String getWorkflowTypeName() {
-			return getWorkflowType().name();
+		public String getJobTypeName() {
+			return getJobType().name();
 		}
 
 		@Override
@@ -510,7 +510,7 @@ public class HPCWorkflowJobManager<T extends JobWithWorkflowTypeSettings>
 							.get();
 					}
 					else {
-						// ToDo: Is this correct for SPIMM Workflow type jobs?
+						// ToDo: Is this correct for the SPIMM Workflow job type?
 						workVerifiedState = Finished;
 					}
 
@@ -551,7 +551,7 @@ public class HPCWorkflowJobManager<T extends JobWithWorkflowTypeSettings>
 			throws IOException
 		{
 
-			final WorkflowType jobType = getWorkflowType();
+			final JobType jobType = getJobType();
 
 			final String mainFile = job.getProperty(SPIM_OUTPUT_FILENAME_PATTERN) +
 				".xml";
@@ -587,9 +587,9 @@ public class HPCWorkflowJobManager<T extends JobWithWorkflowTypeSettings>
 		}
 
 		private Predicate<String> getOtherFilesFilterForDownload(
-			WorkflowType jobType, String mainFile)
+			JobType jobType, String mainFile)
 		{
-			if (jobType == WorkflowType.MACRO_WORKFLOW) {
+			if (jobType == JobType.MACRO) {
 				return x -> true;
 			}
 			Set<String> otherFiles = extractNames(getOutputDirectory().resolve(
@@ -597,13 +597,13 @@ public class HPCWorkflowJobManager<T extends JobWithWorkflowTypeSettings>
 			return otherFiles::contains;
 		}
 
-		private CompletableFuture<?> downloadMainFile(final WorkflowType jobType,
+		private CompletableFuture<?> downloadMainFile(final JobType jobType,
 			final String mainFile,
 			final StillRunningDownloadSwitcher stillRunningTemporarySwitch,
 			final ProgressNotifierTemporarySwitchOff progressNotifierTemporarySwitchOff)
 			throws IOException
 		{
-			if (jobType == WorkflowType.MACRO_WORKFLOW) {
+			if (jobType == JobType.MACRO) {
 				return CompletableFuture.completedFuture(null);
 			}
 			return job.startDownload(downloadFileNameExtractDecorator(
@@ -741,7 +741,7 @@ public class HPCWorkflowJobManager<T extends JobWithWorkflowTypeSettings>
 			job.createEmptyFile(Constants.DEMO_DATA_SIGNAL_FILE_NAME);
 		}
 		BenchmarkJob result = convertJob(job);
-		result.setWorkflowType(parameters.getWorkflowType());
+		result.setJobType(parameters.getJobType());
 		if (job.isUseDemoData()) {
 			job.storeDataInWorkdirectory(getConfigYamlFile());
 		}
