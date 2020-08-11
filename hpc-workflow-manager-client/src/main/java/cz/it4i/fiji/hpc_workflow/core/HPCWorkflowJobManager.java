@@ -51,6 +51,7 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
+import org.apache.commons.lang.WordUtils;
 import org.scijava.parallel.ParallelizationParadigm;
 import org.scijava.parallel.Status;
 import org.scijava.plugin.Plugin;
@@ -455,7 +456,7 @@ public class HPCWorkflowJobManager<T extends JobWithJobTypeSettings>
 
 		@Override
 		public String getJobTypeName() {
-			return getJobType().name();
+			return WordUtils.capitalizeFully(getJobType().name().replace("_", " "));
 		}
 
 		@Override
