@@ -111,7 +111,7 @@ public class HPCWorkflowControl<T extends JobWithDirectorySettings> extends
 		this.paradigm = paradigm;
 		JavaFXRoutines.initRootAndController("HPCWorkflow.fxml", this);
 		jobs.setPlaceholder(new Label(
-			"No content in table. Right click to create new one."));
+			"No jobs in table. Right click to create new job."));
 	}
 
 	public CompletableFuture<Void> init(Stage newStage) {
@@ -158,8 +158,7 @@ public class HPCWorkflowControl<T extends JobWithDirectorySettings> extends
 		menu.addSeparator();
 
 		menu.addItem("Start job", job -> {
-			if (job.getJobType() == JobType.MACRO) job
-				.setLastStartedTimestamp();
+			if (job.getJobType() == JobType.MACRO) job.setLastStartedTimestamp();
 			executeWSCallAsync("Starting job", p -> {
 				job.getValue().startJob(p);
 				job.getValue().update();
@@ -189,10 +188,11 @@ public class HPCWorkflowControl<T extends JobWithDirectorySettings> extends
 			x -> JavaFXRoutines.notNullValue(x, j -> j
 				.getState() == JobState.Finished && j.isVisibleInBDV()),
 			MaterialDesign.MDI_EYE);
-		menu.addItem("Open Macro in editor", j -> openEditor(j.getValue()),
-			x -> JavaFXRoutines.notNullValue(x, j -> j
-				.getJobType() == JobType.MACRO),
-			MaterialDesign.MDI_LEAD_PENCIL);
+		menu.addItem("Open in editor", j -> openEditor(j.getValue()),
+			x -> JavaFXRoutines.notNullValue(x, j -> {
+				JobType jobType = j.getJobType();
+				return jobType == JobType.MACRO || jobType == JobType.SCRIPT;
+			}), MaterialDesign.MDI_LEAD_PENCIL);
 
 		menu.addSeparator();
 
@@ -350,8 +350,8 @@ public class HPCWorkflowControl<T extends JobWithDirectorySettings> extends
 		WorkflowJob job = doCreateJob(jobSettings);
 
 		if (jobSettings.getInputPath().apply(job.getDirectory()) != null && job
-			.getJobType() == JobType.SPIM_WORKFLOW && (job
-				.getInputDirectory().resolve(CONFIG_YAML)).toFile().exists())
+			.getJobType() == JobType.SPIM_WORKFLOW && (job.getInputDirectory()
+				.resolve(CONFIG_YAML)).toFile().exists())
 		{
 			executorServiceFX.execute(() -> {
 
