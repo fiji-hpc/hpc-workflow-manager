@@ -158,7 +158,9 @@ public class HPCWorkflowControl<T extends JobWithDirectorySettings> extends
 		menu.addSeparator();
 
 		menu.addItem("Start job", job -> {
-			if (job.getJobType() == JobType.MACRO) job.setLastStartedTimestamp();
+			JobType jobType = job.getJobType();
+			if (jobType == JobType.MACRO || jobType == JobType.SCRIPT) job
+				.setLastStartedTimestamp();
 			executeWSCallAsync("Starting job", p -> {
 				job.getValue().startJob(p);
 				job.getValue().update();
