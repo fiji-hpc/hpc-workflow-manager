@@ -900,6 +900,7 @@ public class HPCWorkflowJobManager<T extends JobWithJobTypeSettings>
 			throw new IllegalStateException(
 				"This paradigm is not already initialized.");
 		}
+		hpcClient.close();
 		jobManager.close();
 		jobManager = null;
 		if (finalizer != null) {

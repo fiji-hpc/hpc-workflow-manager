@@ -1,17 +1,12 @@
 package cz.it4i.fiji.hpc_client;
 
-import java.io.Closeable;
 import java.io.InterruptedIOException;
 import java.nio.file.Path;
 import java.util.List;
 
 import cz.it4i.fiji.scpclient.TransferFileProgress;
 
-public interface HPCFileTransfer extends Closeable {
-
-	
-	@Override
-	void close();
+public interface HPCFileTransfer {
 
 	void upload(UploadingFile file) throws InterruptedIOException;
 

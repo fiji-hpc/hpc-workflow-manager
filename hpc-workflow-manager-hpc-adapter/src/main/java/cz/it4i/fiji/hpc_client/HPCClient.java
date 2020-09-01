@@ -40,4 +40,6 @@ public interface HPCClient<T> {
 
 	HPCDataTransfer startDataTransfer(long jobId, int nodeNumber, int port);
 
+	void close();
+
 }

@@ -5,6 +5,7 @@
  * This file is subject to the terms and conditions defined in
  * file 'LICENSE', which is part of this project.
  ******************************************************************************/
+
 package cz.it4i.fiji.hpc_adapter;
 
 import java.util.Collection;
@@ -36,7 +37,6 @@ public class HPCClientProxyAdapter<T> implements HPCClient<T> {
 	private final Supplier<HPCClient<T>> clientSupplier;
 	private final Class<T> jobSettingsType;
 	private HPCClient<T> hpcClient;
-
 
 	public HPCClientProxyAdapter(Supplier<HPCClient<T>> clientSupplier,
 		Class<T> jobSettingsType)
@@ -120,5 +120,12 @@ public class HPCClientProxyAdapter<T> implements HPCClient<T> {
 			hpcClient = clientSupplier.get();
 		}
 		return hpcClient;
+	}
+
+	@Override
+	public void close() {
+		if (hpcClient != null) {
+			hpcClient.close();
+		}
 	}
 }
