@@ -36,7 +36,7 @@ abstract class PersistentSynchronizationProcess<T> {
 	private static final TransferFileProgressForHPCClient DUMMY_FILE_PROGRESS =
 		new TransferFileProgressForHPCClient(0, Notifiers.emptyProgressNotifier());
 
-	static private final String INIT_TRANSFER_ITEM = "init transfer";
+	private static final String INIT_TRANSFER_ITEM = "init transfer";
 
 	private static final long WAIT_FOR_CLOSE_SEESION_TIMEOUT = 500;
 
@@ -271,12 +271,7 @@ abstract class PersistentSynchronizationProcess<T> {
 		@Override
 		public void close() {
 			synchronized (openedClosables) {
-				try {
-					transfer.close();
-				}
-				finally {
-					openedClosables.remove(this);
-				}
+				openedClosables.remove(this);
 			}
 		}
 	}

@@ -265,25 +265,22 @@ public class Job {
 		TransferFileProgressForHPCClient progress =
 			new TransferFileProgressForHPCClient(totalSize, notifier);
 
-		try (HPCFileTransfer transfer = hpcClient.startFileTransfer(getId(),
-			progress))
-		{
-			int index = 0;
-			for (UploadingFile file : files) {
-				String item;
-				progress.startNewFile(totalSizes.get(index));
-				item = "Uploading file: " + file.getName();
-				notifier.addItem(item);
-				try {
-					transfer.upload(file);
-				}
-				catch (InterruptedIOException e) {
-					notifier.itemDone(item);
-					return;
-				}
-				notifier.itemDone(item);
-				index++;
+		HPCFileTransfer transfer = hpcClient.startFileTransfer(getId(), progress);
+		int index = 0;
+		for (UploadingFile file : files) {
+			String item;
+			progress.startNewFile(totalSizes.get(index));
+			item = "Uploading file: " + file.getName();
+			notifier.addItem(item);
+			try {
+				transfer.upload(file);
 			}
+			catch (InterruptedIOException e) {
+				notifier.itemDone(item);
+				return;
+			}
+			notifier.itemDone(item);
+			index++;
 		}
 	}
 
@@ -320,37 +317,36 @@ public class Job {
 	{
 		List<String> files = hpcClient.getChangedFiles(jobId).stream().filter(
 			predicate).collect(Collectors.toList());
-		try (HPCFileTransfer transfer = hpcClient.startFileTransfer(getId(),
-			emptyTransferFileProgress()))
-		{
-			List<Long> fileSizes;
+		HPCFileTransfer transfer = hpcClient.startFileTransfer(getId(),
+			emptyTransferFileProgress());
+
+		List<Long> fileSizes;
+		try {
+			fileSizes = transfer.obtainSize(files);
+		}
+		catch (InterruptedIOException e1) {
+			return;
+		}
+		final long totalFileSize = fileSizes.stream().mapToLong(Long::longValue)
+			.sum();
+		TransferFileProgressForHPCClient progress =
+			new TransferFileProgressForHPCClient(totalFileSize, notifier);
+		transfer.setProgress(progress);
+		int idx = 0;
+		for (String fileName : files) {
+			String item;
+			item = fileName;
+			progress.addItem(item);
+			progress.startNewFile(fileSizes.get(idx));
 			try {
-				fileSizes = transfer.obtainSize(files);
+				transfer.download(fileName, jobDir);
 			}
-			catch (InterruptedIOException e1) {
+			catch (InterruptedIOException e) {
+				progress.itemDone(item);
 				return;
 			}
-			final long totalFileSize = fileSizes.stream().mapToLong(Long::longValue)
-				.sum();
-			TransferFileProgressForHPCClient progress =
-				new TransferFileProgressForHPCClient(totalFileSize, notifier);
-			transfer.setProgress(progress);
-			int idx = 0;
-			for (String fileName : files) {
-				String item;
-				item = fileName;
-				progress.addItem(item);
-				progress.startNewFile(fileSizes.get(idx));
-				try {
-					transfer.download(fileName, jobDir);
-				}
-				catch (InterruptedIOException e) {
-					progress.itemDone(item);
-					return;
-				}
-				progress.itemDone(item);
-				idx++;
-			}
+			progress.itemDone(item);
+			idx++;
 		}
 	}
 
@@ -449,24 +445,22 @@ public class Job {
 
 	public List<Long> getFileSizes(List<String> names) {
 
-		try (HPCFileTransfer transfer = hpcClient.startFileTransfer(getId(),
-			emptyTransferFileProgress()))
-		{
-			try {
-				return transfer.obtainSize(names);
-			}
-			catch (InterruptedIOException e) {
-				return Collections.emptyList();
-			}
+		HPCFileTransfer transfer = hpcClient.startFileTransfer(getId(),
+			emptyTransferFileProgress());
+
+		try {
+			return transfer.obtainSize(names);
 		}
+		catch (InterruptedIOException e) {
+			return Collections.emptyList();
+		}
+
 	}
 
 	public List<String> getFileContents(List<String> logs) {
-		try (HPCFileTransfer transfer = hpcClient.startFileTransfer(getId(),
-			emptyTransferFileProgress()))
-		{
-			return transfer.getContent(logs);
-		}
+		HPCFileTransfer transfer = hpcClient.startFileTransfer(getId(),
+			emptyTransferFileProgress());
+		return transfer.getContent(logs);
 	}
 
 	public void setDownloadNotifier(ProgressNotifier notifier) {
@@ -518,9 +512,8 @@ public class Job {
 	}
 
 	public void createEmptyFile(String fileName) throws InterruptedIOException {
-		try (HPCFileTransfer transfer = hpcClient.startFileTransfer(getId())) {
-			transfer.upload(new EmptyUploadingFile(fileName));
-		}
+		HPCFileTransfer transfer = hpcClient.startFileTransfer(getId());
+		transfer.upload(new EmptyUploadingFile(fileName));
 	}
 
 	private void storeInputOutputDirectory() {
