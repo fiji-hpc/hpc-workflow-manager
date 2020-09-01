@@ -106,15 +106,16 @@ public class MacroTaskProgressViewController extends BorderPane {
 				JavaFXRoutines.runOnFxThread(() -> createColumnsForEachNode(files
 					.size()));
 				getAndParseFileUpdateTasks(files);
+			}
 
-				JobState jobState = job.getState();
-				if (jobState != JobState.Queued && jobState != JobState.Running &&
-					jobState != JobState.Submitted)
-				{
-					setStatusMessage("Stopped updating progress because state is: " +
-						jobState.toString());
-					exec.shutdown();
-				}
+			// Stop trying to update the log if the job has stopped in any way.
+			JobState jobState = job.getState();
+			if (jobState != JobState.Queued && jobState != JobState.Running &&
+				jobState != JobState.Submitted)
+			{
+				setStatusMessage("Stopped updating progress because state is: " +
+					jobState.toString());
+				exec.shutdown();
 			}
 
 		}, 0, 2, TimeUnit.SECONDS);
