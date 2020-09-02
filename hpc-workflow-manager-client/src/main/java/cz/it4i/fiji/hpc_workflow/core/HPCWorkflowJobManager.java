@@ -83,8 +83,8 @@ import cz.it4i.swing_javafx_ui.JavaFXRoutines;
 import cz.it4i.swing_javafx_ui.SimpleDialog;
 
 @Plugin(type = ParallelizationParadigm.class)
-public class HPCWorkflowJobManager<T extends JobWithJobTypeSettings>
-	implements WorkflowParadigm<T>
+public class HPCWorkflowJobManager<T extends JobWithJobTypeSettings> implements
+	WorkflowParadigm<T>
 {
 
 	public interface DownloadingStatusProvider {
@@ -587,10 +587,10 @@ public class HPCWorkflowJobManager<T extends JobWithJobTypeSettings>
 				});
 		}
 
-		private Predicate<String> getOtherFilesFilterForDownload(
-			JobType jobType, String mainFile)
+		private Predicate<String> getOtherFilesFilterForDownload(JobType jobType,
+			String mainFile)
 		{
-			if (jobType == JobType.MACRO) {
+			if (jobType == JobType.MACRO || jobType == JobType.SCRIPT) {
 				return x -> true;
 			}
 			Set<String> otherFiles = extractNames(getOutputDirectory().resolve(
@@ -604,7 +604,7 @@ public class HPCWorkflowJobManager<T extends JobWithJobTypeSettings>
 			final ProgressNotifierTemporarySwitchOff progressNotifierTemporarySwitchOff)
 			throws IOException
 		{
-			if (jobType == JobType.MACRO) {
+			if (jobType == JobType.MACRO || jobType == JobType.SCRIPT) {
 				return CompletableFuture.completedFuture(null);
 			}
 			return job.startDownload(downloadFileNameExtractDecorator(
