@@ -26,13 +26,13 @@ public class XmlProgressLogParserTest {
 		getLastUpdatedTimestampShouldReturnNegativeOneIfTheTimestampDoesNotExist()
 	{
 		List<String> progressLogs = new ArrayList<>();
-		progressLogs.add("<job>\r\n" + "	<nodes>1</nodes>\r\n" +
-			"	<task id=\"0\">\r\n" +
-			"		<description>Sample task one</description>\r\n" +
-			"		<progress>100</progress>\r\n" + "	</task>\r\n" +
-			"	<task id=\"1\">\r\n" +
-			"		<description>Sample task two</description>\r\n" +
-			"		<progress>75</progress>\r\n" + "	</task>\r\n" + "</job>");
+		progressLogs.add("<job>\n" + "	<nodes>1</nodes>\n" +
+			"	<task id=\"0\">\n" +
+			"		<description>Sample task one</description>\n" +
+			"		<progress>100</progress>\n" + "	</task>\n" +
+			"	<task id=\"1\">\n" +
+			"		<description>Sample task two</description>\n" +
+			"		<progress>75</progress>\n" + "	</task>\n" + "</job>");
 
 		long realTimestamp = -1;
 		long readTimestamp = parser.getLastUpdatedTimestamp(0, progressLogs);
@@ -43,14 +43,14 @@ public class XmlProgressLogParserTest {
 	@Test
 	public void getLastUpdatedTimestampShouldRetrunCorrectTimestamp() {
 		List<String> progressLogs = new ArrayList<>();
-		progressLogs.add("<job>\r\n" + "	<nodes>1</nodes>\r\n" +
-			"	<task id=\"0\">\r\n" +
-			"		<description>Sample task one</description>\r\n" +
-			"		<progress>100</progress>\r\n" + "	</task>\r\n" +
-			"	<task id=\"1\">\r\n" +
-			"		<description>Sample task two</description>\r\n" +
-			"		<progress>75</progress>\r\n" + "	</task>\r\n" +
-			"<lastUpdated>100</lastUpdated>\r\n " + "</job>");
+		progressLogs.add("<job>\n" + "	<nodes>1</nodes>\n" +
+			"	<task id=\"0\">\n" +
+			"		<description>Sample task one</description>\n" +
+			"		<progress>100</progress>\n" + "	</task>\n" +
+			"	<task id=\"1\">\n" +
+			"		<description>Sample task two</description>\n" +
+			"		<progress>75</progress>\n" + "	</task>\n" +
+			"<lastUpdated>100</lastUpdated>\n " + "</job>");
 
 		long realTimestamp = 100;
 		long readTimestamp = parser.getLastUpdatedTimestamp(0, progressLogs);
