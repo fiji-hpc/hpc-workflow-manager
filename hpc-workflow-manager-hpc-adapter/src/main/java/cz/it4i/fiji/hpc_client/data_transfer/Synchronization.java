@@ -30,7 +30,7 @@ import cz.it4i.fiji.hpc_client.UploadingFileImpl;
 
 public class Synchronization implements Closeable {
 
-	private final static Logger log = LoggerFactory.getLogger(
+	private static final Logger log = LoggerFactory.getLogger(
 		cz.it4i.fiji.hpc_client.data_transfer.Synchronization.class);
 
 	private static final String FILE_INDEX_TO_UPLOAD_FILENAME = ".toUploadFiles";
@@ -162,10 +162,9 @@ public class Synchronization implements Closeable {
 			@Override
 			protected Collection<Path> getItems() throws IOException {
 				try (Stream<Path> ds = Files.walk(inputDirectory)) {
-					return ds.filter(p -> !Files.isDirectory(p) && canUpload(p) &&
+					return ds.filter(p -> !p.toFile().isDirectory() && canUpload(p) &&
 						!filesUploaded.contains(p)).collect(Collectors.toList());
 				}
-
 			}
 
 			@Override
@@ -233,11 +232,12 @@ public class Synchronization implements Closeable {
 		}
 
 		@Override
-		protected void processItem(final HPCFileTransfer tr, final String file)
-			throws InterruptedIOException
+		protected void processItem(final HPCFileTransfer fileTransfer,
+			final String file) throws InterruptedIOException
 		{
-			tr.download(file, outputDirectory);
-			filesDownloaded.insert(outputDirectory.resolve(file));
+			fileTransfer.download(file, outputDirectory);
+			Path fileAbsolutePath = outputDirectory.resolve(file);
+			filesDownloaded.insert(fileAbsolutePath);
 			try {
 				filesDownloaded.storeToWorkingFile();
 			}

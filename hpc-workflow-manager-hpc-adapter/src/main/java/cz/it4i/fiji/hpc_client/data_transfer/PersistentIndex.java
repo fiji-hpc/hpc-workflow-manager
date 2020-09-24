@@ -3,11 +3,14 @@ package cz.it4i.fiji.hpc_client.data_transfer;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -21,7 +24,8 @@ class PersistentIndex<T> {
 
 	private final Path workingFile;
 
-	private final Set<T> indexedFiles = new LinkedHashSet<>();
+	private Set<T> indexedFiles = new LinkedHashSet<>();
+	private Map<String, Long> lastUpdatedfiles = new HashMap<>();
 
 	private final Function<String, T> fromStringConvertor;
 
@@ -36,16 +40,20 @@ class PersistentIndex<T> {
 	public synchronized void storeToWorkingFile() throws IOException {
 		try (BufferedWriter bw = Files.newBufferedWriter(workingFile)) {
 			for (T file : indexedFiles) {
-				bw.write(file.toString() + "\n");
+				File myFile = new File(file.toString());
+				bw.write(file.toString() + "," + myFile.lastModified() + "\n");
 			}
 		}
 	}
 
 	public synchronized boolean insert(T file) {
+		File myFile = new File(file.toString());
+		lastUpdatedfiles.put(file.toString(), myFile.lastModified());
 		return indexedFiles.add(file);
 	}
 
 	public synchronized void remove(T p) {
+		lastUpdatedfiles.remove(p.toString());
 		indexedFiles.remove(p);
 	}
 
@@ -58,17 +66,36 @@ class PersistentIndex<T> {
 		storeToWorkingFile();
 	}
 
-	public synchronized boolean contains(Path file) {
-		return indexedFiles.contains(file);
+	public synchronized boolean contains(T file) {
+		boolean containsItem = false;
+		File myFile = new File(file.toString());
+		if (indexedFiles.contains(file) && lastUpdatedfiles.containsKey(file
+			.toString()) && myFile.lastModified() == lastUpdatedfiles.get(file
+				.toString()))
+		{
+			containsItem = true;
+		}
+		return containsItem;
 	}
 
 	private void loadFromWorkingFile() throws IOException {
 		indexedFiles.clear();
+		String[] pathAndTime;
+		String path = "";
+		Long time = 0L;
 		if (workingFile.toFile().exists()) {
 			try (BufferedReader br = Files.newBufferedReader(workingFile)) {
 				String line;
 				while (null != (line = br.readLine())) {
-					processLine(line);
+					pathAndTime = line.split(",");
+					if(pathAndTime.length == 2) {
+						path = pathAndTime[0];
+						time = Long.parseLong(pathAndTime[1]);
+					} else {
+						path = pathAndTime[0];
+					}
+					lastUpdatedfiles.put(path, time);
+					processLine(pathAndTime[0]);
 				}
 			}
 		}
