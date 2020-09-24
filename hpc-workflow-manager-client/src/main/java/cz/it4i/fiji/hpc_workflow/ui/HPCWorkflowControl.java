@@ -198,15 +198,22 @@ public class HPCWorkflowControl<T extends JobWithDirectorySettings> extends
 
 		menu.addSeparator();
 
-		menu.addItem("Upload data", job -> {
+		menu.addItem(
+			"Upload data",
+			job -> {
 			boolean wasSuccessfull = createTheMacroScript(job);
 			if (wasSuccessfull) executeWSCallAsync("Uploading data", p -> job
 				.getValue().startUpload());
-		}, job -> executeWSCallAsync("Stop uploading data", p -> job.getValue()
-			.stopUpload()), job -> JavaFXRoutines.notNullValue(job, j -> j
-				.canBeUploaded() && !EnumSet.of(JobState.Running, JobState.Disposed)
-					.contains(j.getState())), job -> job != null && job
-						.getUploadProgress().isWorking(), MaterialDesign.MDI_UPLOAD);
+		},
+			job -> executeWSCallAsync("Stop uploading data", p -> job.getValue()
+			.stopUpload()),
+			job -> JavaFXRoutines.notNullValue(job, j -> 
+				j.canBeUploaded() && !EnumSet.of(JobState.Running, JobState.Disposed)
+					.contains(j.getState())),
+			job -> job != null && job
+						.getUploadProgress().isWorking(),
+			MaterialDesign.MDI_UPLOAD
+		);
 
 		menu.addItem("Download result", job -> executeWSCallAsync(
 			"Downloading data", p -> job.getValue().startDownload()),
