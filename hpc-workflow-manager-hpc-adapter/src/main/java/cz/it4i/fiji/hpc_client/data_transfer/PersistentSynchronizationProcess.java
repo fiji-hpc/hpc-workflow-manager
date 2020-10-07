@@ -59,8 +59,8 @@ abstract class PersistentSynchronizationProcess<T> {
 
 	private final AtomicInteger runningProcessCounter = new AtomicInteger();
 
-	private final Collection<P_HolderOfOpenClosables> openedClosables =
-		new LinkedList<>();
+	private final Collection<HolderOfOpenClosables> openedClosables = Collections
+		.synchronizedList(new LinkedList<>());
 
 	public PersistentSynchronizationProcess(ExecutorService service,
 		Supplier<HPCFileTransfer> fileTransferSupplier,
@@ -73,7 +73,7 @@ abstract class PersistentSynchronizationProcess<T> {
 		this.index = new PersistentIndex<>(indexFile, convertor);
 	}
 
-	public synchronized CompletableFuture<?> start() throws IOException {
+	public synchronized CompletableFuture<Void> start() throws IOException {
 		startFinished = false;
 		index.clear();
 		try {
@@ -110,7 +110,9 @@ abstract class PersistentSynchronizationProcess<T> {
 	}
 
 	public void resume() {
-		toProcessQueue.addAll(index.getIndexedItems());
+		synchronized (this) {
+			toProcessQueue.addAll(index.getIndexedItems());
+		}
 		runner.runIfNotRunning(this::doProcess);
 	}
 
@@ -122,7 +124,7 @@ abstract class PersistentSynchronizationProcess<T> {
 		this.notifier = notifier;
 	}
 
-	public synchronized boolean isWorking() {
+	public boolean isWorking() {
 		return !toProcessQueue.isEmpty();
 	}
 
@@ -134,18 +136,19 @@ abstract class PersistentSynchronizationProcess<T> {
 	protected abstract long getTotalSize(Iterable<T> items, HPCFileTransfer tr)
 		throws InterruptedIOException;
 
-	private void doProcess(AtomicBoolean reRun) {
+	private void doProcess(AtomicBoolean hasAlreadyRun) {
 		runningProcessCounter.incrementAndGet();
 		boolean interrupted = false;
 		this.notifier.addItem(INIT_TRANSFER_ITEM);
 		runningTransferThreads.add(Thread.currentThread());
-		TransferFileProgressForHPCClient actualnotifier = DUMMY_FILE_PROGRESS;
-		try (P_HolderOfOpenClosables transferHolder = new P_HolderOfOpenClosables(
+		TransferFileProgressForHPCClient actualNotifier = DUMMY_FILE_PROGRESS;
+		try (HolderOfOpenClosables transferHolder = new HolderOfOpenClosables(
 			fileTransferSupplier.get()))
 		{
 			HPCFileTransfer tr = transferHolder.getTransfer();
 			try {
-				tr.setProgress(actualnotifier = getTransferFileProgress(tr));
+				actualNotifier = getTransferFileProgress(tr);
+				tr.setProgress(actualNotifier);
 			}
 			catch (InterruptedIOException e1) {
 				interrupted = true;
@@ -153,22 +156,24 @@ abstract class PersistentSynchronizationProcess<T> {
 			this.notifier.itemDone(INIT_TRANSFER_ITEM);
 			this.notifier.done();
 			do {
+				String item;
+				T p;
 				synchronized (this) {
-					synchronized (reRun) {
+					synchronized (hasAlreadyRun) {
 						interrupted |= Thread.interrupted();
 						if (interrupted || toProcessQueue.isEmpty()) {
-							reRun.set(false);
+							hasAlreadyRun.set(false);
 							break;
 						}
 					}
+					p = toProcessQueue.poll();
+					item = p.toString();
 				}
-				T p = toProcessQueue.poll();
-				String item = p.toString();
-				actualnotifier.addItem(item);
+				actualNotifier.addItem(item);
 				try {
 					processItem(tr, p);
 					fileTransfered(p);
-					actualnotifier.itemDone(item);
+					actualNotifier.itemDone(item);
 				}
 				catch (InterruptedIOException | HPCClientException e) {
 					synchronized (this) {
@@ -176,7 +181,7 @@ abstract class PersistentSynchronizationProcess<T> {
 						interrupted = true;
 						if (e instanceof HPCClientException) {
 							log.warn("process ", e);
-							actualnotifier.addItem(Synchronization.FAILED_ITEM);
+							actualNotifier.addItem(Synchronization.FAILED_ITEM);
 						}
 						else {
 							Thread.currentThread().interrupt();
@@ -193,11 +198,11 @@ abstract class PersistentSynchronizationProcess<T> {
 				if (startFinished) {
 					if (!interrupted && !Thread.interrupted()) {
 						processFinishedNotifier.run();
-						actualnotifier.done();
+						actualNotifier.done();
 					}
 					else {
 						notifyStop();
-						reRun.set(false);
+						hasAlreadyRun.set(false);
 					}
 				}
 			}
@@ -247,32 +252,26 @@ abstract class PersistentSynchronizationProcess<T> {
 
 	protected void closeOpennedClosables() {
 		synchronized (openedClosables) {
-			for (P_HolderOfOpenClosables closeable : openedClosables) {
-				closeable.close();
-			}
+			openedClosables.forEach(HolderOfOpenClosables::close);
 		}
 	}
 
-	private class P_HolderOfOpenClosables implements Closeable {
+	private class HolderOfOpenClosables implements Closeable {
 
 		private final HPCFileTransfer transfer;
 
-		public P_HolderOfOpenClosables(HPCFileTransfer transfer) {
+		public HolderOfOpenClosables(HPCFileTransfer transfer) {
 			this.transfer = transfer;
-			synchronized (openedClosables) {
-				openedClosables.add(this);
-			}
+			openedClosables.add(this);
 		}
 
 		public HPCFileTransfer getTransfer() {
-			return transfer;
+			return this.transfer;
 		}
 
 		@Override
 		public void close() {
-			synchronized (openedClosables) {
-				openedClosables.remove(this);
-			}
+			openedClosables.remove(this);
 		}
 	}
 }
