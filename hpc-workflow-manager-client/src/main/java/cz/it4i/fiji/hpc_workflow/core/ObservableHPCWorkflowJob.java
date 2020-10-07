@@ -29,11 +29,16 @@ public class ObservableHPCWorkflowJob extends
 	public static final Logger log = LoggerFactory.getLogger(
 		cz.it4i.fiji.hpc_workflow.core.ObservableHPCWorkflowJob.class);
 
+	private WorkflowJob curentWorkflowJob = getValue();
+
 	private final PTransferProgress downloadProgress = new PTransferProgress(
-		getValue()::setDownloaded, getValue()::isDownloaded,
-		getValue()::isDownloading);
+		curentWorkflowJob::setDownloaded, curentWorkflowJob::isDownloaded,
+		curentWorkflowJob::isDownloading);
+
 	private final PTransferProgress uploadProgress = new PTransferProgress(
-		getValue()::setUploaded, getValue()::isUploaded, getValue()::isUploading);
+		curentWorkflowJob::setUploaded, curentWorkflowJob::isUploaded,
+		curentWorkflowJob::isUploading);
+
 	private final Executor executor;
 
 	private final HaasOutputObservableValueRegistry haasOutputRegistry;
@@ -251,15 +256,15 @@ public class ObservableHPCWorkflowJob extends
 			return typeJob.getUserScriptName();
 		}
 		throw new UnsupportedOperationException(
-			"Script name is support by MacroWorkflowJob but actual job is " +
-				job.getClass());
+			"Script name is support by MacroWorkflowJob but actual job is " + job
+				.getClass());
 	}
-	
+
 	public void setLastStartedTimestamp() {
 		MacroJob typeJob = (MacroJob) job;
 		typeJob.setLastStartedTimestamp();
 	}
-	
+
 	public long getLastStartedTimestamp() {
 		MacroJob typeJob = (MacroJob) job;
 		return typeJob.getLastStartedTimestamp();

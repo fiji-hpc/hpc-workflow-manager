@@ -37,7 +37,6 @@ public class UpdatableObservableValue<T> extends ObservableValueBase<T> {
 
 	@Override
 	public T getValue() {
-
 		return wrapped;
 	}
 
