@@ -22,7 +22,7 @@ public class HPCWorkflowWindow {
 	@Parameter
 	private Context ctx;
 
-	private static boolean windowIsOpen = false;
+	public static boolean windowIsOpen = false;
 
 	public HPCWorkflowWindow() {
 		Platform.setImplicitExit(false);
