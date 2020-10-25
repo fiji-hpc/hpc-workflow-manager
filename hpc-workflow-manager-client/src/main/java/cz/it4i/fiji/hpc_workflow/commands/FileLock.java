@@ -1,3 +1,4 @@
+
 package cz.it4i.fiji.hpc_workflow.commands;
 
 import java.io.Closeable;
@@ -13,7 +14,8 @@ import org.slf4j.LoggerFactory;
 
 public class FileLock implements Closeable {
 
-	public static final Logger log = LoggerFactory.getLogger(cz.it4i.fiji.hpc_workflow.commands.FileLock.class);
+	public static final Logger log = LoggerFactory.getLogger(
+		cz.it4i.fiji.hpc_workflow.commands.FileLock.class);
 
 	private final Path localPath;
 
@@ -26,14 +28,15 @@ public class FileLock implements Closeable {
 	}
 
 	public boolean tryLock() throws IOException {
-		this.fileChannel = FileChannel.open(localPath, StandardOpenOption.READ, StandardOpenOption.WRITE,
-				StandardOpenOption.CREATE);
+		this.fileChannel = FileChannel.open(localPath, StandardOpenOption.READ,
+			StandardOpenOption.WRITE, StandardOpenOption.CREATE);
 		try {
 			this.lock = fileChannel.tryLock();
 			if (this.lock != null) {
 				return true;
 			}
-		} catch (OverlappingFileLockException e) {
+		}
+		catch (OverlappingFileLockException e) {
 			// IGNORE
 		}
 		this.fileChannel.close();

@@ -5,10 +5,10 @@
  * This file is subject to the terms and conditions defined in
  * file 'LICENSE', which is part of this project.
  ******************************************************************************/
+
 package cz.it4i.fiji.hpc_workflow.paradigm_manager;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Path;
 
 import org.scijava.Context;
@@ -31,7 +31,6 @@ import cz.it4i.parallel.paradigm_managers.ui.HavingOwnerWindow;
 import cz.it4i.swing_javafx_ui.JavaFXRoutines;
 import cz.it4i.swing_javafx_ui.SimpleDialog;
 import javafx.stage.Window;
-
 
 public class WorkflowParadigmManager<T extends SettingsWithWorkingDirectory, U extends JobWithJobTypeSettings>
 	extends ParadigmManagerWithSettings<SettingsWithWorkingDirectory> implements
@@ -95,8 +94,7 @@ public class WorkflowParadigmManager<T extends SettingsWithWorkingDirectory, U e
 
 		PManager pmManager = new PManager(typedProfile, ownerWindow);
 		typedParadigm.prepareParadigm(typedProfile.getSettings()
-			.getWorkingDirectory(), typedProfile::createHPCClient,
-			typeOfJobSettings,
+			.getWorkingDirectory(), typedProfile::createHPCClient, typeOfJobSettings,
 			pmManager::init, pmManager::initDone, pmManager::dispose);
 	}
 
@@ -110,20 +108,17 @@ public class WorkflowParadigmManager<T extends SettingsWithWorkingDirectory, U e
 		ownerWindow = parent;
 	}
 
-	public static boolean checkWorkingDirectory(Path workingDirectory) {
-		try (FileLock fl = tryOpenWorkingDirectory(workingDirectory)) {
-			if (fl == null) {
-				return false;
-			}
-		}
-		return true;
+	public static boolean workingDirectoryExists(Path workingDirectory) {
+		File workingDirectoryFile = workingDirectory.toFile();
+		return (workingDirectoryFile.exists() && workingDirectoryFile
+			.isDirectory());
 	}
 
 	private static FileLock tryOpenWorkingDirectory(Path workingDirectory) {
-		File workingDirectoryFile = workingDirectory.toFile();
-		if (!workingDirectoryFile.exists() || !workingDirectoryFile.isDirectory()) {
+		if (!workingDirectoryExists(workingDirectory)) {
 			JavaFXRoutines.runOnFxThread(() -> SimpleDialog.showError(ERROR_HEADER,
-				"The working directory selected does not exist!"));
+				"The working directory " + workingDirectory.toString() +
+					" selected does not exist!"));
 			return null;
 		}
 
@@ -132,18 +127,17 @@ public class WorkflowParadigmManager<T extends SettingsWithWorkingDirectory, U e
 			if (!result.tryLock()) {
 				JavaFXRoutines.runOnFxThread(() -> SimpleDialog.showError(ERROR_HEADER,
 					"Working directory is already used by someone else."));
-				return null;
+				result = null;
 			}
 		}
-		catch (IOException exc) {
+		catch (Exception exc) {
 			JavaFXRoutines.runOnFxThread(() -> SimpleDialog.showException(
 				ERROR_HEADER, "Problem encountered while attempting to read file.",
 				exc));
-			return null;
+			result = null;
 		}
 		return result;
 	}
-
 
 	private static class PManager {
 
@@ -159,25 +153,34 @@ public class WorkflowParadigmManager<T extends SettingsWithWorkingDirectory, U e
 		}
 
 		boolean init() {
-			progress = new ProgressDialogViewWindow("Connecting to HPC", ownerWindow);
-			fileLock = tryOpenWorkingDirectory(profile.getSettings()
+			// Set the file lock to be able to close it later.
+			this.fileLock = tryOpenWorkingDirectory(profile.getSettings()
 				.getWorkingDirectory());
-
-			if (fileLock == null) {
-				return false;
+			Boolean workingDirectoryExists = false;
+			if (this.fileLock != null) {
+				workingDirectoryExists = true;
 			}
-			JavaFXRoutines.runOnFxThread(this::initExceptionHandler);
-			return true;
+
+			if (workingDirectoryExists) {
+				progress = new ProgressDialogViewWindow("Connecting to HPC",
+					ownerWindow);
+				JavaFXRoutines.runOnFxThread(this::initExceptionHandler);
+			}
+			return workingDirectoryExists;
 		}
 
 		void initDone() {
-			progress.done();
+			if (progress != null) {
+				progress.done();
+			}
 		}
 
 		void dispose() {
 			JavaFXRoutines.runOnFxThread(this::disposeExceptionHandler);
-			fileLock.close();
-			fileLock = null;
+			if (fileLock != null) {
+				fileLock.close();
+				fileLock = null;
+			}
 		}
 
 		void initExceptionHandler() {
@@ -186,7 +189,6 @@ public class WorkflowParadigmManager<T extends SettingsWithWorkingDirectory, U e
 			uehd.registerHandler(new NotConnectedExceptionHandler());
 			uehd.registerHandler(new AuthFailExceptionHandler());
 			uehd.activate();
-
 		}
 
 		void disposeExceptionHandler() {
