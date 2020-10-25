@@ -24,6 +24,7 @@ import cz.it4i.fiji.hpc_workflow.core.AuthenticationExceptionHandler;
 import cz.it4i.fiji.hpc_workflow.core.HPCWorkflowJobManager;
 import cz.it4i.fiji.hpc_workflow.core.JobWithJobTypeSettings;
 import cz.it4i.fiji.hpc_workflow.core.NotConnectedExceptionHandler;
+import cz.it4i.fiji.hpc_workflow.ui.HPCWorkflowWindow;
 import cz.it4i.fiji.hpc_workflow.ui.ProgressDialogViewWindow;
 import cz.it4i.parallel.paradigm_managers.ParadigmManagerWithSettings;
 import cz.it4i.parallel.paradigm_managers.ParadigmProfileWithSettings;
@@ -127,6 +128,7 @@ public class WorkflowParadigmManager<T extends SettingsWithWorkingDirectory, U e
 			if (!result.tryLock()) {
 				JavaFXRoutines.runOnFxThread(() -> SimpleDialog.showError(ERROR_HEADER,
 					"Working directory is already used by someone else."));
+				HPCWorkflowWindow.windowIsOpen = false;
 				result = null;
 			}
 		}
