@@ -120,6 +120,7 @@ public class WorkflowParadigmManager<T extends SettingsWithWorkingDirectory, U e
 			JavaFXRoutines.runOnFxThread(() -> SimpleDialog.showError(ERROR_HEADER,
 				"The working directory " + workingDirectory.toString() +
 					" selected does not exist!"));
+			HPCWorkflowWindow.windowIsOpen = false;
 			return null;
 		}
 
