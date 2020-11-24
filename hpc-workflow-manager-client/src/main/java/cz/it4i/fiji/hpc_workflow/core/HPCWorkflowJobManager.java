@@ -210,17 +210,25 @@ public class HPCWorkflowJobManager<T extends JobWithJobTypeSettings> implements
 		@Override
 		public void update() {
 			job.updateInfo();
-			try {
-				visibleInBDV = getPathToLocalResultFile().toFile().exists() ||
-					WebRoutines.doesURLExist(new URL(getPathToRemoteResultFile()));
-				if (log.isDebugEnabled()) {
-					log.debug("job # ".concat(getId().toString()).concat(
-						" is visible in BDV ").concat(Boolean.toString(visibleInBDV)));
+			
+			// Big data viewer is only applicable to SPIM Workflow type jobs.
+			if (getJobType() == JobType.SPIM_WORKFLOW) {
+				try {
+					visibleInBDV = getPathToLocalResultFile().toFile().exists()
+							|| WebRoutines.doesURLExist(new URL(getPathToRemoteResultFile()));
+					if (log.isDebugEnabled()) {
+						log.debug("job # ".concat(getId().toString()).concat(" is visible in BDV ")
+								.concat(Boolean.toString(visibleInBDV)));
+					}
+				} catch (MalformedURLException exc) {
+					log.info(exc.getMessage(), exc);
+					visibleInBDV = false;
 				}
-			}
-			catch (MalformedURLException exc) {
-				log.info(exc.getMessage(), exc);
-				visibleInBDV = false;
+				// Catch unexpected end of file from server.
+				catch (Exception exc) {
+					log.info(exc.getMessage());
+					log.debug(exc.getMessage());
+				}
 			}
 		}
 

@@ -59,10 +59,8 @@ public class UpdatableObservableValue<T> extends ObservableValueBase<T> {
 					fireValueChangedEvent();
 				}
 				//$FALL-THROUGH$
-			default:
-				return status;
 		}
-
+		return status;
 	}
 
 	@Override
