@@ -12,12 +12,12 @@ function parFinalize() {
 
 function parGetRank() {
 	rank = call("cz.it4i.fiji.parallel_macro.ParallelMacro.getRank");
-	return rank;
+	return parseInt(rank);
 }
 
 function parGetSize() {
 	size = call("cz.it4i.fiji.parallel_macro.ParallelMacro.getSize");
-	return size;
+	return parseInt(size);
 }
 
 function parBarrier() {
@@ -34,7 +34,7 @@ function parReportText(text) {
 
 function parAddTask(description){
 	id = call("cz.it4i.fiji.parallel_macro.ParallelMacro.addTask", description);
-	return id;
+	return parseInt(id);
 }
 
 function parReportTasks(){

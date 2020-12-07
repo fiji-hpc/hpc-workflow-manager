@@ -558,16 +558,16 @@ public class HPCWorkflowControl<T extends JobWithDirectorySettings> extends
 			// TODO Context handling is wrong:
 			TextEditor txt = new TextEditor(new Context());
 
-			// If there is no wrapped script open the user script:
-			File editFile = new File(job.getInputDirectory().toString() +
-				File.separator + typeJob.getUserScriptName());
+			// Open the user script:
+			String userScriptPathString = typeJob.getInputDirectory().toString() + File.separator
+					+ typeJob.getUserScriptName();
+			File editFile = new File(userScriptPathString);
 
 			// Open editor:
 			txt.open(editFile);
 			txt.setVisible(true);
 			txt.toFront();
 		}
-
 	}
 
 	private interface PJobAction {
