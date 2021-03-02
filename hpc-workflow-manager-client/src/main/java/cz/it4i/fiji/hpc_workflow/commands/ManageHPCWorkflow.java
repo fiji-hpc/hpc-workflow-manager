@@ -9,7 +9,6 @@ import org.scijava.command.Command;
 import org.scijava.parallel.ParallelService;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
-
 import cz.it4i.fiji.hpc_adapter.JobWithDirectorySettings;
 import cz.it4i.fiji.hpc_workflow.WorkflowParadigm;
 import cz.it4i.fiji.hpc_workflow.core.Constants;
@@ -39,12 +38,13 @@ public class ManageHPCWorkflow implements Command {
 
 	public void runWithGivenParameterValues(Context givenContext,
 		ParallelService givenParallelService)
-	{
+	{		
 		// Display window:
 		WorkflowParadigm<?> paradigm = givenParallelService.getParadigmOfType(
 			WorkflowParadigm.class);
 		if (paradigm != null) {
-			JavaFXRoutines.runOnFxThread(() -> this.openWorkflowWindow(givenContext,
+			JavaFXRoutines.runOnFxThread(() -> 
+			this.openWorkflowWindow(givenContext,
 				paradigm));
 		}
 		else {
@@ -61,7 +61,7 @@ public class ManageHPCWorkflow implements Command {
 
 	private <T extends JobWithDirectorySettings> void openWorkflowWindow(
 		Context givenContext, WorkflowParadigm<?> paradigm)
-	{
+	{	
 		@SuppressWarnings("unchecked")
 		WorkflowParadigm<T> typedParadigm = (WorkflowParadigm<T>) paradigm;
 		inject(givenContext, new HPCWorkflowWindow()).openWindow(typedParadigm);

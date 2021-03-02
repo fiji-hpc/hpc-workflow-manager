@@ -4,6 +4,7 @@ package cz.it4i.fiji.hpc_workflow.ui;
 import static cz.it4i.fiji.hpc_workflow.core.Configuration.getHaasUpdateTimeout;
 import static cz.it4i.fiji.hpc_workflow.core.Constants.CONFIG_YAML;
 
+import java.awt.EventQueue;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -79,6 +80,9 @@ public class HPCWorkflowControl<T extends JobWithDirectorySettings> extends
 
 	@Parameter
 	private PluginService pluginService;
+	
+	@Parameter
+	private Context context;
 
 	@FXML
 	private TableView<ObservableHPCWorkflowJob> jobs;
@@ -190,7 +194,7 @@ public class HPCWorkflowControl<T extends JobWithDirectorySettings> extends
 			x -> JavaFXRoutines.notNullValue(x, j -> j
 				.getState() == JobState.Finished && j.isVisibleInBDV()),
 			MaterialDesign.MDI_EYE);
-		menu.addItem("Open in editor", j -> openEditor(j.getValue()),
+		menu.addItem("Open in editor", j -> openEditor(j.getValue(), this.context),
 			x -> JavaFXRoutines.notNullValue(x, j -> {
 				JobType jobType = j.getJobType();
 				return jobType == JobType.MACRO || jobType == JobType.SCRIPT;
@@ -552,21 +556,26 @@ public class HPCWorkflowControl<T extends JobWithDirectorySettings> extends
 		}
 	}
 
-	private void openEditor(WorkflowJob job) {
+	private void openEditor(WorkflowJob job, Context givenContext) {
 		if (job instanceof MacroJob) {
 			MacroJob typeJob = (MacroJob) job;
-			// TODO Context handling is wrong:
-			TextEditor txt = new TextEditor(new Context());
-
 			// Open the user script:
 			String userScriptPathString = typeJob.getInputDirectory().toString() + File.separator
 					+ typeJob.getUserScriptName();
 			File editFile = new File(userScriptPathString);
-
-			// Open editor:
-			txt.open(editFile);
-			txt.setVisible(true);
-			txt.toFront();
+			if(editFile.isFile()) {
+				// Open the text editor (AWT based):
+				EventQueue.invokeLater(()->{
+					TextEditor txt = new TextEditor(givenContext);
+					txt.open(editFile);
+					txt.setVisible(true);
+					txt.toFront();
+				});
+			} else {
+				JavaFXRoutines.runOnFxThread(() -> SimpleDialog.showInformation("Script file is missing.",
+						"You may have moved, removed or renamed the script file and it can no longer be found at the following location:\n"
+						+ userScriptPathString));
+			}
 		}
 	}
 

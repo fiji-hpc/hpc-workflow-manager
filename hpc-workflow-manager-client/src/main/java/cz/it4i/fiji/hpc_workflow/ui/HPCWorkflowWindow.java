@@ -20,7 +20,7 @@ import javafx.stage.WindowEvent;
 public class HPCWorkflowWindow {
 
 	@Parameter
-	private Context ctx;
+	private Context context;
 
 	public static boolean windowIsOpen = false;
 
@@ -37,7 +37,7 @@ public class HPCWorkflowWindow {
 			// Open the the window:
 			windowIsOpen = true;
 			controller = new HPCWorkflowControl<>(paradigm);
-			ctx.inject(controller);
+			context.inject(controller);
 			final Scene formScene = new Scene(controller);
 			stage = new Stage();
 			stage.initOwner(null);
