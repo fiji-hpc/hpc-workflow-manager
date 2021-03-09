@@ -128,4 +128,8 @@ public class HPCClientProxyAdapter<T> implements HPCClient<T> {
 			hpcClient.close();
 		}
 	}
+
+	public String getRemoteJobInfo(long id) {
+		return hpcClient.getRemoteJobInfo(id);
+	}
 }

@@ -648,4 +648,8 @@ public class Job {
 
 		};
 	}
+
+	public String getRemoteJobInfo() {
+		return hpcClient.getRemoteJobInfo(getId());
+	}
 }
