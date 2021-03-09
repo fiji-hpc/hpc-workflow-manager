@@ -727,6 +727,11 @@ public class HPCWorkflowJobManager<T extends JobWithJobTypeSettings> implements
 		public long getLastStartedTimestamp() {
 			return job.getLastStartedTimestamp();
 		}
+
+		@Override
+		public String getRemoteJobInfo() {
+			return job.getRemoteJobInfo();
+		}
 	}
 
 	public void prepareParadigm(Path aWorkingDirectory,

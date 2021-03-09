@@ -9,6 +9,7 @@
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.HBox?>
 <?import cz.it4i.fiji.hpc_workflow.ui.JobPropertiesControl?>
+<?import cz.it4i.fiji.hpc_workflow.ui.RemoteJobInfoViewController?>
 
 
 <fx:root type="TabPane" xmlns:fx="http://javafx.com/fxml/1"
@@ -67,6 +68,17 @@
 				<HBox>
 					<DataTransferController
 						fx:id="dataUploadControl" HBox.hgrow="ALWAYS" />
+				</HBox>
+			</content>
+		</Tab>
+		<!-- This tab contains info about the remote HPC cluster 
+		configuration chosen for the job -->
+		<Tab closable="false" text="Remote job info"
+			fx:id="remoteJobInfoViewTab">
+			<content>
+				<HBox>
+					<RemoteJobInfoViewController fx:id="remoteJobInfoViewControl"
+						HBox.hgrow="ALWAYS" />
 				</HBox>
 			</content>
 		</Tab>

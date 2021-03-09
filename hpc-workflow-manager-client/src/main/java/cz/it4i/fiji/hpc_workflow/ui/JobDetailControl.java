@@ -65,6 +65,12 @@ public class JobDetailControl extends TabPane {
 
 	@FXML
 	private Tab dataUploadTab;
+	
+	@FXML
+	private Tab remoteJobInfoViewTab;
+	
+	@FXML
+	private RemoteJobInfoViewController remoteJobInfoViewControl;
 
 	private final ExecutorService executorServiceWS;
 
@@ -122,7 +128,7 @@ public class JobDetailControl extends TabPane {
 					setTabAvailability(macroProgressTab, true);
 					removeTab(macroProgressTab);
 
-					// SPIM-only related initializations:
+					// SPIM-only related initialisations:
 					JavaFXRoutines.runOnFxThread(() -> progressControl.init());
 					taskList = job.getObservableTaskList();
 					taskList.subscribe(taskListListener);
@@ -136,7 +142,7 @@ public class JobDetailControl extends TabPane {
 					JavaFXRoutines.runOnFxThread(() -> snakemakeOutputTab.setText(
 						"Error output"));
 
-					// Macro-only related initializations:
+					// Macro-only related initialisations:
 					macroProgressControl.setJobParameter(job);
 
 					progressDialogViewWindow.done();
@@ -148,6 +154,7 @@ public class JobDetailControl extends TabPane {
 				otherOutputControl.setObservable(standardOutput);
 
 				jobProperties.setJob(job);
+				remoteJobInfoViewControl.setRemoteJobInfo(job.getRemoteJobInfo());
 
 				SimpleObservableList<FileTransferInfo> fileTransferList = job
 					.getFileTransferList();

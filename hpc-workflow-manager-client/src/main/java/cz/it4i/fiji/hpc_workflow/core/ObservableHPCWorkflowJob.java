@@ -256,7 +256,7 @@ public class ObservableHPCWorkflowJob extends
 			return typeJob.getUserScriptName();
 		}
 		throw new UnsupportedOperationException(
-			"Script name is support by MacroWorkflowJob but actual job is " + job
+			"Script name is supported by MacroWorkflowJob but actual job is " + job
 				.getClass());
 	}
 
@@ -268,6 +268,11 @@ public class ObservableHPCWorkflowJob extends
 	public long getLastStartedTimestamp() {
 		MacroJob typeJob = (MacroJob) job;
 		return typeJob.getLastStartedTimestamp();
+	}
+
+	public String getRemoteJobInfo() {
+		MacroJob typeJob = (MacroJob) job;
+		return typeJob.getRemoteJobInfo();
 	}
 
 }

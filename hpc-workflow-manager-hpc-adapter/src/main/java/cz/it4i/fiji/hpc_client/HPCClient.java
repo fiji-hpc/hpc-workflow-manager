@@ -42,4 +42,6 @@ public interface HPCClient<T> {
 
 	void close();
 
+	String getRemoteJobInfo(long jobId);
+
 }
