@@ -70,7 +70,7 @@
 		<dependency>
 			<groupId>it4i-fiji</groupId>
 			<artifactId>swing-javafx-ui</artifactId>
-			<version>0.5.0</version>
+			<version>1.0.0</version>
 		</dependency>
 		<dependency>
 			<groupId>cz.it4i.fiji</groupId>
