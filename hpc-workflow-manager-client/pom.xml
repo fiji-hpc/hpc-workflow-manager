@@ -85,7 +85,7 @@
 		<dependency>
 			<groupId>org.scijava</groupId>
 			<artifactId>scijava-parallel</artifactId>
-			<version>1.1.1-SNAPSHOT</version>
+			<version>1.1.1</version>
 		</dependency>
 		<dependency>
 			<groupId>net.imagej</groupId>
