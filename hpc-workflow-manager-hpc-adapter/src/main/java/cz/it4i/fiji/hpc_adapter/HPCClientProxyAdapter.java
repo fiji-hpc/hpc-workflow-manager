@@ -129,6 +129,7 @@ public class HPCClientProxyAdapter<T> implements HPCClient<T> {
 		}
 	}
 
+	@Override
 	public String getRemoteJobInfo(long id) {
 		return hpcClient.getRemoteJobInfo(id);
 	}

@@ -8,7 +8,7 @@
 
 
 <fx:root type="TabPane" xmlns:fx="http://javafx.com/fxml/1"
-	xmlns="http://javafx.com/javafx/8.0.65"
+	xmlns="http://javafx.com/javafx/"
 	fx:controller="cz.it4i.fiji.hpc_workflow.ui.TaskComputationControl">
 	<Tab closable="false" text="Output files">
 		<content>

@@ -6,7 +6,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.text.Font?>
 
-<fx:root type="BorderPane" xmlns="http://javafx.com/javafx/15.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="cz.it4i.fiji.hpc_workflow.ui.RemoteJobInfoViewController">
+<fx:root type="BorderPane" xmlns="http://javafx.com/javafx/" xmlns:fx="http://javafx.com/fxml/1" fx:controller="cz.it4i.fiji.hpc_workflow.ui.RemoteJobInfoViewController">
 	<center>
 		<HBox>
 			<padding>
