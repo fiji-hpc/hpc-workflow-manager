@@ -652,4 +652,8 @@ public class Job {
 	public String getRemoteJobInfo() {
 		return hpcClient.getRemoteJobInfo(getId());
 	}
+
+	public void getRemotePreviewCommand() {
+		hpcClient.getRemotePreviewCommand(getId());
+	}
 }

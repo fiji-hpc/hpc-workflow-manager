@@ -2,6 +2,7 @@
 package cz.it4i.fiji.hpc_workflow.ui;
 
 import java.io.Closeable;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -10,14 +11,18 @@ import javafx.fxml.FXML;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.BorderPane;
 
-public class RemoteJobInfoViewController extends BorderPane implements Closeable {
+public class RemoteJobInfoViewController extends BorderPane implements
+	Closeable
+{
 
 	@FXML
 	private TextArea infoTextArea;
-	
+
+	private Runnable remotePreviewCommand;
+
 	private static final String FXML_FILE_NAME = "RemoteJobInfoView.fxml";
-	public static final Logger log = LoggerFactory
-			.getLogger(cz.it4i.fiji.hpc_workflow.ui.RemoteJobInfoViewController.class);
+	public static final Logger log = LoggerFactory.getLogger(
+		cz.it4i.fiji.hpc_workflow.ui.RemoteJobInfoViewController.class);
 
 	public RemoteJobInfoViewController() {
 		JavaFXRoutines.initRootAndController(FXML_FILE_NAME, this);
@@ -26,6 +31,16 @@ public class RemoteJobInfoViewController extends BorderPane implements Closeable
 
 	public void setRemoteJobInfo(String newRemoteJobInfo) {
 		infoTextArea.setText(newRemoteJobInfo);
+	}
+
+	public void setRemotePreviewCommand(Runnable newRemotePreviewCommand) {
+		this.remotePreviewCommand = newRemotePreviewCommand;
+	}
+
+	@FXML
+	private void previewRemoteCommandButton() {
+		// Display the preview job submission script:
+		this.remotePreviewCommand.run();
 	}
 
 	@Override

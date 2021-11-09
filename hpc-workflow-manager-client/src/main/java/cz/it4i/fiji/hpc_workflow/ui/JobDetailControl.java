@@ -155,6 +155,7 @@ public class JobDetailControl extends TabPane {
 
 				jobProperties.setJob(job);
 				remoteJobInfoViewControl.setRemoteJobInfo(job.getRemoteJobInfo());
+				remoteJobInfoViewControl.setRemotePreviewCommand(()->job.getRemotePreviewCommand());
 
 				SimpleObservableList<FileTransferInfo> fileTransferList = job
 					.getFileTransferList();

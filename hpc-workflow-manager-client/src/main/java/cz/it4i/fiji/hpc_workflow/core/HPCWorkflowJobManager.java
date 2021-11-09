@@ -732,6 +732,11 @@ public class HPCWorkflowJobManager<T extends JobWithJobTypeSettings> implements
 		public String getRemoteJobInfo() {
 			return job.getRemoteJobInfo();
 		}
+		
+		@Override
+		public void getRemotePreviewCommand() {
+			job.getRemotePreviewCommand();
+		}
 	}
 
 	public void prepareParadigm(Path aWorkingDirectory,

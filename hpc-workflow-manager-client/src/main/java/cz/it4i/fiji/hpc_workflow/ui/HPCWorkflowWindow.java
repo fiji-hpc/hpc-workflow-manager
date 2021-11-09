@@ -33,7 +33,7 @@ public class HPCWorkflowWindow {
 		WorkflowParadigm<T> paradigm)
 	{
 		Stage stage;
-		HPCWorkflowControl<?> controller;
+
 		if (!windowIsOpen) {
 			// Open the the window:
 			windowIsOpen = true;
@@ -44,7 +44,7 @@ public class HPCWorkflowWindow {
 			stage.initOwner(null);
 			stage.initModality(Modality.NONE);
 			stage.setResizable(true);
-			stage.setTitle(Constants.SUBMENU_ITEM_NAME);
+			stage.setTitle(Constants.PLUGIN_NAME);
 			stage.setScene(formScene);
 			stage.setOnCloseRequest((WindowEvent we) -> {
 				controller.close();

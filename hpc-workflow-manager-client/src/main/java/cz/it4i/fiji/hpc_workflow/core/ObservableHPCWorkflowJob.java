@@ -274,5 +274,10 @@ public class ObservableHPCWorkflowJob extends
 		MacroJob typeJob = (MacroJob) job;
 		return typeJob.getRemoteJobInfo();
 	}
+	
+	public void getRemotePreviewCommand() {
+		MacroJob typeJob = (MacroJob) job;
+		typeJob.getRemotePreviewCommand();
+	}
 
 }

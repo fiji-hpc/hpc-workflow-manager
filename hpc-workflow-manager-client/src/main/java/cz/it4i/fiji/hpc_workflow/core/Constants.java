@@ -10,12 +10,15 @@ public class Constants {
 		// Private constructor to hide public.
 	}
 
-	public static final String MENU_ITEM_NAME = "Multiview Reconstruction";
-	public static final String SUBMENU_ITEM_NAME =
-		"HPC Workflow Manager";
-	
-	public static final String ALTERNATIVE_ITEM_NAME = "Macros";
-	public static final String ALTERNATIVE_SUBMENU_ITEM_NAME = "Parallel Macro Client";
+	public static final String MENU_ITEM_NAME = "HPC-ParallelTools";
+	public static final String LEGACY_MENU_ITEM_NAME = "Multiview Reconstruction";
+	public static final String PLUGIN_NAME = "HPC Workflow Manager";
+	public static final String SUBMENU_ITEM_NAME = PLUGIN_NAME +
+		" (SPIM Workflow)";
+
+	public static final String ALTERNATIVE_MENU_ITEM_NAME = "Macros";
+	public static final String ALTERNATIVE_SUBMENU_ITEM_NAME = PLUGIN_NAME +
+		" (Parallel Macro)";
 
 	public static final String PHONE = "123456789";
 
@@ -70,7 +73,8 @@ public class Constants {
 		"resources_used.cpupercent";
 	public static final String STATISTICS_RESOURCES_START_TIME = "stime";
 	public static final String BENCHMARK_RESULT_FILE = "benchmark_result.csv";
-	public static final String DEFAULT_MACRO_FILE = "parallelMacroWrappedScript.ijm";
+	public static final String DEFAULT_MACRO_FILE =
+		"parallelMacroWrappedScript.ijm";
 	public static final String STATISTICS_SUMMARY_FILENAME = "summary.csv";
 	public static final String SUMMARY_FILE_HEADER =
 		"Task;AvgMemoryUsage;AvgWallTime;MaxWallTime;TotalTime;JobCount";

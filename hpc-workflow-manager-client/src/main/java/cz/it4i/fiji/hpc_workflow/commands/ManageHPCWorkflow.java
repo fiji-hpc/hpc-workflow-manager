@@ -20,7 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Plugin(type = Command.class, headless = false, priority = Priority.HIGH,
-	menuPath = "Plugins>" + Constants.MENU_ITEM_NAME + ">" +
+	menuPath = "Plugins>" + Constants.LEGACY_MENU_ITEM_NAME + ">" +
 		Constants.SUBMENU_ITEM_NAME)
 public class ManageHPCWorkflow implements Command {
 
@@ -48,14 +48,12 @@ public class ManageHPCWorkflow implements Command {
 				paradigm));
 		}
 		else {
-			JavaFXRoutines.runOnFxThread(() -> {
-				Platform.setImplicitExit(false); // Do not stop the JavaFX thread.
-				SimpleDialog.showWarning("There is no active HPC Workflow paradigm.",
-					"Please start an HPC Workflow paradigm first!\nFrom the Fiji menu select:\n" +
-						"\"Plugins > SciJava Parallel > Paradigm Profiles Manager\"\n" +
-						"then activate an existing worklow paradigm or create a " +
-						"new one and try running HPC Workflow Manager again.");
-			});
+			JavaFXRoutines.runOnFxThread(() -> SimpleDialog.showWarning(
+				"There is no active HPC Workflow paradigm.",
+				"Please start an HPC Workflow paradigm first!\nFrom the Fiji menu select:\n" +
+					"\"Plugins > HPC-ParallelTools > Paradigm Profiles Manager\"\n" +
+					"then activate an existing worklow paradigm or create a " +
+					"new one and try running HPC Workflow Manager again."));
 		}
 	}
 

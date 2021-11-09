@@ -19,4 +19,6 @@ public interface MacroJob extends WorkflowJob {
 	long getLastStartedTimestamp();
 
 	String getRemoteJobInfo();
+	
+	void getRemotePreviewCommand();
 }

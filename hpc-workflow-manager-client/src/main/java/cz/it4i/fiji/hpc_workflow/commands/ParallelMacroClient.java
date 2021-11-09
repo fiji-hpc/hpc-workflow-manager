@@ -13,7 +13,7 @@ import cz.it4i.fiji.hpc_workflow.core.Constants;
 // This calls the ManageHPCWorkflow class.
 
 @Plugin(type = Command.class, headless = false, priority = Priority.HIGH,
-	menuPath = "Plugins>" + Constants.ALTERNATIVE_ITEM_NAME + ">" +
+	menuPath = "Plugins>" + Constants.ALTERNATIVE_MENU_ITEM_NAME + ">" +
 		Constants.ALTERNATIVE_SUBMENU_ITEM_NAME)
 public class ParallelMacroClient implements Command {
 
