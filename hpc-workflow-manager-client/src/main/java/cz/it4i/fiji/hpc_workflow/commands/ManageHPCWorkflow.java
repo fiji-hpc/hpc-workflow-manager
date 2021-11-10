@@ -51,7 +51,7 @@ public class ManageHPCWorkflow implements Command {
 			JavaFXRoutines.runOnFxThread(() -> SimpleDialog.showWarning(
 				"There is no active HPC Workflow paradigm.",
 				"Please start an HPC Workflow paradigm first!\nFrom the Fiji menu select:\n" +
-					"\"Plugins > HPC-ParallelTools > Paradigm Profiles Manager\"\n" +
+					"\"Plugins > HPC-ParallelTools > Paradigm Profiles Configurator\"\n" +
 					"then activate an existing worklow paradigm or create a " +
 					"new one and try running HPC Workflow Manager again."));
 		}
