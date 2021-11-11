@@ -17,7 +17,7 @@
 	fx:controller="cz.it4i.fiji.hpc_workflow.ui.JobDetailControl">	
 	<tabs>
 		<!-- This is the Macro Task progress tab: -->
-		<Tab closable="false" text="Macro Progress" fx:id="macroProgressTab">
+		<Tab closable="false" text="Macro progress" fx:id="macroProgressTab">
 			<content>
 				<HBox>
 					<MacroTaskProgressViewController
