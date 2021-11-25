@@ -5,6 +5,7 @@ import org.kordamp.ikonli.materialdesign.MaterialDesign;
 import org.scijava.Context;
 import org.scijava.parallel.Status;
 import org.scijava.plugin.Parameter;
+
 import cz.it4i.fiji.hpc_adapter.JobWithDirectorySettings;
 import cz.it4i.fiji.hpc_workflow.WorkflowParadigm;
 import cz.it4i.fiji.hpc_workflow.core.Constants;
@@ -37,7 +38,7 @@ public class HPCWorkflowWindow {
 		if (!windowIsOpen) {
 			// Open the the window:
 			windowIsOpen = true;
-			controller = new HPCWorkflowControl<>(paradigm);
+			HPCWorkflowControl<T> controller = new HPCWorkflowControl<>(paradigm);
 			context.inject(controller);
 			final Scene formScene = new Scene(controller);
 			stage = new Stage();
