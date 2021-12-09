@@ -45,53 +45,8 @@ function parEnableTiming(){
 	ret = call("cz.it4i.fiji.parallel_macro.ParallelMacro.enableTiming");
 }
 
-function parScatterEqually(sendBuffer, totalSendBufferLength, root) {
-	sendString = convertArrayToCommaSeparatedString(sendBuffer);
-	receivedString = call("cz.it4i.fiji.parallel_macro.ParallelMacro.scatterEqually", sendString, totalSendBufferLength, root);
-	receivedBuffer = convertCommaSeparatedStringToArray(receivedString);
-	return receivedBuffer;
-}
-
-function parScatter(sendBuffer, sendCount, receiveCount, root) {
-	sendString = convertArrayToCommaSeparatedString(sendBuffer);
-	receivedString = call("cz.it4i.fiji.parallel_macro.ParallelMacro.scatter", sendString, sendCount, receiveCount, root);
-	receivedBuffer = convertCommaSeparatedStringToArray(receivedString);
-	return receivedBuffer;
-}
-
-function parGather(sendBuffer, sendCount, receiveCount, receiver){
-	sendString = convertArrayToCommaSeparatedString(sendBuffer);
-	receivedString = call("cz.it4i.fiji.parallel_macro.ParallelMacro.gather", sendString, sendCount, receiveCount, receiver);
-	receivedBuffer = convertCommaSeparatedStringToArray(receivedString);
-	return receivedBuffer;
-}
-
-function parGatherEqually(sendBuffer, totalReceiveBufferLength, receiver){
-	sendString = convertArrayToCommaSeparatedString(sendBuffer);
-	receivedString = call("cz.it4i.fiji.parallel_macro.ParallelMacro.gatherEqually", sendString, totalReceiveBufferLength, receiver);
-	receivedBuffer = convertCommaSeparatedStringToArray(receivedString);
-	return receivedBuffer;
-}
-
 function parSelectProgressLogger(type){
 	ret = call("cz.it4i.fiji.parallel_macro.ParallelMacro.selectProgressLogger", type);
-}
-
-function convertArrayToCommaSeparatedString(array){
-	length = lengthOf(array);
-	string = "";
-	for(i = 0; i < length; i++){
-		string += ""+array[i];
-		if(i != length - 1){
-			string += ", ";
-		}
-	}
-	return string;
-}
-
-function convertCommaSeparatedStringToArray(string) {
-	array = split(string, ",");
-	return array;
 }
 
 // End of parallel functions section, 

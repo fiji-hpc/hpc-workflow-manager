@@ -15,7 +15,7 @@ public class MyMacroAutoCompletionExtension implements
 {
 
 	private static final String STANDARD_DOCUMENTATION_INFORMATION =
-		"For more help visit the <a href=\"https://imagej.net/HPC_Workflow_Manager\">wiki page</a>.";
+		"For more help visit the <a href=\"https://github.com/fiji-hpc/parallel-macro/wiki/Available-Functions\">wiki page</a>.";
 
 	@Override
 	public List<BasicCompletion> getCompletions(
