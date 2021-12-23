@@ -2,14 +2,6 @@
 // This code is automatically appended to the user script file, 
 // Do NOT remove this section of code!
 
-function parInit() {
-	ret = call("cz.it4i.fiji.parallel_macro.ParallelMacro.initialise");
-}
-
-function parFinalize() {
-	ret = call("cz.it4i.fiji.parallel_macro.ParallelMacro.finalise");
-}
-
 function parGetRank() {
 	rank = call("cz.it4i.fiji.parallel_macro.ParallelMacro.getRank");
 	return parseInt(rank);
