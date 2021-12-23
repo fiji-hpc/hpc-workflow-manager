@@ -11,14 +11,6 @@ public class FunctionsInformationLoader {
 	public void load() {
 
 		// Create the function information for all available functions:
-		functionInformationList.add(new FunctionInformation("Init",
-			"Initializes parallelization, it should be called at the beginning of the parallel code.",
-			""));
-
-		functionInformationList.add(new FunctionInformation("Finalize",
-			"Finalizes parallelization, it should be called at the end of the parallel code.",
-			""));
-
 		functionInformationList.add(new FunctionInformation("GetRank",
 			"Returns the id of the current node.", ""));
 
