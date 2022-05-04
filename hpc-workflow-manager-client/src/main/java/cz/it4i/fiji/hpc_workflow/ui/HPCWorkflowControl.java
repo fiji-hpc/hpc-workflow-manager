@@ -14,6 +14,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -80,7 +81,7 @@ public class HPCWorkflowControl<T extends JobWithDirectorySettings> extends
 
 	@Parameter
 	private PluginService pluginService;
-	
+
 	@Parameter
 	private Context context;
 
@@ -227,9 +228,18 @@ public class HPCWorkflowControl<T extends JobWithDirectorySettings> extends
 		menu.addSeparator();
 
 		menu.addItem("Delete job", j -> deleteJob(j.getValue()), x -> JavaFXRoutines
-			.notNullValue(x, j -> j.getState() != JobState.Running),
+			.notNullValue(x, j -> canDelete(j.getState())),
 			MaterialDesign.MDI_DELETE);
 
+	}
+
+	// In order to be able to delete a job it should be
+	// done one way or another (Cancelled, Disposed, Failed, Finished or
+	// Configured).
+	private boolean canDelete(JobState jobState) {
+		return Arrays.asList(JobState.Canceled, JobState.Disposed, JobState.Failed,
+			JobState.Finished, JobState.Configuring).contains(jobState);
+		// If false then the job must be cancelled first.
 	}
 
 	private boolean checkIfAnythingHasBeenUploaded(WorkflowJob job) {
@@ -560,21 +570,23 @@ public class HPCWorkflowControl<T extends JobWithDirectorySettings> extends
 		if (job instanceof MacroJob) {
 			MacroJob typeJob = (MacroJob) job;
 			// Open the user script:
-			String userScriptPathString = typeJob.getInputDirectory().toString() + File.separator
-					+ typeJob.getUserScriptName();
+			String userScriptPathString = typeJob.getInputDirectory().toString() +
+				File.separator + typeJob.getUserScriptName();
 			File editFile = new File(userScriptPathString);
-			if(editFile.isFile()) {
+			if (editFile.isFile()) {
 				// Open the text editor (AWT based):
-				EventQueue.invokeLater(()->{
+				EventQueue.invokeLater(() -> {
 					TextEditor txt = new TextEditor(givenContext);
 					txt.open(editFile);
 					txt.setVisible(true);
 					txt.toFront();
 				});
-			} else {
-				JavaFXRoutines.runOnFxThread(() -> SimpleDialog.showInformation("Script file is missing.",
-						"You may have moved, removed or renamed the script file and it can no longer be found at the following location:\n"
-						+ userScriptPathString));
+			}
+			else {
+				JavaFXRoutines.runOnFxThread(() -> SimpleDialog.showInformation(
+					"Script file is missing.",
+					"You may have moved, removed or renamed the script file and it can no longer be found at the following location:\n" +
+						userScriptPathString));
 			}
 		}
 	}

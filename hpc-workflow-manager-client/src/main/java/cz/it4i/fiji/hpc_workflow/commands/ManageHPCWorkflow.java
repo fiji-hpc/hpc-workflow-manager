@@ -15,7 +15,6 @@ import cz.it4i.fiji.hpc_workflow.core.Constants;
 import cz.it4i.fiji.hpc_workflow.ui.HPCWorkflowWindow;
 import cz.it4i.swing_javafx_ui.JavaFXRoutines;
 import cz.it4i.swing_javafx_ui.SimpleDialog;
-import javafx.application.Platform;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
