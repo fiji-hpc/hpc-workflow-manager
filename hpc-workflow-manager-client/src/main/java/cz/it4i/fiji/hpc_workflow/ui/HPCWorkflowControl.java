@@ -172,9 +172,9 @@ public class HPCWorkflowControl<T extends JobWithDirectorySettings> extends
 			});
 		}, job -> JavaFXRoutines.notNullValue(job, j -> {
 			JobState jobState = j.getState();
-			return (jobState == JobState.Configuring ||
-				jobState == JobState.Finished || jobState == JobState.Failed ||
-				jobState == JobState.Canceled) && checkIfAnythingHasBeenUploaded(j);
+			return Arrays.asList(JobState.Configuring, JobState.Finished,
+				JobState.Failed, JobState.Canceled).contains(jobState) &&
+				hasAnythingBeenUploaded(j);
 		}), MaterialDesign.MDI_PLAY);
 
 		menu.addItem("Cancel job", job -> executeWSCallAsync("Canceling job", p -> {
@@ -242,21 +242,24 @@ public class HPCWorkflowControl<T extends JobWithDirectorySettings> extends
 		// If false then the job must be cancelled first.
 	}
 
-	private boolean checkIfAnythingHasBeenUploaded(WorkflowJob job) {
-		if (job.getJobType() == JobType.MACRO) {
+	private boolean hasAnythingBeenUploaded(WorkflowJob job) {
+		// If it is not a Macro Workflow then this method should have no impact
+		// therefore it returns true:
+		boolean uploaded = true;
+		if (Arrays.asList(JobType.MACRO, JobType.SCRIPT).contains(job
+			.getJobType()))
+		{
 			// If the user has not uploaded anything return false:
 			try {
-				if (job.isUploaded()) {
-					return true;
+				if (!job.isUploaded()) {
+					uploaded = false;
 				}
 			}
 			catch (Exception exc) {
-				return false;
+				uploaded = false;
 			}
 		}
-		// If it is not a Macro Workflow then this method should have no impact
-		// therefore it returns true:
-		return true;
+		return uploaded;
 	}
 
 	private boolean createTheMacroScript(ObservableHPCWorkflowJob job) {
