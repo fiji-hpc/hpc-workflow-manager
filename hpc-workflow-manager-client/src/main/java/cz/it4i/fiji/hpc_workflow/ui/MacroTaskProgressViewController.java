@@ -2,6 +2,7 @@
 package cz.it4i.fiji.hpc_workflow.ui;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,35 +55,30 @@ public class MacroTaskProgressViewController extends BorderPane {
 		new HashMap<>();
 
 	public MacroTaskProgressViewController() {
-		init();
-	}
-
-	private void init() {
 		JavaFXRoutines.initRootAndController("MacroTaskProgressView.fxml", this);
 	}
 
 	private class ProgressCell extends TableCell<MacroTask, Long> {
 
-		final ProgressIndicator cellProgress = new ProgressIndicator();
-
 		// Display progress indicator if the row is not empty:
 		@Override
-		protected void updateItem(Long t, boolean empty) {
-			super.updateItem(t, empty);
-			if (!empty && t >= -1) {
-				setText(null);
-				if (t == -1) {
-					cellProgress.setProgress(-1);
+		protected void updateItem(Long progress, boolean empty) {
+			super.updateItem(progress, empty);
+			if (!empty && progress >= -1) {
+				double value;
+				if (progress == -1) {
+					value = -1;
 				}
 				else {
-					cellProgress.setProgress(t.doubleValue() / 100D);
+					value = progress.doubleValue() / 100D;
 				}
+				ProgressIndicator cellProgress = new ProgressIndicator(value);
 				setGraphic(cellProgress);
 			}
 			else {
-				setText(null);
 				setGraphic(null);
 			}
+			setText(null);
 		}
 	}
 
@@ -92,8 +88,7 @@ public class MacroTaskProgressViewController extends BorderPane {
 
 	public void setJobParameter(ObservableHPCWorkflowJob newJob) {
 		this.job = newJob;
-
-		// Initialize table columns:
+		// Initialise table columns:
 		// Task description column:
 		this.descriptionColumn.setCellValueFactory(new PropertyValueFactory<>(
 			"description"));
@@ -110,8 +105,8 @@ public class MacroTaskProgressViewController extends BorderPane {
 
 			// Stop trying to update the log if the job has stopped in any way.
 			JobState jobState = job.getState();
-			if (jobState != JobState.Queued && jobState != JobState.Running &&
-				jobState != JobState.Submitted)
+			if (!Arrays.asList(JobState.Queued, JobState.Running, JobState.Submitted)
+				.contains(jobState))
 			{
 				setStatusMessage("Stopped updating progress because state is: " +
 					jobState.toString());
@@ -192,8 +187,8 @@ public class MacroTaskProgressViewController extends BorderPane {
 	private SimpleLongProperty createObservableProperty(
 		CellDataFeatures<MacroTask, Long> cellData, int nodeId)
 	{
-		SimpleLongProperty cellValueProperty = new SimpleLongProperty();
-		cellValueProperty.setValue(cellData.getValue().getProgress(nodeId));
+		SimpleLongProperty cellValueProperty = new SimpleLongProperty(cellData
+			.getValue().getProgress(nodeId));
 		Map<Integer, SimpleLongProperty> innerMap;
 		String description = cellData.getValue().getDescription();
 		if (this.descriptionToProperty.containsKey(description)) {

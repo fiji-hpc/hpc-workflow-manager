@@ -65,10 +65,10 @@ public class JobDetailControl extends TabPane {
 
 	@FXML
 	private Tab dataUploadTab;
-	
+
 	@FXML
 	private Tab remoteJobInfoViewTab;
-	
+
 	@FXML
 	private RemoteJobInfoViewController remoteJobInfoViewControl;
 
@@ -125,27 +125,26 @@ public class JobDetailControl extends TabPane {
 				logViewControl.setObservable(errorOutput);
 
 				if (jobType == JobType.SPIM_WORKFLOW) {
-					setTabAvailability(macroProgressTab, true);
-					removeTab(macroProgressTab);
-
 					// SPIM-only related initialisations:
-					JavaFXRoutines.runOnFxThread(() -> progressControl.init());
-					taskList = job.getObservableTaskList();
-					taskList.subscribe(taskListListener);
-					progressControl.setObservable(taskList);
+					JavaFXRoutines.runOnFxThread(() -> {
+						setTabAvailability(macroProgressTab, true);
+						removeTab(macroProgressTab);
+						progressControl.init();
+						taskList = job.getObservableTaskList();
+						taskList.subscribe(taskListListener);
+						progressControl.setObservable(taskList);
+					});
 				}
 				else {
-					setTabAvailability(macroProgressTab, false);
-					setTabAvailability(progressTab, true);
-
-					removeTab(progressTab);
-					JavaFXRoutines.runOnFxThread(() -> snakemakeOutputTab.setText(
-						"Error output"));
-
-					// Macro-only related initialisations:
-					macroProgressControl.setJobParameter(job);
-
-					progressDialogViewWindow.done();
+					JavaFXRoutines.runOnFxThread(() -> {
+						// Macro and Jython related initialisations:
+						setTabAvailability(macroProgressTab, false);
+						setTabAvailability(progressTab, true);
+						removeTab(progressTab);
+						snakemakeOutputTab.setText("Error output");
+						macroProgressControl.setJobParameter(job);
+						progressDialogViewWindow.done();
+					});
 				}
 
 				standardOutput = job.getObservableSnakemakeOutput(
@@ -155,8 +154,8 @@ public class JobDetailControl extends TabPane {
 
 				jobProperties.setJob(job);
 				remoteJobInfoViewControl.setRemoteJobInfo(job.getRemoteJobInfo());
-				remoteJobInfoViewControl.setRemotePreviewCommand(()->job.getRemotePreviewCommand());
-
+				remoteJobInfoViewControl.setRemotePreviewCommand(
+					job::getRemotePreviewCommand);
 				SimpleObservableList<FileTransferInfo> fileTransferList = job
 					.getFileTransferList();
 				setTabAvailability(dataUploadTab, fileTransferList == null ||
@@ -217,12 +216,14 @@ public class JobDetailControl extends TabPane {
 	// -- Helper methods --
 
 	private void setTabAvailability(final Tab tab, final boolean isDisabled) {
-		tab.setDisable(isDisabled);
-		setActiveFirstVisibleTab(false);
+		JavaFXRoutines.runOnFxThread(() -> {
+			tab.setDisable(isDisabled);
+			setActiveFirstVisibleTab(false);
+		});
 	}
 
 	private void removeTab(final Tab tab) {
-		JavaFXRoutines.runOnFxThread(() -> this.getTabs().remove(tab));
+		this.getTabs().remove(tab);
 	}
 
 	private void setActiveFirstVisibleTab(final boolean force) {
