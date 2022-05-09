@@ -227,10 +227,19 @@ public class HPCWorkflowControl<T extends JobWithDirectorySettings> extends
 
 		menu.addSeparator();
 
-		menu.addItem("Delete job", j -> deleteJob(j.getValue()), x -> JavaFXRoutines
-			.notNullValue(x, j -> canDelete(j.getState())),
+		menu.addItem("Delete job", j -> {
+			if (confirmDelete()) {
+				deleteJob(j.getValue());
+			}
+		}, x -> JavaFXRoutines.notNullValue(x, j -> canDelete(j.getState())),
 			MaterialDesign.MDI_DELETE);
 
+	}
+
+	// Ask for confirmation in order to delete the job:
+	private boolean confirmDelete() {
+		return SimpleDialog.showConfirmation("Delete job?",
+			"Are you sure you want to delete this job?");
 	}
 
 	// In order to be able to delete a job it should be
