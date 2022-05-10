@@ -41,6 +41,8 @@ import cz.it4i.fiji.hpc_client.data_transfer.FileTransferInfo;
 import cz.it4i.fiji.hpc_client.data_transfer.Synchronization;
 import cz.it4i.fiji.hpc_client.data_transfer.TransferFileProgressForHPCClient;
 import cz.it4i.fiji.scpclient.TransferFileProgress;
+import cz.it4i.swing_javafx_ui.JavaFXRoutines;
+import cz.it4i.swing_javafx_ui.SimpleDialog;
 
 /***
  * TASK - napojit na UI
@@ -560,6 +562,8 @@ public class Job {
 				this.outputDirectory, () -> {
 					setProperty(JOB_NEEDS_UPLOAD, false);
 					setUploaded(true);
+					JavaFXRoutines.runOnFxThread(() -> SimpleDialog.showInformation(
+						"Upload complete.", "Job "+this.getId()+" data have been successfully uploaded!"));
 				}, () -> {
 					setDownloaded(true);
 					setProperty(JOB_NEEDS_DOWNLOAD, false);
