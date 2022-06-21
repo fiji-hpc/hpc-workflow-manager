@@ -80,6 +80,8 @@ then
   exit 1
 fi
 
+write_item "${blue}Note: More details can be monitored in the currently populated log file ${yellow}${LOG_NAME}${clear}"
+
 
 # Option handling, there are two available option, 1) install custom Open MPI Environment Module 2) install parallel macro and OpenMPI Ops plugins.
 OPEN_MPI_MODULE_INSTALLATION=false
