@@ -72,7 +72,7 @@ function configure_and_install_open_mpi
 
 
 # User must provide at least one argument.
-if [ "$#" -eq  "0" ]
+if [ "$#" -eq  "0" -o "$#" -gt 2 ]
 then
   write "* Please select at least one of the two options:"
   write "  1) -openMpiModule, install a custom Open MPI module localy."
