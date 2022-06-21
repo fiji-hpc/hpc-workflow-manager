@@ -245,6 +245,7 @@ grep -q "$CUSTOM_MODULES_ROOT" "$HOME"/.bashrc || {
 write_item "The custom Environment Module >> OpenMpi/$CUSTOM_MODULE_NAME << should appear in the list bellow:"
 # Display available Open MPI modules:
 module avail openmpi 2> /dev/tty
+write_item "Installation of Custom Open MPI Environment Module finished."
 
 fi # End OPEN_MPI_MODULE_INSTALLATION section.
 
@@ -372,7 +373,8 @@ then
 fi
 
 write_item "Installation of Fiji with the parallel macro and OpenMPI Ops plugins finished $INSTALLATION_RESULT!"
-write_item "Generated log file: $LOG_NAME"
-
 
 fi # End of PARALLEL TOOLS INSTALLATION section!
+
+
+write_item "Generated log file: $LOG_NAME"
