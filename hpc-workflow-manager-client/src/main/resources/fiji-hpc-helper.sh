@@ -56,14 +56,14 @@ clear='\033[0m'
 function configure_and_install_open_mpi
 {
   # Configure Open MPI
-  write_item "About to configure Open MPI. (This will take a while, please wait!)"
+  write_item "About to configure Open MPI. (This will take a while, please wait.)"
   cd openmpi-4.1.1
 
   # Configuration command for a real cluster:
   ./configure --prefix=$PREFIX --enable-shared --enable-mpi-thread-multiple --with-verbs --enable-mpirun-prefix-by-default --with-hwloc=$EBROOTHWLOC $SCHEDULER_CONFIGURATION_ARGUMENT --enable-mpi-cxx --with-ucx=$EBROOTUCX
 
   # Install Open MPI:
-  write_item "About to install Open MPI. (This WILL take very long. Please wait!)"
+  write_item "About to install Open MPI. (This WILL take very long, please wait.)"
   make install
 }
 ## Configuration and installation subroutine END
@@ -193,7 +193,7 @@ if [ -f "$FILE" ]
 then
   write_item "Open MPI has already been downloaded!"
 else
-  write_item "Downloading Open MPI. (This might take a while, please wait)"
+  write_item "Downloading Open MPI. (This might take a while, please wait.)"
   wget https://download.open-mpi.org/release/open-mpi/v4.1/openmpi-4.1.1.tar.gz
 fi
 
@@ -304,7 +304,7 @@ if [ -f "$FILE" ]
 then
   write_item "Fiji has already been downloaded!"
 else
-  write_item "Downloading Fiji (this will take a while please wait)!"
+  write_item "Downloading Fiji. (This will take a while, please wait.)"
   wget https://downloads.imagej.net/fiji/latest/fiji-linux64.zip
 fi
 
