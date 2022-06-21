@@ -55,16 +55,22 @@ clear='\033[0m'
 ## Configuration and Installation Subroutine START
 function configure_and_install_open_mpi
 {
+  # memorize the current working folder
+  pushd .
+
   # Configure Open MPI
-  write_item "About to configure Open MPI. (This will take a while, please wait!)"
-  cd openmpi-4.1.1
+  write_item "About to configure Open MPI. (This will take a while, please wait.)"
+  cd openmpi-${OPENMPI_VERSION}
 
   # Configuration command for a real cluster:
   ./configure --prefix=$PREFIX --enable-shared --enable-mpi-thread-multiple --with-verbs --enable-mpirun-prefix-by-default --with-hwloc=$EBROOTHWLOC $SCHEDULER_CONFIGURATION_ARGUMENT --enable-mpi-cxx --with-ucx=$EBROOTUCX
 
   # Install Open MPI:
-  write_item "About to install Open MPI. (This WILL take very long. Please wait!)"
+  write_item "About to install Open MPI. (This WILL take very long, please wait.)"
   make install
+
+  # return to the memorized/previous working folder
+  popd
 }
 ## Configuration and installation subroutine END
 
@@ -72,13 +78,19 @@ function configure_and_install_open_mpi
 
 
 # User must provide at least one argument.
-if [ "$#" -eq  "0" ]
+if [ "$#" -eq  "0" -o "$#" -gt 2 ]
 then
   write "* Please select at least one of the two options:"
   write "  1) -openMpiModule, install a custom Open MPI module localy."
   write "  2) -parallelTools, install Fiji with the parallel macro and OpenMPI Ops plugins."
+  write "\nThe script will operate (create folders) in the current working directory"
+  write "(that means $PWD),"
+  write "and with the option 1) it will add files into folder $HOME/Modules/modulefiles"
+
   exit 1
 fi
+
+write_item "${blue}Note: More details can be monitored in the currently populated log file ${yellow}${LOG_NAME}${clear}"
 
 
 # Option handling, there are two available option, 1) install custom Open MPI Environment Module 2) install parallel macro and OpenMPI Ops plugins.
@@ -128,11 +140,16 @@ if $OPEN_MPI_MODULE_INSTALLATION; then # Start of OPEN_MPI_MODULE_INSTALLATION s
 GCC_COMPILER_MODULE="GCC/10.3.0"
 COMPILER_PART=$(echo "$GCC_COMPILER_MODULE" | sed 's;/;;g' )
 
-# Set Open MPI installation directory (prefix):
-PREFIX="$HOME"/openmpi-4.1.1-"$COMPILER_PART"/
+# Set custom Open MPI version
+OPENMPI_VERSION="4.1.1"
 
 # Set custom Open MPI module directory:
+CUSTOM_MODULES_ROOT="$HOME"/Modules/modulefiles
 CUSTOM_MODULE_DIR="$HOME"/Modules/modulefiles/OpenMpi
+CUSTOM_MODULE_NAME="${OPENMPI_VERSION}-${COMPILER_PART}-CustomModule"
+
+# Set Open MPI installation directory (prefix):
+PREFIX="$PWD/openmpi-$CUSTOM_MODULE_NAME"
 
 
 # The Environment Modules program must exist:
@@ -186,18 +203,18 @@ write_item "Will use the following GCC Environment Module: $GCC_COMPILER_MODULE"
 module load "$GCC_COMPILER_MODULE"
 
 # Download Open MPI source code, extract archive and remove archive:
-FILE=./openmpi-4.1.1.tar.gz
+FILE=./openmpi-${OPENMPI_VERSION}.tar.gz
 if [ -f "$FILE" ]
 then
   write_item "Open MPI has already been downloaded!"
 else
-  write_item "Downloading Open MPI. (This might take a while, please wait)"
-  wget https://download.open-mpi.org/release/open-mpi/v4.1/openmpi-4.1.1.tar.gz
+  write_item "Downloading Open MPI. (This might take a while, please wait.)"
+  wget https://download.open-mpi.org/release/open-mpi/v${OPENMPI_VERSION:0:3}/openmpi-${OPENMPI_VERSION}.tar.gz
 fi
 
 write_item "Extracting Open MPI archive!"
-tar xvfz openmpi-4.1.1.tar.gz
-##rm -r openmpi-4.1.1.tar.gz
+tar xvfz openmpi-${OPENMPI_VERSION}.tar.gz
+##rm -r openmpi-${OPENMPI_VERSION}.tar.gz
 
 # Scheduler directory must exist.
 if [ -d "$DIR" ]; then
@@ -214,22 +231,26 @@ echo 'btl_openib_allow_ib = true' >> "$PREFIX"/etc/openmpi-mca-params.conf
 
 
 
-write_item "About to create custom Open MPI Environment Module."
+write_item "About to create custom Open MPI Environment Module: $CUSTOM_MODULE_DIR"
 # Create custom module:
-mkdir -p "$CUSTOM_MODULE_DIR"
+mkdir -vp "$CUSTOM_MODULE_DIR"
 
-# Create the module file:
-echo "$MODULE_TEXT" > "$CUSTOM_MODULE_DIR"/4.1.1-"$COMPILER_PART"
+# Create and enable the module file:
+echo "$MODULE_TEXT" > "$CUSTOM_MODULE_DIR/$CUSTOM_MODULE_NAME"
+module use --append $CUSTOM_MODULES_ROOT
 
-# Automatically load custom module:
-echo "module use --append $HOME/Modules/modulefiles" >> "$HOME"/.bashrc
+# Make sure to automatically load custom module (if not already there):
+grep -q "$CUSTOM_MODULES_ROOT" "$HOME"/.bashrc || {
+  echo "module use --append $CUSTOM_MODULES_ROOT" >> "$HOME"/.bashrc;
+  write_item "Note: Adding a line \"module use --append $CUSTOM_MODULES_ROOT\" into ${HOME}/.bashrc file.";
+  }
 
 
-write_item "The custom Environment Module should appear in the list bellow:"
+write_item "The custom Environment Module >> OpenMpi/$CUSTOM_MODULE_NAME << should appear in the list bellow:"
 # Display available Open MPI modules:
-module avail openmpi > /dev/tty
+module avail openmpi 2> /dev/tty
+write_item "Installation of Custom Open MPI Environment Module finished."
 
-cd ..
 fi # End OPEN_MPI_MODULE_INSTALLATION section.
 
 
@@ -302,7 +323,7 @@ if [ -f "$FILE" ]
 then
   write_item "Fiji has already been downloaded!"
 else
-  write_item "Downloading Fiji (this will take a while please wait)!"
+  write_item "Downloading Fiji. (This will take a while, please wait.)"
   wget https://downloads.imagej.net/fiji/latest/fiji-linux64.zip
 fi
 
@@ -356,7 +377,8 @@ then
 fi
 
 write_item "Installation of Fiji with the parallel macro and OpenMPI Ops plugins finished $INSTALLATION_RESULT!"
-write_item "Generated log file: $LOG_NAME"
-
 
 fi # End of PARALLEL TOOLS INSTALLATION section!
+
+
+write_item "Generated log file: $LOG_NAME"
