@@ -55,6 +55,9 @@ clear='\033[0m'
 ## Configuration and Installation Subroutine START
 function configure_and_install_open_mpi
 {
+  # memorize the current working folder
+  pushd .
+
   # Configure Open MPI
   write_item "About to configure Open MPI. (This will take a while, please wait.)"
   cd openmpi-${OPENMPI_VERSION}
@@ -65,6 +68,9 @@ function configure_and_install_open_mpi
   # Install Open MPI:
   write_item "About to install Open MPI. (This WILL take very long, please wait.)"
   make install
+
+  # return to the memorized/previous working folder
+  popd
 }
 ## Configuration and installation subroutine END
 
@@ -240,7 +246,6 @@ write_item "The custom Environment Module should appear in the list bellow:"
 # Display available Open MPI modules:
 module avail openmpi > /dev/tty
 
-cd ..
 fi # End OPEN_MPI_MODULE_INSTALLATION section.
 
 
