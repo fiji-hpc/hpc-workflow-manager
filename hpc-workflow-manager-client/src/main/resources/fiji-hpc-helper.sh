@@ -227,9 +227,9 @@ echo 'btl_openib_allow_ib = true' >> "$PREFIX"/etc/openmpi-mca-params.conf
 
 
 
-write_item "About to create custom Open MPI Environment Module."
+write_item "About to create custom Open MPI Environment Module: $CUSTOM_MODULE_DIR"
 # Create custom module:
-mkdir -p "$CUSTOM_MODULE_DIR"
+mkdir -vp "$CUSTOM_MODULE_DIR"
 
 # Create and enable the module file:
 echo "$MODULE_TEXT" > "$CUSTOM_MODULE_DIR/$CUSTOM_MODULE_NAME"
