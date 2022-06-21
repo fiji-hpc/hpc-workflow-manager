@@ -83,6 +83,10 @@ then
   write "* Please select at least one of the two options:"
   write "  1) -openMpiModule, install a custom Open MPI module localy."
   write "  2) -parallelTools, install Fiji with the parallel macro and OpenMPI Ops plugins."
+  write "\nThe script will operate (create folders) in the current working directory"
+  write "(that means $PWD),"
+  write "and with the option 1) it will add files into folder $HOME/Modules/modulefiles"
+
   exit 1
 fi
 
