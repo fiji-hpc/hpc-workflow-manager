@@ -57,7 +57,7 @@ function configure_and_install_open_mpi
 {
   # Configure Open MPI
   write_item "About to configure Open MPI. (This will take a while, please wait.)"
-  cd openmpi-4.1.1
+  cd openmpi-${OPENMPI_VERSION}
 
   # Configuration command for a real cluster:
   ./configure --prefix=$PREFIX --enable-shared --enable-mpi-thread-multiple --with-verbs --enable-mpirun-prefix-by-default --with-hwloc=$EBROOTHWLOC $SCHEDULER_CONFIGURATION_ARGUMENT --enable-mpi-cxx --with-ucx=$EBROOTUCX
@@ -130,11 +130,15 @@ if $OPEN_MPI_MODULE_INSTALLATION; then # Start of OPEN_MPI_MODULE_INSTALLATION s
 GCC_COMPILER_MODULE="GCC/10.3.0"
 COMPILER_PART=$(echo "$GCC_COMPILER_MODULE" | sed 's;/;;g' )
 
-# Set Open MPI installation directory (prefix):
-PREFIX="$HOME"/openmpi-4.1.1-"$COMPILER_PART"/
+# Set custom Open MPI version
+OPENMPI_VERSION="4.1.1"
 
 # Set custom Open MPI module directory:
 CUSTOM_MODULE_DIR="$HOME"/Modules/modulefiles/OpenMpi
+CUSTOM_MODULE_NAME="${OPENMPI_VERSION}-${COMPILER_PART}-CustomModule"
+
+# Set Open MPI installation directory (prefix):
+PREFIX="$PWD/openmpi-$CUSTOM_MODULE_NAME"
 
 
 # The Environment Modules program must exist:
@@ -188,18 +192,18 @@ write_item "Will use the following GCC Environment Module: $GCC_COMPILER_MODULE"
 module load "$GCC_COMPILER_MODULE"
 
 # Download Open MPI source code, extract archive and remove archive:
-FILE=./openmpi-4.1.1.tar.gz
+FILE=./openmpi-${OPENMPI_VERSION}.tar.gz
 if [ -f "$FILE" ]
 then
   write_item "Open MPI has already been downloaded!"
 else
   write_item "Downloading Open MPI. (This might take a while, please wait.)"
-  wget https://download.open-mpi.org/release/open-mpi/v4.1/openmpi-4.1.1.tar.gz
+  wget https://download.open-mpi.org/release/open-mpi/v${OPENMPI_VERSION:0:3}/openmpi-${OPENMPI_VERSION}.tar.gz
 fi
 
 write_item "Extracting Open MPI archive!"
-tar xvfz openmpi-4.1.1.tar.gz
-##rm -r openmpi-4.1.1.tar.gz
+tar xvfz openmpi-${OPENMPI_VERSION}.tar.gz
+##rm -r openmpi-${OPENMPI_VERSION}.tar.gz
 
 # Scheduler directory must exist.
 if [ -d "$DIR" ]; then
