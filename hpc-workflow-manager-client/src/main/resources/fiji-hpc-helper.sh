@@ -251,6 +251,9 @@ write_item "The custom Environment Module >> OpenMpi/$CUSTOM_MODULE_NAME << shou
 module avail openmpi 2> /dev/tty
 write_item "Installation of Custom Open MPI Environment Module finished."
 
+write_item "${blue}The new module can be later loaded with the command:${clear}"
+write_item "${blue}module load OpenMpi/$CUSTOM_MODULE_NAME${clear}"
+
 fi # End OPEN_MPI_MODULE_INSTALLATION section.
 
 
