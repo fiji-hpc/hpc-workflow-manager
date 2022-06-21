@@ -134,6 +134,7 @@ COMPILER_PART=$(echo "$GCC_COMPILER_MODULE" | sed 's;/;;g' )
 OPENMPI_VERSION="4.1.1"
 
 # Set custom Open MPI module directory:
+CUSTOM_MODULES_ROOT="$HOME"/Modules/modulefiles
 CUSTOM_MODULE_DIR="$HOME"/Modules/modulefiles/OpenMpi
 CUSTOM_MODULE_NAME="${OPENMPI_VERSION}-${COMPILER_PART}-CustomModule"
 
@@ -224,11 +225,15 @@ write_item "About to create custom Open MPI Environment Module."
 # Create custom module:
 mkdir -p "$CUSTOM_MODULE_DIR"
 
-# Create the module file:
-echo "$MODULE_TEXT" > "$CUSTOM_MODULE_DIR"/4.1.1-"$COMPILER_PART"
+# Create and enable the module file:
+echo "$MODULE_TEXT" > "$CUSTOM_MODULE_DIR/$CUSTOM_MODULE_NAME"
+module use --append $CUSTOM_MODULES_ROOT
 
-# Automatically load custom module:
-echo "module use --append $HOME/Modules/modulefiles" >> "$HOME"/.bashrc
+# Make sure to automatically load custom module (if not already there):
+grep -q "$CUSTOM_MODULES_ROOT" "$HOME"/.bashrc || {
+  echo "module use --append $CUSTOM_MODULES_ROOT" >> "$HOME"/.bashrc;
+  write_item "Note: Adding a line \"module use --append $CUSTOM_MODULES_ROOT\" into ${HOME}/.bashrc file.";
+  }
 
 
 write_item "The custom Environment Module should appear in the list bellow:"
