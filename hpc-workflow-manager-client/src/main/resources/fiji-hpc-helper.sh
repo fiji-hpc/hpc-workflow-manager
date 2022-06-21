@@ -242,9 +242,9 @@ grep -q "$CUSTOM_MODULES_ROOT" "$HOME"/.bashrc || {
   }
 
 
-write_item "The custom Environment Module should appear in the list bellow:"
+write_item "The custom Environment Module >> OpenMpi/$CUSTOM_MODULE_NAME << should appear in the list bellow:"
 # Display available Open MPI modules:
-module avail openmpi > /dev/tty
+module avail openmpi 2> /dev/tty
 
 fi # End OPEN_MPI_MODULE_INSTALLATION section.
 
