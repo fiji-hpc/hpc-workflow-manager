@@ -217,11 +217,13 @@ tar xvfz openmpi-${OPENMPI_VERSION}.tar.gz
 ##rm -r openmpi-${OPENMPI_VERSION}.tar.gz
 
 # Scheduler directory must exist.
-if [ -d "$DIR" ]; then
+if [ -d "$DIR" ] && [ -r "$DIR" ]
+then
   write_item "Scheduler directory $DIR found!"
   configure_and_install_open_mpi
 else
-  write_error "Scheduler directory $DIR must exist! Try running this script in an interactive job."
+  write_error "Scheduler directory $DIR must exist and be accessible!"
+  write_item "Try running this script in an interactive job. In PBS for example run: qsub -q qexp -l select=1 -I"
   exit 1
 fi
 
