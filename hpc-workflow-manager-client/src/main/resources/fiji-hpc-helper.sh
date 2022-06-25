@@ -47,8 +47,38 @@ magenta='\033[0;35m'
 cyan='\033[0;36m'
 # Clear the color after that
 clear='\033[0m'
-
 # Echo formatting helper subroutines END.
+
+
+
+
+# This function will attempt to locate the most recent version
+# of a module that matches a key approximatly,
+# use lower case for key.
+function find_module
+{
+  # The serach key provided by the user of the subroutine:
+  SEARCH_KEY="$1"
+
+  # Find a list of modules:
+  MODULES=$((module avail $SEARCH_KEY) |& awk -v key="$SEARCH_KEY" 'BEGIN{IGNORECASE=1}($1~/'"$key"'.*/){for(i=1;i<=NF;++i)if($i~/^'"$1"'\/.*/)print $i}');
+
+  # If  nothing is found this subroutine should return false:
+  if [ -z "$MODULES" ]
+  then
+    echo false
+    return
+  fi
+
+  # Reverse list to get most recent version of the module:
+  list=$( echo "$MODULES" | tac );
+
+  # Get first item of list (most recent version):
+  array=( $list )
+  echo ${array[0]}
+  return
+}
+
 
 
 
