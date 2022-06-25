@@ -63,6 +63,13 @@ function find_module
   # Find a list of modules:
   MODULES=$((module avail $SEARCH_KEY) |& awk -v key="$SEARCH_KEY" 'BEGIN{IGNORECASE=1}($1~/'"$key"'.*/){for(i=1;i<=NF;++i)if($i~/^'"$1"'\/.*/)print $i}');
 
+  # If a version is provided, filter all results with it:
+  if [ $# -eq 2 ]
+  then
+    VERSION=$2
+    MODULES=$(echo $MODULES | grep $VERSION)
+  fi
+
   # If  nothing is found this subroutine should return false:
   if [ -z "$MODULES" ]
   then
@@ -164,11 +171,29 @@ fi
 
 if $OPEN_MPI_MODULE_INSTALLATION; then # Start of OPEN_MPI_MODULE_INSTALLATION section. Skip this section if the user did not select this option!
 
+# The Environment Modules program must exist:
+if ! command -v module &> /dev/null
+then
+  write_error "Environment Modules program does not exist!"
+  exit 1
+else
+  write_found "Environment Modules"
+fi
 
+# GCC compiler Environment Module must exist:
+GCC_COMPILER_MODULE=$(find_module gcc)
+if [ $GCC_COMPILER_MODULE != false ]
+then
+  module load $GCC_COMPILER_MODULE
+  write_found "GCC Environment Module"
+else
+  write_error "Could not find a GCC Environment Module!"
+  exit 1
+fi
 
-# Set this constant to the correct name of the GCC module on your HPC Cluster:
-GCC_COMPILER_MODULE="GCC/10.3.0"
+write_item "Will use the following GCC Environment Module: $GCC_COMPILER_MODULE"
 COMPILER_PART=$(echo "$GCC_COMPILER_MODULE" | sed 's;/;;g' )
+
 
 # Set custom Open MPI version
 OPENMPI_VERSION="4.1.1"
@@ -181,15 +206,6 @@ CUSTOM_MODULE_NAME="${OPENMPI_VERSION}-${COMPILER_PART}-CustomModule"
 # Set Open MPI installation directory (prefix):
 PREFIX="$PWD/openmpi-$CUSTOM_MODULE_NAME"
 
-
-# The Environment Modules program must exist:
-if ! command -v module &> /dev/null
-then
-  write_error "Environment Modules program does not exist!"
-  exit 1
-else
-  write_found "Environment Modules"
-fi
 
 # Contents of the Environment Module file:
 MODULE_TEXT="#%Module 1.0
@@ -227,10 +243,16 @@ fi
 
 write_item "Will use $SCHEDULER_CONFIGURATION_ARGUMENT option in Open MPI configuration."
 
-write_item "About to load GCC compiler."
-# Load the GCC module:
-write_item "Will use the following GCC Environment Module: $GCC_COMPILER_MODULE"
-module load "$GCC_COMPILER_MODULE"
+# Scheduler directory must exist.
+if [ -d "$DIR" ] && [ -r "$DIR" ]
+then
+  write_item "Scheduler directory $DIR found!"
+  configure_and_install_open_mpi
+else
+  write_error "Scheduler directory $DIR must exist and be accessible!"
+  write_item "Try running this script in an interactive job. In PBS for example run: qsub -q qexp -l select=1 -I"
+  exit 1
+fi
 
 # Download Open MPI source code, extract archive and remove archive:
 FILE=./openmpi-${OPENMPI_VERSION}.tar.gz
@@ -245,17 +267,6 @@ fi
 write_item "Extracting Open MPI archive!"
 tar xvfz openmpi-${OPENMPI_VERSION}.tar.gz
 ##rm -r openmpi-${OPENMPI_VERSION}.tar.gz
-
-# Scheduler directory must exist.
-if [ -d "$DIR" ] && [ -r "$DIR" ]
-then
-  write_item "Scheduler directory $DIR found!"
-  configure_and_install_open_mpi
-else
-  write_error "Scheduler directory $DIR must exist and be accessible!"
-  write_item "Try running this script in an interactive job. In PBS for example run: qsub -q qexp -l select=1 -I"
-  exit 1
-fi
 
 # OpenFabrics error fix:
 echo 'btl_openib_allow_ib = true' >> "$PREFIX"/etc/openmpi-mca-params.conf
@@ -311,8 +322,16 @@ fi
 # Java (JDK) 8 must be available:
 if ! command -v javac &> /dev/null
 then
-  write_error "Did not find Java Developement Kit 8! It must be installed to continue!"
-  exit 1
+  write_warning "Did not find Java Developement Kit 8! I will try to find and load an Environment Module!"
+  JAVA_MODULE=$( find_module java "1.8" )
+  if [ $JAVA_MODULE != false ]
+  then
+    module load $JAVA_MODULE
+    write_found "Java 8 Environment Module: $JAVA_MODULE"
+  else
+    write_error "Did not find a Java Development Kit version 8 Environment Module."
+    exit 1
+  fi
 else
   version=$("java" -version 2>&1 | awk -F '"' '/version/ {print $2}')
   echo $version
@@ -328,26 +347,33 @@ fi
 # Maven must be available:
 if ! command -v mvn &> /dev/null
 then
-  write_warning "Did not find Maven! I will install it localy!"
-
-  # Download Maven:
-  FILE=./apache-maven-3.8.6-bin.zip
-  if [ -f "$FILE" ]
+  write_warning "Did not find Maven! I try to find and load a module!"
+  MAVEN_MODULE=$(find_module maven)
+  if [ $MAVEN_MODULE != false ]
   then
-    write_item "Maven has already been downloaded!"
+    module load $MAVEN_MODULE
   else
-    write_item "Downloading maven!"
-    wget https://dlcdn.apache.org/maven/maven-3/3.8.6/binaries/apache-maven-3.8.6-bin.zip
+    write_warning "Did not find a Maven Module! I will install it localy!"
+  
+    # Download Maven:
+    FILE=./apache-maven-3.8.6-bin.zip
+    if [ -f "$FILE" ]
+    then
+      write_item "Maven has already been downloaded!"
+    else
+      write_item "Downloading maven!"
+      wget https://dlcdn.apache.org/maven/maven-3/3.8.6/binaries/apache-maven-3.8.6-bin.zip
+    fi
+  
+    # Install Maven:
+    unzip -o apache-maven-3.8.6-bin.zip
+    ##rm apache-maven-3.8.6-bin.zip
+    cd apache-maven-3.8.6
+    pwd=$(pwd)
+    export PATH="$pwd/bin:$PATH"
+    cd ..
+    write_item "Maven installed!"
   fi
-
-  # Install Maven:
-  unzip -o apache-maven-3.8.6-bin.zip
-  ##rm apache-maven-3.8.6-bin.zip
-  cd apache-maven-3.8.6
-  pwd=$(pwd)
-  export PATH="$pwd/bin:$PATH"
-  cd ..
-  write_item "Maven installed!"
 else
   write_found "Maven"
 fi
