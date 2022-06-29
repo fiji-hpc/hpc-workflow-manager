@@ -30,13 +30,24 @@ function write_warning
 function write_error
 {
   write_item "${red}ERROR:${clear} $1"
-  write_item "Generated log file: $LOG_NAME"
+  write_item "Generated log file: ${yellow}$LOG_NAME${clear}"
 }
 
 function write_found
 {
   write_item "${green}Found $1!${clear}"
 }
+
+function write_note
+{
+  write_item "${blue}Note:${clear} $1"
+}
+
+function break_line
+{
+  write "\n"
+}
+
 
 # Color variables
 red='\033[0;31m'
@@ -120,19 +131,22 @@ then
   write "* Please select at least one of the two options:"
   write "  1) -openMpiModule, install a custom Open MPI module localy."
   write "  2) -parallelTools, install Fiji with the parallel macro and OpenMPI Ops plugins."
-  write "\nThe script will operate (create folders) in the current working directory"
-  write "(that means $PWD),"
-  write "and with the option 1) it will add files into folder $HOME/Modules/modulefiles"
+  write "  3) -installersRemoval, remove files used during each one of the two above options."
+  break_line
+  write_note "The script will operate (create folders) in the current working directory (that means ${yellow}$PWD${clear})"
+  write_note "With the option (1) it will add files into folder: ${yellow}$HOME/Modules/modulefiles${clear}"
+  break_line
 
   exit 1
 fi
 
-write_item "${blue}Note: More details can be monitored in the currently populated log file ${yellow}${LOG_NAME}${clear}"
+write_note "More details can be monitored in the currently populated log file ${yellow}${LOG_NAME}${clear}"
 
 
 # Option handling, there are two available option, 1) install custom Open MPI Environment Module 2) install parallel macro and OpenMPI Ops plugins.
 OPEN_MPI_MODULE_INSTALLATION=false
 PARALLEL_TOOLS_INSTALLATION=false
+INSTALLERS_REMOVAL=false
 while test "$#" -gt 0
 do
     case "$1" in
@@ -142,6 +156,9 @@ do
         -parallelTools) write_item "Fiji and parallel macro and OpenMPI Ops plugins installation selected."
             PARALLEL_TOOLS_INSTALLATION=true
             ;;
+        -installersRemoval) write_item "Removal of installers selected."
+            INSTALLERS_REMOVAL=true
+            ;;
         *) write_error "Invalid option!"
             exit 1
             ;;
@@ -149,6 +166,38 @@ do
     shift
 done
 
+
+
+# Start of INSTALLERS_REMOVAL section. Skip this section if the user did not select this option!
+function delete_item
+{
+  ITEM=$1
+  if [ -f $ITEM  ] 
+  then
+    write_item "About to delete file $ITEM."
+    rm $ITEM
+    write_item "Item $ITEM deleted!"
+  elif [ -d $ITEM  ]
+  then
+    write_item "About to delete directory  $ITEM."
+    rm -rf $ITEM
+    write_item "Directory $ITEM deleted!"
+  fi
+}
+
+
+if $INSTALLERS_REMOVAL; then
+  write_item "Removing installers!"
+  delete_item apache-maven-3.8.6
+  delete_item apache-maven-3.8.6-bin.zip
+  delete_item fiji-linux64.zip
+  delete_item openmpi-4.1.1
+  delete_item openmpi-4.1.1.tar.gz
+  delete_item parallel-macro
+  delete_item scijava-parallel-mpi
+  exit 1
+fi
+# End of INSTALLERS_REMOVAL section.
 
 
 
@@ -442,4 +491,4 @@ write_item "Installation of Fiji with the parallel macro and OpenMPI Ops plugins
 fi # End of PARALLEL TOOLS INSTALLATION section!
 
 
-write_item "Generated log file: $LOG_NAME"
+write_item "Generated log file: ${yellow}$LOG_NAME${clear}"
