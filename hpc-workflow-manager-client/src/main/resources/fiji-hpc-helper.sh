@@ -54,8 +54,6 @@ red='\033[0;31m'
 green='\033[0;32m'
 yellow='\033[0;33m'
 blue='\033[0;34m'
-magenta='\033[0;35m'
-cyan='\033[0;36m'
 # Clear the color after that
 clear='\033[0m'
 # Echo formatting helper subroutines END.
@@ -72,13 +70,13 @@ function find_module
   SEARCH_KEY="$1"
 
   # Find a list of modules:
-  MODULES=$((module avail $SEARCH_KEY) |& awk -v key="$SEARCH_KEY" 'BEGIN{IGNORECASE=1}($1~/'"$key"'.*/){for(i=1;i<=NF;++i)if($i~/^'"$1"'\/.*/)print $i}');
+  MODULES=$( (module avail "$SEARCH_KEY") |& awk -v key="$SEARCH_KEY" 'BEGIN{IGNORECASE=1}($1~/'"$key"'.*/){for(i=1;i<=NF;++i)if($i~/^'"$1"'\/.*/)print $i}' );
 
   # If a version is provided, filter all results with it:
   if [ $# -eq 2 ]
   then
     VERSION=$2
-    MODULES=$(echo $MODULES | grep $VERSION)
+    MODULES=$(echo "$MODULES" | grep "$VERSION")
   fi
 
   # If  nothing is found this subroutine should return false:
@@ -93,7 +91,7 @@ function find_module
 
   # Get first item of list (most recent version):
   array=( $list )
-  echo ${array[0]}
+  echo "${array[0]}"
   return
 }
 
@@ -108,10 +106,10 @@ function configure_and_install_open_mpi
 
   # Configure Open MPI
   write_item "About to configure Open MPI. (This will take a while, please wait.)"
-  cd openmpi-${OPENMPI_VERSION}
+  cd openmpi-"${OPENMPI_VERSION}"
 
   # Configuration command for a real cluster:
-  ./configure --prefix=$PREFIX --enable-shared --enable-mpi-thread-multiple --with-verbs --enable-mpirun-prefix-by-default --with-hwloc=$EBROOTHWLOC $SCHEDULER_CONFIGURATION_ARGUMENT --enable-mpi-cxx --with-ucx=$EBROOTUCX
+  ./configure --prefix="$PREFIX" --enable-shared --enable-mpi-thread-multiple --with-verbs --enable-mpirun-prefix-by-default --with-hwloc="$EBROOTHWLOC" "$SCHEDULER_CONFIGURATION_ARGUMENT" --enable-mpi-cxx --with-ucx="$EBROOTUCX"
 
   # Install Open MPI:
   write_item "About to install Open MPI. (This WILL take very long, please wait.)"
@@ -126,7 +124,7 @@ function configure_and_install_open_mpi
 
 
 # User must provide at least one argument.
-if [ "$#" -eq  "0" -o "$#" -gt 2 ]
+if [ "$#" -eq  "0" ] || [ "$#" -gt 2 ]
 then
   write "* Please select at least one of the two options:"
   write "  1) -openMpiModule, install a custom Open MPI module localy."
@@ -172,15 +170,15 @@ done
 function delete_item
 {
   ITEM=$1
-  if [ -f $ITEM  ] 
+  if [ -f "$ITEM"  ] 
   then
     write_item "About to delete file $ITEM."
-    rm $ITEM
+    rm "$ITEM"
     write_item "Item $ITEM deleted!"
-  elif [ -d $ITEM  ]
+  elif [ -d "$ITEM"  ]
   then
     write_item "About to delete directory  $ITEM."
-    rm -rf $ITEM
+    rm -rf "$ITEM"
     write_item "Directory $ITEM deleted!"
   fi
 }
@@ -231,9 +229,9 @@ fi
 
 # GCC compiler Environment Module must exist:
 GCC_COMPILER_MODULE=$(find_module gcc)
-if [ $GCC_COMPILER_MODULE != false ]
+if [ "$GCC_COMPILER_MODULE" != false ]
 then
-  module load $GCC_COMPILER_MODULE
+  module load "$GCC_COMPILER_MODULE"
   write_found "GCC Environment Module"
 else
   write_error "Could not find a GCC Environment Module!"
@@ -241,7 +239,7 @@ else
 fi
 
 write_item "Will use the following GCC Environment Module: $GCC_COMPILER_MODULE"
-COMPILER_PART=$(echo "$GCC_COMPILER_MODULE" | sed 's;/;;g' )
+COMPILER_PART="${GCC_COMPILER_MODULE////}"
 
 
 # Set custom Open MPI version
@@ -329,7 +327,7 @@ mkdir -vp "$CUSTOM_MODULE_DIR"
 
 # Create and enable the module file:
 echo "$MODULE_TEXT" > "$CUSTOM_MODULE_DIR/$CUSTOM_MODULE_NAME"
-module use --append $CUSTOM_MODULES_ROOT
+module use --append "$CUSTOM_MODULES_ROOT"
 
 # Make sure to automatically load custom module (if not already there):
 grep -q "$CUSTOM_MODULES_ROOT" "$HOME"/.bashrc || {
@@ -373,9 +371,9 @@ if ! command -v javac &> /dev/null
 then
   write_warning "Did not find Java Developement Kit 8! I will try to find and load an Environment Module!"
   JAVA_MODULE=$( find_module java "1.8" )
-  if [ $JAVA_MODULE != false ]
+  if [ "$JAVA_MODULE" != false ]
   then
-    module load $JAVA_MODULE
+    module load "$JAVA_MODULE"
     write_found "Java 8 Environment Module: $JAVA_MODULE"
   else
     write_error "Did not find a Java Development Kit version 8 Environment Module."
@@ -383,8 +381,8 @@ then
   fi
 else
   version=$("java" -version 2>&1 | awk -F '"' '/version/ {print $2}')
-  echo $version
-  if [[ "$version" < "1.8" ]]
+  echo "$version"
+  if [[ "$version" != *"1.8."* ]]
   then
     write_error "Did not find Java Developement Kit version 8! Fiji is compatible only with version 8."
     exit 1
@@ -398,9 +396,9 @@ if ! command -v mvn &> /dev/null
 then
   write_warning "Did not find Maven! I try to find and load a module!"
   MAVEN_MODULE=$(find_module maven)
-  if [ $MAVEN_MODULE != false ]
+  if [ "$MAVEN_MODULE" != false ]
   then
-    module load $MAVEN_MODULE
+    module load "$MAVEN_MODULE"
   else
     write_warning "Did not find a Maven Module! I will install it localy!"
   
@@ -417,10 +415,11 @@ then
     # Install Maven:
     unzip -o apache-maven-3.8.6-bin.zip
     ##rm apache-maven-3.8.6-bin.zip
-    cd apache-maven-3.8.6
+    pushd
+	cd apache-maven-3.8.6
     pwd=$(pwd)
     export PATH="$pwd/bin:$PATH"
-    cd ..
+    popd
     write_item "Maven installed!"
   fi
 else
@@ -441,9 +440,10 @@ write_item "About to install Fiji!"
 # Install Fiji
 unzip -o fiji-linux64.zip
 ##rm fiji-linux64.zip
+pushd
 cd Fiji.app
 FIJI_DIR=$(pwd)
-cd ..
+popd
 write_item "Fiji installed!"
 
 # Install Parallel Macro
@@ -455,9 +455,10 @@ else
   write_item "Cloning parallel macro localy!"
   git clone https://github.com/fiji-hpc/parallel-macro.git
 fi
+pushd
 cd parallel-macro
 bash build.sh "$FIJI_DIR"
-cd ..
+popd
 write_item "Parallel macro plugin installed!"
 
 # Install OpenMPI Ops
@@ -469,9 +470,10 @@ else
   write_item "Cloning OpenMPI Ops localy!"
   git clone https://github.com/fiji-hpc/scijava-parallel-mpi
 fi
+pushd
 cd scijava-parallel-mpi
 bash build.sh "$FIJI_DIR"
-cd ..
+popd
 write_item "OpenMPI Ops plugin installed!"
 
 # Inspect installation (the jar files of parallel macro and OpenMPI Ops should be in jars of Fiji):
