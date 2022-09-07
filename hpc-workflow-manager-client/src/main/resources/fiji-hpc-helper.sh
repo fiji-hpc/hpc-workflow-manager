@@ -297,7 +297,7 @@ then
   write_item "Open MPI has already been downloaded!"
 else
   write_item "Downloading Open MPI. (This might take a while, please wait.)"
-  wget https://download.open-mpi.org/release/open-mpi/v${OPENMPI_VERSION:0:3}/openmpi-${OPENMPI_VERSION}.tar.gz
+  wget --no-check-certificate https://download.open-mpi.org/release/open-mpi/v${OPENMPI_VERSION:0:3}/openmpi-${OPENMPI_VERSION}.tar.gz
 fi
 
 write_item "Extracting Open MPI archive!"
@@ -409,13 +409,13 @@ then
       write_item "Maven has already been downloaded!"
     else
       write_item "Downloading maven!"
-      wget https://dlcdn.apache.org/maven/maven-3/3.8.6/binaries/apache-maven-3.8.6-bin.zip
+      wget --no-check-certificate https://dlcdn.apache.org/maven/maven-3/3.8.6/binaries/apache-maven-3.8.6-bin.zip
     fi
   
     # Install Maven:
     unzip -o apache-maven-3.8.6-bin.zip
     ##rm apache-maven-3.8.6-bin.zip
-    pushd
+	pushd .
 	cd apache-maven-3.8.6
     pwd=$(pwd)
     export PATH="$pwd/bin:$PATH"
@@ -433,14 +433,14 @@ then
   write_item "Fiji has already been downloaded!"
 else
   write_item "Downloading Fiji. (This will take a while, please wait.)"
-  wget https://downloads.imagej.net/fiji/latest/fiji-linux64.zip
+  wget --no-check-certificate https://downloads.imagej.net/fiji/latest/fiji-linux64.zip
 fi
 
 write_item "About to install Fiji!"
 # Install Fiji
 unzip -o fiji-linux64.zip
 ##rm fiji-linux64.zip
-pushd
+pushd .
 cd Fiji.app
 FIJI_DIR=$(pwd)
 popd
@@ -455,7 +455,7 @@ else
   write_item "Cloning parallel macro localy!"
   git clone https://github.com/fiji-hpc/parallel-macro.git
 fi
-pushd
+pushd .
 cd parallel-macro
 bash build.sh "$FIJI_DIR"
 popd
@@ -470,7 +470,7 @@ else
   write_item "Cloning OpenMPI Ops localy!"
   git clone https://github.com/fiji-hpc/scijava-parallel-mpi
 fi
-pushd
+pushd .
 cd scijava-parallel-mpi
 bash build.sh "$FIJI_DIR"
 popd
