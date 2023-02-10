@@ -9,3 +9,7 @@ implementation of the GUI dialog windows, etc.
 - [__The Short Guide on how to install and use the project__](https://github.com/fiji-hpc/parallel-macro/wiki/Short-Guide)
 - [The official web page about this whole project](https://fiji-hpc.github.io/hpc-parallel-tools/)
 - [Wiki page of the project](https://imagej.net/HPC_Workflow_Manager) on [imagej.net](https://imagej.net/)
+
+# Reporting issues
+I'm sure issues will come across :( <br/>
+[Please, tell us here.](https://github.com/fiji-hpc/parallel-macro/issues)
