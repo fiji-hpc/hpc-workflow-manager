@@ -90,6 +90,12 @@
 		<dependency>
 			<groupId>net.imagej</groupId>
 			<artifactId>imagej</artifactId>
+			<exclusions>
+				<exclusion>
+					<groupId>com.jcraft</groupId>
+  					<artifactId>jsch</artifactId>
+				</exclusion>
+			</exclusions>	
 			<scope>provided</scope>
 		</dependency>
 		<!-- BDV and Vistools -->
