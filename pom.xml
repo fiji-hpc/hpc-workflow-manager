@@ -85,7 +85,6 @@
 
 		<issueManagement.system>GitLab Issues</issueManagement.system>
 		<issueManagement.url>https://code.it4i.cz/fiji/haas-java-client/issues</issueManagement.url>
-		<maven.deploy.skip>true</maven.deploy.skip>
 	</properties>
 	<modules>
 		<module>hpc-workflow-manager-client</module>
@@ -102,6 +101,16 @@
 			<url>https://maven.scijava.org/content/groups/public</url>
 		</repository>
 	</repositories>
+	<distributionManagement>
+		<repository>
+			<id>it4i</id>
+			<url>https://artifactory.cs.vsb.cz/it4i/</url>
+		</repository>
+		<snapshotRepository>
+			<id>it4i</id>
+			<url>https://artifactory.cs.vsb.cz/it4i/</url>
+		</snapshotRepository>
+	</distributionManagement>
 	<profiles>
 		<profile>
 			<id>develop</id>
