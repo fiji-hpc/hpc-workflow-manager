@@ -60,7 +60,7 @@ public class DataTransferController extends BorderPane implements
 					return;
 				}
 
-				final TableRow<FileTransferInfo> currentRow = cell.getTableRow();
+				final TableRow<?> currentRow = cell.getTableRow();
 				cell.setText(val.toString());
 				if (val.equals(FileTransferState.Finished)) {
 					currentRow.setStyle("-fx-text-background-color: " + JavaFXRoutines
