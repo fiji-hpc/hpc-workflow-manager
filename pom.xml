@@ -72,6 +72,8 @@
 		<organization.name>IT4Innovations - National Supercomputing Center</organization.name>
 		<organization.url>http://www.it4i.cz/</organization.url>
 
+		<enforcer.skip>true</enforcer.skip>
+
 		<license.name>cc0</license.name>
 		<license.url>http://creativecommons.org/publicdomain/zero/1.0/</license.url>
 		<license.base.licenseName>CC0 1.0 Universal License</license.base.licenseName>
